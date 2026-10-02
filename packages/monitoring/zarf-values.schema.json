@@ -1364,6 +1364,9 @@
                     "clusterLabel": {
                       "type": "string"
                     },
+                    "clusterPeerName": {
+                      "type": "string"
+                    },
                     "clusterPeerTimeout": {
                       "type": "string"
                     },
@@ -1395,9 +1398,7 @@
                     "hostAliases": {
                       "type": "array"
                     },
-                    "hostNetwork": {
-                      "type": "boolean"
-                    },
+                    "hostNetwork": {},
                     "hostUsers": {},
                     "initContainers": {
                       "type": "array"
@@ -1866,6 +1867,10 @@
                         "sessionPersistence": {
                           "properties": {},
                           "type": "object"
+                        },
+                        "timeouts": {
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -1932,6 +1937,10 @@
                           "type": "array"
                         },
                         "sessionPersistence": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "timeouts": {
                           "properties": {},
                           "type": "object"
                         }
@@ -2227,8 +2236,24 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     },
                     "enabled": {
                       "type": "boolean"
@@ -2929,6 +2954,9 @@
                     "dashboardsConfigMapRefEnabled": {
                       "type": "boolean"
                     },
+                    "datasourcesEnabled": {
+                      "type": "boolean"
+                    },
                     "folder": {
                       "type": "string"
                     },
@@ -3172,6 +3200,25 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "enabled": {
                       "type": "boolean"
                     },
@@ -3246,6 +3293,22 @@
                 },
                 "tlsConfig": {
                   "properties": {
+                    "ca": {
+                      "properties": {
+                        "configMap": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "insecureSkipVerify": {
                       "type": "boolean"
                     },
@@ -3302,11 +3365,29 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "enabled": {
                       "type": "boolean"
                     },
                     "https": {},
-                    "insecureSkipVerify": {},
                     "interval": {
                       "type": "string"
                     },
@@ -3341,12 +3422,35 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "serverName": {},
                     "targetLabels": {
                       "type": "array"
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "ca": {
+                          "properties": {
+                            "configMap": {
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "insecureSkipVerify": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -3409,8 +3513,24 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     },
                     "dnsmasqMetricRelabelings": {
                       "type": "array"
@@ -3506,28 +3626,32 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
-                    },
-                    "caFile": {
-                      "type": "string"
-                    },
-                    "certFile": {
-                      "type": "string"
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     },
                     "enabled": {
-                      "type": "boolean"
-                    },
-                    "insecureSkipVerify": {
                       "type": "boolean"
                     },
                     "interval": {
                       "type": "string"
                     },
                     "jobLabel": {
-                      "type": "string"
-                    },
-                    "keyFile": {
                       "type": "string"
                     },
                     "labelLimit": {
@@ -3561,14 +3685,19 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "serverName": {
-                      "type": "string"
-                    },
                     "targetLabels": {
                       "type": "array"
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "insecureSkipVerify": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -3624,8 +3753,24 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     },
                     "enabled": {
                       "type": "boolean"
@@ -3672,6 +3817,27 @@
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "ca": {
+                          "properties": {
+                            "configMap": {
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -3723,11 +3889,29 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "enabled": {
                       "type": "boolean"
                     },
                     "https": {},
-                    "insecureSkipVerify": {},
                     "interval": {
                       "type": "string"
                     },
@@ -3779,12 +3963,35 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "serverName": {},
                     "targetLabels": {
                       "type": "array"
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "ca": {
+                          "properties": {
+                            "configMap": {
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "insecureSkipVerify": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -3827,6 +4034,25 @@
                       "properties": {
                         "node": {
                           "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
                         }
                       },
                       "type": "object"
@@ -3887,9 +4113,6 @@
                       "type": "boolean"
                     },
                     "https": {
-                      "type": "boolean"
-                    },
-                    "insecureSkipVerify": {
                       "type": "boolean"
                     },
                     "interval": {
@@ -4013,6 +4236,30 @@
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "ca": {
+                          "properties": {
+                            "configMap": {
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "insecureSkipVerify": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
                     },
                     "trackTimestampsStaleness": {
                       "type": "boolean"
@@ -4554,6 +4801,9 @@
                     "retention": {
                       "type": "string"
                     },
+                    "retentionPercentage": {
+                      "type": "string"
+                    },
                     "retentionSize": {
                       "type": "string"
                     },
@@ -4573,6 +4823,10 @@
                     },
                     "ruleSelectorNilUsesHelmValues": {
                       "type": "boolean"
+                    },
+                    "rules": {
+                      "properties": {},
+                      "type": "object"
                     },
                     "runtime": {
                       "properties": {},
@@ -4699,7 +4953,14 @@
                     },
                     "tsdb": {
                       "properties": {
+                        "chunkEncoding": {
+                          "properties": {},
+                          "type": "object"
+                        },
                         "outOfOrderTimeWindow": {
+                          "type": "string"
+                        },
+                        "staleSeriesCompactionThreshold": {
                           "type": "string"
                         }
                       },
@@ -4822,6 +5083,10 @@
                         "sessionPersistence": {
                           "properties": {},
                           "type": "object"
+                        },
+                        "timeouts": {
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -4888,6 +5153,10 @@
                           "type": "array"
                         },
                         "sessionPersistence": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "timeouts": {
                           "properties": {},
                           "type": "object"
                         }
@@ -5001,6 +5270,9 @@
                       "type": "boolean"
                     },
                     "create": {
+                      "type": "boolean"
+                    },
+                    "createTokenSecret": {
                       "type": "boolean"
                     },
                     "name": {
@@ -5404,6 +5676,9 @@
                   },
                   "type": "object"
                 },
+                "prometheusScrape": {
+                  "type": "boolean"
+                },
                 "rbac": {
                   "properties": {
                     "pspEnabled": {
@@ -5745,8 +6020,7 @@
                       "type": "string"
                     },
                     "matchConditions": {
-                      "properties": {},
-                      "type": "object"
+                      "type": "array"
                     },
                     "mutatingWebhookConfiguration": {
                       "properties": {
@@ -6405,6 +6679,10 @@
                         "sessionPersistence": {
                           "properties": {},
                           "type": "object"
+                        },
+                        "timeouts": {
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -6743,6 +7021,9 @@
                     },
                     "ruleSelectorNilUsesHelmValues": {
                       "type": "boolean"
+                    },
+                    "schedulerName": {
+                      "type": "string"
                     },
                     "serviceName": {},
                     "storage": {
