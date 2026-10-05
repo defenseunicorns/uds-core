@@ -105,7 +105,6 @@ components:
       path: ../../dist
     charts:
       - name: module
-        releaseName: module
         valuesFiles:
           - values.yaml
         values:
@@ -122,6 +121,29 @@ components:
               - .pepr-uds-core.module.watcher.containerSecurityContext
     actions:
       onDeploy:
+        before:
+          - description: Migrate the legacy UDS Core Pepr Helm release
+            cmd: |
+              set -euo pipefail
+
+              if ./zarf tools helm status module --namespace pepr-system >/dev/null 2>&1; then
+                LEGACY_MANIFEST="$(./zarf tools helm get manifest module --namespace pepr-system)"
+
+                if printf '%s\n' "$LEGACY_MANIFEST" | awk '
+                  /^kind: ServiceAccount$/ { service_account = 1; next }
+                  /^kind:/ { service_account = 0 }
+                  service_account && /^  name: pepr-uds-core$/ { found = 1 }
+                  END { exit !found }
+                '; then
+                  echo "Removing the legacy UDS Core Pepr release named module..."
+                  ./zarf tools helm uninstall module --namespace pepr-system --wait --timeout 5m
+                else
+                  echo "The module release belongs to a different Pepr module; leaving it in place."
+                fi
+              else
+                echo "No legacy module Helm release found."
+              fi
+
         after:
           - description: Validate ClusterConfig
             maxTotalSeconds: 60
