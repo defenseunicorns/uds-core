@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -242,6 +242,37 @@ describe("reconcileService and reconcilePod", () => {
     vi.clearAllMocks();
   });
 
+  it("adds the external authorization waypoint to a matching Service", async () => {
+    const resource = createMockService({ "app.kubernetes.io/name": "test-app" });
+    const pkg: UDSPackage = {
+      metadata: { name: "test-pkg", namespace: testNamespace },
+      spec: {
+        network: {
+          serviceMesh: {
+            mode: Mode.Ambient,
+            externalAuthorization: {
+              provider: "opa",
+              selector: { "app.kubernetes.io/name": "test-app" },
+            },
+          },
+        },
+      },
+    };
+
+    (
+      PackageStore.getPackageByNamespace as MockedFunction<
+        typeof PackageStore.getPackageByNamespace
+      >
+    ).mockReturnValue(pkg);
+
+    await reconcileService(resource);
+
+    expect(resource.metadata?.labels).toMatchObject({
+      "istio.io/use-waypoint": "test-pkg-waypoint",
+      "istio.io/ingress-use-waypoint": "true",
+    });
+  });
+
   it.each(testCases)(
     "$name - should add waypoint labels when matching package exists",
     async ({ createResource, expectedLabels, name }) => {
@@ -361,12 +392,12 @@ describe("setupAmbientWaypoint", () => {
     vi.clearAllMocks();
   });
 
-  const client = {
-    clientId: "test-client",
-    name: "test-sso",
-    enableAuthserviceSelector: {
+  const target = {
+    id: "test-client",
+    selector: {
       app: "test-client",
     },
+    type: "authservice" as const,
   };
 
   it("should throw an error when package metadata is missing namespace or name", async () => {
@@ -374,18 +405,18 @@ describe("setupAmbientWaypoint", () => {
     const pkg = { metadata: {} } as UDSPackage;
 
     // Expect the function to throw with the correct error message
-    await expect(setupAmbientWaypoint(pkg, client)).rejects.toThrow(
+    await expect(setupAmbientWaypoint(pkg, target)).rejects.toThrow(
       "Package metadata is missing namespace or name",
     );
 
     // Also test with partial metadata
     const pkgNoNamespace = { metadata: { name: "test" } } as UDSPackage;
-    await expect(setupAmbientWaypoint(pkgNoNamespace, client)).rejects.toThrow(
+    await expect(setupAmbientWaypoint(pkgNoNamespace, target)).rejects.toThrow(
       "Package metadata is missing namespace or name",
     );
 
     const pkgNoName = { metadata: { namespace: "test-ns" } } as UDSPackage;
-    await expect(setupAmbientWaypoint(pkgNoName, client)).rejects.toThrow(
+    await expect(setupAmbientWaypoint(pkgNoName, target)).rejects.toThrow(
       "Package metadata is missing namespace or name",
     );
   });
@@ -476,6 +507,25 @@ describe("cleanupWaypointLabels", () => {
       },
       "Failed to clean up waypoint labels",
     );
+  });
+
+  it("should surface errors when strict cleanup is requested", async () => {
+    const testError = new Error("Test error");
+    mockGet.mockRejectedValueOnce(testError);
+
+    await expect(
+      cleanupWaypointLabels(namespace, waypointName, { throwOnError: true }),
+    ).rejects.toThrow("Test error");
+  });
+
+  it("should surface patch errors when strict cleanup is requested", async () => {
+    const pod = createMockPod({ [ISTIO_WAYPOINT_LABEL]: waypointName });
+    mockGet.mockResolvedValueOnce({ items: [pod] });
+    mockPatch.mockRejectedValueOnce(new Error("Patch failed"));
+
+    await expect(
+      cleanupWaypointLabels(namespace, waypointName, { throwOnError: true }),
+    ).rejects.toThrow("Patch failed");
   });
 
   it("should only remove matching waypoint labels", async () => {
@@ -663,7 +713,7 @@ describe("reconcileExistingResources", () => {
 
   it("should warn and return if no namespace in package", async () => {
     const pkg = { ...createMockPackage("test-pkg"), metadata: {} };
-    await reconcileExistingResources(pkg, ssoClient, waypointName);
+    await reconcileExistingResources(pkg, ssoClient.enableAuthserviceSelector!, waypointName);
     expect(mockLog.warn).toHaveBeenCalledWith({ pkg }, "No namespace found in package metadata");
     expect(mockGet).not.toHaveBeenCalled();
     expect(mockPatch).not.toHaveBeenCalled();
@@ -679,7 +729,7 @@ describe("reconcileExistingResources", () => {
       .mockResolvedValueOnce({ items: [mockPod] }); // Pods
     mockPatch.mockResolvedValue(undefined);
 
-    await reconcileExistingResources(pkg, ssoClient, waypointName);
+    await reconcileExistingResources(pkg, ssoClient.enableAuthserviceSelector!, waypointName);
 
     // Service patch
     expect(mockPatch).toHaveBeenCalledWith([
@@ -717,7 +767,7 @@ describe("reconcileExistingResources", () => {
     // Service patch throws
     mockPatch.mockRejectedValueOnce(new Error("patch failed")).mockResolvedValueOnce(undefined); // Pod patch succeeds
 
-    await reconcileExistingResources(pkg, ssoClient, waypointName);
+    await reconcileExistingResources(pkg, ssoClient.enableAuthserviceSelector!, waypointName);
     expect(mockLog.error).toHaveBeenCalledWith(
       { errorMessage: "patch failed" },
       `Service reconciliation failed for ${pkg.metadata?.namespace}`,
@@ -736,7 +786,7 @@ describe("reconcileExistingResources", () => {
     // Service patch succeeds, pod patch fails
     mockPatch.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("pod patch failed"));
 
-    await reconcileExistingResources(pkg, ssoClient, waypointName);
+    await reconcileExistingResources(pkg, ssoClient.enableAuthserviceSelector!, waypointName);
     expect(mockLog.info).toHaveBeenCalledWith(
       { errorMessage: "pod patch failed" },
       `Pod reconciliation failed for ${pkg.metadata?.namespace}`,
@@ -747,9 +797,9 @@ describe("reconcileExistingResources", () => {
   it("should log and throw if K8s.Get fails", async () => {
     const pkg = createMockPackage("test-pkg", selector);
     mockGet.mockRejectedValueOnce(new Error("get failed"));
-    await expect(reconcileExistingResources(pkg, ssoClient, waypointName)).rejects.toThrow(
-      "get failed",
-    );
+    await expect(
+      reconcileExistingResources(pkg, ssoClient.enableAuthserviceSelector!, waypointName),
+    ).rejects.toThrow("get failed");
     expect(mockLog.error).toHaveBeenCalledWith(
       { errorMessage: "get failed" },
       "Error in reconcileExistingResources()",

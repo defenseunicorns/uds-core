@@ -135,6 +135,45 @@ describe("flexible gateway configuration", () => {
 });
 
 describe("authorization policy generation", () => {
+  test("generates waypoint bypass protection for external authorization", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "ollama", namespace: "ollama", generation: 1 },
+      spec: {
+        network: {
+          serviceMesh: {
+            mode: Mode.Ambient,
+            externalAuthorization: {
+              provider: "opa",
+              selector: { "app.kubernetes.io/name": "ollama" },
+            },
+          },
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg, "ollama", IstioState.Ambient);
+
+    expect(policies).toHaveLength(1);
+    expect(policies[0]).toMatchObject({
+      metadata: { name: "deny-all-except-waypoint-ollama-waypoint" },
+      spec: {
+        action: "DENY",
+        selector: { matchLabels: { "app.kubernetes.io/name": "ollama" } },
+        rules: [
+          {
+            from: [
+              {
+                source: {
+                  notPrincipals: ["cluster.local/ns/ollama/sa/ollama-waypoint"],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
   test("should generate authpol with ipBlock for CloudMetadata", async () => {
     const pkg: UDSPackage = {
       metadata: { name: "cloud-metadata-test", namespace: "test-ns", generation: 1 },

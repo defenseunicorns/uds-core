@@ -16,6 +16,10 @@ vi.mock("../controllers/envoy-gateway/udp-route-resources", () => ({
   removeDefaultListenerMapEntry: vi.fn(),
 }));
 vi.mock("../controllers/istio/egress-orchestrator", () => ({ istioEgressResources: vi.fn() }));
+vi.mock("../controllers/istio/external-authorization", () => ({
+  cleanupExternalAuthorization: vi.fn(),
+  externalAuthorization: vi.fn(),
+}));
 vi.mock("../controllers/istio/istio-resources", async () => {
   const originalModule = (await vi.importActual("../controllers/istio/istio-resources")) as object;
   return { ...originalModule, istioResources: vi.fn() };
@@ -87,6 +91,10 @@ import {
 } from "../controllers/envoy-gateway/udp-route-resources";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
+import {
+  cleanupExternalAuthorization,
+  externalAuthorization,
+} from "../controllers/istio/external-authorization";
 import { istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import {
@@ -190,6 +198,7 @@ describe("packageReconciler", () => {
     (purgeSSOClients as Mock).mockResolvedValue(undefined);
     (caBundleConfigMap as Mock).mockResolvedValue(undefined);
     (authservice as Mock).mockResolvedValue([]);
+    (externalAuthorization as Mock).mockResolvedValue(0);
   });
   test("logs error for invalid package definitions", async () => {
     delete mockPackage.metadata!.namespace;
@@ -206,6 +215,44 @@ describe("packageReconciler", () => {
     await packageReconciler(mockPackage);
 
     expect(Log.error).toHaveBeenCalled();
+  });
+
+  test("reconciles package external authorization independently of identity", async () => {
+    mockPackage.spec = {
+      network: {
+        serviceMesh: {
+          externalAuthorization: {
+            provider: "opa",
+            selector: { app: "ollama" },
+          },
+        },
+      },
+    };
+    (externalAuthorization as Mock).mockResolvedValue(1);
+
+    await packageReconciler(mockPackage);
+
+    expect(externalAuthorization).toHaveBeenCalledWith(mockPackage);
+    expect(mockPatchStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: expect.objectContaining({
+          authorizationPolicyCount: 1,
+          externalAuthorizationProvider: "opa",
+        }),
+      }),
+    );
+  });
+
+  test("clears external authorization status when it is disabled", async () => {
+    await packageReconciler(mockPackage);
+
+    expect(mockPatchStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: expect.objectContaining({
+          externalAuthorizationProvider: "",
+        }),
+      }),
+    );
   });
 });
 
@@ -244,6 +291,7 @@ describe("packageFinalizer", () => {
     (cleanupNamespace as Mock).mockImplementation(mockCleanupNamespace);
     (purgeSSOClients as Mock).mockImplementation(mockPurgeSSO);
     (purgeAuthserviceClients as Mock).mockImplementation(mockPurgeAuthservice);
+    (cleanupExternalAuthorization as Mock).mockResolvedValue(undefined);
     (reconcileSharedEgressResources as Mock).mockImplementation(mockReconcileSharedEgressResources);
     (writeEvent as Mock).mockImplementation(mockWriteEvent);
     (hasDefaultModeUDPExpose as Mock).mockReturnValue(false);
@@ -349,6 +397,35 @@ describe("packageFinalizer", () => {
       expect.objectContaining({
         reason: "RemovalFailed",
         message: expect.stringContaining("AuthService"),
+      }),
+    );
+  });
+
+  test("should handle failure in external authorization cleanup and set phase to RemovalFailed", async () => {
+    mockPackage.status = { phase: Phase.Ready };
+    (cleanupExternalAuthorization as Mock).mockRejectedValue(
+      new Error("Waypoint label cleanup failed"),
+    );
+    mockPurgeSSO.mockReset();
+    mockReconcileSharedEgressResources.mockReset();
+
+    const finalizerRemoved = await packageFinalizer(mockPackage);
+
+    expect(finalizerRemoved).toEqual(false);
+    expect(cleanupExternalAuthorization).toHaveBeenCalledWith(mockPackage);
+    expect(mockPurgeSSO).not.toHaveBeenCalled();
+    expect(mockReconcileSharedEgressResources).not.toHaveBeenCalled();
+    expect(mockPatchStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { name: "test-package", namespace: "test-namespace" },
+        status: { phase: Phase.RemovalFailed },
+      }),
+    );
+    expect(mockWriteEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        reason: "RemovalFailed",
+        message: expect.stringContaining("Waypoint label cleanup failed"),
       }),
     );
   });

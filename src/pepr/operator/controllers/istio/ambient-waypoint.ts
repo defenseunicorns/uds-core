@@ -1,20 +1,26 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { a, K8s, kind } from "pepr";
 import { K8sGateway, K8sGatewayFromType, UDSPackage } from "../../crd";
-import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "../packages/package-store";
-import { getAuthserviceClients, getOwnerRef } from "../utils";
+import { getOwnerRef } from "../utils";
 import {
   ambientEgressNamespace,
   getSharedAnnotationKey,
   log,
   sharedEgressPkgId,
 } from "./istio-resources";
-import { getWaypointName, matchesLabels, serviceMatchesSelector } from "./waypoint-utils";
+import {
+  getWaypointName,
+  getWaypointTargets,
+  matchesLabels,
+  serviceMatchesSelector,
+  WaypointTarget,
+} from "./waypoint-utils";
 
 export const egressWaypointName = "egress-waypoint";
 
@@ -31,7 +37,12 @@ const HEALTH_OPTS = {
 /**
  * Sets up an ambient waypoint for a package
  */
-export async function setupAmbientWaypoint(pkg: UDSPackage, client: Sso): Promise<void> {
+export async function setupAmbientWaypoint(
+  pkg: UDSPackage,
+  target: WaypointTarget,
+  labels: Record<string, string> = {},
+  replaceExistingLabels = false,
+): Promise<void> {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) {
     const error = "Package metadata is missing namespace or name";
@@ -41,13 +52,16 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, client: Sso): Promis
 
   log.info(`Starting ambient waypoint setup for package ${name} in ${namespace}`);
 
-  const waypointId = client.clientId;
+  const waypointId = target.id;
   const waypointName = getWaypointName(waypointId);
 
   try {
-    await createWaypointGateway(pkg, waypointName);
+    await createWaypointGateway(pkg, waypointName, labels);
     await waitForWaypointPodHealthy(namespace, waypointName);
-    await reconcileExistingResources(pkg, client, waypointName);
+    if (replaceExistingLabels) {
+      await cleanupWaypointLabels(namespace, waypointName, { throwOnError: true });
+    }
+    await reconcileExistingResources(pkg, target.selector, waypointName);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     log.error(
@@ -61,7 +75,11 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, client: Sso): Promis
 /**
  * Creates a waypoint gateway for the given package
  */
-export async function createWaypointGateway(pkg: UDSPackage, waypointName: string) {
+export async function createWaypointGateway(
+  pkg: UDSPackage,
+  waypointName: string,
+  labels: Record<string, string> = {},
+) {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) throw new Error("Package metadata is missing namespace or name");
 
@@ -80,6 +98,7 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointName: strin
         "istio.io/gateway-name": waypointName,
         "uds/generation": (pkg.metadata?.generation ?? 0).toString(),
         "uds/package": pkg.metadata?.name ?? "unknown",
+        ...labels,
       },
       ownerReferences: getOwnerRef(pkg),
     };
@@ -218,15 +237,13 @@ export async function reconcileService(svc: a.Service): Promise<void> {
     return;
   }
 
-  // Find the SSO client that matches this service's selector (only authservice-enabled)
-  const authClients = getAuthserviceClients(pkg);
-  const matchingSso = authClients.find(sso =>
-    serviceMatchesSelector(svc, sso.enableAuthserviceSelector!),
+  const matchingTarget = getWaypointTargets(pkg).find(target =>
+    serviceMatchesSelector(svc, target.selector),
   );
 
-  if (!matchingSso?.clientId) return;
+  if (!matchingTarget) return;
 
-  const waypointName = getWaypointName(matchingSso.clientId);
+  const waypointName = getWaypointName(matchingTarget.id);
 
   svc.metadata.labels = {
     ...svc.metadata.labels,
@@ -235,7 +252,7 @@ export async function reconcileService(svc: a.Service): Promise<void> {
   };
 
   log.info(
-    { namespace, waypointName, clientId: matchingSso.clientId, labels: svc.metadata.labels },
+    { namespace, waypointName, targetId: matchingTarget.id, labels: svc.metadata.labels },
     `Added waypoint labels to service ${svc.metadata?.name}`,
   );
 }
@@ -272,15 +289,13 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
     return;
   }
 
-  // Find the SSO client that matches this pod's labels (only authservice-enabled)
-  const authClients = getAuthserviceClients(pkg);
-  const matchingSso = authClients.find(sso =>
-    matchesLabels(pod.metadata?.labels || {}, sso.enableAuthserviceSelector!),
+  const matchingTarget = getWaypointTargets(pkg).find(target =>
+    matchesLabels(pod.metadata?.labels || {}, target.selector),
   );
 
-  if (!matchingSso?.clientId) return;
+  if (!matchingTarget) return;
 
-  const waypointName = getWaypointName(matchingSso.clientId);
+  const waypointName = getWaypointName(matchingTarget.id);
 
   pod.metadata.labels = {
     ...pod.metadata.labels,
@@ -293,7 +308,7 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
     {
       namespace,
       waypointName,
-      clientId: matchingSso.clientId,
+      targetId: matchingTarget.id,
     },
     `Added waypoint labels to pod ${podDisplayName}`,
   );
@@ -305,15 +320,16 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
 export async function cleanupWaypointLabels(
   namespace: string,
   waypointName: string,
+  options: { throwOnError?: boolean } = {},
 ): Promise<void> {
   log.info(`Starting cleanup of waypoint labels: namespace=${namespace}, waypoint=${waypointName}`);
 
   try {
     // Clean up pods with the waypoint label
-    await cleanupPodsWithWaypointLabel(namespace, waypointName);
+    await cleanupPodsWithWaypointLabel(namespace, waypointName, options);
 
     // Clean up services with the waypoint label
-    await cleanupServicesWithWaypointLabel(namespace, waypointName);
+    await cleanupServicesWithWaypointLabel(namespace, waypointName, options);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     log.error(
@@ -324,7 +340,9 @@ export async function cleanupWaypointLabels(
       },
       "Failed to clean up waypoint labels",
     );
-    // Don't throw here to allow other cleanup to continue
+    if (options.throwOnError) {
+      throw error;
+    }
   }
 }
 
@@ -334,6 +352,7 @@ export async function cleanupWaypointLabels(
 async function cleanupPodsWithWaypointLabel(
   namespace: string,
   waypointName: string,
+  options: { throwOnError?: boolean } = {},
 ): Promise<void> {
   const pods = await K8s(a.Pod)
     .InNamespace(namespace)
@@ -372,6 +391,9 @@ async function cleanupPodsWithWaypointLabel(
           },
           "Failed to remove waypoint label from pod",
         );
+        if (options.throwOnError) {
+          throw error;
+        }
       }
     }),
   );
@@ -383,6 +405,7 @@ async function cleanupPodsWithWaypointLabel(
 async function cleanupServicesWithWaypointLabel(
   namespace: string,
   waypointName: string,
+  options: { throwOnError?: boolean } = {},
 ): Promise<void> {
   const services = await K8s(a.Service)
     .InNamespace(namespace)
@@ -425,6 +448,9 @@ async function cleanupServicesWithWaypointLabel(
           },
           "Failed to remove waypoint labels from service",
         );
+        if (options.throwOnError) {
+          throw error;
+        }
       }
     }),
   );
@@ -432,7 +458,7 @@ async function cleanupServicesWithWaypointLabel(
 
 export async function reconcileExistingResources(
   pkg: UDSPackage,
-  ssoClient: Sso,
+  selector: Record<string, string>,
   waypointName: string,
 ): Promise<void> {
   const namespace = pkg.metadata?.namespace;
@@ -449,15 +475,10 @@ export async function reconcileExistingResources(
       K8s(kind.Pod).InNamespace(namespace).Get(),
     ]);
 
-    const matchingServices = services.items.filter(svc =>
-      serviceMatchesSelector(svc, ssoClient.enableAuthserviceSelector!),
-    );
+    const matchingServices = services.items.filter(svc => serviceMatchesSelector(svc, selector));
 
     const matchingPods = pods.items.filter(pod => {
-      const matches = matchesLabels(
-        pod.metadata?.labels || {},
-        ssoClient.enableAuthserviceSelector!,
-      );
+      const matches = matchesLabels(pod.metadata?.labels || {}, selector);
       return matches;
     });
 

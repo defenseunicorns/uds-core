@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -55,7 +55,11 @@ export async function authservice(
   // Reconcile each client
   for (const sso of authServiceClients) {
     if (isAmbient) {
-      await setupAmbientWaypoint(pkg, sso);
+      await setupAmbientWaypoint(pkg, {
+        id: sso.clientId,
+        selector: sso.enableAuthserviceSelector!,
+        type: "authservice",
+      });
     }
 
     const client = clients.get(sso.clientId);

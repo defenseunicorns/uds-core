@@ -174,6 +174,69 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
+  describe("external authorization selector validation", () => {
+    it("allows disjoint Authservice and external authorization selectors", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [],
+        [],
+        [{ clientId: "authservice", enableAuthserviceSelector: { app: "web" } }],
+        [],
+      );
+      mockReq.Raw.spec!.network!.serviceMesh!.externalAuthorization = {
+        provider: "opa",
+        selector: { app: "api" },
+      };
+
+      await validator(mockReq);
+
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("denies selectors that can select the same workload", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [],
+        [],
+        [
+          {
+            clientId: "authservice",
+            enableAuthserviceSelector: { app: "web", tier: "frontend" },
+          },
+        ],
+        [],
+      );
+      mockReq.Raw.spec!.network!.serviceMesh!.externalAuthorization = {
+        provider: "opa",
+        selector: { app: "web" },
+      };
+
+      await validator(mockReq);
+
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        'externalAuthorization.selector overlaps enableAuthserviceSelector for SSO client "authservice". Use disjoint selectors because a workload cannot use both operator-managed Authservice and external authorization.',
+      );
+    });
+
+    it("denies an empty selector when Authservice is enabled", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [],
+        [],
+        [{ clientId: "authservice", enableAuthserviceSelector: { app: "web" } }],
+        [],
+      );
+      mockReq.Raw.spec!.network!.serviceMesh!.externalAuthorization = {
+        provider: "opa",
+        selector: {},
+      };
+
+      await validator(mockReq);
+
+      expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("Gateway name validation", () => {
     it("allows valid custom gateway names", async () => {
       const mockReq = makeMockReq(

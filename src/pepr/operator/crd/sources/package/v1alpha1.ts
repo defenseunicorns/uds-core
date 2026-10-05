@@ -278,6 +278,28 @@ const serviceMesh = {
   description: "Service Mesh configuration for the package",
   type: "object",
   properties: {
+    externalAuthorization: {
+      description:
+        "Protects matching workloads with a registered Istio external authorization provider.",
+      type: "object",
+      required: ["provider", "selector"],
+      properties: {
+        provider: {
+          description:
+            "Name of an external authorization provider registered in Istio meshConfig.extensionProviders.",
+          type: "string",
+          minLength: 1,
+        },
+        selector: {
+          description:
+            "Labels that select workloads and Services to protect. An empty selector protects the namespace. The selector must not overlap an SSO enableAuthserviceSelector in the same package.",
+          type: "object",
+          additionalProperties: {
+            type: "string",
+          },
+        },
+      },
+    },
     mode: {
       type: "string",
       enum: ["sidecar", "ambient"],
@@ -755,6 +777,11 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                   },
                 },
               },
+            },
+            externalAuthorizationProvider: {
+              type: "string",
+              description:
+                "The external authorization provider reconciled for the current package generation, or an empty string when disabled.",
             },
             meshMode: {
               type: "string",
