@@ -105,6 +105,7 @@ components:
       path: ../../dist
     charts:
       - name: module
+        releaseName: module
         valuesFiles:
           - values.yaml
         values:
