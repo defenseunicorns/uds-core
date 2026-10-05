@@ -34,6 +34,9 @@ tasks:
         cmd: |
           EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "network.spec.ts"
         dir: test/vitest
+      - description: "Run Keycloak admin hostname tests"
+        cmd: "npx vitest run keycloak-hostname-admin.spec.ts"
+        dir: test/vitest
       - description: "Run Test Resources Tests"
         cmd: |
           npx vitest run "test-resources.spec.ts"
@@ -176,6 +179,26 @@ tasks:
             name: podinfo-svcmonitor
             namespace: podinfo
 
+      - description: Expose Keycloak on a temporary alternate SSO host for browser regression tests
+        cmd: |
+          ALT_ROUTE_MARKER="test.uds.dev/created-sso-alt-route"
+          if uds zarf tools kubectl get package keycloak -n keycloak -o json | jq -e '.spec.network.expose[]? | select(.host == "sso-alt" and .gateway == "tenant")' >/dev/null; then
+            # Keep ownership after an interrupted run; leave unmarked pre-existing routes alone.
+            :
+          else
+            uds zarf tools kubectl annotate package keycloak -n keycloak "${ALT_ROUTE_MARKER}=true" --overwrite
+          uds zarf tools kubectl patch package keycloak -n keycloak --type=json --field-manager=zarf -p='[{"op":"add","path":"/spec/network/expose/-","value":{"service":"keycloak-http","selector":{"app.kubernetes.io/name":"keycloak"},"gateway":"tenant","host":"sso-alt","port":8080,"advancedHTTP":{"headers":{"request":{"remove":["x-forwarded-host","x-forwarded-port","x-forwarded-prefix","x-forwarded-proto"],"add":{"x-forwarded-host":"%REQ(:AUTHORITY)%","x-forwarded-port":"443","x-forwarded-proto":"https"}}}}}}]'
+          fi
+          attempt=1
+          until curl --fail --silent --show-error --insecure https://sso-alt.uds.dev/realms/uds/ -o /dev/null; do
+            if [ "$attempt" -ge 30 ]; then
+              echo "sso-alt Keycloak route did not become ready after 60 seconds"
+              exit 1
+            fi
+            sleep 2
+            attempt=$((attempt + 1))
+          done
+
   - name: check-authservice-protection
     description: Verify if a service is protected by authservice by checking redirects
     inputs:
@@ -232,6 +255,17 @@ tasks:
                 fi
               fi
             fi
+          fi
+      - description: Remove the temporary alternate Keycloak host
+        cmd: |
+          ALT_ROUTE_MARKER="test.uds.dev/created-sso-alt-route"
+          PACKAGE_JSON="$(uds zarf tools kubectl get package keycloak -n keycloak -o json)"
+          if [ "$(printf '%s' "$PACKAGE_JSON" | jq --arg marker "$ALT_ROUTE_MARKER" -r '.metadata.annotations[$marker] // ""')" = "true" ]; then
+            EXPOSE_INDEX="$(printf '%s' "$PACKAGE_JSON" | jq -r '[.spec.network.expose | to_entries[] | select(.value.host == "sso-alt" and .value.gateway == "tenant") | .key][0] // empty')"
+            if [ -n "$EXPOSE_INDEX" ]; then
+              uds zarf tools kubectl patch package keycloak -n keycloak --type=json --field-manager=zarf -p="[{\"op\":\"remove\",\"path\":\"/spec/network/expose/${EXPOSE_INDEX}\"}]"
+            fi
+            uds zarf tools kubectl annotate package keycloak -n keycloak "${ALT_ROUTE_MARKER}-"
           fi
 
   - name: cleanup-udp-expose

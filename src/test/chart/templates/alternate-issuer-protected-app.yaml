@@ -1,0 +1,75 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alt-protected-podinfo
+  namespace: podinfo
+  labels:
+    app.kubernetes.io/name: alt-protected-podinfo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alt-protected-podinfo
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: alt-protected-podinfo
+    spec:
+      containers:
+        - name: podinfo
+          image: ghcr.io/stefanprodan/podinfo:6.15.0
+          ports:
+            - name: http
+              containerPort: 9898
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alt-protected-podinfo
+  namespace: podinfo
+spec:
+  selector:
+    app.kubernetes.io/name: alt-protected-podinfo
+  ports:
+    - name: http
+      port: 9898
+      targetPort: http
+---
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: alt-protected-podinfo-jwt
+  namespace: podinfo
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alt-protected-podinfo
+  jwtRules:
+    - issuer: https://sso-alt.uds.dev/realms/uds
+      audiences:
+        - alt-podinfo-oidc
+      forwardOriginalToken: true
+      jwksUri: https://sso-alt.uds.dev/realms/uds/protocol/openid-connect/certs
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: alt-protected-podinfo-jwt
+  namespace: podinfo
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alt-protected-podinfo
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            requestPrincipals:
+              - https://sso-alt.uds.dev/realms/uds/*

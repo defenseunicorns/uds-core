@@ -1,0 +1,92 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak hostname startup options
+templates:
+  - statefulset.yaml
+  - secret-postgresql.yaml
+  - secret-kc-realm.yaml
+  - uds-package.yaml
+
+tests:
+  - it: should disable strict hostname validation without pinning a hostname
+    set:
+      devMode: false
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--hostname-strict=false"
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_HOSTNAME
+
+  - it: should overwrite forwarded host at every Keycloak gateway route
+    template: uds-package.yaml
+    asserts:
+      - contains:
+          path: spec.network.expose[0].advancedHTTP.headers.request.remove
+          content: x-forwarded-host
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.headers.request.add.x-forwarded-host
+          value: "%REQ(:AUTHORITY)%"
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.headers.request.add.x-forwarded-proto
+          value: "https"
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.headers.request.add.x-forwarded-port
+          value: "443"
+      - contains:
+          path: spec.network.expose[1].advancedHTTP.headers.request.remove
+          content: x-forwarded-host
+      - equal:
+          path: spec.network.expose[1].advancedHTTP.headers.request.add.x-forwarded-host
+          value: "%REQ(:AUTHORITY)%"
+      - equal:
+          path: spec.network.expose[1].advancedHTTP.headers.request.add.x-forwarded-proto
+          value: "https"
+      - equal:
+          path: spec.network.expose[1].advancedHTTP.headers.request.add.x-forwarded-port
+          value: "443"
+      - contains:
+          path: spec.network.expose[2].advancedHTTP.headers.request.remove
+          content: x-forwarded-host
+      - equal:
+          path: spec.network.expose[2].advancedHTTP.headers.request.add.x-forwarded-host
+          value: "%REQ(:AUTHORITY)%"
+      - equal:
+          path: spec.network.expose[2].advancedHTTP.headers.request.add.x-forwarded-proto
+          value: "https"
+      - equal:
+          path: spec.network.expose[2].advancedHTTP.headers.request.add.x-forwarded-port
+          value: "443"
+
+  - it: should limit direct Keycloak backchannel access to control plane and Fleet
+    template: uds-package.yaml
+    asserts:
+      - notContains:
+          path: spec.network.allow
+          content:
+            description: "Keycloak backchannel access"
+            remoteNamespace: "*"
+      - contains:
+          path: spec.network.allow
+          content:
+            description: "Keycloak backchannel access for Core services"
+            direction: Ingress
+            remoteNamespace: pepr-system
+            port: 8080
+            selector:
+              app.kubernetes.io/name: keycloak
+      - contains:
+          path: spec.network.allow
+          content:
+            description: "Keycloak backchannel access for Fleet"
+            direction: Ingress
+            remoteNamespace: uds-fleet-command
+            port: 8080
+            selector:
+              app.kubernetes.io/name: keycloak

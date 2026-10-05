@@ -8,17 +8,8 @@ import { describe, expect, it } from "vitest";
 const publicOrigin = "https://sso.uds.dev";
 const adminOrigin = "https://keycloak.admin.uds.dev";
 
-describe("Keycloak hostname routing", () => {
-  it("uses the public origin for public realm discovery", async () => {
-    const response = await fetch(`${publicOrigin}/realms/uds/.well-known/openid-configuration`);
-
-    expect(response.ok).toBe(true);
-    await expect(response.json()).resolves.toMatchObject({
-      issuer: `${publicOrigin}/realms/uds`,
-    });
-  });
-
-  it("uses the admin origin for admin realm discovery", async () => {
+describe("Keycloak admin hostname behavior", () => {
+  it("uses the request host for discovery through the admin gateway", async () => {
     const response = await fetch(`${adminOrigin}/realms/uds/.well-known/openid-configuration`);
 
     expect(response.ok).toBe(true);

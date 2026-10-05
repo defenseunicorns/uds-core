@@ -31,12 +31,17 @@ spec:
         remoteServiceAccount: kube-prometheus-stack-prometheus
         port: 15020
 
-      - description: "Keycloak backchannel access"
+      - description: "Keycloak backchannel access for Core services"
         direction: Ingress
         selector:
           app.kubernetes.io/name: keycloak
-        # Allow access from anything in cluster using an empty namespace selector
-        remoteNamespace: "*"
+        remoteNamespace: pepr-system
+        port: 8080
+      - description: "Keycloak backchannel access for Fleet"
+        direction: Ingress
+        selector:
+          app.kubernetes.io/name: keycloak
+        remoteNamespace: uds-fleet-command
         port: 8080
 
       # Keycloak OCSP to check certs cannot guarantee a static IP
@@ -165,9 +170,6 @@ spec:
             request:
               set:
                 X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
-                X-Forwarded-Host: "sso.{{ .Values.domain }}"
-                X-Forwarded-Proto: "https"
-                X-Forwarded-Port: "443"
               remove:
                 - Forwarded
                 - X-Forwarded-For
@@ -177,7 +179,12 @@ spec:
                 - X-Forwarded-Prefix
                 {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 - istio-mtls-client-certificate
+                {{- end }}
               add:
+                x-forwarded-host: "%REQ(:AUTHORITY)%"
+                x-forwarded-port: "443"
+                x-forwarded-proto: "https"
+                {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
                 {{- end }}
 
@@ -198,9 +205,6 @@ spec:
             request:
               set:
                 X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
-                X-Forwarded-Host: "sso.{{ .Values.domain }}"
-                X-Forwarded-Proto: "https"
-                X-Forwarded-Port: "443"
               remove:
                 - Forwarded
                 - X-Forwarded-For
@@ -210,7 +214,12 @@ spec:
                 - X-Forwarded-Prefix
                 {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 - istio-mtls-client-certificate
+                {{- end }}
               add:
+                x-forwarded-host: "%REQ(:AUTHORITY)%"
+                x-forwarded-port: "443"
+                x-forwarded-proto: "https"
+                {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
                 {{- end }}
 
@@ -238,9 +247,6 @@ spec:
             request:
               set:
                 X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
-                X-Forwarded-Host: "keycloak.{{ .Values.adminDomain | default (printf "admin.%s" .Values.domain) }}"
-                X-Forwarded-Proto: "https"
-                X-Forwarded-Port: "443"
               remove:
                 - Forwarded
                 - X-Forwarded-For
@@ -250,7 +256,12 @@ spec:
                 - X-Forwarded-Prefix
                 {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 - istio-mtls-client-certificate
+                {{- end }}
               add:
+                x-forwarded-host: "%REQ(:AUTHORITY)%"
+                x-forwarded-port: "443"
+                x-forwarded-proto: "https"
+                {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
                 {{- end }}
     # @lulaEnd 506992d2-64cf-4fb3-95de-40a8ad127626

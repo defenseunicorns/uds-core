@@ -894,6 +894,19 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
     " HTTP_CODE:%{http_code}",
     "https://keycloak-http.keycloak.svc.cluster.local:8080/realms/master/.well-known/openid-configuration",
   ];
+  const UNTRUSTED_BACKCHANNEL_CURL = [
+    "curl",
+    "-s",
+    "-m",
+    "3",
+    "-H",
+    "Host: sso.uds.dev",
+    "-H",
+    "X-Forwarded-Host: attacker.example",
+    "-w",
+    " HTTP_CODE:%{http_code}",
+    "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/.well-known/openid-configuration",
+  ];
 
   // Validate redirected request when hitting the external address
   const redirect_response = await execInPod("test-admin-app", testAdminApp, "curl", SSO_CURL);
@@ -909,4 +922,14 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
   );
   const keycloakDeniedDebug = `Keycloak internal denied response: stdout=${denied_keycloak_response.stdout}, stderr=${denied_keycloak_response.stderr}`;
   expect(isResponseError(denied_keycloak_response), keycloakDeniedDebug).toBe(true);
+
+  // Untrusted workloads must not bypass the gateway's forwarded-host sanitization.
+  const denied_backchannel_response = await execInPod(
+    "test-admin-app",
+    testAdminApp,
+    "curl",
+    UNTRUSTED_BACKCHANNEL_CURL,
+  );
+  const keycloakBackchannelDebug = `Untrusted Keycloak backchannel response: stdout=${denied_backchannel_response.stdout}, stderr=${denied_backchannel_response.stderr}`;
+  expect(isResponseError(denied_backchannel_response), keycloakBackchannelDebug).toBe(true);
 });
