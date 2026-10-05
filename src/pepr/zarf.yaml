@@ -124,7 +124,7 @@ components:
         before:
           - description: Migrate the legacy UDS Core Pepr Helm release
             cmd: |
-              set -euo pipefail
+              set -eu
 
               if ./zarf tools helm status module --namespace pepr-system >/dev/null 2>&1; then
                 LEGACY_MANIFEST="$(./zarf tools helm get manifest module --namespace pepr-system)"
