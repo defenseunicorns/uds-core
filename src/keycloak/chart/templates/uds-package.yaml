@@ -31,6 +31,15 @@ spec:
         remoteServiceAccount: kube-prometheus-stack-prometheus
         port: 15020
 
+      - description: "Keycloak metrics access for Blackbox Exporter"
+        direction: Ingress
+        selector:
+          app.kubernetes.io/name: keycloak
+        remoteNamespace: monitoring
+        remoteSelector:
+          app.kubernetes.io/name: prometheus-blackbox-exporter
+        port: 9000
+
       - description: "Keycloak backchannel access for Core services"
         direction: Ingress
         selector:
