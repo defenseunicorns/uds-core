@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import {
   SSA_CLEANUP_ANNOTATION,
   computeResourceChecksum,
-  configMapChecksumCache,
+  configMapReloadStateCache,
   discoverConfigMapConsumers,
   discoverSecretConsumers,
   handleConfigMapDelete,
@@ -67,13 +67,13 @@ vi.mock("./reload-utils", async () => {
 });
 
 // Import the caches directly
-import { secretChecksumCache } from "./pod-reload";
+import { secretReloadStateCache } from "./pod-reload";
 
 describe("pod-reload", () => {
   // Clear the caches before each test
   beforeEach(() => {
-    secretChecksumCache.clear();
-    configMapChecksumCache.clear();
+    secretReloadStateCache.clear();
+    configMapReloadStateCache.clear();
   });
 
   // Global mocks for K8s API
@@ -125,8 +125,8 @@ describe("pod-reload", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    secretChecksumCache.clear();
-    configMapChecksumCache.clear();
+    secretReloadStateCache.clear();
+    configMapReloadStateCache.clear();
 
     // Setup K8s mock with empty items array by default
     setupK8sMock({ items: [] });
@@ -280,7 +280,7 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
-    it("should return early when the selector format is invalid without rotating pods", async () => {
+    it("keeps an invalid selector pending without rotating pods", async () => {
       // First, create a secret with valid data to set the initial checksum
       const initialSecret = {
         metadata: {
@@ -315,10 +315,13 @@ describe("pod-reload", () => {
       };
 
       // Process the updated secret
-      await handleSecretUpdate(updatedSecret as kind.Secret);
+      await expect(handleSecretUpdate(updatedSecret as kind.Secret)).rejects.toThrow(
+        "Invalid selector format",
+      );
 
       // Verify that the function doesn't call reloadPods
       expect(utils.reloadPods).not.toHaveBeenCalled();
+      expect(secretReloadStateCache.get("default/test-secret")?.status).toBe("updating");
 
       // Verify error log for invalid selector format
       expect(mockError).toHaveBeenCalledWith(
@@ -1355,6 +1358,53 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).toHaveBeenCalledTimes(2);
     });
 
+    it("retries an old pod when its controller template was patched but eviction failed", async () => {
+      const affected = pod("affected", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      affected.metadata!.ownerReferences = [
+        {
+          apiVersion: "apps/v1",
+          kind: "StatefulSet",
+          name: "controller",
+          uid: "owner",
+          controller: true,
+        },
+      ];
+      const createdSecret = secret();
+      createdSecret.metadata!.annotations = { [SSA_CLEANUP_ANNOTATION]: "true" };
+      setupK8sMock({ items: [affected] });
+      vi.mocked(utils.resolveControllerKindAndName).mockResolvedValue({
+        kindClass: kind.StatefulSet,
+        name: "controller",
+      });
+      let templatePatched = false;
+      mockGet.mockImplementation((name?: string) =>
+        name
+          ? Promise.resolve({
+              spec: {
+                template: {
+                  metadata: {
+                    annotations: templatePatched
+                      ? { "uds.dev/restartedAt": "2026-09-30T10:06:00Z" }
+                      : {},
+                  },
+                },
+              },
+            })
+          : Promise.resolve({ items: [affected] }),
+      );
+      vi.mocked(utils.reloadPods).mockImplementationOnce(async () => {
+        templatePatched = true;
+        throw new Error("eviction failed");
+      });
+
+      await expect(handleSecretUpdate(createdSecret)).rejects.toThrow("eviction failed");
+      await handleSecretUpdate(createdSecret);
+
+      expect(utils.reloadPods).toHaveBeenCalledTimes(2);
+    });
+
     it("retries creation processing after pod discovery fails", async () => {
       const affected = pod("affected", [
         { name: "config", secret: { secretName: resourceName, optional: true } },
@@ -1365,7 +1415,7 @@ describe("pod-reload", () => {
       mockGet.mockRejectedValueOnce(new Error("pod list unavailable"));
 
       await expect(handleSecretUpdate(createdSecret)).rejects.toThrow("pod list unavailable");
-      expect(secretChecksumCache.has(`${namespace}/${resourceName}`)).toBe(false);
+      expect(secretReloadStateCache.get(`${namespace}/${resourceName}`)?.status).toBe("creating");
 
       await handleSecretUpdate(createdSecret);
       expect(utils.reloadPods).toHaveBeenCalledTimes(1);
@@ -1398,7 +1448,7 @@ describe("pod-reload", () => {
       );
 
       await expect(handleSecretUpdate(createdSecret)).rejects.toThrow("controller unavailable");
-      expect(secretChecksumCache.has(`${namespace}/${resourceName}`)).toBe(false);
+      expect(secretReloadStateCache.get(`${namespace}/${resourceName}`)?.status).toBe("creating");
 
       mockGet.mockImplementation((name?: string) =>
         name
@@ -1407,6 +1457,128 @@ describe("pod-reload", () => {
       );
       await handleSecretUpdate(createdSecret);
       expect(utils.reloadPods).toHaveBeenCalledTimes(1);
+    });
+
+    it("treats a new UID as creation even before the old deletion event arrives", async () => {
+      const affected = pod("affected", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      setupK8sMock({ items: [affected] });
+      const oldSecret = secret("2026-09-30T09:00:00Z");
+      oldSecret.metadata!.uid = "old-uid";
+      oldSecret.metadata!.annotations = { [SSA_CLEANUP_ANNOTATION]: "true" };
+      const newSecret = secret();
+      newSecret.metadata!.uid = "new-uid";
+      newSecret.metadata!.annotations = { [SSA_CLEANUP_ANNOTATION]: "true" };
+
+      await handleSecretUpdate(oldSecret);
+      expect(utils.reloadPods).not.toHaveBeenCalled();
+
+      await handleSecretUpdate(newSecret);
+      expect(utils.reloadPods).toHaveBeenCalledTimes(1);
+      expect(secretReloadStateCache.get(`${namespace}/${resourceName}/new-uid`)?.status).toBe(
+        "complete",
+      );
+
+      handleSecretDelete(oldSecret);
+      expect(secretReloadStateCache.has(`${namespace}/${resourceName}/new-uid`)).toBe(true);
+      await handleSecretUpdate(newSecret);
+      expect(utils.reloadPods).toHaveBeenCalledTimes(1);
+    });
+
+    it("retries a creation reload after losing the in-memory cache", async () => {
+      const affected = pod("affected", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      setupK8sMock({ items: [affected] });
+      const createdSecret = secret();
+      createdSecret.metadata!.uid = "secret-uid";
+      createdSecret.metadata!.annotations = { [SSA_CLEANUP_ANNOTATION]: "true" };
+      vi.mocked(utils.reloadPods).mockRejectedValueOnce(new Error("operator stopped"));
+
+      await expect(handleSecretUpdate(createdSecret)).rejects.toThrow("operator stopped");
+      secretReloadStateCache.clear();
+      await handleSecretUpdate(createdSecret);
+
+      expect(utils.reloadPods).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("failed data update retries", () => {
+    const cacheKey = "default/late-config";
+    const affected = {
+      metadata: { name: "affected", namespace: "default" },
+      status: { phase: "Running", startTime: "2026-09-30T10:10:00Z" },
+      spec: {
+        containers: [{ name: "app", image: "example:latest" }],
+        volumes: [{ name: "config", configMap: { name: "late-config", optional: true } }],
+      },
+    } as unknown as kind.Pod;
+    const original = {
+      metadata: {
+        name: "late-config",
+        namespace: "default",
+        creationTimestamp: "2026-09-30T10:05:00Z",
+        annotations: { [SSA_CLEANUP_ANNOTATION]: "true" },
+      },
+      data: { key: "A" },
+    } as unknown as kind.ConfigMap;
+    const updated = { ...original, data: { key: "B" } } as kind.ConfigMap;
+
+    beforeEach(async () => {
+      setupK8sMock({ items: [affected] });
+      await handleConfigMapUpdate(original);
+      expect(utils.reloadPods).not.toHaveBeenCalled();
+    });
+
+    it("retries an unchanged value after a partial reload failure", async () => {
+      vi.mocked(utils.reloadPods).mockRejectedValueOnce(new Error("one controller failed"));
+
+      await expect(handleConfigMapUpdate(updated)).rejects.toThrow("one controller failed");
+      expect(configMapReloadStateCache.get(cacheKey)?.checksum).toBe(
+        computeResourceChecksum(updated.data!),
+      );
+      expect(configMapReloadStateCache.get(cacheKey)?.status).toBe("updating");
+
+      await handleConfigMapUpdate(updated);
+      await handleConfigMapUpdate(updated);
+
+      expect(utils.reloadPods).toHaveBeenCalledTimes(2);
+      expect(configMapReloadStateCache.get(cacheKey)?.status).toBe("complete");
+    });
+
+    it("reloads again when data reverts after a partial reload failure", async () => {
+      vi.mocked(utils.reloadPods).mockRejectedValueOnce(new Error("one controller failed"));
+
+      await expect(handleConfigMapUpdate(updated)).rejects.toThrow("one controller failed");
+      await handleConfigMapUpdate(original);
+
+      expect(utils.reloadPods).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(utils.reloadPods).mock.calls[1]?.[1]).toEqual([affected]);
+      expect(configMapReloadStateCache.get(cacheKey)?.checksum).toBe(
+        computeResourceChecksum(original.data!),
+      );
+      expect(configMapReloadStateCache.get(cacheKey)?.status).toBe("complete");
+    });
+
+    it("clears a pending reload when the resource is deleted", async () => {
+      vi.mocked(utils.reloadPods).mockRejectedValueOnce(new Error("one controller failed"));
+
+      await expect(handleConfigMapUpdate(updated)).rejects.toThrow("one controller failed");
+      handleConfigMapDelete(updated);
+
+      expect(configMapReloadStateCache.has(cacheKey)).toBe(false);
+    });
+
+    it("records pending state before attempting a data reload", async () => {
+      vi.mocked(utils.reloadPods).mockImplementationOnce(async () => {
+        expect(configMapReloadStateCache.get(cacheKey)?.status).toBe("updating");
+      });
+
+      await handleConfigMapUpdate(updated);
+
+      expect(configMapReloadStateCache.get(cacheKey)?.status).toBe("complete");
+      expect(mockPatch).not.toHaveBeenCalled();
     });
   });
 });

@@ -14,10 +14,11 @@ import { createEvent, retryWithDelay } from "../utils";
  * Reload a list of pods using controller-based rolling restart when possible,
  * falling back to direct pod eviction when necessary.
  *
- * For Deployments, StatefulSets, DaemonSets, and ReplicaSets, it will trigger a
- * rolling restart by apply an update to the controller with a restartedAt annotation.
+ * Updates a controller's pod template with a restartedAt annotation.
  *
- * For standalone pods or unsupported controllers, it will use direct pod eviction.
+ * Controllers with OnDelete updates and orphaned ReplicaSets also need their
+ * existing pods evicted after their templates are changed. Pods without a
+ * supported controller use direct eviction.
  * Failed controller restarts and failed eviction/deletion attempts are reported
  * after all pods have been attempted.
  *
@@ -42,8 +43,8 @@ export async function reloadPods(
   log.info(`Processing ${pods.length} pods for restart/eviction in namespace ${namespace}`);
 
   // Track which controllers we've already handled to avoid duplicate restarts
-  const handledControllers: Record<string, boolean> = {};
-  const standalonePodsToEvict: kind.Pod[] = [];
+  const handledControllers: Record<string, "rolling" | "evict"> = {};
+  const podsToEvict: kind.Pod[] = [];
   const failures: Error[] = [];
 
   // First pass - identify controllers and standalone pods
@@ -65,14 +66,16 @@ export async function reloadPods(
 
     if (!controllerRef) {
       // No controller reference, handle as standalone pod
-      standalonePodsToEvict.push(pod);
+      podsToEvict.push(pod);
       continue;
     }
 
     // Build a unique key for this controller to avoid duplicate handling
     const controllerKey = `${controllerRef.kind}:${controllerRef.name}`;
     if (handledControllers[controllerKey]) {
-      // We've already processed this controller
+      if (handledControllers[controllerKey] === "evict") {
+        podsToEvict.push(pod);
+      }
       continue;
     }
 
@@ -80,14 +83,30 @@ export async function reloadPods(
       const resolved = await resolveControllerKindAndName(namespace, controllerRef, log);
       if (!resolved) {
         // Unhandled controller type, evict the pod directly
-        standalonePodsToEvict.push(pod);
+        podsToEvict.push(pod);
         continue;
       }
 
-      await restartController(namespace, resolved.kindClass, resolved.name, message, log, reason);
+      const controller = await restartController(
+        namespace,
+        resolved.kindClass,
+        resolved.name,
+        message,
+        log,
+        reason,
+      );
+      const updateStrategy = (controller as { spec?: { updateStrategy?: { type?: string } } }).spec
+        ?.updateStrategy?.type;
+      const needsEviction =
+        resolved.kindClass === kind.ReplicaSet ||
+        ((resolved.kindClass === kind.StatefulSet || resolved.kindClass === kind.DaemonSet) &&
+          updateStrategy === "OnDelete");
 
       // Mark this controller as handled
-      handledControllers[controllerKey] = true;
+      handledControllers[controllerKey] = needsEviction ? "evict" : "rolling";
+      if (needsEviction) {
+        podsToEvict.push(pod);
+      }
     } catch (error) {
       log.error(
         {
@@ -107,10 +126,10 @@ export async function reloadPods(
     }
   }
 
-  // Now handle any standalone pods with direct eviction
-  if (standalonePodsToEvict.length > 0) {
+  // Evict pods that need direct handling, including standalone pods.
+  if (podsToEvict.length > 0) {
     try {
-      await evictStandalonePods(namespace, standalonePodsToEvict, message, log);
+      await evictStandalonePods(namespace, podsToEvict, message, log);
     } catch (error) {
       failures.push(error instanceof Error ? error : new Error(String(error)));
     }
@@ -262,7 +281,7 @@ export async function restartController(
   message: string,
   log: Logger,
   reason: string,
-): Promise<void> {
+) {
   // Get the controller kind name for logging
   const controllerKindName = controllerKind?.name ?? String(controllerKind);
 
@@ -332,6 +351,7 @@ export async function restartController(
 
   // Log success if we got here (apply was successful)
   log.info(`Successfully restarted ${controllerKindName} ${namespace}/${name}: ${message}`);
+  return controller;
 }
 
 /**

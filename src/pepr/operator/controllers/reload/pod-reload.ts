@@ -18,10 +18,14 @@ const log = setupLogger(Component.OPERATOR_SECRETS);
 // Define resource types
 export type ResourceType = "Secret" | "ConfigMap";
 
-// Maps to store resource checksums for change detection
-// Exported for testing purposes
-export const secretChecksumCache = new Map<string, string>();
-export const configMapChecksumCache = new Map<string, string>();
+interface ReloadState {
+  checksum: string;
+  status: "creating" | "updating" | "complete";
+}
+
+// Keep failed attempts pending so unchanged data and reversions still retry.
+export const secretReloadStateCache = new Map<string, ReloadState>();
+export const configMapReloadStateCache = new Map<string, ReloadState>();
 
 // Annotation set on a Secret/ConfigMap after its backing controllers have been cleaned up.
 // Prevents re-running the cleanup on every controller restart.
@@ -50,8 +54,7 @@ export function computeResourceChecksum(data: Record<string, string>): string {
   return hash.digest("hex");
 }
 
-// Watch and list responses contain JSON timestamp strings, while the Kubernetes
-// client types describe these fields as Dates.
+// Kubernetes watch and list responses use timestamp strings despite Date types.
 function timestampMs(value: Date | string | undefined): number | undefined {
   const ms = value instanceof Date ? value.getTime() : Date.parse(value ?? "");
   return Number.isFinite(ms) ? ms : undefined;
@@ -168,13 +171,13 @@ export async function discoverConfigMapConsumers(namespace: string, configMapNam
  * Generic function to handle resource updates (Secret or ConfigMap)
  *
  * @param resource The Kubernetes resource that was updated
- * @param checksumCache The cache to use for this resource type
+ * @param stateCache The cache to use for this resource type
  * @param discoverResourceConsumers Function to discover pods using this resource
  * @param resourceType Type of resource ("Secret" or "ConfigMap")
  */
 export async function handleResourceUpdate(
   resource: kind.Secret | kind.ConfigMap,
-  checksumCache: Map<string, string>,
+  stateCache: Map<string, ReloadState>,
   discoverResourceConsumers: (namespace: string, name: string) => Promise<kind.Pod[]>,
   resourceType: ResourceType,
 ) {
@@ -183,7 +186,8 @@ export async function handleResourceUpdate(
   }
 
   const { name, namespace } = resource.metadata;
-  const cacheKey = `${namespace}/${name}`;
+  // Kubernetes UIDs distinguish a new resource from a late event for a deleted one.
+  const cacheKey = `${namespace}/${name}${resource.metadata.uid ? `/${resource.metadata.uid}` : ""}`;
 
   // Use an empty object if data is undefined or null
   const data = resource.data || {};
@@ -191,11 +195,16 @@ export async function handleResourceUpdate(
   // Compute checksum of the current resource data
   const currentChecksum = computeResourceChecksum(data);
 
-  // Check if we've seen this resource before
-  const previousChecksum = checksumCache.get(cacheKey);
+  const state = stateCache.get(cacheKey);
+  const isCreation = !state || (state.status === "creating" && state.checksum === currentChecksum);
 
-  // Record the current checksum so later data changes use the update path.
-  checksumCache.set(cacheKey, currentChecksum);
+  if (state?.checksum === currentChecksum && state.status === "complete") {
+    return;
+  }
+
+  function checkpoint(status: ReloadState["status"]) {
+    stateCache.set(cacheKey, { checksum: currentChecksum, status });
+  }
 
   try {
     // Determine which pods to reload based on the strategy
@@ -203,7 +212,7 @@ export async function handleResourceUpdate(
 
     // First time we've seen this resource — proactively clean up any over-claimed controller
     // fields so Helm upgrades don't conflict before the first reload fires.
-    if (previousChecksum === undefined) {
+    if (isCreation) {
       // Has not been cleaned up by a prior run.
       if (!resource.metadata?.annotations?.[SSA_CLEANUP_ANNOTATION]) {
         // Chain onto the queue so concurrent first-observation events on startup
@@ -245,6 +254,7 @@ export async function handleResourceUpdate(
 
       // evaluate if resource is new and pods should be reloaded
       await startupCleanupQueue;
+      checkpoint("creating");
       const resourceTimestamp = resource.metadata?.creationTimestamp;
       const resourceCreatedAt = timestampMs(resourceTimestamp);
       if (resourceTimestamp !== undefined && resourceCreatedAt === undefined) {
@@ -311,6 +321,7 @@ export async function handleResourceUpdate(
           controller?.spec?.template?.metadata?.annotations?.["uds.dev/restartedAt"];
 
         if (
+          state?.status !== "creating" &&
           resourceCreatedAt !== undefined &&
           restartedAt &&
           Date.parse(restartedAt) >= resourceCreatedAt
@@ -330,13 +341,11 @@ export async function handleResourceUpdate(
           `${resourceType}Changed`,
         );
       }
+      checkpoint("complete");
       return;
     }
 
-    // Data unchanged — nothing to do
-    if (previousChecksum === currentChecksum) {
-      return;
-    }
+    checkpoint("updating");
 
     log.info(
       { resource: name, namespace, type: resourceType },
@@ -354,7 +363,7 @@ export async function handleResourceUpdate(
           { resource: name, namespace, selector: selectorStr, type: resourceType },
           errorMsg,
         );
-        return;
+        throw new Error(errorMsg);
       }
 
       log.debug(
@@ -408,31 +417,21 @@ export async function handleResourceUpdate(
         { resource: name, namespace, type: resourceType },
         `No pods found to reload for ${resourceType.toLowerCase()} change`,
       );
-      return;
+    } else {
+      log.info(
+        { resource: name, namespace, podCount: podsToReload.length, type: resourceType },
+        `Reloading ${podsToReload.length} pods due to ${resourceType.toLowerCase()} change`,
+      );
+      await reloadPods(
+        namespace,
+        podsToReload,
+        `${resourceType} ${name} change`,
+        log,
+        `${resourceType}Changed`,
+      );
     }
-
-    // Reload the pods
-    log.info(
-      { resource: name, namespace, podCount: podsToReload.length, type: resourceType },
-      `Reloading ${podsToReload.length} pods due to ${resourceType.toLowerCase()} change`,
-    );
-
-    await reloadPods(
-      namespace,
-      podsToReload,
-      `${resourceType} ${name} change`,
-      log,
-      `${resourceType}Changed`,
-    );
+    checkpoint("complete");
   } catch (error) {
-    // A failed read or restart must not mark this observation as processed.
-    if (checksumCache.get(cacheKey) === currentChecksum) {
-      if (previousChecksum === undefined) {
-        checksumCache.delete(cacheKey);
-      } else {
-        checksumCache.set(cacheKey, previousChecksum);
-      }
-    }
     log.error(
       { resource: name, namespace, error, type: resourceType },
       `Failed to process ${resourceType.toLowerCase()} pod reload`,
@@ -445,21 +444,21 @@ export async function handleResourceUpdate(
  * Generic function to handle resource deletion (Secret or ConfigMap)
  *
  * @param resource The Kubernetes resource that was deleted
- * @param checksumCache The cache to use for this resource type
+ * @param stateCache The cache to use for this resource type
  */
 export function handleResourceDelete(
   resource: kind.Secret | kind.ConfigMap,
-  checksumCache: Map<string, string>,
+  stateCache: Map<string, ReloadState>,
 ) {
   if (!resource.metadata?.name || !resource.metadata?.namespace) {
     return;
   }
 
   const { name, namespace } = resource.metadata;
-  const cacheKey = `${namespace}/${name}`;
+  const cacheKey = `${namespace}/${name}${resource.metadata.uid ? `/${resource.metadata.uid}` : ""}`;
 
   // Clean up the cache entry
-  checksumCache.delete(cacheKey);
+  stateCache.delete(cacheKey);
 }
 
 /**
@@ -468,7 +467,7 @@ export function handleResourceDelete(
  * @param secret The Kubernetes secret that was updated
  */
 export async function handleSecretUpdate(secret: kind.Secret) {
-  await handleResourceUpdate(secret, secretChecksumCache, discoverSecretConsumers, "Secret");
+  await handleResourceUpdate(secret, secretReloadStateCache, discoverSecretConsumers, "Secret");
 }
 
 /**
@@ -477,7 +476,7 @@ export async function handleSecretUpdate(secret: kind.Secret) {
  * @param secret The Kubernetes secret that was deleted
  */
 export function handleSecretDelete(secret: kind.Secret) {
-  handleResourceDelete(secret, secretChecksumCache);
+  handleResourceDelete(secret, secretReloadStateCache);
 }
 
 /**
@@ -488,7 +487,7 @@ export function handleSecretDelete(secret: kind.Secret) {
 export async function handleConfigMapUpdate(configMap: kind.ConfigMap) {
   await handleResourceUpdate(
     configMap,
-    configMapChecksumCache,
+    configMapReloadStateCache,
     discoverConfigMapConsumers,
     "ConfigMap",
   );
@@ -500,5 +499,5 @@ export async function handleConfigMapUpdate(configMap: kind.ConfigMap) {
  * @param configMap The Kubernetes ConfigMap that was deleted
  */
 export function handleConfigMapDelete(configMap: kind.ConfigMap) {
-  handleResourceDelete(configMap, configMapChecksumCache);
+  handleResourceDelete(configMap, configMapReloadStateCache);
 }
