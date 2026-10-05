@@ -20,7 +20,7 @@ tasks:
     actions:
       - description: install pepr deps
         cmd: npm ci
-      - task: renovate
+      - task: remote:renovate
       - description: "Format check"
         cmd: npm run format:check
       - description: Build the Pepr module for values lint
@@ -37,11 +37,6 @@ tasks:
         task: license
       - description: Run helm unittest on all charts
         task: helm-unittest
-  - name: renovate
-    description: "Validate Renovate configuration"
-    actions:
-      - task: remote:renovate
-
   - name: values-lint
     description: "Lint each package that exposes Zarf values to catch mapping/schema regressions"
     inputs:

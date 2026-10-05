@@ -5,7 +5,7 @@ amends "package://github.com/jdx/hk/releases/download/v2.0.0/hk@2.0.0#/Config.pk
 
 steps {
     ["renovate-config"] {
-        check = "uds run -f tasks/lint.yaml renovate"
+        check = "uds run -f tasks/lint.yaml remote:renovate"
         glob = List("renovate.json")
     }
     ["yamllint"] {
