@@ -12,7 +12,7 @@ Prepare the following before starting:
 - Make port `127.0.0.1:6443` available. The task creates a container named `k0s-uds`; remove a previous test container before rerunning it.
 - Use an internet connection to download the pinned images and development stack.
 
-CI validates Linux amd64. The macOS procedure uses Docker's Linux VM; macOS runtime verification remains pending.
+CI validates Linux amd64. On macOS, the procedure uses Docker's Linux VM.
 
 ## Create the cluster
 
