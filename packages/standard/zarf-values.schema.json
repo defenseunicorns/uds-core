@@ -4197,6 +4197,12 @@
             "pathParameterProtection": {
               "type": "boolean"
             },
+            "pathParameterProtectionAdditionalHosts": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "persistence": {
               "properties": {
                 "accessMode": {

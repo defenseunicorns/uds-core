@@ -903,8 +903,10 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
     "Host: sso.uds.dev",
     "-H",
     "X-Forwarded-Host: attacker.example",
+    "-o",
+    "/dev/null",
     "-w",
-    " HTTP_CODE:%{http_code}",
+    "HTTP_CODE:%{http_code}",
     "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/.well-known/openid-configuration",
   ];
 
@@ -931,5 +933,6 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
     UNTRUSTED_BACKCHANNEL_CURL,
   );
   const keycloakBackchannelDebug = `Untrusted Keycloak backchannel response: stdout=${denied_backchannel_response.stdout}, stderr=${denied_backchannel_response.stderr}`;
-  expect(isResponseError(denied_backchannel_response), keycloakBackchannelDebug).toBe(true);
+  expect(denied_backchannel_response.exitCode, keycloakBackchannelDebug).toBe(0);
+  expect(denied_backchannel_response.stdout, keycloakBackchannelDebug).toBe("HTTP_CODE:403");
 });

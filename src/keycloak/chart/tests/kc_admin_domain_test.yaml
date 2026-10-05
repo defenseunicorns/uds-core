@@ -67,3 +67,19 @@ tests:
       - matchRegex:
           path: spec.configPatches[0].patch.value.typed_config.inlineCode
           pattern: 'keycloak\.admin\.custom\.example\.com'
+
+  - it: should protect Core's alternate SSO host and configured additional Keycloak hosts
+    set:
+      domain: "custom.example.com"
+      adminDomain: "mgmt.example.com"
+      pathParameterProtection: true
+      pathParameterProtectionAdditionalHosts:
+        - "login.partner.example"
+    template: path-parameter-envoyfilter.yaml
+    asserts:
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.inlineCode
+          pattern: 'sso-alt\.custom\.example\.com'
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.inlineCode
+          pattern: 'login\.partner\.example'

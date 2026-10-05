@@ -95,6 +95,19 @@ uds zarf package deploy zarf-package-core-amd64-x.x.x.tar.zst \
 
 The resulting domains are `example.com` and `admin.example.net`. If `ADMIN_DOMAIN` is also unset, the admin domain becomes `admin.example.com`.
 
+### Additional Keycloak hostnames
+
+Keycloak's path-parameter protection covers the primary SSO host, the admin host, and `sso-alt.<global.domain>`. If you expose Keycloak through another hostname, add its full hostname to `keycloak.keycloak.pathParameterProtectionAdditionalHosts`:
+
+```yaml title="values.yaml"
+keycloak:
+  keycloak:
+    pathParameterProtectionAdditionalHosts:
+      - login.example.net
+```
+
+This setting only extends path-parameter protection; it does not create a route or configure Keycloak discovery for that hostname.
+
 ## Values files and variables
 
 UDS Core uses two Zarf values-file phases. Use `###ZARF_VAR_<NAME>###` in ordinary `valuesFiles` when Zarf should substitute a package variable directly. Declare that variable in the package definition, then use `templatedValuesFiles` with `.Variables.<NAME>` when explicit package values must take precedence over the variable or need a computed fallback. Keep those phases separate because Zarf substitutes variable tokens before evaluating Go templates.

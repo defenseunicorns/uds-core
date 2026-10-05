@@ -110,6 +110,8 @@ tasks:
         default: "false"
     # Run each e2e test type from the e2e folder
     actions:
+      - description: Clean up an alternate Keycloak route left by an interrupted prior run
+        task: test-resources:remove-owned-alt-sso-route
       - description: "Setup the Doug User for testing"
         task: common-setup:keycloak-user
         with:
@@ -125,7 +127,7 @@ tasks:
         dir: test/playwright
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host --net=host -e FULL_CORE="true" -e FLAVOR="${FLAVOR}" -e VALIDATE_PASSTHROUGH="${{ .inputs.validate_passthrough }}" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.64.0-noble sh -c " \
+          docker run --rm --ipc=host --net=host -e FULL_CORE="true" -e FLAVOR="${FLAVOR}" -e VALIDATE_PASSTHROUGH="${{ .inputs.validate_passthrough }}" -e DOMAIN="${DOMAIN:-uds.dev}" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.64.0-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test \

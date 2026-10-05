@@ -42,7 +42,7 @@ spec:
       clientId: podinfo
       fullScopeAllowed: false
       redirectUris:
-        - https://podinfo.uds.dev/login
+        - https://podinfo.{{ .Values.domain }}/login
       enableAuthserviceSelector:
         app.kubernetes.io/name: podinfo
     - name: alternate issuer regression client
@@ -50,7 +50,7 @@ spec:
       secret: alt-issuer-regression-secret
       fullScopeAllowed: false
       redirectUris:
-        - https://alt-protected.uds.dev/callback
+        - https://alt-protected.{{ .Values.domain }}/callback
       protocolMappers:
         - name: alternate issuer audience
           protocol: openid-connect

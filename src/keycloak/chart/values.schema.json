@@ -148,6 +148,12 @@
     "pathParameterProtection": {
       "type": "boolean"
     },
+    "pathParameterProtectionAdditionalHosts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "additionalNetworkAllow": {
       "type": "array",
       "items": {

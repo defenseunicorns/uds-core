@@ -49,6 +49,11 @@ test("alternate-host OIDC authorization yields a token accepted by the protected
     expect(new URL(discovery.authorization_endpoint).hostname).toBe(alternateSsoHost);
     expect(new URL(discovery.token_endpoint).hostname).toBe(alternateSsoHost);
 
+    const pathParameterResponse = await context.request.get(
+      `https://${alternateSsoHost}/realms;unexpected/uds/`,
+    );
+    expect(pathParameterResponse.status()).toBe(400);
+
     const callbackUri = `${protectedAppUrl}/callback`;
     const authorizationUrl = new URL(discovery.authorization_endpoint);
     authorizationUrl.search = new URLSearchParams({
@@ -144,6 +149,9 @@ test("alternate-host OIDC authorization yields a token accepted by the protected
     expect(idClaims.aud).toContain(clientId);
     expect(accessClaims.iss).toBe(discovery.issuer);
     expect(accessClaims.aud).toContain(clientId);
+
+    const anonymousResponse = await context.request.get(protectedAppUrl);
+    expect(anonymousResponse.status()).toBe(403);
 
     // The app's callback is intercepted above, then this test supplies the bearer token directly.
     // This verifies the protected endpoint's JWT policy, not client-side callback/session handling.

@@ -7,6 +7,11 @@ metadata:
   description: "UDS Core Common test apps"
   url: https://github.com/defenseunicorns/uds-core
 
+variables:
+  - name: DOMAIN
+    description: Domain configured for the Core test cluster
+    default: uds.dev
+
 components:
   - name: vector-node-log-test-exemption
     required: true

@@ -24,6 +24,8 @@ tasks:
         default: "true"
 
     actions:
+      - description: Clean up an alternate Keycloak route left by an interrupted prior run
+        task: remove-owned-alt-sso-route
       - description: "Run Test Apps E2E tests"
         task: create-deploy
         with:
@@ -48,7 +50,7 @@ tasks:
       - description: "Run Ambient Playwright Test"
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.64.0-noble sh -c " \
+          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" -e DOMAIN="${DOMAIN:-uds.dev}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.64.0-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test ambient-waypoint.test.ts \
@@ -101,10 +103,10 @@ tasks:
           fi
 
           if [ -n "$COMPONENTS" ]; then
-            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components "$COMPONENTS"
+            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components "$COMPONENTS" --set-variables "DOMAIN=${DOMAIN:-uds.dev}"
           else
-            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm
-          fi
+            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --set-variables "DOMAIN=${DOMAIN:-uds.dev}"
+          fi (fix(keycloak): cover alternate hostname protections)
 
       - description: Verify the admin app is accessible
         wait:
@@ -190,7 +192,7 @@ tasks:
           uds zarf tools kubectl patch package keycloak -n keycloak --type=json --field-manager=zarf -p='[{"op":"add","path":"/spec/network/expose/-","value":{"service":"keycloak-http","selector":{"app.kubernetes.io/name":"keycloak"},"gateway":"tenant","host":"sso-alt","port":8080,"advancedHTTP":{"headers":{"request":{"remove":["x-forwarded-host","x-forwarded-port","x-forwarded-prefix","x-forwarded-proto"],"add":{"x-forwarded-host":"%REQ(:AUTHORITY)%","x-forwarded-port":"443","x-forwarded-proto":"https"}}}}}}]'
           fi
           attempt=1
-          until curl --fail --silent --show-error --insecure https://sso-alt.uds.dev/realms/uds/ -o /dev/null; do
+          until curl --fail --silent --show-error --insecure "https://sso-alt.${DOMAIN:-uds.dev}/realms/uds/" -o /dev/null; do
             if [ "$attempt" -ge 30 ]; then
               echo "sso-alt Keycloak route did not become ready after 60 seconds"
               exit 1
@@ -257,7 +259,12 @@ tasks:
             fi
           fi
       - description: Remove the temporary alternate Keycloak host
-        cmd: |
+        task: remove-owned-alt-sso-route
+
+  - name: remove-owned-alt-sso-route
+    description: Remove the test-owned alternate Keycloak route, if present
+    actions:
+      - cmd: |
           ALT_ROUTE_MARKER="test.uds.dev/created-sso-alt-route"
           PACKAGE_JSON="$(uds zarf tools kubectl get package keycloak -n keycloak -o json)"
           if [ "$(printf '%s' "$PACKAGE_JSON" | jq --arg marker "$ALT_ROUTE_MARKER" -r '.metadata.annotations[$marker] // ""')" = "true" ]; then

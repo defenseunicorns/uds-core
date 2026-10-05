@@ -52,11 +52,11 @@ spec:
     matchLabels:
       app.kubernetes.io/name: alt-protected-podinfo
   jwtRules:
-    - issuer: https://sso-alt.uds.dev/realms/uds
+    - issuer: https://sso-alt.{{ .Values.domain }}/realms/uds
       audiences:
         - alt-podinfo-oidc
       forwardOriginalToken: true
-      jwksUri: https://sso-alt.uds.dev/realms/uds/protocol/openid-connect/certs
+      jwksUri: https://sso-alt.{{ .Values.domain }}/realms/uds/protocol/openid-connect/certs
 ---
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
@@ -72,4 +72,20 @@ spec:
     - from:
         - source:
             requestPrincipals:
-              - https://sso-alt.uds.dev/realms/uds/*
+              - https://sso-alt.{{ .Values.domain }}/realms/uds/*
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: alt-protected-podinfo-require-jwt
+  namespace: podinfo
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alt-protected-podinfo
+  action: DENY
+  rules:
+    - from:
+        - source:
+            notRequestPrincipals:
+              - https://sso-alt.{{ .Values.domain }}/realms/uds/*
