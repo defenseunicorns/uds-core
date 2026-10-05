@@ -20,7 +20,7 @@ export type ResourceType = "Secret" | "ConfigMap";
 
 interface ReloadState {
   checksum: string;
-  status: "creating" | "updating" | "complete";
+  status: "creating" | "creationAndUpdatePending" | "updating" | "complete";
 }
 
 // Keep failed attempts pending so unchanged data and reversions still retry.
@@ -196,7 +196,11 @@ export async function handleResourceUpdate(
   const currentChecksum = computeResourceChecksum(data);
 
   const state = stateCache.get(cacheKey);
-  const isCreation = !state || (state.status === "creating" && state.checksum === currentChecksum);
+  const isCreation =
+    !state || state.status === "creating" || state.status === "creationAndUpdatePending";
+  const changedDuringCreation =
+    state?.status === "creationAndUpdatePending" ||
+    (state?.status === "creating" && state.checksum !== currentChecksum);
 
   if (state?.checksum === currentChecksum && state.status === "complete") {
     return;
@@ -208,7 +212,7 @@ export async function handleResourceUpdate(
 
   try {
     // Determine which pods to reload based on the strategy
-    let podsToReload: kind.Pod[] = [];
+    const podsToReload: kind.Pod[] = [];
 
     // First time we've seen this resource — proactively clean up any over-claimed controller
     // fields so Helm upgrades don't conflict before the first reload fires.
@@ -254,7 +258,7 @@ export async function handleResourceUpdate(
 
       // evaluate if resource is new and pods should be reloaded
       await startupCleanupQueue;
-      checkpoint("creating");
+      checkpoint(changedDuringCreation ? "creationAndUpdatePending" : "creating");
       const resourceTimestamp = resource.metadata?.creationTimestamp;
       const resourceCreatedAt = timestampMs(resourceTimestamp);
       if (resourceTimestamp !== undefined && resourceCreatedAt === undefined) {
@@ -332,20 +336,23 @@ export async function handleResourceUpdate(
         podsToReload.push(pod);
       }
 
-      if (podsToReload.length > 0) {
-        await reloadPods(
-          namespace,
-          podsToReload,
-          `${resourceType} ${name} change`,
-          log,
-          `${resourceType}Changed`,
-        );
+      if (!changedDuringCreation) {
+        if (podsToReload.length > 0) {
+          await reloadPods(
+            namespace,
+            podsToReload,
+            `${resourceType} ${name} change`,
+            log,
+            `${resourceType}Changed`,
+          );
+        }
+        checkpoint("complete");
+        return;
       }
-      checkpoint("complete");
-      return;
     }
 
-    checkpoint("updating");
+    // Keep creation pending until both the optional mounts and the data change are handled.
+    if (!changedDuringCreation) checkpoint("updating");
 
     log.info(
       { resource: name, namespace, type: resourceType },
@@ -355,6 +362,7 @@ export async function handleResourceUpdate(
     // Check if we have an explicit pod selector in annotations
     const selectorStr = resource.metadata?.annotations?.["uds.dev/pod-reload-selector"];
 
+    let updatePods: kind.Pod[];
     if (selectorStr) {
       const selector = parseSelectorString(selectorStr);
       if (!selector) {
@@ -377,37 +385,31 @@ export async function handleResourceUpdate(
         podQuery = podQuery.WithLabel(key, value);
       }
 
-      try {
-        async function getPodsWithSelector() {
-          return podQuery.Get();
-        }
-
-        const pods = await retryWithDelay(getPodsWithSelector, log);
-        podsToReload = pods.items;
-      } catch (error) {
-        log.error(
-          { resource: name, namespace, selector, error, type: resourceType },
-          `Failed to get pods using selector from ${resourceType.toLowerCase()} annotation`,
-        );
-        throw error;
+      async function getPodsWithSelector() {
+        return podQuery.Get();
       }
+      const pods = await retryWithDelay(getPodsWithSelector, log);
+      updatePods = pods.items;
     } else {
       // No explicit selector, use auto-discovery
       log.debug(
         { resource: name, namespace, type: resourceType },
         `Auto-discovering ${resourceType.toLowerCase()} consumers`,
       );
-      try {
-        async function getPodsUsingResource() {
-          return discoverResourceConsumers(namespace, name);
-        }
-        podsToReload = await retryWithDelay(getPodsUsingResource, log);
-      } catch (error) {
-        log.error(
-          { resource: name, namespace, error, type: resourceType },
-          `Failed to discover ${resourceType.toLowerCase()} consumers`,
-        );
-        throw error;
+      async function getPodsUsingResource() {
+        return discoverResourceConsumers(namespace, name);
+      }
+      updatePods = await retryWithDelay(getPodsUsingResource, log);
+    }
+
+    // A changed resource can have old optional-mount pods and newer update consumers.
+    // Restart each pod once, even when both selections contain it.
+    const podIds = new Set(podsToReload.map(pod => pod.metadata?.uid ?? pod.metadata?.name));
+    for (const pod of updatePods) {
+      const id = pod.metadata?.uid ?? pod.metadata?.name;
+      if (!podIds.has(id)) {
+        podsToReload.push(pod);
+        podIds.add(id);
       }
     }
 

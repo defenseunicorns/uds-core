@@ -1358,6 +1358,91 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).toHaveBeenCalledTimes(2);
     });
 
+    it("combines a pending creation retry with targets of a later data update", async () => {
+      const oldPod = pod("old-optional", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      const newerPod = pod(
+        "newer-selected",
+        [{ name: "config", secret: { secretName: resourceName } }],
+        afterResource,
+      );
+      setupK8sMock({ items: [oldPod, newerPod] });
+      mockGet
+        .mockResolvedValueOnce({ items: [oldPod, newerPod] })
+        .mockResolvedValueOnce({ items: [oldPod, newerPod] })
+        .mockResolvedValueOnce({ items: [newerPod] });
+      const createdSecret = secret();
+      createdSecret.metadata!.annotations = {
+        [SSA_CLEANUP_ANNOTATION]: "true",
+        "uds.dev/pod-reload-selector": "app=newer",
+      };
+      vi.mocked(utils.reloadPods).mockRejectedValueOnce(new Error("temporary failure"));
+
+      await expect(handleSecretUpdate(createdSecret)).rejects.toThrow("temporary failure");
+      const updatedSecret = { ...createdSecret, data: { key: "bmV3" } } as kind.Secret;
+      await handleSecretUpdate(updatedSecret);
+
+      expect(utils.reloadPods).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(utils.reloadPods).mock.calls[1]?.[1]).toEqual([oldPod, newerPod]);
+      expect(secretReloadStateCache.get(`${namespace}/${resourceName}`)).toEqual({
+        checksum: computeResourceChecksum(updatedSecret.data!),
+        status: "complete",
+      });
+    });
+
+    it("does not reload an overlapping pod twice when creation and update targets combine", async () => {
+      const affected = pod("affected", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      setupK8sMock({ items: [affected] });
+      const createdSecret = secret();
+      createdSecret.metadata!.annotations = {
+        [SSA_CLEANUP_ANNOTATION]: "true",
+        "uds.dev/pod-reload-selector": "app=affected",
+      };
+      vi.mocked(utils.reloadPods).mockRejectedValueOnce(new Error("temporary failure"));
+
+      await expect(handleSecretUpdate(createdSecret)).rejects.toThrow("temporary failure");
+      await handleSecretUpdate({ ...createdSecret, data: { key: "bmV3" } } as kind.Secret);
+
+      expect(vi.mocked(utils.reloadPods).mock.calls[1]?.[1]).toEqual([affected]);
+    });
+
+    it("keeps both target groups pending when a combined reload fails and data reverts", async () => {
+      const oldPod = pod("old-optional", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      const newerPod = pod("newer-selected", [], afterResource);
+      setupK8sMock({ items: [oldPod, newerPod] });
+      mockGet
+        .mockResolvedValueOnce({ items: [oldPod, newerPod] })
+        .mockResolvedValueOnce({ items: [oldPod, newerPod] })
+        .mockResolvedValueOnce({ items: [newerPod] })
+        .mockResolvedValueOnce({ items: [oldPod, newerPod] })
+        .mockResolvedValueOnce({ items: [newerPod] });
+      const createdSecret = secret();
+      createdSecret.metadata!.annotations = {
+        [SSA_CLEANUP_ANNOTATION]: "true",
+        "uds.dev/pod-reload-selector": "app=newer",
+      };
+      const updatedSecret = { ...createdSecret, data: { key: "bmV3" } } as kind.Secret;
+      vi.mocked(utils.reloadPods)
+        .mockRejectedValueOnce(new Error("creation failed"))
+        .mockRejectedValueOnce(new Error("combined reload failed"));
+
+      await expect(handleSecretUpdate(createdSecret)).rejects.toThrow("creation failed");
+      await expect(handleSecretUpdate(updatedSecret)).rejects.toThrow("combined reload failed");
+      expect(secretReloadStateCache.get(`${namespace}/${resourceName}`)?.status).toBe(
+        "creationAndUpdatePending",
+      );
+
+      await handleSecretUpdate(createdSecret);
+
+      expect(vi.mocked(utils.reloadPods).mock.calls[2]?.[1]).toEqual([oldPod, newerPod]);
+      expect(secretReloadStateCache.get(`${namespace}/${resourceName}`)?.status).toBe("complete");
+    });
+
     it("retries an old pod when its controller template was patched but eviction failed", async () => {
       const affected = pod("affected", [
         { name: "config", secret: { secretName: resourceName, optional: true } },

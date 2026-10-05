@@ -45,6 +45,7 @@ export async function reloadPods(
   // Track which controllers we've already handled to avoid duplicate restarts
   const handledControllers: Record<string, "rolling" | "evict"> = {};
   const podsToEvict: kind.Pod[] = [];
+  const managedPodsToEvict: kind.Pod[] = [];
   const failures: Error[] = [];
 
   // First pass - identify controllers and standalone pods
@@ -74,7 +75,7 @@ export async function reloadPods(
     const controllerKey = `${controllerRef.kind}:${controllerRef.name}`;
     if (handledControllers[controllerKey]) {
       if (handledControllers[controllerKey] === "evict") {
-        podsToEvict.push(pod);
+        managedPodsToEvict.push(pod);
       }
       continue;
     }
@@ -105,7 +106,7 @@ export async function reloadPods(
       // Mark this controller as handled
       handledControllers[controllerKey] = needsEviction ? "evict" : "rolling";
       if (needsEviction) {
-        podsToEvict.push(pod);
+        managedPodsToEvict.push(pod);
       }
     } catch (error) {
       log.error(
@@ -130,6 +131,13 @@ export async function reloadPods(
   if (podsToEvict.length > 0) {
     try {
       await evictStandalonePods(namespace, podsToEvict, message, log);
+    } catch (error) {
+      failures.push(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+  if (managedPodsToEvict.length > 0) {
+    try {
+      await evictStandalonePods(namespace, managedPodsToEvict, message, log, false);
     } catch (error) {
       failures.push(error instanceof Error ? error : new Error(String(error)));
     }
@@ -397,19 +405,20 @@ export async function cleanupOverClaimedControllerFields(
 }
 
 /**
- * Evict standalone pods directly using the Evict API with fallback to Delete
+ * Evict pods directly. Existing standalone callers fall back to Delete when eviction fails.
  */
 export async function evictStandalonePods(
   namespace: string,
   pods: kind.Pod[],
   reason: string,
   log: Logger,
+  fallbackToDelete = true,
 ) {
   if (pods.length === 0) return;
 
   const failures: Error[] = [];
 
-  log.info(`Directly evicting ${pods.length} standalone pods in namespace ${namespace}`);
+  log.info(`Directly evicting ${pods.length} pods in namespace ${namespace}`);
 
   // Group pods by owner UID for ordered eviction (handling StatefulSets differently)
   const groups: Record<string, kind.Pod[]> = {};
@@ -436,6 +445,12 @@ export async function evictStandalonePods(
         await retryWithDelay(evictPod, log);
         log.info(`Successfully evicted pod ${namespace}/${pod.metadata?.name}`);
       } catch (err) {
+        if (!fallbackToDelete) {
+          failures.push(
+            new Error(`Failed to evict pod ${namespace}/${pod.metadata?.name}`, { cause: err }),
+          );
+          continue;
+        }
         // Fall back to Delete with grace period if Evict fails
         log.warn(
           `Failed to evict pod ${namespace}/${pod.metadata?.name} using Evict API, falling back to Delete: ${err.message}`,
