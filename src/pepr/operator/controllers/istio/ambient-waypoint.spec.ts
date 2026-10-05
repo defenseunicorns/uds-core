@@ -509,25 +509,6 @@ describe("cleanupWaypointLabels", () => {
     );
   });
 
-  it("should surface errors when strict cleanup is requested", async () => {
-    const testError = new Error("Test error");
-    mockGet.mockRejectedValueOnce(testError);
-
-    await expect(
-      cleanupWaypointLabels(namespace, waypointName, { throwOnError: true }),
-    ).rejects.toThrow("Test error");
-  });
-
-  it("should surface patch errors when strict cleanup is requested", async () => {
-    const pod = createMockPod({ [ISTIO_WAYPOINT_LABEL]: waypointName });
-    mockGet.mockResolvedValueOnce({ items: [pod] });
-    mockPatch.mockRejectedValueOnce(new Error("Patch failed"));
-
-    await expect(
-      cleanupWaypointLabels(namespace, waypointName, { throwOnError: true }),
-    ).rejects.toThrow("Patch failed");
-  });
-
   it("should only remove matching waypoint labels", async () => {
     // Mock a pod with a different waypoint label
     const otherPod = createMockPod({

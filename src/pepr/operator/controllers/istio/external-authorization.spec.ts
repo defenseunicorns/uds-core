@@ -128,9 +128,7 @@ describe("externalAuthorization", () => {
     await expect(externalAuthorization(pkg)).resolves.toBe(1);
 
     expect(setupAmbientWaypoint).not.toHaveBeenCalled();
-    expect(cleanupWaypointLabels).toHaveBeenCalledWith("ollama", "ollama-waypoint", {
-      throwOnError: true,
-    });
+    expect(cleanupWaypointLabels).toHaveBeenCalledWith("ollama", "ollama-waypoint");
     expect(mockApply).toHaveBeenCalledOnce();
   });
 
@@ -141,9 +139,7 @@ describe("externalAuthorization", () => {
 
     await expect(externalAuthorization(pkg)).resolves.toBe(0);
 
-    expect(cleanupWaypointLabels).toHaveBeenCalledWith("ollama", "ollama-waypoint", {
-      throwOnError: true,
-    });
+    expect(cleanupWaypointLabels).toHaveBeenCalledWith("ollama", "ollama-waypoint");
     expect(mockApply).not.toHaveBeenCalled();
     expect(purgeOrphans).toHaveBeenCalledTimes(2);
   });
@@ -158,16 +154,6 @@ describe("externalAuthorization", () => {
     expect(mockApply).not.toHaveBeenCalled();
     expect(purgeOrphans).not.toHaveBeenCalled();
   });
-
-  it("stops reconciliation when strict waypoint cleanup fails", async () => {
-    const pkg = createPackage(Mode.Sidecar);
-    vi.mocked(cleanupWaypointLabels).mockRejectedValueOnce(new Error("Patch failed"));
-
-    await expect(externalAuthorization(pkg)).rejects.toThrow("Patch failed");
-
-    expect(mockApply).not.toHaveBeenCalled();
-    expect(purgeOrphans).not.toHaveBeenCalled();
-  });
 });
 
 describe("cleanupExternalAuthorization", () => {
@@ -175,11 +161,9 @@ describe("cleanupExternalAuthorization", () => {
     vi.clearAllMocks();
   });
 
-  it("uses strict cleanup so finalizer retries can observe failures", async () => {
+  it("cleans up waypoint labels during finalization", async () => {
     await cleanupExternalAuthorization(createPackage());
 
-    expect(cleanupWaypointLabels).toHaveBeenCalledWith("ollama", "ollama-waypoint", {
-      throwOnError: true,
-    });
+    expect(cleanupWaypointLabels).toHaveBeenCalledWith("ollama", "ollama-waypoint");
   });
 });

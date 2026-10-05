@@ -95,7 +95,7 @@ export async function externalAuthorization(pkg: UDSPackage): Promise<number> {
       true,
     );
   } else {
-    await cleanupWaypointLabels(namespace, waypointName, { throwOnError: true });
+    await cleanupWaypointLabels(namespace, waypointName);
   }
 
   if (config) {
@@ -122,5 +122,5 @@ export async function cleanupExternalAuthorization(pkg: UDSPackage): Promise<voi
   const { name: pkgName, namespace } = pkg.metadata ?? {};
   if (!pkgName || !namespace) return;
 
-  await cleanupWaypointLabels(namespace, getWaypointName(pkgName), { throwOnError: true });
+  await cleanupWaypointLabels(namespace, getWaypointName(pkgName));
 }

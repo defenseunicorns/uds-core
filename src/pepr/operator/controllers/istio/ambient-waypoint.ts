@@ -59,7 +59,7 @@ export async function setupAmbientWaypoint(
     await createWaypointGateway(pkg, waypointName, labels);
     await waitForWaypointPodHealthy(namespace, waypointName);
     if (replaceExistingLabels) {
-      await cleanupWaypointLabels(namespace, waypointName, { throwOnError: true });
+      await cleanupWaypointLabels(namespace, waypointName);
     }
     await reconcileExistingResources(pkg, target.selector, waypointName);
   } catch (error) {
@@ -320,16 +320,15 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
 export async function cleanupWaypointLabels(
   namespace: string,
   waypointName: string,
-  options: { throwOnError?: boolean } = {},
 ): Promise<void> {
   log.info(`Starting cleanup of waypoint labels: namespace=${namespace}, waypoint=${waypointName}`);
 
   try {
     // Clean up pods with the waypoint label
-    await cleanupPodsWithWaypointLabel(namespace, waypointName, options);
+    await cleanupPodsWithWaypointLabel(namespace, waypointName);
 
     // Clean up services with the waypoint label
-    await cleanupServicesWithWaypointLabel(namespace, waypointName, options);
+    await cleanupServicesWithWaypointLabel(namespace, waypointName);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     log.error(
@@ -340,9 +339,7 @@ export async function cleanupWaypointLabels(
       },
       "Failed to clean up waypoint labels",
     );
-    if (options.throwOnError) {
-      throw error;
-    }
+    // Don't throw here to allow other cleanup to continue
   }
 }
 
@@ -352,7 +349,6 @@ export async function cleanupWaypointLabels(
 async function cleanupPodsWithWaypointLabel(
   namespace: string,
   waypointName: string,
-  options: { throwOnError?: boolean } = {},
 ): Promise<void> {
   const pods = await K8s(a.Pod)
     .InNamespace(namespace)
@@ -391,9 +387,6 @@ async function cleanupPodsWithWaypointLabel(
           },
           "Failed to remove waypoint label from pod",
         );
-        if (options.throwOnError) {
-          throw error;
-        }
       }
     }),
   );
@@ -405,7 +398,6 @@ async function cleanupPodsWithWaypointLabel(
 async function cleanupServicesWithWaypointLabel(
   namespace: string,
   waypointName: string,
-  options: { throwOnError?: boolean } = {},
 ): Promise<void> {
   const services = await K8s(a.Service)
     .InNamespace(namespace)
@@ -448,9 +440,6 @@ async function cleanupServicesWithWaypointLabel(
           },
           "Failed to remove waypoint labels from service",
         );
-        if (options.throwOnError) {
-          throw error;
-        }
       }
     }),
   );
