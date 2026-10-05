@@ -896,7 +896,7 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
   ];
   const UNTRUSTED_BACKCHANNEL_CURL = [
     "curl",
-    "-s",
+    "-sS",
     "-m",
     "3",
     "-H",
@@ -933,6 +933,10 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
     UNTRUSTED_BACKCHANNEL_CURL,
   );
   const keycloakBackchannelDebug = `Untrusted Keycloak backchannel response: stdout=${denied_backchannel_response.stdout}, stderr=${denied_backchannel_response.stderr}`;
-  expect(denied_backchannel_response.exitCode, keycloakBackchannelDebug).toBe(0);
-  expect(denied_backchannel_response.stdout, keycloakBackchannelDebug).toBe("HTTP_CODE:403");
+  // Ambient network policy rejects this direct service connection with a TCP reset.
+  expect(denied_backchannel_response.exitCode, keycloakBackchannelDebug).toBe(56);
+  expect(denied_backchannel_response.stdout, keycloakBackchannelDebug).toBe("HTTP_CODE:000");
+  expect(denied_backchannel_response.stderr, keycloakBackchannelDebug).toContain(
+    "Recv failure: Connection reset by peer",
+  );
 });
