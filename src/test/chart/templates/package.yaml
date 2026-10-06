@@ -8,6 +8,32 @@ metadata:
   namespace: podinfo
 spec:
   network:
+    allow:
+      # OAuth2 Proxy must reach Keycloak's public issuer endpoints for discovery and code exchange.
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: alt-protected-oauth2-proxy
+        remoteNamespace: istio-tenant-gateway
+        remoteSelector:
+          app: tenant-ingressgateway
+        port: 443
+        description: "Alternate-host OIDC provider"
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: alt-protected-oauth2-proxy
+        remoteNamespace: podinfo
+        remoteSelector:
+          app.kubernetes.io/component: alt-protected-upstream
+        port: 9898
+        description: "Protected test app upstream"
+      - direction: Ingress
+        selector:
+          app.kubernetes.io/component: alt-protected-upstream
+        remoteNamespace: podinfo
+        remoteSelector:
+          app.kubernetes.io/name: alt-protected-oauth2-proxy
+        port: 9898
+        description: "Protected test app upstream ingress"
     # Relying on default mesh mode
     # serviceMesh:
     #   mode: ambient
@@ -18,12 +44,12 @@ spec:
         gateway: tenant
         host: podinfo
         port: 9898
-      - service: alt-protected-podinfo
+      - service: alt-protected-oauth2-proxy
         selector:
-          app.kubernetes.io/name: alt-protected-podinfo
+          app.kubernetes.io/name: alt-protected-oauth2-proxy
         gateway: tenant
         host: alt-protected
-        port: 9898
+        port: 4180
   monitor:
     - selector:
         app.kubernetes.io/name: podinfo
@@ -50,7 +76,7 @@ spec:
       secret: alt-issuer-regression-secret
       fullScopeAllowed: false
       redirectUris:
-        - https://alt-protected.{{ .Values.domain }}/callback
+        - https://alt-protected.{{ .Values.domain }}/oauth2/callback
       protocolMappers:
         - name: alternate issuer audience
           protocol: openid-connect
