@@ -92,7 +92,6 @@ export async function externalAuthorization(pkg: UDSPackage): Promise<number> {
         type: "external-authorization",
       },
       EXTERNAL_AUTHORIZATION_LABELS,
-      true,
     );
   } else {
     await cleanupWaypointLabels(namespace, waypointName);

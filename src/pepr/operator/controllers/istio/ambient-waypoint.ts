@@ -4,6 +4,7 @@
  */
 
 import { a, K8s, kind } from "pepr";
+import type { Operation } from "kubernetes-fluent-client";
 import { K8sGateway, K8sGatewayFromType, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "../packages/package-store";
@@ -41,7 +42,6 @@ export async function setupAmbientWaypoint(
   pkg: UDSPackage,
   target: WaypointTarget,
   labels: Record<string, string> = {},
-  replaceExistingLabels = false,
 ): Promise<void> {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) {
@@ -58,9 +58,6 @@ export async function setupAmbientWaypoint(
   try {
     await createWaypointGateway(pkg, waypointName, labels);
     await waitForWaypointPodHealthy(namespace, waypointName);
-    if (replaceExistingLabels) {
-      await cleanupWaypointLabels(namespace, waypointName);
-    }
     await reconcileExistingResources(pkg, target.selector, waypointName);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -464,22 +461,18 @@ export async function reconcileExistingResources(
       K8s(kind.Pod).InNamespace(namespace).Get(),
     ]);
 
-    const matchingServices = services.items.filter(svc => serviceMatchesSelector(svc, selector));
-
-    const matchingPods = pods.items.filter(pod => {
-      const matches = matchesLabels(pod.metadata?.labels || {}, selector);
-      return matches;
-    });
-
     log.debug(`Found resource to update with waypoint labels in ${namespace}`);
 
-    // Process matching services
-    for (const svc of matchingServices) {
-      try {
-        await K8s(kind.Service, {
-          name: svc.metadata!.name!,
-          namespace: namespace,
-        }).Patch([
+    // Reconcile services that match the selector or still reference this waypoint.
+    for (const svc of services.items) {
+      const labels = svc.metadata?.labels ?? {};
+      const matchesSelector = serviceMatchesSelector(svc, selector);
+      const referencesWaypoint = labels[ISTIO_WAYPOINT_LABEL] === waypointName;
+      if ((!matchesSelector && !referencesWaypoint) || svc.metadata?.deletionTimestamp) continue;
+
+      const patches: Operation[] = [];
+      if (matchesSelector) {
+        patches.push(
           {
             op: "add",
             path: "/metadata/labels/istio.io~1ingress-use-waypoint",
@@ -490,26 +483,57 @@ export async function reconcileExistingResources(
             path: `/metadata/labels/${ISTIO_WAYPOINT_LABEL.replace(/\//g, "~1")}`,
             value: waypointName,
           },
-        ]);
+        );
+      } else {
+        if (labels["istio.io/ingress-use-waypoint"] !== undefined) {
+          patches.push({
+            op: "remove",
+            path: "/metadata/labels/istio.io~1ingress-use-waypoint",
+          });
+        }
+        patches.push({
+          op: "remove",
+          path: `/metadata/labels/${ISTIO_WAYPOINT_LABEL.replace(/\//g, "~1")}`,
+        });
+      }
+
+      try {
+        await K8s(kind.Service, {
+          name: svc.metadata!.name!,
+          namespace: namespace,
+        }).Patch(patches);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         log.error({ errorMessage }, `Service reconciliation failed for ${namespace}`);
       }
     }
 
-    // Process matching pods
-    for (const pod of matchingPods) {
+    // Reconcile pods that match the selector or still reference this waypoint.
+    for (const pod of pods.items) {
+      const labels = pod.metadata?.labels ?? {};
+      const matchesSelector = matchesLabels(labels, selector);
+      const referencesWaypoint = labels[ISTIO_WAYPOINT_LABEL] === waypointName;
+      if ((!matchesSelector && !referencesWaypoint) || pod.metadata?.deletionTimestamp) continue;
+
+      const patches: Operation[] = [];
+      if (matchesSelector) {
+        patches.push({
+          op: "add",
+          path: `/metadata/labels/${ISTIO_WAYPOINT_LABEL.replace(/\//g, "~1")}`,
+          value: waypointName,
+        });
+      } else {
+        patches.push({
+          op: "remove",
+          path: `/metadata/labels/${ISTIO_WAYPOINT_LABEL.replace(/\//g, "~1")}`,
+        });
+      }
+
       try {
         await K8s(kind.Pod, {
           name: pod.metadata!.name!,
           namespace: namespace,
-        }).Patch([
-          {
-            op: "add",
-            path: `/metadata/labels/${ISTIO_WAYPOINT_LABEL.replace(/\//g, "~1")}`,
-            value: waypointName,
-          },
-        ]);
+        }).Patch(patches);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         log.info({ errorMessage }, `Pod reconciliation failed for ${namespace}`);

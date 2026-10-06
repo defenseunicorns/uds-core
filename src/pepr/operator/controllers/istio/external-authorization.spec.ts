@@ -116,7 +116,6 @@ describe("externalAuthorization", () => {
         type: "external-authorization",
       },
       { "uds/for": "external-authorization" },
-      true,
     );
     expect(mockApply).toHaveBeenCalledOnce();
     expect(purgeOrphans).toHaveBeenCalledTimes(2);

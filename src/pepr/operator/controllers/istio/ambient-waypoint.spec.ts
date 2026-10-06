@@ -738,6 +738,57 @@ describe("reconcileExistingResources", () => {
     );
   });
 
+  it("should remove labels from services and pods that no longer match the selector", async () => {
+    const pkg = createMockPackage("test-pkg", selector);
+    const staleService = createMockService(
+      { "app.kubernetes.io/name": "old-app" },
+      {
+        ["istio.io/use-waypoint"]: waypointName,
+        ["istio.io/ingress-use-waypoint"]: "true",
+      },
+    );
+    const stalePod = createMockPod({
+      "app.kubernetes.io/name": "old-app",
+      ["istio.io/use-waypoint"]: waypointName,
+    });
+    mockGet
+      .mockResolvedValueOnce({ items: [staleService] })
+      .mockResolvedValueOnce({ items: [stalePod] });
+    mockPatch.mockResolvedValue(undefined);
+
+    await reconcileExistingResources(pkg, selector, waypointName);
+
+    expect(mockPatch).toHaveBeenCalledWith([
+      {
+        op: "remove",
+        path: "/metadata/labels/istio.io~1ingress-use-waypoint",
+      },
+      {
+        op: "remove",
+        path: "/metadata/labels/istio.io~1use-waypoint",
+      },
+    ]);
+    expect(mockPatch).toHaveBeenCalledWith([
+      {
+        op: "remove",
+        path: "/metadata/labels/istio.io~1use-waypoint",
+      },
+    ]);
+  });
+
+  it("should leave unrelated services and pods unchanged", async () => {
+    const pkg = createMockPackage("test-pkg", selector);
+    const unrelatedService = createMockService({ "app.kubernetes.io/name": "other-app" });
+    const unrelatedPod = createMockPod({ "app.kubernetes.io/name": "other-app" });
+    mockGet
+      .mockResolvedValueOnce({ items: [unrelatedService] })
+      .mockResolvedValueOnce({ items: [unrelatedPod] });
+
+    await reconcileExistingResources(pkg, selector, waypointName);
+
+    expect(mockPatch).not.toHaveBeenCalled();
+  });
+
   it("should log error if service patch fails", async () => {
     const pkg = createMockPackage("test-pkg", selector);
     const mockService = createMockService(selector);
