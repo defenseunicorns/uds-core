@@ -281,7 +281,7 @@ export async function handleResourceUpdate(
           usesOptionalMount &&
           startedAt !== undefined &&
           resourceCreatedAt !== undefined &&
-          startedAt < resourceCreatedAt &&
+          startedAt <= resourceCreatedAt &&
           !pod.metadata?.deletionTimestamp &&
           pod.status?.phase !== "Succeeded" &&
           pod.status?.phase !== "Failed"

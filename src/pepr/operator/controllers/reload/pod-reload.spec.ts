@@ -1274,6 +1274,19 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
+    it("reloads an optional mount when pod start and Secret creation share a timestamp", async () => {
+      const affected = pod(
+        "same-second-pod",
+        [{ name: "config", secret: { secretName: resourceName, optional: true } }],
+        resourceCreated,
+      );
+      setupK8sMock({ items: [affected] });
+
+      await handleSecretUpdate(secret());
+
+      expect(vi.mocked(utils.reloadPods).mock.calls[0]?.[1]).toEqual([affected]);
+    });
+
     it("does not confuse the cleanup annotation with a completed creation reload", async () => {
       const affected = pod("affected", [
         { name: "config", secret: { secretName: resourceName, optional: true } },
