@@ -894,20 +894,16 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
     " HTTP_CODE:%{http_code}",
     "https://keycloak-http.keycloak.svc.cluster.local:8080/realms/master/.well-known/openid-configuration",
   ];
-  const UNTRUSTED_BACKCHANNEL_CURL = [
+  const FORGED_FORWARDING_HEADER_CURL = [
     "curl",
-    "-sS",
+    "-s",
     "-m",
     "3",
     "-H",
-    "Host: sso.uds.dev",
-    "-H",
     "X-Forwarded-Host: attacker.example",
-    "-o",
-    "/dev/null",
     "-w",
-    "HTTP_CODE:%{http_code}",
-    "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/.well-known/openid-configuration",
+    " HTTP_CODE:%{http_code}",
+    "https://sso-alt.uds.dev/realms/uds/.well-known/openid-configuration",
   ];
 
   // Validate redirected request when hitting the external address
@@ -925,18 +921,18 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
   const keycloakDeniedDebug = `Keycloak internal denied response: stdout=${denied_keycloak_response.stdout}, stderr=${denied_keycloak_response.stderr}`;
   expect(isResponseError(denied_keycloak_response), keycloakDeniedDebug).toBe(true);
 
-  // Untrusted workloads must not bypass the gateway's forwarded-host sanitization.
-  const denied_backchannel_response = await execInPod(
+  // The tenant gateway must discard caller-supplied forwarding hosts before proxying to Keycloak.
+  const alternate_host_discovery = await execInPod(
     "test-admin-app",
     testAdminApp,
     "curl",
-    UNTRUSTED_BACKCHANNEL_CURL,
+    FORGED_FORWARDING_HEADER_CURL,
   );
-  const keycloakBackchannelDebug = `Untrusted Keycloak backchannel response: stdout=${denied_backchannel_response.stdout}, stderr=${denied_backchannel_response.stderr}`;
-  // Ambient network policy rejects this direct service connection with a TCP reset.
-  expect(denied_backchannel_response.exitCode, keycloakBackchannelDebug).toBe(56);
-  expect(denied_backchannel_response.stdout, keycloakBackchannelDebug).toBe("HTTP_CODE:000");
-  expect(denied_backchannel_response.stderr, keycloakBackchannelDebug).toContain(
-    "Recv failure: Connection reset by peer",
+  const discoveryDebug = `Alternate-host discovery with forged X-Forwarded-Host: exitCode=${alternate_host_discovery.exitCode}, stdout=${alternate_host_discovery.stdout}, stderr=${alternate_host_discovery.stderr}`;
+  expect(alternate_host_discovery.exitCode, discoveryDebug).toBe(0);
+  const [discoveryBody, responseCode] = alternate_host_discovery.stdout.split(" HTTP_CODE:");
+  expect(responseCode, discoveryDebug).toBe("200");
+  expect(JSON.parse(discoveryBody).issuer, discoveryDebug).toBe(
+    "https://sso-alt.uds.dev/realms/uds",
   );
 });
