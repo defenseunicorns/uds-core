@@ -196,6 +196,10 @@ packages:
               description: "Custom terms and conditions for the Keycloak login page"
               path: "themeCustomizations.termsAndConditions.text.inline"
               default: ""
+            - name: KEYCLOAK_PATH_PARAMETER_PROTECTION_ADDITIONAL_HOSTS
+              description: "Additional Keycloak hostnames protected from path-parameter bypasses"
+              path: pathParameterProtectionAdditionalHosts
+              default: []
           values:
             - path: detailedObservability.alerts.enabled
               value: true

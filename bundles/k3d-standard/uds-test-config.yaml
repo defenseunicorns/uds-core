@@ -3,6 +3,8 @@
 
 variables:
   core:
+    KEYCLOAK_PATH_PARAMETER_PROTECTION_ADDITIONAL_HOSTS:
+      - "sso-alt.uds.dev"
     # Classification banner E2E test matrix
     CLASSIFICATION_BANNERS:
       - text: "SAMPLE BANNER"

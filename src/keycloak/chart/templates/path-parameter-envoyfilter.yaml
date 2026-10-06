@@ -32,11 +32,9 @@ spec:
                 {{- $domain := .Values.domain }}
                 {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
 
-                -- Include Core's primary hosts and the alternate-host regression fixture.
-                -- Operators can list any additional Keycloak hostnames in chart values.
+                -- Include Core's primary hosts. Operators can list additional Keycloak hostnames in chart values.
                 local keycloak_hosts = {
                   "sso.{{ $domain }}",
-                  "sso-alt.{{ $domain }}",
                   "keycloak.{{ $adminDomain }}",
                   {{- range .Values.pathParameterProtectionAdditionalHosts }}
                   {{ . | quote }},

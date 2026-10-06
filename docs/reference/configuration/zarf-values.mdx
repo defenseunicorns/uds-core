@@ -97,7 +97,7 @@ The resulting domains are `example.com` and `admin.example.net`. If `ADMIN_DOMAI
 
 ### Additional Keycloak hostnames
 
-Keycloak's path-parameter protection covers the primary SSO host, the admin host, and `sso-alt.<global.domain>`. If you expose Keycloak through another hostname, add its full hostname to `keycloak.keycloak.pathParameterProtectionAdditionalHosts`:
+Keycloak's path-parameter protection covers the primary SSO host and the admin host. If you expose Keycloak through another hostname, add its full hostname to `keycloak.keycloak.pathParameterProtectionAdditionalHosts`:
 
 ```yaml title="values.yaml"
 keycloak:
@@ -107,6 +107,25 @@ keycloak:
 ```
 
 This setting only extends path-parameter protection; it does not create a route or configure Keycloak discovery for that hostname.
+
+Custom `Package` routes do not inherit the forwarded-header sanitization on Core's built-in Keycloak routes. Remove caller-supplied forwarded headers and set trusted values on every custom Keycloak route. This prevents callers from changing the issuer, redirect, and action-link hostnames Keycloak generates.
+
+Add the following request-header settings under the custom route's `advancedHTTP` configuration:
+
+```yaml title="Keycloak Package route"
+advancedHTTP:
+  headers:
+    request:
+      remove:
+        - x-forwarded-host
+        - x-forwarded-port
+        - x-forwarded-prefix
+        - x-forwarded-proto
+      add:
+        x-forwarded-host: "%REQ(:AUTHORITY)%"
+        x-forwarded-port: "443"
+        x-forwarded-proto: "https"
+```
 
 ## Values files and variables
 

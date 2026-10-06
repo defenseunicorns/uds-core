@@ -885,14 +885,18 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
     "https://sso.uds.dev/realms/master/.well-known/openid-configuration",
   ];
 
-  const KEYCLOAK_CURL = [
+  const UNTRUSTED_BACKCHANNEL_CURL = [
     "curl",
-    "-s",
+    "-sS",
     "-m",
     "3",
+    "-H",
+    "Host: sso.uds.dev",
+    "-H",
+    "X-Forwarded-Host: attacker.example",
     "-w",
     " HTTP_CODE:%{http_code}",
-    "https://keycloak-http.keycloak.svc.cluster.local:8080/realms/master/.well-known/openid-configuration",
+    "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/.well-known/openid-configuration",
   ];
   const FORGED_FORWARDING_HEADER_CURL = [
     "curl",
@@ -911,15 +915,19 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
   const keycloakRedirectDebug = `Keycloak SSO redirect response: stdout=${redirect_response.stdout}, stderr=${redirect_response.stderr}`;
   expect(redirect_response.stdout, keycloakRedirectDebug).toContain("HTTP_CODE:301");
 
-  // Validate denied request when hitting the internal address
-  const denied_keycloak_response = await execInPod(
+  // Direct HTTP access to Keycloak must be reset even when a caller supplies a valid SSO host.
+  const denied_backchannel_response = await execInPod(
     "test-admin-app",
     testAdminApp,
     "curl",
-    KEYCLOAK_CURL,
+    UNTRUSTED_BACKCHANNEL_CURL,
   );
-  const keycloakDeniedDebug = `Keycloak internal denied response: stdout=${denied_keycloak_response.stdout}, stderr=${denied_keycloak_response.stderr}`;
-  expect(isResponseError(denied_keycloak_response), keycloakDeniedDebug).toBe(true);
+  const backchannelDeniedDebug = `Keycloak direct HTTP response: exitCode=${denied_backchannel_response.exitCode}, stdout=${denied_backchannel_response.stdout}, stderr=${denied_backchannel_response.stderr}`;
+  expect(denied_backchannel_response.exitCode, backchannelDeniedDebug).toBe(56);
+  expect(denied_backchannel_response.stdout, backchannelDeniedDebug).toContain("HTTP_CODE:000");
+  expect(denied_backchannel_response.stderr, backchannelDeniedDebug).toContain(
+    "Connection reset by peer",
+  );
 
   // The tenant gateway must discard caller-supplied forwarding hosts before proxying to Keycloak.
   const alternate_host_discovery = await execInPod(
