@@ -195,9 +195,11 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     policies.push(keycloakGeneratedPolicy);
   }
 
-  // Add the provider-independent network policies required by ambient waypoints.
-  if (istioMode === Mode.Ambient) {
-    for (const target of getWaypointTargets(pkg)) {
+  // Add the provider-independent network policies required by ambient
+  // waypoints.
+  const waypointTargets = getWaypointTargets(pkg);
+  if (istioMode === Mode.Ambient && waypointTargets.length > 0) {
+    for (const target of waypointTargets) {
       const waypointName = getWaypointName(target.id);
       const waypointSelector = { "istio.io/gateway-name": waypointName };
 
