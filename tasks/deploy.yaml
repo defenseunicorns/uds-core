@@ -17,7 +17,8 @@ tasks:
   - name: k3d-standard-bundle
     inputs:
       K3D_EXTRA_ARGS:
-        default: ""
+        # Remove this override after uds-k3d includes https://github.com/defenseunicorns/uds-k3d/pull/400.
+        default: "--k3s-arg --disable=gateway-api-crd@server:*"
         description: "Extra args for k3d"
     actions:
       - description: "Deploy the UDS Core Standard Bundle with UDS CLI Legacy"
@@ -62,7 +63,7 @@ tasks:
   - name: k3d-standard-bundle-ha
     actions:
       - description: "Deploy the UDS Core Standard Bundle"
-        cmd: ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+        cmd: ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set K3D_EXTRA_ARGS="--k3s-arg --disable=gateway-api-crd@server:*" --confirm --no-progress
         env:
           - UDS_CONFIG=bundles/k3d-standard/uds-ha-config.yaml
 
@@ -86,7 +87,7 @@ tasks:
   - name: k3d-standard-bundle-private-pki
     actions:
       - description: "Deploy k3d cluster and init packages"
-        cmd: ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages uds-k3d-dev,init --confirm --no-progress
+        cmd: ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages uds-k3d-dev,init --set K3D_EXTRA_ARGS="--k3s-arg --disable=gateway-api-crd@server:*" --confirm --no-progress
 
       - description: "Deploy UDS Core with Private PKI configuration"
         cmd: ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress
@@ -106,7 +107,7 @@ tasks:
   - name: k3d-slim-dev-bundle
     actions:
       - description: "Deploy the UDS Core Slim Dev Only Bundle"
-        cmd: ./uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+        cmd: ./uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --set K3D_EXTRA_ARGS="--k3s-arg --disable=gateway-api-crd@server:*" --confirm --no-progress
 
   - name: k3d-slim-dev-bundle-next
     actions:
@@ -116,7 +117,7 @@ tasks:
   - name: k3d-slim-dev-bundle-ha
     actions:
       - description: "Deploy the UDS Core Slim Dev Bundle with HA configuration"
-        cmd: ./uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+        cmd: ./uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --set K3D_EXTRA_ARGS="--k3s-arg --disable=gateway-api-crd@server:*" --confirm --no-progress
         env:
           - UDS_CONFIG=bundles/k3d-slim-dev/uds-ha-config.yaml
 

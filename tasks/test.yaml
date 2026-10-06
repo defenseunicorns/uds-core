@@ -176,7 +176,8 @@ tasks:
     description: "Build and test UDS Core with UDS CLI Legacy bundle workflow"
     inputs:
       K3D_EXTRA_ARGS:
-        default: ""
+        # Remove this override after uds-k3d includes https://github.com/defenseunicorns/uds-k3d/pull/400.
+        default: "--k3s-arg --disable=gateway-api-crd@server:*"
         description: "Extra args for k3d"
     actions:
       - task: create:standard-package
@@ -198,7 +199,7 @@ tasks:
     description: "Build and test UDS Core e2e with UDS CLI Legacy bundle workflow"
     inputs:
       K3D_EXTRA_ARGS:
-        default: ""
+        default: "--k3s-arg --disable=gateway-api-crd@server:*"
         description: "Extra args for k3d"
     actions:
       - task: uds-core-legacy
