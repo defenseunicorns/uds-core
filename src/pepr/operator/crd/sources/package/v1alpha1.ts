@@ -292,8 +292,9 @@ const serviceMesh = {
         },
         selector: {
           description:
-            "Labels that select workloads and Services to protect. An empty selector protects the namespace. The selector must not overlap an SSO enableAuthserviceSelector in the same package.",
+            "Labels that select workloads and Services to protect. Specify at least one label. The selector must not overlap an SSO enableAuthserviceSelector in the same package.",
           type: "object",
+          minProperties: 1,
           additionalProperties: {
             type: "string",
           },

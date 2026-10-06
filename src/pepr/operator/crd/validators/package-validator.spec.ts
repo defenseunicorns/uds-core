@@ -217,24 +217,6 @@ describe("Test validation of Package CRs", () => {
         'externalAuthorization.selector overlaps enableAuthserviceSelector for SSO client "authservice". Use disjoint selectors because a workload cannot use both operator-managed Authservice and external authorization.',
       );
     });
-
-    it("denies an empty selector when Authservice is enabled", async () => {
-      const mockReq = makeMockReq(
-        {},
-        [],
-        [],
-        [{ clientId: "authservice", enableAuthserviceSelector: { app: "web" } }],
-        [],
-      );
-      mockReq.Raw.spec!.network!.serviceMesh!.externalAuthorization = {
-        provider: "opa",
-        selector: {},
-      };
-
-      await validator(mockReq);
-
-      expect(mockReq.Deny).toHaveBeenCalledTimes(1);
-    });
   });
 
   describe("Gateway name validation", () => {

@@ -789,9 +789,8 @@ export interface ExternalAuthorization {
    */
   provider: string;
   /**
-   * Labels that select workloads and Services to protect. An empty selector protects the
-   * namespace. The selector must not overlap an SSO enableAuthserviceSelector in the same
-   * package.
+   * Labels that select workloads and Services to protect. Specify at least one label. The
+   * selector must not overlap an SSO enableAuthserviceSelector in the same package.
    */
   selector: { [key: string]: string };
 }
