@@ -420,6 +420,7 @@ describe("pod-reload", () => {
         "Secret test-secret change",
         expect.anything(),
         "SecretChanged",
+        expect.any(Set),
       );
     });
 
@@ -518,6 +519,7 @@ describe("pod-reload", () => {
         "Secret multi-selector-secret change",
         expect.anything(),
         "SecretChanged",
+        expect.any(Set),
       );
     });
 
@@ -949,6 +951,7 @@ describe("pod-reload", () => {
         "ConfigMap test-configmap change",
         expect.anything(),
         "ConfigMapChanged",
+        expect.any(Set),
       );
     });
   });
@@ -1193,6 +1196,7 @@ describe("pod-reload", () => {
         expect.any(String),
         expect.anything(),
         expect.any(String),
+        expect.any(Set),
       );
       expect(utils.reloadPods).toHaveBeenCalledTimes(1);
     });
@@ -1212,6 +1216,7 @@ describe("pod-reload", () => {
         expect.any(String),
         expect.anything(),
         expect.any(String),
+        expect.any(Set),
       );
     });
 
@@ -1233,6 +1238,7 @@ describe("pod-reload", () => {
         expect.any(String),
         expect.anything(),
         expect.any(String),
+        expect.any(Set),
       );
     });
 
@@ -1254,6 +1260,7 @@ describe("pod-reload", () => {
         expect.any(String),
         expect.anything(),
         expect.any(String),
+        expect.any(Set),
       );
     });
 
@@ -1388,6 +1395,7 @@ describe("pod-reload", () => {
       expect(secretReloadStateCache.get(`${namespace}/${resourceName}`)).toEqual({
         checksum: computeResourceChecksum(updatedSecret.data!),
         status: "complete",
+        patchedRollingControllers: new Set(),
       });
     });
 
@@ -1529,7 +1537,10 @@ describe("pod-reload", () => {
       });
       vi.mocked(utils.reloadPods)
         .mockRejectedValueOnce(new Error("eviction failed"))
-        .mockRejectedValueOnce(new Error("combined reload failed"));
+        .mockImplementationOnce(async (...args) => {
+          args[5]?.add("Deployment:healthy");
+          throw new Error("combined reload failed");
+        });
       const createdSecret = secret();
       createdSecret.metadata!.annotations = {
         [SSA_CLEANUP_ANNOTATION]: "true",
@@ -1542,6 +1553,10 @@ describe("pod-reload", () => {
       await handleSecretUpdate(updatedSecret);
 
       expect(vi.mocked(utils.reloadPods).mock.calls[2]?.[1]).toEqual([affected, selected]);
+      expect(vi.mocked(utils.reloadPods).mock.calls[2]?.[5]).toBe(
+        vi.mocked(utils.reloadPods).mock.calls[1]?.[5],
+      );
+      expect(vi.mocked(utils.reloadPods).mock.calls[2]?.[5]?.has("Deployment:healthy")).toBe(true);
       expect(secretReloadStateCache.get(`${namespace}/${resourceName}`)?.status).toBe("complete");
     });
 
@@ -1722,6 +1737,24 @@ describe("pod-reload", () => {
 
       expect(utils.reloadPods).toHaveBeenCalledTimes(2);
       expect(configMapReloadStateCache.get(cacheKey)?.status).toBe("complete");
+    });
+
+    it("retains successful rolling patches on retry and clears them for a new checksum", async () => {
+      vi.mocked(utils.reloadPods).mockImplementationOnce(async (...args) => {
+        args[5]?.add("Deployment:working");
+        throw new Error("another controller failed");
+      });
+
+      await expect(handleConfigMapUpdate(updated)).rejects.toThrow("another controller failed");
+      const patchedControllers = configMapReloadStateCache.get(cacheKey)?.patchedRollingControllers;
+      expect(patchedControllers?.has("Deployment:working")).toBe(true);
+
+      await handleConfigMapUpdate(updated);
+      expect(vi.mocked(utils.reloadPods).mock.calls[1]?.[5]).toBe(patchedControllers);
+
+      await handleConfigMapUpdate(original);
+      expect(vi.mocked(utils.reloadPods).mock.calls[2]?.[5]).not.toBe(patchedControllers);
+      expect(vi.mocked(utils.reloadPods).mock.calls[2]?.[5]?.size).toBe(0);
     });
 
     it("reloads again when data reverts after a partial reload failure", async () => {

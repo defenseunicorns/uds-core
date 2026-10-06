@@ -459,6 +459,67 @@ describe("reloadPods", () => {
     },
   );
 
+  it("does not patch a successful rolling controller again while eviction is retried", async () => {
+    const pods = [
+      {
+        metadata: {
+          name: "deployment-pod",
+          ownerReferences: [
+            { kind: "Deployment", name: "deployment", uid: "deployment-owner", controller: true },
+          ],
+        },
+      },
+      {
+        metadata: {
+          name: "ondelete-pod",
+          ownerReferences: [
+            { kind: "StatefulSet", name: "ondelete", uid: "ondelete-owner", controller: true },
+          ],
+        },
+      },
+    ] as kind.Pod[];
+    const deploymentClient = createMockK8sClient();
+    deploymentClient.Get.mockResolvedValue(makeTestDeployment());
+    const onDeleteClient = createMockK8sClient();
+    onDeleteClient.Get.mockResolvedValue({
+      metadata: { name: "ondelete", namespace: "default", uid: "ondelete-owner" },
+      spec: { updateStrategy: { type: "OnDelete" } },
+    });
+    vi.mocked(K8s as Mock).mockImplementation(resourceKind => {
+      if (resourceKind === kind.Deployment) return deploymentClient;
+      if (resourceKind === kind.StatefulSet) return onDeleteClient;
+      return mockK8sClient;
+    });
+    const patchedRollingControllers = new Set<string>();
+    mockK8sClient.Evict.mockRejectedValueOnce(new Error("eviction denied"));
+
+    await expect(
+      reloadPods(
+        "default",
+        pods,
+        "Test eviction",
+        mockLogger,
+        "SecretChanged",
+        patchedRollingControllers,
+      ),
+    ).rejects.toThrow("Failed to reload pods");
+    expect(deploymentClient.Apply).toHaveBeenCalledTimes(1);
+
+    await reloadPods(
+      "default",
+      pods,
+      "Test eviction",
+      mockLogger,
+      "SecretChanged",
+      patchedRollingControllers,
+    );
+    expect(deploymentClient.Apply).toHaveBeenCalledTimes(1);
+    expect(mockK8sClient.Evict).toHaveBeenCalledTimes(2);
+
+    await reloadPods("default", pods, "Test eviction", mockLogger, "SecretChanged", new Set());
+    expect(deploymentClient.Apply).toHaveBeenCalledTimes(2);
+  });
+
   it("should report an error if controller applying fails", async () => {
     // Create a statefulset-controlled pod
     const pods = [
