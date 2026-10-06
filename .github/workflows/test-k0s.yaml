@@ -5,8 +5,7 @@ name: K0s Test
 
 on:
   schedule:
-    - cron: "0 2 * * *"
-  workflow_dispatch: {}
+    - cron: "0 0 * * 0"  # Every Sunday Midnight (UTC) / Saturday 5pm MT
   workflow_call: {}
 
 permissions:
