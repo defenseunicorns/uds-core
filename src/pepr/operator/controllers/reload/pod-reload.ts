@@ -23,7 +23,8 @@ interface ReloadState {
   status: "creating" | "creationAndUpdatePending" | "updating" | "complete";
 }
 
-// Keep failed attempts pending so unchanged data and reversions still retry.
+// Maps to store resource checksums and states for change detection
+// Exported for testing purposes
 export const secretReloadStateCache = new Map<string, ReloadState>();
 export const configMapReloadStateCache = new Map<string, ReloadState>();
 
@@ -75,19 +76,16 @@ export async function discoverSecretConsumers(namespace: string, secretName: str
   return pods.items.filter(pod => {
     if (!pod.spec) return false;
 
-    // Check volume mounts for direct secret volumes
     const usesSecretVolume = pod.spec.volumes?.some(
       volume => volume.secret && volume.secret.secretName === secretName,
     );
     if (usesSecretVolume) return true;
 
-    // Check for projected volumes that include the secret
     const usesProjectedSecretVolume = pod.spec.volumes?.some(volume =>
       volume.projected?.sources?.some(source => source.secret?.name === secretName),
     );
     if (usesProjectedSecretVolume) return true;
 
-    // Check environment variables
     const containers = [...(pod.spec.containers || []), ...(pod.spec.initContainers || [])];
     const usesSecretEnv = containers.some(
       container =>
@@ -136,7 +134,6 @@ export function parseSelectorString(value: string): Record<string, string> | nul
  * @returns Array of pods that mount or reference the ConfigMap
  */
 export async function discoverConfigMapConsumers(namespace: string, configMapName: string) {
-  // Get all pods in the namespace
   const pods = await K8s(kind.Pod).InNamespace(namespace).Get();
 
   // Filter pods that use the ConfigMap either as a volume or env var source
@@ -189,10 +186,8 @@ export async function handleResourceUpdate(
   // Kubernetes UIDs distinguish a new resource from a late event for a deleted one.
   const cacheKey = `${namespace}/${name}${resource.metadata.uid ? `/${resource.metadata.uid}` : ""}`;
 
-  // Use an empty object if data is undefined or null
   const data = resource.data || {};
 
-  // Compute checksum of the current resource data
   const currentChecksum = computeResourceChecksum(data);
 
   const state = stateCache.get(cacheKey);
@@ -211,11 +206,10 @@ export async function handleResourceUpdate(
   }
 
   try {
-    // Determine which pods to reload based on the strategy
     const podsToReload: kind.Pod[] = [];
 
-    // First time we've seen this resource — proactively clean up any over-claimed controller
-    // fields so Helm upgrades don't conflict before the first reload fires.
+    // Proactively clean up any over-claimed controller fields on first appearance
+    // so Helm upgrades don't conflict before the first reload fires.
     if (isCreation) {
       // Has not been cleaned up by a prior run.
       if (!resource.metadata?.annotations?.[SSA_CLEANUP_ANNOTATION]) {
@@ -226,15 +220,9 @@ export async function handleResourceUpdate(
             const pods = await discoverResourceConsumers(namespace, name);
             await cleanupOverClaimedControllerFields(namespace, pods, log);
             // Mark complete so future restarts skip this work entirely.
-            // Use JSON Patch (not SSA Apply) so we don't affect field ownership — an SSA Apply
-            // that omits `data` would cause Kubernetes to drop any fields Pepr previously owned
-            // (e.g. the CA cert in uds-trust-bundle).
             try {
               const kindClass = resourceType === "Secret" ? kind.Secret : kind.ConfigMap;
-              // RFC 6901 JSON Pointer encoding: ~ → ~0, / → ~1
               const annotationPath = `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/~/g, "~0").replace(/\//g, "~1")}`;
-              // If the resource has no annotations map yet, we must create it first —
-              // JSON Patch `add` on a child key fails if the parent object is absent.
               const ops: { op: "add"; path: string; value: unknown }[] = [];
               if (!resource.metadata?.annotations) {
                 ops.push({ op: "add", path: "/metadata/annotations", value: {} });
