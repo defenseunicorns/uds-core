@@ -1595,6 +1595,43 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
+    it("reloads when the controller restart and resource creation share a second", async () => {
+      const affected = pod("old-optional", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      affected.metadata!.ownerReferences = [
+        {
+          apiVersion: "apps/v1",
+          kind: "StatefulSet",
+          name: "controller",
+          uid: "owner",
+          controller: true,
+        },
+      ];
+      const createdSecret = secret();
+      createdSecret.metadata!.annotations = { [SSA_CLEANUP_ANNOTATION]: "true" };
+      setupK8sMock({ items: [affected] });
+      vi.mocked(utils.resolveControllerKindAndName).mockResolvedValue({
+        kindClass: kind.StatefulSet,
+        name: "controller",
+      });
+      mockGet.mockImplementation((name?: string) =>
+        name
+          ? Promise.resolve({
+              spec: {
+                template: {
+                  metadata: { annotations: { "uds.dev/restartedAt": "2026-09-30T10:05:00.500Z" } },
+                },
+              },
+            })
+          : Promise.resolve({ items: [affected] }),
+      );
+
+      await handleSecretUpdate(createdSecret);
+
+      expect(vi.mocked(utils.reloadPods).mock.calls[0]?.[1]).toEqual([affected]);
+    });
+
     it("retries creation processing after pod discovery fails", async () => {
       const affected = pod("affected", [
         { name: "config", secret: { secretName: resourceName, optional: true } },

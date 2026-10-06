@@ -312,11 +312,12 @@ export async function handleResourceUpdate(
         const restartedAt =
           controller?.spec?.template?.metadata?.annotations?.["uds.dev/restartedAt"];
 
+        // Same-second timestamps cannot establish whether the restart preceded creation.
         if (
           !state &&
           resourceCreatedAt !== undefined &&
           restartedAt &&
-          Date.parse(restartedAt) >= resourceCreatedAt
+          Math.floor(Date.parse(restartedAt) / 1000) > Math.floor(resourceCreatedAt / 1000)
         ) {
           continue; // A restart has already been requested since creation.
         }
