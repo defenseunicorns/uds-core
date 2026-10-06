@@ -459,7 +459,7 @@ describe("reloadPods", () => {
     },
   );
 
-  it("does not patch a successful rolling controller again while eviction is retried", async () => {
+  it("retries a rolling controller recreated while another pod's eviction is pending", async () => {
     const pods = [
       {
         metadata: {
@@ -479,7 +479,11 @@ describe("reloadPods", () => {
       },
     ] as kind.Pod[];
     const deploymentClient = createMockK8sClient();
-    deploymentClient.Get.mockResolvedValue(makeTestDeployment());
+    const replacementDeployment = makeTestDeployment();
+    replacementDeployment.metadata!.uid = "replacement-uid";
+    deploymentClient.Get.mockResolvedValueOnce(makeTestDeployment()).mockResolvedValue(
+      replacementDeployment,
+    );
     const onDeleteClient = createMockK8sClient();
     onDeleteClient.Get.mockResolvedValue({
       metadata: { name: "ondelete", namespace: "default", uid: "ondelete-owner" },
@@ -490,34 +494,17 @@ describe("reloadPods", () => {
       if (resourceKind === kind.StatefulSet) return onDeleteClient;
       return mockK8sClient;
     });
-    const patchedRollingControllers = new Set<string>();
     mockK8sClient.Evict.mockRejectedValueOnce(new Error("eviction denied"));
 
     await expect(
-      reloadPods(
-        "default",
-        pods,
-        "Test eviction",
-        mockLogger,
-        "SecretChanged",
-        patchedRollingControllers,
-      ),
+      reloadPods("default", pods, "Test eviction", mockLogger, "SecretChanged"),
     ).rejects.toThrow("Failed to reload pods");
     expect(deploymentClient.Apply).toHaveBeenCalledTimes(1);
 
-    await reloadPods(
-      "default",
-      pods,
-      "Test eviction",
-      mockLogger,
-      "SecretChanged",
-      patchedRollingControllers,
-    );
-    expect(deploymentClient.Apply).toHaveBeenCalledTimes(1);
-    expect(mockK8sClient.Evict).toHaveBeenCalledTimes(2);
-
-    await reloadPods("default", pods, "Test eviction", mockLogger, "SecretChanged", new Set());
+    await reloadPods("default", pods, "Test eviction", mockLogger, "SecretChanged");
+    expect(deploymentClient.Get).toHaveBeenCalledTimes(2);
     expect(deploymentClient.Apply).toHaveBeenCalledTimes(2);
+    expect(mockK8sClient.Evict).toHaveBeenCalledTimes(2);
   });
 
   it("should report an error if controller applying fails", async () => {

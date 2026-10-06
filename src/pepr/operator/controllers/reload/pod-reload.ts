@@ -21,7 +21,6 @@ export type ResourceType = "Secret" | "ConfigMap";
 interface ReloadState {
   checksum: string;
   status: "creating" | "creationAndUpdatePending" | "updating" | "complete";
-  patchedRollingControllers: Set<string>;
 }
 
 // Keep failed attempts pending so unchanged data and reversions still retry.
@@ -207,11 +206,8 @@ export async function handleResourceUpdate(
     return;
   }
 
-  const patchedRollingControllers =
-    state?.checksum === currentChecksum ? state.patchedRollingControllers : new Set<string>();
-
   function checkpoint(status: ReloadState["status"]) {
-    stateCache.set(cacheKey, { checksum: currentChecksum, status, patchedRollingControllers });
+    stateCache.set(cacheKey, { checksum: currentChecksum, status });
   }
 
   try {
@@ -348,7 +344,6 @@ export async function handleResourceUpdate(
             `${resourceType} ${name} change`,
             log,
             `${resourceType}Changed`,
-            patchedRollingControllers,
           );
         }
         checkpoint("complete");
@@ -435,7 +430,6 @@ export async function handleResourceUpdate(
         `${resourceType} ${name} change`,
         log,
         `${resourceType}Changed`,
-        patchedRollingControllers,
       );
     }
     checkpoint("complete");

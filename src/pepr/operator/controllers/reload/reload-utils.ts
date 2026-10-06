@@ -27,7 +27,6 @@ import { createEvent, retryWithDelay } from "../utils";
  * @param message The reason for eviction/restart (for logging)
  * @param log Logger instance for logging
  * @param reason Resource type responsible for eviction/restart (for logging)
- * @param patchedRollingControllers Rolling controllers already patched for this resource checksum
  */
 export async function reloadPods(
   namespace: string,
@@ -35,7 +34,6 @@ export async function reloadPods(
   message: string,
   log: Logger,
   reason: string,
-  patchedRollingControllers?: Set<string>,
 ) {
   if (pods.length === 0) {
     log.warn(`No pods provided for eviction in namespace ${namespace}`);
@@ -90,12 +88,6 @@ export async function reloadPods(
         continue;
       }
 
-      const effectiveControllerKey = `${resolved.kindClass.name ?? String(resolved.kindClass)}:${resolved.name}`;
-      if (patchedRollingControllers?.has(effectiveControllerKey)) {
-        handledControllers[controllerKey] = "rolling";
-        continue;
-      }
-
       const controller = await restartController(
         namespace,
         resolved.kindClass,
@@ -115,8 +107,6 @@ export async function reloadPods(
       handledControllers[controllerKey] = needsEviction ? "evict" : "rolling";
       if (needsEviction) {
         managedPodsToEvict.push(pod);
-      } else {
-        patchedRollingControllers?.add(effectiveControllerKey);
       }
     } catch (error) {
       log.error(
