@@ -237,7 +237,7 @@ async function cleanupMismatchedMeshModePolicies(
       if (!policyMeshMode || policyMeshMode !== currentMeshMode) {
         log.debug(
           `Deleting AuthorizationPolicy ${policy.metadata?.name} with mismatched mesh-mode: ` +
-          `current=${currentMeshMode}, policy=${policyMeshMode || "undefined"}`,
+            `current=${currentMeshMode}, policy=${policyMeshMode || "undefined"}`,
         );
         await K8s(AuthorizationPolicy).Delete(policy);
       }
