@@ -325,7 +325,7 @@ export async function handleResourceUpdate(
           controller?.spec?.template?.metadata?.annotations?.["uds.dev/restartedAt"];
 
         if (
-          state?.status !== "creating" &&
+          !state &&
           resourceCreatedAt !== undefined &&
           restartedAt &&
           Date.parse(restartedAt) >= resourceCreatedAt

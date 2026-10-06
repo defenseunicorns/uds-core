@@ -1490,6 +1490,98 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).toHaveBeenCalledTimes(2);
     });
 
+    it("retries an old OnDelete pod after a failed combined reload", async () => {
+      const affected = pod("old-optional", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      affected.metadata!.ownerReferences = [
+        {
+          apiVersion: "apps/v1",
+          kind: "StatefulSet",
+          name: "controller",
+          uid: "owner",
+          controller: true,
+        },
+      ];
+      const selected = pod("newer-selected", [], afterResource);
+      const allPods = { items: [affected, selected] };
+      const controller = (restartedAt?: string) => ({
+        spec: {
+          updateStrategy: { type: "OnDelete" },
+          template: {
+            metadata: { annotations: restartedAt ? { "uds.dev/restartedAt": restartedAt } : {} },
+          },
+        },
+      });
+      setupK8sMock(allPods);
+      mockGet
+        .mockResolvedValueOnce(allPods)
+        .mockResolvedValueOnce(controller())
+        .mockResolvedValueOnce(allPods)
+        .mockResolvedValueOnce(controller("2026-09-30T10:06:00Z"))
+        .mockResolvedValueOnce({ items: [selected] })
+        .mockResolvedValueOnce(allPods)
+        .mockResolvedValueOnce(controller("2026-09-30T10:06:00Z"))
+        .mockResolvedValueOnce({ items: [selected] });
+      vi.mocked(utils.resolveControllerKindAndName).mockResolvedValue({
+        kindClass: kind.StatefulSet,
+        name: "controller",
+      });
+      vi.mocked(utils.reloadPods)
+        .mockRejectedValueOnce(new Error("eviction failed"))
+        .mockRejectedValueOnce(new Error("combined reload failed"));
+      const createdSecret = secret();
+      createdSecret.metadata!.annotations = {
+        [SSA_CLEANUP_ANNOTATION]: "true",
+        "uds.dev/pod-reload-selector": "app=newer",
+      };
+      const updatedSecret = { ...createdSecret, data: { key: "bmV3" } } as kind.Secret;
+
+      await expect(handleSecretUpdate(createdSecret)).rejects.toThrow("eviction failed");
+      await expect(handleSecretUpdate(updatedSecret)).rejects.toThrow("combined reload failed");
+      await handleSecretUpdate(updatedSecret);
+
+      expect(vi.mocked(utils.reloadPods).mock.calls[2]?.[1]).toEqual([affected, selected]);
+      expect(secretReloadStateCache.get(`${namespace}/${resourceName}`)?.status).toBe("complete");
+    });
+
+    it("keeps the controller timestamp guard on first observation", async () => {
+      const affected = pod("old-optional", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      affected.metadata!.ownerReferences = [
+        {
+          apiVersion: "apps/v1",
+          kind: "StatefulSet",
+          name: "controller",
+          uid: "owner",
+          controller: true,
+        },
+      ];
+      const createdSecret = secret();
+      createdSecret.metadata!.annotations = { [SSA_CLEANUP_ANNOTATION]: "true" };
+      setupK8sMock({ items: [affected] });
+      vi.mocked(utils.resolveControllerKindAndName).mockResolvedValue({
+        kindClass: kind.StatefulSet,
+        name: "controller",
+      });
+      mockGet.mockImplementation((name?: string) =>
+        name
+          ? Promise.resolve({
+              spec: {
+                template: {
+                  metadata: { annotations: { "uds.dev/restartedAt": "2026-09-30T10:06:00Z" } },
+                },
+              },
+            })
+          : Promise.resolve({ items: [affected] }),
+      );
+
+      await handleSecretUpdate(createdSecret);
+
+      expect(utils.reloadPods).not.toHaveBeenCalled();
+    });
+
     it("retries creation processing after pod discovery fails", async () => {
       const affected = pod("affected", [
         { name: "config", secret: { secretName: resourceName, optional: true } },
