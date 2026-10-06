@@ -34,6 +34,7 @@ jobs:
           - v1.34.4+k3s1
           - v1.35.8+k3s1
           - v1.36.4+k3s1
+          - v1.37.1+k3s1
         flavor:
           - upstream
           - registry1

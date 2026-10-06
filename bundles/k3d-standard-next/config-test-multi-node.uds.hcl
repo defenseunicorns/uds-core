@@ -30,6 +30,5 @@ variables = {
   ]
 
   # Passed through as a scalar Zarf package variable to uds_k3d_dev.
-  # Remove the CRD override after uds-k3d includes https://github.com/defenseunicorns/uds-k3d/pull/400.
-  k3d_extra_args = "--servers 3 --agents 2 --k3s-arg --disable=gateway-api-crd@server:*"
+  k3d_extra_args = "--servers 3 --agents 2"
 }

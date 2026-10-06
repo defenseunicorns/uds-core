@@ -23,4 +23,4 @@ UDS Core runs on any [CNCF-conformant Kubernetes distribution](https://www.cncf.
 > [!NOTE]
 > Unlisted CNCF-conformant distributions are expected to work but are not validated in CI. Bug reports and contributions for compatibility issues are welcome.
 
-Regular K3s/k3d tests use Kubernetes 1.37. The [Kubernetes compatibility workflow](https://github.com/defenseunicorns/uds-core/blob/main/.github/workflows/test-kubernetes-matrix.yaml) tests exact K3s releases for 1.34, 1.35, and 1.36. This workflow does not define the UDS Core support policy. Kubernetes release support is tracked by the [Kubernetes release calendar](https://kubernetes.io/releases/).
+Regular pull request tests use Kubernetes 1.37 by default. The [Kubernetes compatibility workflow](https://github.com/defenseunicorns/uds-core/blob/main/.github/workflows/test-kubernetes-matrix.yaml) tests exact K3s releases for all supported minors: 1.34, 1.35, 1.36, and 1.37. This workflow does not define the UDS Core support policy. Kubernetes release support is tracked by the [Kubernetes release calendar](https://kubernetes.io/releases/).

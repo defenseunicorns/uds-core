@@ -19,14 +19,12 @@ tasks:
           linux: bash
         cmd: |
           set -euo pipefail
-          # Remove this override after uds-k3d includes https://github.com/defenseunicorns/uds-k3d/pull/400.
-          K3D_EXTRA_ARGS="--k3s-arg --disable=gateway-api-crd@server:*"
           if [ -z "${{ .inputs.k3s_version }}" ]; then
-            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.21.1-airgap --set K3D_EXTRA_ARGS="$K3D_EXTRA_ARGS" --confirm
+            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.21.2-airgap --confirm
           else
             K3S_VERSION="${{ .inputs.k3s_version }}"
             K3D_IMAGE="ghcr.io/defenseunicorns/uds-k3d/k3s:${K3S_VERSION/+k3s/-k3s}"
-            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.21.1 --set K3D_IMAGE="$K3D_IMAGE" --set K3D_EXTRA_ARGS="$K3D_EXTRA_ARGS" --confirm
+            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.21.2 --set K3D_IMAGE="$K3D_IMAGE" --confirm
           fi
 
   - name: k3d-test-cluster

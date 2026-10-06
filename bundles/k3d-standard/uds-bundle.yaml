@@ -12,7 +12,7 @@ metadata:
 packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
-    ref: 0.21.1-airgap
+    ref: 0.21.2-airgap
     keylessVerification:
       certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-k3d/\.github/workflows/publish\.yaml@refs/tags/v\d+\.\d+\.\d+
       certificateOIDCIssuer: https://token.actions.githubusercontent.com
