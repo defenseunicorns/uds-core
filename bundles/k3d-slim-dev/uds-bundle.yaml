@@ -67,6 +67,12 @@ packages:
               path: "admission.resources.requests.cpu"
               default: "100m"
       istio-controlplane:
+        cni:
+          values:
+            - path: "istioOwnedCNIConfig"
+              value: true
+            - path: "ambient.enableAmbientDetectionRetry"
+              value: true
         istiod:
           variables:
             - name: ISTIOD_MEMORY_REQUEST
