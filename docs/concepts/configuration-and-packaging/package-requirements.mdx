@@ -43,7 +43,7 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 - **MUST** define network policies under the `allow` key as required in the [UDS `Package` Custom Resource](/reference/operator-and-crds/packages-v1alpha1-cr/). These policies **MUST** adhere to the principle of least privilege, permitting only strictly necessary traffic.
 - **MUST** define any external interfaces under the `expose` key in the [UDS `Package` Custom Resource](/reference/operator-and-crds/packages-v1alpha1-cr/).
 - **MUST** not rely on exposed interfaces (e.g., `.uds.dev`) being accessible from the deployment environment (bastion or pipeline).
-- **MUST** configure applications that communicate with external services, including databases and object storage, to trust the [UDS Core `uds-trust-bundle`](/how-to-guides/networking/manage-trust-bundles/).
+- **MUST** configure applications that communicate with external services, including backend services like databases, to trust the [UDS Core `uds-trust-bundle`](/how-to-guides/networking/manage-trust-bundles/).
 - **MUST** deploy and operate successfully with Istio enabled.
 - **SHOULD** use Istio Ambient unless specific technical constraints require otherwise.
 - **MAY** use Istio Sidecars, when Istio Ambient is not technically feasible. Must document the specific technical constraints in `docs/justifications.md` if using Sidecars.
