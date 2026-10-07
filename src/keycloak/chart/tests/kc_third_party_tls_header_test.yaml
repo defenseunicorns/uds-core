@@ -12,17 +12,13 @@ tests:
   - it: should inject default client certificate header fallback
     template: uds-package.yaml
     asserts:
+      - equal:
+          path: spec.network.expose[*].advancedHTTP.headers.request.add
+          value:
+            istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
       - contains:
-          path: spec.network.expose
-          any: true
-          content:
-            advancedHTTP:
-              headers:
-                request:
-                  remove:
-                    - istio-mtls-client-certificate
-                  add:
-                    istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: istio-mtls-client-certificate
 
   - it: should omit fallback header injection when third-party tls header is configured
     set:
@@ -31,17 +27,11 @@ tests:
           tlsCertificateHeader: x-amzn-mtls-clientcert
     template: uds-package.yaml
     asserts:
+      - notExists:
+          path: spec.network.expose[*].advancedHTTP.headers.request.add
       - notContains:
-          path: spec.network.expose
-          any: true
-          content:
-            advancedHTTP:
-              headers:
-                request:
-                  remove:
-                    - istio-mtls-client-certificate
-                  add:
-                    istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: istio-mtls-client-certificate
 
   - it: should not render alb envoy filter by default
     template: alb-envoyfilter.yaml
