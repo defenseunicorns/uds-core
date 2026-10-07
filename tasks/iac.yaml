@@ -100,10 +100,6 @@ tasks:
       - cmd: tofu destroy -auto-approve
         dir: .github/test-infra/${CLOUD}/${K8S_DISTRO}
 
-  - name: cleanup-aws-load-balancers
-    actions:
-      - cmd: .github/scripts/cleanup-aws-load-balancers.sh "${K8S_DISTRO}" "${CLUSTER_NAME}"
-
   - name: apply-tofu
     actions:
       - cmd: |

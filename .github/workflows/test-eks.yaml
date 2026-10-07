@@ -134,11 +134,6 @@ jobs:
         run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
         timeout-minutes: 30
 
-      - name: Cleanup AWS load balancers
-        if: always()
-        run: uds run -f tasks/iac.yaml cleanup-aws-load-balancers --no-progress --set K8S_DISTRO=eks --set CLUSTER_NAME="$UDS_CLUSTER_NAME"
-        timeout-minutes: 20
-
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'
         uses: ./.github/actions/slack-alert

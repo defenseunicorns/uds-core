@@ -89,12 +89,6 @@ jobs:
         run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=rke2 --set CLOUD=aws
         timeout-minutes: 20
 
-      - name: Capture RKE2 cluster name
-        if: always()
-        run: |
-          cluster_name=$(tofu -chdir=.github/test-infra/aws/rke2 output -raw cluster_name)
-          echo "RKE2_CLUSTER_NAME=$cluster_name" >> "$GITHUB_ENV"
-
       - name: Get Kubeconfig
         run: uds run -f tasks/iac.yaml rke2-get-kubeconfig --no-progress
         timeout-minutes: 20
@@ -138,11 +132,6 @@ jobs:
         if: always()
         run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=rke2 --set CLOUD=aws
         timeout-minutes: 10
-
-      - name: Cleanup AWS load balancers
-        if: always()
-        run: uds run -f tasks/iac.yaml cleanup-aws-load-balancers --no-progress --set K8S_DISTRO=rke2 --set CLUSTER_NAME="$RKE2_CLUSTER_NAME"
-        timeout-minutes: 20
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'
