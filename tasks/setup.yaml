@@ -70,10 +70,8 @@ tasks:
           linux: bash
         cmd: |
           set -euo pipefail
-          # Reuse the pinned dev stack's glibc/OpenSSL layer with the K0s base image.
-          sed 's|FROM rancher/k3s:|FROM k0sproject/k0s:|' build/k0s/dev-stack/docker/Dockerfile \
-            | docker build --build-arg "K3S_TAG=${DEFAULT_K0S_VERSION/+k0s./-k0s.}" \
-                --tag uds-k0s-test --file - build/k0s/dev-stack/docker
+          docker build --build-arg "K0S_VERSION=${DEFAULT_K0S_VERSION/+k0s./-k0s.}" \
+            --tag uds-k0s-test --file docker/k0s/Dockerfile docker/k0s
           docker run -d --name k0s-uds --hostname k0s-uds --privileged \
             --ulimit nofile=1048576:1048576 \
             --tmpfs /run -v /var/lib/k0s -v /var/log/pods -v /var/lib/kubelet \
