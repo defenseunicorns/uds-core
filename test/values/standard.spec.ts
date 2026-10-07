@@ -30,32 +30,34 @@ let variableManifests: K8sResource[];
 let nativeOverrideManifests: K8sResource[];
 
 beforeAll(async () => {
-  manifests = await renderManifests(PKG, { values: sharedValues });
-  variableManifests = await renderManifests(PKG, {
-    variables: {
-      DOMAIN: "variable.example.com",
-      ADMIN_DOMAIN: "admin.variable.example.com",
-      VELERO_BUCKET: "variable-bucket",
-      VELERO_BUCKET_REGION: "variable-region",
-      VELERO_BUCKET_PROVIDER_URL: "https://variable.example.com",
-      AUTHSERVICE_REDIS_URI: "redis://variable.example.com:6379",
-    },
-  });
-  nativeOverrideManifests = await renderManifests(PKG, {
-    values: {
-      ...sharedValues,
-      authservice: {
+  [manifests, variableManifests, nativeOverrideManifests] = await Promise.all([
+    renderManifests(PKG, { values: sharedValues }),
+    renderManifests(PKG, {
+      variables: {
+        DOMAIN: "variable.example.com",
+        ADMIN_DOMAIN: "admin.variable.example.com",
+        VELERO_BUCKET: "variable-bucket",
+        VELERO_BUCKET_REGION: "variable-region",
+        VELERO_BUCKET_PROVIDER_URL: "https://variable.example.com",
+        AUTHSERVICE_REDIS_URI: "redis://variable.example.com:6379",
+      },
+    }),
+    renderManifests(PKG, {
+      values: {
+        ...sharedValues,
         authservice: {
-          redis: { uri: "" },
+          authservice: {
+            redis: { uri: "" },
+          },
         },
       },
-    },
-    variables: {
-      VELERO_BUCKET: "variable-bucket",
-      VELERO_BUCKET_REGION: "variable-region",
-      VELERO_BUCKET_PROVIDER_URL: "https://variable.example.com",
-    },
-  });
+      variables: {
+        VELERO_BUCKET: "variable-bucket",
+        VELERO_BUCKET_REGION: "variable-region",
+        VELERO_BUCKET_PROVIDER_URL: "https://variable.example.com",
+      },
+    }),
+  ]);
 });
 
 describe("standard package values", () => {

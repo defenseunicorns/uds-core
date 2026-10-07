@@ -223,7 +223,7 @@ describe("envoyGatewayResources", () => {
             return {
               items: [
                 {
-                  apiVersion: "gateway.networking.k8s.io/v1alpha2",
+                  apiVersion: "gateway.networking.k8s.io/v1",
                   kind: "UDPRoute",
                   metadata: {
                     name: "web-udp-old",
@@ -280,7 +280,7 @@ describe("envoyGatewayResources", () => {
             return {
               items: [
                 {
-                  apiVersion: "gateway.networking.k8s.io/v1alpha2",
+                  apiVersion: "gateway.networking.k8s.io/v1",
                   kind: "UDPRoute",
                   metadata: {
                     name: "web-udp-old",

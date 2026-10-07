@@ -27,6 +27,9 @@ tasks:
       istio_components:
         description: "Comma separated list of istio components to deploy"
         default: ""
+      deploy_pepr:
+        description: "Deploy Pepr before Istio"
+        default: "false"
     actions:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
@@ -36,11 +39,16 @@ tasks:
           ./uds zarf tools kubectl create ns uds-policy-exemptions
           ./uds zarf tools kubectl create ns istio-system
           ./uds zarf tools kubectl create ns pepr-system
+          ./uds zarf tools kubectl label ns pepr-system zarf.dev/agent=ignore --overwrite
 
       - description: "Deploy the UDS CRDs and apply all hack dev manifests"
         cmd: |
           ./uds zarf tools kubectl apply -f src/pepr/uds-cluster-crds/templates/
           ./uds zarf tools kubectl apply -f hack/dev-manifests/
+
+      - description: "Deploy Pepr"
+        if: ${{ eq .inputs.deploy_pepr "true" }}
+        cmd: "npx pepr deploy --yes"
 
       # Note: the `registry-url` flag used here requires uds 0.19.2+
       - description: "Deploy the Istio source package with Zarf Dev"
@@ -59,10 +67,18 @@ tasks:
 
   - name: slim-dev
     actions:
-      - description: "Build slim dev bundle"
+      - description: "Build slim dev bundle with UDS CLI Next"
+        task: create:k3d-slim-dev-bundle-next
+
+      - description: "Deploy slim dev bundle with UDS CLI Next"
+        task: deploy:k3d-slim-dev-bundle-next
+
+  - name: slim-dev-legacy
+    actions:
+      - description: "Build slim dev Legacy bundle"
         task: create:k3d-slim-dev-bundle
 
-      - description: "Deploy slim dev bundle"
+      - description: "Deploy slim dev Legacy bundle"
         task: deploy:k3d-slim-dev-bundle
 
   - name: slim-dev-ha
@@ -81,9 +97,8 @@ tasks:
     description: "Create k3d cluster with istio, Pepr, Keycloak, and Authservice for development"
     actions:
       - task: dev-setup
-
-      - description: "Deploy Pepr"
-        cmd: "npx pepr deploy --yes"
+        with:
+          deploy_pepr: "true"
 
       - description: "Deploy Keycloak + Authservice"
         cmd: "./uds run dev-deploy --set LAYER=identity-authorization --no-progress"
@@ -119,11 +134,15 @@ tasks:
       - task: test:uds-core
 
   - name: test-uds-core-multi-node
-    description: "Deploys UDS Core on a multi-node cluster (based on K3D_EXTRA_ARGS variable)"
+    description: "Deploys UDS Core on a multi-node cluster"
     actions:
-      - task: test:uds-core
+      - task: create:k3d-standard-bundle-next
         with:
-          K3D_EXTRA_ARGS: "--servers 3 --agents 2"
+          create_options: "--skip-sbom"
+      - task: deploy:k3d-standard-bundle-next
+        with:
+          configFile: bundles/k3d-standard-next/config-test-multi-node.uds.hcl
+      - task: test:validate-packages
 
   - name: test-uds-core-ha
     description: "Build and test UDS Core"
@@ -132,6 +151,13 @@ tasks:
       - task: setup:ha-redis
       - task: test:uds-core-ha
 
+  - name: test-uds-core-ha-legacy
+    description: "Build and test UDS Core with UDS CLI Legacy bundle workflow"
+    actions:
+      - task: setup:ha-postgres
+      - task: setup:ha-redis
+      - task: test:uds-core-ha-legacy
+
   - name: test-uds-core-ha-upgrade
     description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA"
     actions:
@@ -139,10 +165,22 @@ tasks:
       - task: setup:ha-redis
       - task: test:uds-core-ha-upgrade
 
+  - name: test-uds-core-ha-upgrade-legacy
+    description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA and UDS CLI Legacy"
+    actions:
+      - task: setup:ha-postgres
+      - task: setup:ha-redis
+      - task: test:uds-core-ha-upgrade-legacy
+
   - name: test-uds-core-upgrade
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
       - task: test:uds-core-upgrade
+
+  - name: test-uds-core-upgrade-legacy
+    description: "Test an upgrade from the latest released UDS Core package to current branch with UDS CLI Legacy bundle workflow"
+    actions:
+      - task: test:uds-core-upgrade-legacy
 
   - name: lint-check
     description: "Run linting checks"
@@ -170,24 +208,33 @@ tasks:
       - description: "Clone the docs repo and symlink the reference docs"
         cmd: |
           git clone https://github.com/defenseunicorns/uds-docs.git uds-docs
-          mkdir -p uds-docs/src/content/docs/core
+
+          channel=$(./uds zarf tools yq -r '.[] | select(.repo == "defenseunicorns/uds-core") | .branch // ""' uds-docs/src/products.json)
+          docs_root="uds-docs/src/content/docs/core${channel:+/$channel}"
+          mkdir -p "$docs_root"
 
           # Symlink only dirs listed in sidebarOrder (mirrors integration-script cleanup logic)
           allowed=$(./uds zarf tools yq -r '.sidebarOrder[] | (.dir // .)' docs/docs.config.json)
           for dir in $(pwd)/docs/*/; do
             name="$(basename "$dir")"
-            echo "$allowed" | grep -qx "$name" && ln -s "$dir" uds-docs/src/content/docs/core/
+            echo "$allowed" | grep -qx "$name" && ln -s "$dir" "$docs_root/"
           done
           # Also symlink the top-level index page if present
-          [ -f "$(pwd)/docs/index.mdx" ] && ln -s "$(pwd)/docs/index.mdx" uds-docs/src/content/docs/core/
+          [ -f "$(pwd)/docs/index.mdx" ] && ln -s "$(pwd)/docs/index.mdx" "$docs_root/"
           ln -s $(pwd)/docs/.c4 uds-docs/src/content/docs/.c4
-          ln -s $(pwd)/docs/.images uds-docs/src/content/docs/core/.images
+          ln -s $(pwd)/docs/.images "$docs_root/.images"
       - description: "Create product config for dev server"
         cmd: |
           mkdir -p uds-docs/.product-configs
 
-          jq '. + {repo: "defenseunicorns/uds-core"}' docs/docs.config.json \
+          ./uds zarf tools yq -o=json '. + {"repo": "defenseunicorns/uds-core"}' docs/docs.config.json \
             > uds-docs/.product-configs/uds-core.json
+
+          channel=$(./uds zarf tools yq -r '.[] | select(.repo == "defenseunicorns/uds-core") | .branch // ""' uds-docs/src/products.json)
+          if [ -n "$channel" ]; then
+            printf '{\n  "/core": "/core/%s/"\n}\n' "$channel" \
+              > uds-docs/.product-configs/redirects.json
+          fi
       - description: "Start the docs server with npm (this will run until you stop it)"
         cmd: |
           # Actual startup takes up to a minute because of the npm install
@@ -224,11 +271,10 @@ tasks:
           darwin: bash
           linux: bash
         cmd: |
-          # check for addlicense bin
-          if [ -x "$HOME/go/bin/addlicense" ]; then
-            echo "addlicense installed in $HOME/go/bin"
+          if command -v addlicense >/dev/null 2>&1; then
+            echo "addlicense installed"
           else
-            echo "Error: addlicense is not installed in $HOME/go/bin" >&2
+            echo "Error: addlicense is not installed" >&2
             exit 1
           fi
-          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/uds-operator-config/templates/uds-ca-certs.yaml
+          addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/uds-operator-config/templates/uds-ca-certs.yaml

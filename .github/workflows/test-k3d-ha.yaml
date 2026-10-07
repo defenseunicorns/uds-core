@@ -14,6 +14,7 @@ on:
     paths:
       - ".github/workflows/test-k3d-ha.yaml"
       - "bundles/k3d-standard/**"
+      - "bundles/k3d-standard-next/**"
 
 concurrency:
   group: test-k3d-ha-${{ github.ref }}
@@ -28,7 +29,7 @@ permissions:
 jobs:
   uds-core-ha-upgrade-nightly:
     runs-on: uds-ubuntu-big-boy-8-core
-    timeout-minutes: 45
+    timeout-minutes: 60
     name: HA Testing
 
     strategy:
@@ -53,7 +54,6 @@ jobs:
           registry1Username: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
-          installK3d: 'true'
 
       - name: Run UDS Core Install HA Test
         if: ${{ matrix.test-type == 'install' }}

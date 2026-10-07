@@ -150,7 +150,7 @@ async function assertDefaultEnvoyUDPResources(port: number): Promise<string> {
 
   const route = (await customObjects.getNamespacedCustomObject({
     group: "gateway.networking.k8s.io",
-    version: "v1alpha2",
+    version: "v1",
     namespace: "curl-ns-udp-server",
     plural: "udproutes",
     name: "curl-pkg-udp-server-udp-envoy-gateway-e2e",

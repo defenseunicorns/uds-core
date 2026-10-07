@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -17,6 +17,7 @@ import {
 // Mock dependencies
 const mockK8sApply = vi.fn();
 const mockK8sGet = vi.fn();
+const mockNamespaceGet = vi.fn();
 const mockWithLabelGet = vi.fn();
 const mockK8sDelete = vi.fn();
 const mockUDSPackageGet = vi.fn();
@@ -64,6 +65,7 @@ vi.mock("pepr", async importOriginal => {
       } else if (resourceKind === actual.kind.Namespace) {
         return {
           Apply: mockK8sApply,
+          Get: mockNamespaceGet,
         };
       } else if (resourceKind === actual.kind.Secret) {
         // Handle Secret operations
@@ -159,6 +161,7 @@ describe("CA Bundle ConfigMap", () => {
     vi.mocked(getOwnerRef).mockReturnValue(mockOwnerRefs);
     vi.mocked(purgeOrphans).mockResolvedValue();
     mockK8sApply.mockResolvedValue({});
+    mockNamespaceGet.mockRejectedValue({ status: 404, message: "namespace not found" });
     mockUDSPackageGet.mockResolvedValue({ items: [] });
     mockLog.warn.mockClear();
 
@@ -479,6 +482,29 @@ describe("CA Bundle ConfigMap", () => {
       });
     });
 
+    it("does not apply the Istio namespace when it already exists", async () => {
+      mockNamespaceGet.mockResolvedValue({ metadata: { name: "istio-system" } });
+
+      await updateAllCaBundleConfigMaps();
+
+      expect(mockK8sApply).not.toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
+      });
+    });
+
+    it("propagates Istio namespace lookup failures", async () => {
+      const error = { status: 500, message: "server error" };
+      mockNamespaceGet.mockRejectedValue(error);
+
+      await expect(updateAllCaBundleConfigMaps()).rejects.toThrow(
+        /Failed to update CA bundle ConfigMaps for all packages/,
+      );
+
+      expect(mockK8sApply).not.toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
+      });
+    });
+
     it("processes all UDS packages and calls caBundleConfigMap for each", async () => {
       UDSConfig.caBundle.certs = validCertBase64;
       UDSConfig.isIdentityDeployed = true;
@@ -655,7 +681,9 @@ describe("CA Bundle ConfigMap", () => {
         return Promise.resolve({});
       });
 
-      await updateAllCaBundleConfigMaps();
+      await expect(updateAllCaBundleConfigMaps()).rejects.toThrow(
+        /Failed to update CA bundle ConfigMaps for all packages/,
+      );
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
       expect(mockK8sApply).toHaveBeenCalledTimes(4); // Namespace + 2 packages + Istio CM

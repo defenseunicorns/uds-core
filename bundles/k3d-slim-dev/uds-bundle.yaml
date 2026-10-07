@@ -7,13 +7,16 @@ metadata:
   name: k3d-core-slim-dev
   description: A UDS bundle for deploying Istio from UDS Core on a development cluster
   # x-release-please-start-version
-  version: "1.11.0"
+  version: "1.14.0"
   # x-release-please-end
 
 packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
-    ref: 0.20.2-airgap
+    ref: 0.21.2-airgap
+    keylessVerification:
+      certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-k3d/\.github/workflows/publish\.yaml@refs/tags/v\d+\.\d+\.\d+
+      certificateOIDCIssuer: https://token.actions.githubusercontent.com
     overrides:
       uds-dev-stack:
         minio:
@@ -33,7 +36,7 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.83.0
+    ref: v0.87.0
     keylessVerification:
       certificateIdentityRegexp: https://github\.com/zarf-dev/zarf/\.github/workflows/release\.yml@refs/tags/v\d+\.\d+\.\d+
       certificateOIDCIssuer: https://token.actions.githubusercontent.com
@@ -41,7 +44,7 @@ packages:
   - name: core-base
     path: ../../build/
     # x-release-please-start-version
-    ref: 1.11.0
+    ref: 1.14.0
     # x-release-please-end
     overrides:
       pepr-uds-core:
@@ -64,6 +67,12 @@ packages:
               path: "admission.resources.requests.cpu"
               default: "100m"
       istio-controlplane:
+        cni:
+          values:
+            - path: "istioOwnedCNIConfig"
+              value: true
+            - path: "ambient.enableAmbientDetectionRetry"
+              value: true
         istiod:
           variables:
             - name: ISTIOD_MEMORY_REQUEST
@@ -123,7 +132,7 @@ packages:
   - name: core-identity-authorization
     path: ../../build/
     # x-release-please-start-version
-    ref: 1.11.0
+    ref: 1.14.0
     # x-release-please-end
     overrides:
       authservice:

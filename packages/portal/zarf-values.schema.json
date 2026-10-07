@@ -18,6 +18,7 @@
         "uds-portal": {
           "properties": {
             "adminApps": {
+              "additionalProperties": false,
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -26,6 +27,7 @@
               "type": "object"
             },
             "classificationBanner": {
+              "additionalProperties": false,
               "properties": {
                 "addFooter": {
                   "type": "boolean"
@@ -34,15 +36,25 @@
                   "type": "boolean"
                 },
                 "text": {
-                  "type": "string"
+                  "pattern": "^([Uu][Nn][Cc][Ll][Aa][Ss][Ss][Ii][Ff][Ii][Ee][Dd]|[Cc][Uu][Ii]|[Cc][Oo][Nn][Ff][Ii][Dd][Ee][Nn][Tt][Ii][Aa][Ll]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Tt][Oo][Pp] [Ss][Ee][Cc][Rr][Ee][Tt](//[Ss][Cc][Ii])?|[Uu][Nn][Kk][Nn][Oo][Ww][Nn]|)$",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "type": "object"
             },
             "extraVolumeMounts": {
+              "items": {
+                "type": "object"
+              },
               "type": "array"
             },
             "extraVolumes": {
+              "items": {
+                "type": "object"
+              },
               "type": "array"
             },
             "package": {

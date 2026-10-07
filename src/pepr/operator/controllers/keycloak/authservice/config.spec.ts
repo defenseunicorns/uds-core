@@ -95,6 +95,7 @@ vi.mock("pepr", () => ({
       info: vi.fn(),
       error: vi.fn(),
       warn: vi.fn(),
+      debug: vi.fn(),
       level: "info",
     })),
   },
@@ -106,6 +107,8 @@ vi.mock("pepr", () => ({
 }));
 
 describe("AuthService Config Tests", () => {
+  const namespaceGetMock = vi.fn();
+  const namespaceApplyMock = vi.fn();
   const applyMock = vi
     .fn<(s: kind.Secret) => Promise<kind.Secret>>()
     .mockImplementation((s: kind.Secret) =>
@@ -162,6 +165,11 @@ describe("AuthService Config Tests", () => {
           InNamespace: vi.fn().mockReturnThis(),
           Get: getMock,
         };
+      } else if (kindType === kind.Namespace) {
+        return {
+          Get: namespaceGetMock.mockResolvedValue({ metadata: { name: "authservice" } }),
+          Apply: namespaceApplyMock,
+        };
       } else {
         return {
           Apply: vi.fn(),
@@ -171,8 +179,56 @@ describe("AuthService Config Tests", () => {
 
     await setupAuthserviceSecret();
 
-    expect(applyMock).toHaveBeenCalledTimes(0); // Apply should be called once
+    expect(applyMock).toHaveBeenCalledTimes(0);
+    expect(namespaceApplyMock).not.toHaveBeenCalled();
+    expect(namespaceGetMock).toHaveBeenCalledWith("authservice");
     expect(getMock).toHaveBeenCalledTimes(1); // Get should be called once
+  });
+
+  it("setupAuthserviceSecret should create the namespace when it does not exist", async () => {
+    const getMock = vi.fn<() => Promise<kind.Secret>>().mockResolvedValue({
+      metadata: { name: "authservice-uds" },
+      data: {
+        "config.json": btoa(JSON.stringify(getConfig())),
+      },
+    });
+
+    namespaceGetMock.mockRejectedValue({ status: 404, message: "not found" });
+
+    (K8s as Mock).mockImplementation(kindType => {
+      if (kindType === kind.Secret) {
+        return {
+          Apply: applyMock,
+          InNamespace: vi.fn().mockReturnThis(),
+          Get: getMock,
+        };
+      } else if (kindType === kind.Namespace) {
+        return {
+          Get: namespaceGetMock,
+          Apply: namespaceApplyMock,
+        };
+      } else {
+        return {
+          Apply: vi.fn(),
+        };
+      }
+    });
+
+    await setupAuthserviceSecret();
+
+    expect(namespaceApplyMock).toHaveBeenCalledWith({
+      metadata: { name: "authservice" },
+    });
+    expect(applyMock).not.toHaveBeenCalled();
+  });
+
+  it("should not create the namespace when the namespace lookup fails", async () => {
+    const error = { status: 500, message: "server error" };
+    namespaceGetMock.mockRejectedValue(error);
+
+    await expect(setupAuthserviceSecret()).rejects.toEqual(error);
+
+    expect(namespaceApplyMock).not.toHaveBeenCalled();
   });
 
   it("updateAuthServiceSecret should debounce and update the Kubernetes secret", async () => {

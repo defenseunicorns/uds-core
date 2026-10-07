@@ -977,6 +977,10 @@
           "type": "boolean",
           "description": "Whether the SSO client is enabled"
         },
+        "fullScopeAllowed": {
+          "type": "boolean",
+          "description": "Controls which roles Keycloak includes in tokens for this client. When enabled, Keycloak\nincludes all roles assigned to the authenticated subject. When disabled, Keycloak limits\nroles according to the client's role scope mappings and linked client scopes. When\nomitted, UDS Core preserves Keycloak's normal behavior. Set this to false whenever\npossible to limit role scope and harden security."
+        },
         "groups": {
           "$ref": "#/definitions/Groups",
           "description": "The client SSO group type"

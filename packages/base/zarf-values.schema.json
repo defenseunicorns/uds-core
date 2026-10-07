@@ -34,6 +34,31 @@
                         "labels": {
                           "properties": {},
                           "type": "object"
+                        },
+                        "securityContext": {
+                          "properties": {
+                            "fsGroup": {
+                              "type": "number"
+                            },
+                            "runAsGroup": {
+                              "type": "number"
+                            },
+                            "runAsNonRoot": {
+                              "type": "boolean"
+                            },
+                            "runAsUser": {
+                              "type": "number"
+                            },
+                            "seccompProfile": {
+                              "properties": {
+                                "type": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -155,6 +180,56 @@
                     "imagePullSecrets": {
                       "type": "array"
                     },
+                    "livenessProbe": {
+                      "properties": {
+                        "httpGet": {
+                          "properties": {
+                            "path": {
+                              "type": "string"
+                            },
+                            "port": {
+                              "type": "number"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "periodSeconds": {
+                          "type": "number"
+                        },
+                        "successThreshold": {
+                          "type": "number"
+                        },
+                        "timeoutSeconds": {
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "readinessProbe": {
+                      "properties": {
+                        "httpGet": {
+                          "properties": {
+                            "path": {
+                              "type": "string"
+                            },
+                            "port": {
+                              "type": "number"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "periodSeconds": {
+                          "type": "number"
+                        },
+                        "successThreshold": {
+                          "type": "number"
+                        },
+                        "timeoutSeconds": {
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "resources": {
                       "properties": {
                         "limits": {
@@ -177,6 +252,42 @@
                           "type": "object"
                         }
                       },
+                      "type": "object"
+                    },
+                    "startupProbe": {
+                      "properties": {
+                        "failureThreshold": {
+                          "type": "number"
+                        },
+                        "httpGet": {
+                          "properties": {
+                            "path": {
+                              "type": "string"
+                            },
+                            "port": {
+                              "type": "number"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "periodSeconds": {
+                          "type": "number"
+                        },
+                        "successThreshold": {
+                          "type": "number"
+                        },
+                        "timeoutSeconds": {
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "strategy": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "wasmCacheVolume": {
+                      "properties": {},
                       "type": "object"
                     }
                   },
@@ -213,6 +324,31 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "securityContext": {
+                      "properties": {
+                        "fsGroup": {
+                          "type": "number"
+                        },
+                        "runAsGroup": {
+                          "type": "number"
+                        },
+                        "runAsNonRoot": {
+                          "type": "boolean"
+                        },
+                        "runAsUser": {
+                          "type": "number"
+                        },
+                        "seccompProfile": {
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "tolerations": {
                       "type": "array"
                     },
@@ -239,9 +375,7 @@
                   },
                   "type": "array"
                 },
-                "priorityClassName": {
-                  "type": "string"
-                },
+                "priorityClassName": {},
                 "replicas": {
                   "type": "number"
                 }
@@ -527,12 +661,8 @@
               },
               "type": "object"
             },
-            "cniBinDir": {
-              "type": "string"
-            },
-            "cniConfDir": {
-              "type": "string"
-            },
+            "cniBinDir": {},
+            "cniConfDir": {},
             "excludeNamespaces": {
               "items": {
                 "type": "string"
@@ -791,6 +921,14 @@
             },
             "domain": {
               "type": "string"
+            },
+            "misdirectedRequest": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
             }
           },
           "type": "object"
@@ -1106,9 +1244,7 @@
                       "name": {
                         "type": "string"
                       },
-                      "value": {
-                        "type": "string"
-                      }
+                      "value": {}
                     },
                     "type": "object"
                   },
@@ -1434,9 +1570,7 @@
                       "name": {
                         "type": "string"
                       },
-                      "value": {
-                        "type": "string"
-                      }
+                      "value": {}
                     },
                     "type": "object"
                   },
@@ -1781,19 +1915,73 @@
     "uds-exemptions": {
       "properties": {
         "uds-exemptions": {
+          "additionalProperties": false,
           "properties": {
             "exemptions": {
+              "additionalProperties": false,
               "properties": {
                 "custom": {
+                  "items": {
+                    "properties": {
+                      "exemptions": {
+                        "items": {
+                          "properties": {
+                            "description": {
+                              "type": "string"
+                            },
+                            "matcher": {
+                              "properties": {
+                                "kind": {
+                                  "enum": [
+                                    "pod",
+                                    "service"
+                                  ],
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "namespace": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "policies": {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            },
+                            "title": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
                   "type": "array"
                 },
                 "istioGatewayNodeport": {
+                  "additionalProperties": false,
                   "properties": {
                     "enabled": {
                       "type": "boolean"
                     },
                     "gateways": {
                       "items": {
+                        "enum": [
+                          "admin",
+                          "tenant",
+                          "passthrough"
+                        ],
                         "type": "string"
                       },
                       "type": "array"
@@ -1813,8 +2001,10 @@
     "uds-operator-config": {
       "properties": {
         "uds-operator-config": {
+          "additionalProperties": false,
           "properties": {
             "cluster": {
+              "additionalProperties": false,
               "properties": {
                 "attributes": {
                   "properties": {
@@ -1822,6 +2012,9 @@
                       "type": "string"
                     },
                     "clusterTags": {
+                      "items": {
+                        "type": "string"
+                      },
                       "type": "array"
                     }
                   },
@@ -1833,10 +2026,16 @@
                       "type": "string"
                     },
                     "includeDoDCerts": {
-                      "type": "string"
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
                     },
                     "includePublicCerts": {
-                      "type": "string"
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
                     }
                   },
                   "type": "object"
@@ -1858,6 +2057,9 @@
                       "type": "string"
                     },
                     "kubeNodeCIDRs": {
+                      "items": {
+                        "type": "string"
+                      },
                       "type": "array"
                     }
                   },
@@ -1866,7 +2068,10 @@
                 "policy": {
                   "properties": {
                     "allowAllNsExemptions": {
-                      "type": "string"
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
                     }
                   },
                   "type": "object"
@@ -1875,14 +2080,29 @@
               "type": "object"
             },
             "operator": {
+              "additionalProperties": false,
               "properties": {
                 "ALLOW_PUBLIC_CLIENTS": {
-                  "type": "boolean"
+                  "enum": [
+                    "true",
+                    "false",
+                    true,
+                    false
+                  ],
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
                 },
                 "AUTHSERVICE_REDIS_URI": {
                   "type": "string"
                 },
                 "KEYCLOAK_CLIENT_MODE": {
+                  "enum": [
+                    "AUTO",
+                    "CLIENT_SECRET",
+                    "SIGNED_JWT"
+                  ],
                   "type": "string"
                 }
               },

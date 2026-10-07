@@ -58,6 +58,9 @@ This guide enables the `proxyProtocol.enabled` value on UDS Core's `uds-istio-co
      - name: core
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          istio-tenant-gateway:
            uds-istio-config:

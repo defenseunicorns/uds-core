@@ -3,10 +3,18 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Expose, Sso } from "../../crd";
 import { UDSConfig } from "../config/config";
-import { generateProbe, getAuthserviceSso } from "./probe";
+import { createProbeKeycloakClient, generateProbe, getAuthserviceSso } from "./probe";
+
+const { credentialsCreateOrUpdate } = vi.hoisted(() => ({
+  credentialsCreateOrUpdate: vi.fn(),
+}));
+
+vi.mock("../keycloak/clients/client-credentials", () => ({
+  credentialsCreateOrUpdate,
+}));
 
 UDSConfig.domain = "uds.dev";
 UDSConfig.adminDomain = "admin.uds.dev";
@@ -190,5 +198,28 @@ describe("getAuthserviceSso", () => {
       },
     ];
     expect(getAuthserviceSso(expose, ssoEntries)).toBeUndefined();
+  });
+});
+
+describe("createProbeKeycloakClient", () => {
+  it("disables full scope for the probe client", async () => {
+    credentialsCreateOrUpdate.mockResolvedValue({
+      clientId: "uds-app-probe",
+      secret: "secret",
+    });
+
+    await createProbeKeycloakClient({
+      name: "App SSO",
+      clientId: "uds-app",
+      redirectUris: ["https://app.uds.dev/login"],
+      enableAuthserviceSelector: { app: "app" },
+    });
+
+    expect(credentialsCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: "uds-app-probe",
+        fullScopeAllowed: false,
+      }),
+    );
   });
 });

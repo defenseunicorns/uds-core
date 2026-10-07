@@ -130,6 +130,7 @@
               },
               "type": "object"
             },
+            "hostUsers": {},
             "imagePullSecrets": {
               "type": "array"
             },
@@ -172,6 +173,9 @@
             "nameOverride": {
               "type": "string"
             },
+            "namespaceOverride": {
+              "type": "string"
+            },
             "nodeSelector": {
               "properties": {},
               "type": "object"
@@ -185,15 +189,9 @@
                 "enabled": {
                   "type": "boolean"
                 },
-                "maxUnavailable": {
-                  "type": "string"
-                },
-                "minAvailable": {
-                  "type": "string"
-                },
-                "unhealthyPodEvictionPolicy": {
-                  "type": "string"
-                }
+                "maxUnavailable": {},
+                "minAvailable": {},
+                "unhealthyPodEvictionPolicy": {}
               },
               "type": "object"
             },
@@ -262,9 +260,7 @@
               },
               "type": "object"
             },
-            "revisionHistoryLimit": {
-              "type": "string"
-            },
+            "revisionHistoryLimit": {},
             "schedulerName": {
               "type": "string"
             },

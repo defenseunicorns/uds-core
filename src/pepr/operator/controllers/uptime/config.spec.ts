@@ -236,7 +236,7 @@ describe("setupUptimeConfig", () => {
 
   it("creates the namespace when it does not exist", async () => {
     process.env.PEPR_WATCH_MODE = "true";
-    namespaceClient.Get.mockRejectedValue(new Error("not found"));
+    namespaceClient.Get.mockRejectedValue({ status: 404, message: "not found" });
     secretClient.Get.mockResolvedValue(makeBlackboxSecret(BLACKBOX_BASE_CONFIG));
 
     await setupUptimeConfig();
@@ -244,6 +244,16 @@ describe("setupUptimeConfig", () => {
     expect(namespaceClient.Apply).toHaveBeenCalledWith(
       expect.objectContaining({ metadata: { name: BLACKBOX_CONFIG_NAMESPACE } }),
     );
+  });
+
+  it("does not create the namespace when the namespace lookup fails", async () => {
+    process.env.PEPR_WATCH_MODE = "true";
+    const error = { status: 500, message: "server error" };
+    namespaceClient.Get.mockRejectedValue(error);
+
+    await expect(setupUptimeConfig()).rejects.toEqual(error);
+
+    expect(namespaceClient.Apply).not.toHaveBeenCalled();
   });
 
   it("skips secret creation when it already exists", async () => {

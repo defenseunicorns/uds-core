@@ -1,6 +1,9 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+{{- $domain := .Values.domain }}
+{{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -161,7 +164,6 @@ spec:
             - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmConfig.maxInFlightLoginsPerUser | default 300 }}"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
-            - "--hostname-strict=false"
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
@@ -206,12 +208,22 @@ spec:
               value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
             {{- end }}
             # Common configuration
-            {{- $domain := .Values.domain }}
-            {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
             - name: UDS_DOMAIN
               value: "{{ $domain }}"
             - name: UDS_ADMIN_DOMAIN
               value: "{{ $adminDomain }}"
+            - name: UDS_CLUSTER_DOMAIN
+              value: "{{ .Values.clusterDomain }}"
+
+            # Keep native Keycloak hostname settings together in the pod environment.
+            - name: KC_HOSTNAME
+              value: "https://sso.{{ $domain }}"
+            - name: KC_HOSTNAME_ADMIN
+              value: "https://keycloak.{{ $adminDomain }}"
+            - name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC
+              value: "true"
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
 
             # Enable health and metrics endpoints
             - name: KC_HEALTH_ENABLED

@@ -101,7 +101,7 @@ components:
     required: true
     charts:
       - name: gateway
-        url: https://istio-release.storage.googleapis.com/charts
+        url: https://blob.istio.io/istio-release/charts
         version: 1.30.3
         releaseName: admin-ingressgateway
         namespace: istio-admin-gateway
@@ -130,7 +130,7 @@ components:
     required: true
     charts:
       - name: gateway
-        url: https://istio-release.storage.googleapis.com/charts
+        url: https://blob.istio.io/istio-release/charts
         version: 1.30.3
         releaseName: tenant-ingressgateway
         namespace: istio-tenant-gateway
@@ -159,7 +159,7 @@ components:
     required: false
     charts:
       - name: gateway
-        url: https://istio-release.storage.googleapis.com/charts
+        url: https://blob.istio.io/istio-release/charts
         version: 1.30.3
         releaseName: passthrough-ingressgateway
         namespace: istio-passthrough-gateway
@@ -203,7 +203,7 @@ components:
     # @lulaEnd 643060b2-0ddf-4728-9582-ef38dca7447a
     charts:
       - name: gateway
-        url: https://istio-release.storage.googleapis.com/charts
+        url: https://blob.istio.io/istio-release/charts
         version: 1.30.3
         releaseName: egressgateway
         namespace: istio-egress-gateway

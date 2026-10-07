@@ -55,11 +55,21 @@ export async function setupAuthserviceSecret() {
 
     log.info("One-time authservice secret initialization");
     // Ensure the namespace exists in the Kubernetes cluster
-    await K8s(kind.Namespace).Apply({
-      metadata: {
-        name: operatorConfig.namespace,
-      },
-    });
+    try {
+      const namespace = await K8s(kind.Namespace).Get(operatorConfig.namespace);
+      log.debug(`Namespace ${namespace.metadata?.name} exists, skipping creation`);
+    } catch (error) {
+      if (error?.status !== 404) {
+        throw error;
+      }
+
+      log.info(`Namespace ${operatorConfig.namespace} does not exist, creating it`);
+      await K8s(kind.Namespace).Apply({
+        metadata: {
+          name: operatorConfig.namespace,
+        },
+      });
+    }
 
     // Create the secret if it doesn't exist
     try {

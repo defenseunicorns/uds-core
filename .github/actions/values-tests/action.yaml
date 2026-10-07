@@ -1,0 +1,15 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: values-tests
+description: "Run UDS Core package values tests"
+
+runs:
+  using: composite
+  steps:
+    - name: Environment setup
+      uses: ./.github/actions/setup-tools
+
+    - name: Run Values Tests
+      run: uds run test:values-tests
+      shell: bash

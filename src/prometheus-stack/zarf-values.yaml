@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Default Zarf values for the Prometheus-Stack package.
+prometheus-operator-crds:
+  prometheus-operator-crds: {}
 kube-prometheus-stack:
   kube-prometheus-stack: {}
   uds-prometheus-config: {}

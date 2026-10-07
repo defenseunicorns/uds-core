@@ -8,7 +8,7 @@ metadata:
   description: "Rehydratable UDS K3d + UDS Core Slim (Istio, UDS Operator and Keycloak) Checkpoint"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "1.11.0"
+  version: "1.14.0"
   # x-release-please-end
 
 variables:
@@ -105,6 +105,15 @@ components:
               linux: bash
               darwin: bash
             description: "Create the cluster"
+
+          - description: Ztunnel to be Healthy
+            wait:
+              cluster:
+                kind: Pod
+                name: app=ztunnel
+                namespace: istio-system
+                condition: Ready
+
           # Wait on Keycloak since it is the slowest pod to start after cluster
           # creation.
           - description: Keycloak to be Healthy

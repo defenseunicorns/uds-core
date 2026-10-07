@@ -19,16 +19,12 @@ import {
 const PKG = "monitoring";
 
 let scenarioManifests: Map<string, K8sResource[]>;
+let manifests: K8sResource[];
 
 beforeAll(async () => {
-  scenarioManifests = await preRenderDomainScenarios(PKG);
-});
-
-describe("monitoring package values", () => {
-  let manifests: K8sResource[];
-
-  beforeAll(async () => {
-    manifests = await renderManifests(PKG, {
+  [scenarioManifests, manifests] = await Promise.all([
+    preRenderDomainScenarios(PKG),
+    renderManifests(PKG, {
       values: {
         "kube-prometheus-stack": {
           "kube-prometheus-stack": {
@@ -59,9 +55,11 @@ describe("monitoring package values", () => {
           },
         },
       },
-    });
-  });
+    }),
+  ]);
+});
 
+describe("monitoring package values", () => {
   it("prometheus has seven replicas", () => {
     const r = findResource(manifests, "Prometheus", "kube-prometheus-stack-prometheus");
     expect(resourceNumber(r, "spec", "replicas")).toBe(7);
@@ -129,16 +127,19 @@ describe.each(DOMAIN_SCENARIOS)(
       expect(ini).toContain(`grafana.${expectedAdminDomain}%2Flogin`);
     });
 
-    it("grafana SSO redirect URI for generic_oauth uses expected admin domain", () => {
+    it("grafana SSO web origin uses the exact admin domain", () => {
       const r = findResource(manifests, "Package", "grafana");
-      const redirectUris = resourceStringArray(r, "spec", "sso", 0, "redirectUris");
-      expect(redirectUris).toContain(`https://grafana.${expectedAdminDomain}/login/generic_oauth`);
+      const webOrigins = resourceStringArray(r, "spec", "sso", 0, "webOrigins");
+      expect(webOrigins).toEqual([`https://grafana.${expectedAdminDomain}`]);
     });
 
-    it("grafana SSO redirect URI for login uses expected admin domain", () => {
+    it("grafana SSO redirect URIs use the exact admin domain and required paths", () => {
       const r = findResource(manifests, "Package", "grafana");
       const redirectUris = resourceStringArray(r, "spec", "sso", 0, "redirectUris");
-      expect(redirectUris).toContain(`https://grafana.${expectedAdminDomain}/login`);
+      expect(redirectUris).toEqual([
+        `https://grafana.${expectedAdminDomain}/login/generic_oauth`,
+        `https://grafana.${expectedAdminDomain}/login`,
+      ]);
     });
   },
 );

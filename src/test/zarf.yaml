@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -8,6 +8,13 @@ metadata:
   url: https://github.com/defenseunicorns/uds-core
 
 components:
+  - name: vector-node-log-test-exemption
+    required: true
+    manifests:
+      - name: vector-node-log-test-exemption
+        files:
+          - "vector-node-log-test-exemption.yaml"
+
   # Things needed for Loki testing
   - name: loki-test
     required: true
@@ -16,6 +23,11 @@ components:
       - name: loki-ruler-test-configmap
         files:
           - "loki-ruler-test-configmap.yaml"
+      - name: vector-node-log-test
+        files:
+          - "vector-node-log-test-daemonset.yaml"
+    images:
+      - curlimages/curl:latest
 
   # Deploy package CRs
   - name: test-app-packages
@@ -65,6 +77,9 @@ components:
       - name: egress-ambient-test
         files:
           - "app-egress-ambient.yaml"
+      - name: passthrough-test
+        files:
+          - "app-passthrough.yaml"
     images:
       - docker.io/kong/httpbin:0.2.3
       - hashicorp/http-echo:latest
@@ -78,11 +93,11 @@ components:
         localPath: ./chart
         version: 0.1.0
       - name: podinfo
-        version: 6.14.1
+        version: 6.15.0
         namespace: podinfo
         url: https://github.com/stefanprodan/podinfo.git
         gitPath: charts/podinfo
         valuesFiles:
           - ./podinfo-values.yaml
     images:
-      - ghcr.io/stefanprodan/podinfo:6.14.1
+      - ghcr.io/stefanprodan/podinfo:6.15.0

@@ -33,13 +33,8 @@ Specifically:
 Before starting, ensure that you have the following installed:
 
 - **Git**: [Install Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- **K3d**: [Install K3d](https://k3d.io/#installation)
-- **Node.js** (for building and running Pepr): [Install Node.js](https://nodejs.org/en/download/) (we recommend Node 24 to align with what CI tests/builds with)
-- **UDS CLI** (for running tasks and deploying): [Install UDS](https://docs.defenseunicorns.com/cli/getting-started/installation/)
-- **Go** (for pre-commit tooling): [Install Go](https://go.dev/doc/install)
-- **Helm** (for development and testing): [Install Helm](https://helm.sh/docs/intro/install/)
-- **Helm Unittest Plugin** (for development and testing): [Install Helm unittest](https://github.com/helm-unittest/helm-unittest?tab=readme-ov-file#install)
-- **uv** is required for running linting tooling:  [Install uv](https://docs.astral.sh/uv/getting-started/installation).
+- **mise**: [Install mise](https://mise.jdx.dev/installing-mise.html)
+- **Container runtime**: Install [Docker](https://docs.docker.com/get-docker/), [Colima](https://github.com/abiosoft/colima), or another Docker-compatible runtime.
 
 #### Setting Up Your Local Repository
 
@@ -60,12 +55,18 @@ git checkout -b my-feature-branch
 
 We use pre-commit hooks to ensure code quality and consistency. These checks run automatically when you commit code and help catch issues early.
 
-**Setup Pre-Commit with Husky:**
+**Set up pre-commit with hk:**
 
 ```console
-# Initialize husky hooks (only needed once after cloning)
-npx husky
+# Install pinned development tools
+mise trust && mise install
+
+# Initialize hk hooks through mise
+hk install --mise
 ```
+
+> [!NOTE]
+> Ensure mise is activated in your shell before running repo tools directly, such as `uds`, `hk`, or `helm`. Reference the [mise shell activation docs](https://mise.jdx.dev/getting-started.html#activate-mise) for your shell.
 
 **Required Tools:**
 
@@ -80,8 +81,8 @@ Our pre-commit and linting checks validate:
 The easiest way to install all required dependencies is:
 
 ```console
-# Install the helm-unittest plugin
-helm plugin install https://github.com/helm-unittest/helm-unittest.git
+# Install pinned development tools
+mise trust && mise install
 
 # Run the lint-check task
 uds run lint-check

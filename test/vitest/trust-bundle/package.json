@@ -9,6 +9,6 @@
     "@types/node": "^24.0.0",
     "kubernetes-fluent-client": "^3.6.3",
     "typescript": "^7.0.0",
-    "vitest": "^4.0.0"
+    "vitest": "^5.0.0"
   }
 }

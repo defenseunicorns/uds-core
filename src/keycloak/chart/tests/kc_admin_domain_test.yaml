@@ -21,6 +21,51 @@ tests:
             name: UDS_ADMIN_DOMAIN
             value: "admin.custom.example.com"
 
+  - it: should configure public and admin Keycloak hostnames
+    set:
+      domain: "custom.example.com"
+      adminDomain: "mgmt.example.com"
+      clusterDomain: "cluster.internal"
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_HOSTNAME
+            value: "https://sso.custom.example.com"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_HOSTNAME_ADMIN
+            value: "https://keycloak.mgmt.example.com"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_HOSTNAME_STRICT
+            value: "false"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UDS_CLUSTER_DOMAIN
+            value: "cluster.internal"
+
+  - it: should derive the admin hostname from domain when adminDomain is unset
+    set:
+      domain: "custom.example.com"
+      adminDomain: ""
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_HOSTNAME_ADMIN
+            value: "https://keycloak.admin.custom.example.com"
+
   - it: should use explicit adminDomain when set
     set:
       domain: "custom.example.com"

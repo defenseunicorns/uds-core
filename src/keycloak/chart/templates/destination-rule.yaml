@@ -14,4 +14,7 @@ spec:
         httpCookie:
           name: {{ include "keycloak.fullname" . }}-session
           ttl: 0s
+          # Preserve the existing SameSite behavior for OIDC iframe flows.
+          attributes:
+            - name: Secure
 {{- end }}

@@ -17,12 +17,12 @@ tasks:
         description: "Generate CRD YAML files"
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.11 crd src/pepr/uds-cluster-crds/templates/packages.uds.dev.yaml src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.12.4 crd src/pepr/uds-cluster-crds/templates/packages.uds.dev.yaml src/pepr/operator/crd/generated
         description: "Generate TS types for packages.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.11 crd src/pepr/uds-cluster-crds/templates/packages.uds.dev.yaml -l json-schema schemas
+          npx kubernetes-fluent-client@3.12.4 crd src/pepr/uds-cluster-crds/templates/packages.uds.dev.yaml -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/package-v1alpha1.json-schema schemas/package-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
@@ -32,12 +32,12 @@ tasks:
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.11 crd src/pepr/uds-cluster-crds/templates/exemptions.uds.dev.yaml src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.12.4 crd src/pepr/uds-cluster-crds/templates/exemptions.uds.dev.yaml src/pepr/operator/crd/generated
         description: "Generate TS types for exemptions.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.11 crd src/pepr/uds-cluster-crds/templates/exemptions.uds.dev.yaml -l json-schema schemas
+          npx kubernetes-fluent-client@3.12.4 crd src/pepr/uds-cluster-crds/templates/exemptions.uds.dev.yaml -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/exemption-v1alpha1.json-schema schemas/exemption-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
@@ -47,12 +47,12 @@ tasks:
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.11 crd src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.12.4 crd src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml src/pepr/operator/crd/generated
         description: "Generate TS types for clusterconfig.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.11 crd src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml -l json-schema schemas
+          npx kubernetes-fluent-client@3.12.4 crd src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/clusterconfig-v1alpha1.json-schema schemas/clusterconfig-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
@@ -65,16 +65,15 @@ tasks:
           darwin: bash
           linux: bash
         cmd: |
-          # check for addlicense bin
-          if [ -x "$HOME/go/bin/addlicense" ]; then
-            echo "addlicense installed in $HOME/go/bin"
+          if command -v addlicense >/dev/null 2>&1; then
+            echo "addlicense installed"
           else
-            echo "Error: addlicense is not installed in $HOME/go/bin" >&2
+            echo "Error: addlicense is not installed" >&2
             exit 1
           fi
-          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/sources
-          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/generated
-          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/uds-cluster-crds/templates
+          addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/sources
+          addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/generated
+          addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/uds-cluster-crds/templates
 
       - task: gen-docs
 

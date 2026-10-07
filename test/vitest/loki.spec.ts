@@ -3,7 +3,6 @@
  */
 
 import * as net from "net";
-import { K8s, kind } from "kubernetes-fluent-client";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
 import { pollUntilSuccess } from "./helpers/polling";
@@ -107,6 +106,15 @@ const checkLokiServices = async (
 };
 
 // Unified log validation function
+const hasLogLine = (
+  queryData: {
+    status: string;
+    data: { result: Array<{ values: string[][] }> };
+  },
+  logMessage: string,
+): boolean =>
+  queryData.data.result.some(stream => stream.values.some(value => value.includes(logMessage)));
+
 const validateLogInQuery = (
   queryData: {
     status: string;
@@ -116,10 +124,7 @@ const validateLogInQuery = (
 ): void => {
   expect(queryData).toHaveProperty("status", "success");
   expect(Array.isArray(queryData.data.result)).toBe(true);
-  const logExists = queryData.data.result.some(stream =>
-    stream.values.some(value => value.includes(logMessage)),
-  );
-  expect(logExists).toBe(true);
+  expect(hasLogLine(queryData, logMessage)).toBe(true);
 };
 
 // Vitest test cases
@@ -134,10 +139,13 @@ describe("Loki Tests", () => {
   }, 30000);
 
   afterAll(async () => {
-    await closeForward(lokiBackend.server);
-    await closeForward(lokiRead.server);
-    await closeForward(lokiWrite.server);
-    await closeForward(lokiGateway.server);
+    await Promise.all(
+      [lokiBackend, lokiRead, lokiWrite, lokiGateway]
+        .filter(
+          (component): component is { server: net.Server; url: string } => component !== undefined,
+        )
+        .map(component => closeForward(component.server)),
+    );
   });
 
   test("Validate pod logs from vector are present in Loki", async () => {
@@ -174,28 +182,6 @@ describe("Loki Tests", () => {
       expect(data.data.result.length).toBeGreaterThan(0);
     },
   );
-
-  // Temporarily skipped because node-log availability is environment-dependent.
-  test.skip("Validate Vector node-log host label", async () => {
-    const nodeName = (
-      await K8s(kind.Pod).InNamespace("vector").WithLabel("app.kubernetes.io/name", "vector").Get()
-    ).items.find(pod => pod.spec?.nodeName)?.spec?.nodeName;
-
-    expect(nodeName).toBeDefined();
-
-    const data = await pollUntilSuccess(
-      () =>
-        queryLogs(
-          `{collector="vector", job=~"varlogs|kubernetes-logs", host=${JSON.stringify(nodeName)}}`,
-        ),
-      result => result.status === "success" && result.data.result.length > 0,
-      "Vector node logs with the expected host label to be available in Loki",
-      120000,
-      2000,
-    );
-    expect(data).toHaveProperty("status", "success");
-    expect(data.data.result.length).toBeGreaterThan(0);
-  }, 125000);
 
   test("Send log to Loki-write and validate in Loki-read", async () => {
     const logMessage = "Test log from vitest";

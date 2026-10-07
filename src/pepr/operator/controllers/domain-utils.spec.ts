@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { Expose } from "../crd";
 import { UDSConfig } from "./config/config";
-import { getFqdn } from "./domain-utils";
+import { getExposureKey, getFqdn } from "./domain-utils";
 
 UDSConfig.domain = "uds.dev";
 UDSConfig.adminDomain = "admin.uds.dev";
@@ -35,5 +35,11 @@ describe("getFqdn", () => {
   it("should use expose.domain when specified for custom gateways", () => {
     const expose: Expose = { host: "app", gateway: "custom-gateway", domain: "custom.example.com" };
     expect(getFqdn(expose)).toEqual("app.custom.example.com");
+  });
+});
+
+describe("getExposureKey", () => {
+  it("normalizes gateway and FQDN casing", () => {
+    expect(getExposureKey({ host: "App", gateway: "Tenant" })).toEqual("tenant:app.uds.dev");
   });
 });

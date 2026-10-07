@@ -535,6 +535,11 @@ const sso = {
         type: "boolean",
         default: false,
       },
+      fullScopeAllowed: {
+        description:
+          "Controls which roles Keycloak includes in tokens for this client. When enabled, Keycloak includes all roles assigned to the authenticated subject. When disabled, Keycloak limits roles according to the client's role scope mappings and linked client scopes. When omitted, UDS Core preserves Keycloak's normal behavior. Set this to false whenever possible to limit role scope and harden security.",
+        type: "boolean",
+      },
       standardFlowEnabled: {
         description:
           "Enables the standard OpenID Connect redirect based authentication with authorization code.",

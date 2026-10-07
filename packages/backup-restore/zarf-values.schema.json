@@ -6,6 +6,9 @@
       "properties": {
         "uds-velero-config": {
           "properties": {
+            "additionalNetworkAllow": {
+              "type": "array"
+            },
             "storage": {
               "properties": {
                 "egressCidr": {
@@ -57,8 +60,31 @@
                 "backupStorageLocation": {
                   "items": {
                     "properties": {
+                      "accessMode": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "annotations": {
+                        "type": "object"
+                      },
+                      "backupSyncPeriod": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
                       "bucket": {
-                        "type": "string"
+                        "type": [
+                          "string"
+                        ]
+                      },
+                      "caCert": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
                       },
                       "config": {
                         "properties": {
@@ -85,56 +111,53 @@
                         },
                         "type": "object"
                       },
+                      "default": {
+                        "type": [
+                          "boolean",
+                          "null"
+                        ]
+                      },
                       "name": {
-                        "type": "string"
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "prefix": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
                       },
                       "provider": {
-                        "type": "string"
+                        "type": [
+                          "string"
+                        ]
+                      },
+                      "validationFrequency": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
                       }
                     },
                     "type": "object"
                   },
                   "type": "array"
                 },
-                "backupSyncPeriod": {
-                  "type": "string"
-                },
-                "clientBurst": {
-                  "type": "string"
-                },
-                "clientPageSize": {
-                  "type": "string"
-                },
-                "clientQPS": {
-                  "type": "string"
-                },
-                "dataMoverPrepareTimeout": {
-                  "type": "string"
-                },
-                "defaultBackupStorageLocation": {
-                  "type": "string"
-                },
-                "defaultBackupTTL": {
-                  "type": "string"
-                },
-                "defaultItemOperationTimeout": {
-                  "type": "string"
-                },
-                "defaultRepoMaintainFrequency": {
-                  "type": "string"
-                },
-                "defaultSnapshotMoveData": {
-                  "type": "string"
-                },
-                "defaultVolumeSnapshotLocations": {
-                  "type": "string"
-                },
-                "defaultVolumesToFsBackup": {
-                  "type": "string"
-                },
-                "disableControllers": {
-                  "type": "string"
-                },
+                "backupSyncPeriod": {},
+                "clientBurst": {},
+                "clientPageSize": {},
+                "clientQPS": {},
+                "dataMoverPrepareTimeout": {},
+                "defaultBackupStorageLocation": {},
+                "defaultBackupTTL": {},
+                "defaultItemOperationTimeout": {},
+                "defaultRepoMaintainFrequency": {},
+                "defaultSnapshotMoveData": {},
+                "defaultVolumeSnapshotLocations": {},
+                "defaultVolumesToFsBackup": {},
+                "disableControllers": {},
                 "disableInformerCache": {
                   "type": "boolean"
                 },
@@ -144,44 +167,77 @@
                 "extraEnvVars": {
                   "type": "array"
                 },
-                "features": {
-                  "type": "string"
-                },
-                "fsBackupTimeout": {
-                  "type": "string"
-                },
-                "garbageCollectionFrequency": {
-                  "type": "string"
-                },
-                "itemBlockWorkerCount": {
-                  "type": "string"
-                },
-                "logFormat": {
-                  "type": "string"
-                },
-                "logLevel": {
-                  "type": "string"
-                },
-                "metricsAddress": {
-                  "type": "string"
-                },
+                "features": {},
+                "fsBackupTimeout": {},
+                "garbageCollectionFrequency": {},
+                "itemBlockWorkerCount": {},
+                "logFormat": {},
+                "logLevel": {},
+                "metricsAddress": {},
                 "namespace": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
-                "pluginDir": {
-                  "type": "string"
-                },
-                "profilerAddress": {
-                  "type": "string"
-                },
+                "pluginDir": {},
+                "profilerAddress": {},
                 "repositoryMaintenanceJob": {
                   "properties": {
+                    "latestJobsCount": {
+                      "type": "number"
+                    },
+                    "limits": {
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
                     "repositoryConfigData": {
                       "properties": {
                         "global": {
                           "properties": {
                             "keepLatestMaintenanceJobs": {
                               "type": "number"
+                            },
+                            "loadAffinity": {
+                              "items": {
+                                "properties": {
+                                  "nodeSelector": {
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
+                            "podResources": {
+                              "properties": {
+                                "cpuLimit": {
+                                  "type": "string"
+                                },
+                                "cpuRequest": {
+                                  "type": "string"
+                                },
+                                "memoryLimit": {
+                                  "type": "string"
+                                },
+                                "memoryRequest": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "priorityClassName": {
+                              "type": "string"
                             }
                           },
                           "type": "object"
@@ -190,30 +246,70 @@
                           "type": "string"
                         },
                         "repositories": {
+                          "additionalProperties": {
+                            "properties": {
+                              "keepLatestMaintenanceJobs": {
+                                "type": "number"
+                              },
+                              "loadAffinity": {
+                                "items": {
+                                  "properties": {
+                                    "nodeSelector": {
+                                      "type": "object"
+                                    }
+                                  },
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              },
+                              "podResources": {
+                                "properties": {
+                                  "cpuLimit": {
+                                    "type": "string"
+                                  },
+                                  "cpuRequest": {
+                                    "type": "string"
+                                  },
+                                  "memoryLimit": {
+                                    "type": "string"
+                                  },
+                                  "memoryRequest": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
                           "properties": {},
                           "type": "object"
                         }
                       },
                       "type": "object"
+                    },
+                    "requests": {
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": [
+                        "object",
+                        "null"
+                      ]
                     }
                   },
                   "type": "object"
                 },
-                "restoreOnlyMode": {
-                  "type": "string"
-                },
-                "restoreResourcePriorities": {
-                  "type": "string"
-                },
-                "storeValidationFrequency": {
-                  "type": "string"
-                },
-                "terminatingResourceTimeout": {
-                  "type": "string"
-                },
-                "uploaderType": {
-                  "type": "string"
-                },
+                "restoreOnlyMode": {},
+                "restoreResourcePriorities": {},
+                "storeValidationFrequency": {},
+                "terminatingResourceTimeout": {},
+                "uploaderType": {},
                 "volumeSnapshotLocation": {
                   "items": {
                     "properties": {
@@ -227,20 +323,21 @@
                       },
                       "credential": {
                         "properties": {
-                          "key": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          }
+                          "key": {},
+                          "name": {}
                         },
                         "type": "object"
                       },
                       "name": {
-                        "type": "string"
+                        "type": [
+                          "string",
+                          "null"
+                        ]
                       },
                       "provider": {
-                        "type": "string"
+                        "type": [
+                          "string"
+                        ]
                       }
                     },
                     "type": "object"
@@ -253,7 +350,10 @@
             "credentials": {
               "properties": {
                 "existingSecret": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "extraEnvVars": {
                   "properties": {},
@@ -263,7 +363,10 @@
                   "type": "string"
                 },
                 "name": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "secretContents": {
                   "properties": {
@@ -489,9 +592,7 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "nodePort": {
-                      "type": "string"
-                    },
+                    "nodePort": {},
                     "type": {
                       "type": "string"
                     }
@@ -761,7 +862,10 @@
                 "server": {
                   "properties": {
                     "annotations": {
-                      "type": "string"
+                      "type": [
+                        "object",
+                        "null"
+                      ]
                     },
                     "automountServiceAccountToken": {
                       "type": "boolean"
@@ -770,13 +874,22 @@
                       "type": "boolean"
                     },
                     "imagePullSecrets": {
+                      "items": {
+                        "type": "string"
+                      },
                       "type": "array"
                     },
                     "labels": {
-                      "type": "string"
+                      "type": [
+                        "object",
+                        "null"
+                      ]
                     },
                     "name": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "type": "object"

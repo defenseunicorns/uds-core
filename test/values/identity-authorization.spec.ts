@@ -19,21 +19,16 @@ import {
 const PKG = "identity-authorization";
 
 let scenarioManifests: Map<string, K8sResource[]>;
+let manifests: K8sResource[];
 
 beforeAll(async () => {
-  scenarioManifests = await preRenderDomainScenarios(PKG);
-});
-
-describe("identity-authorization package values", () => {
-  let manifests: K8sResource[];
-
-  beforeAll(async () => {
-    manifests = await renderManifests(PKG, {
+  [scenarioManifests, manifests] = await Promise.all([
+    preRenderDomainScenarios(PKG),
+    renderManifests(PKG, {
       values: {
         keycloak: {
           keycloak: {
             podLabels: { probe: "PROBE_VISIBLE" },
-            image: { repository: "SHOULD_NOT_APPEAR" },
             configImage: "ghcr.io/example/uds-identity-config:custom",
           },
         },
@@ -44,9 +39,11 @@ describe("identity-authorization package values", () => {
           },
         },
       },
-    });
-  });
+    }),
+  ]);
+});
 
+describe("identity-authorization package values", () => {
   it("keycloak statefulset has probe label", () => {
     const r = findResource(manifests, "StatefulSet", "keycloak");
     expect(resourceString(r, "spec", "template", "metadata", "labels", "probe")).toBe(
@@ -66,8 +63,22 @@ describe("identity-authorization package values", () => {
     expect(resourceNumber(r, "spec", "replicas")).toBe(7);
   });
 
-  it("excludePaths block SHOULD_NOT_APPEAR values", () => {
+  it("authservice excludePaths block SHOULD_NOT_APPEAR values", () => {
     expectNoExcludedValues(manifests);
+  });
+
+  it("keycloak image override is rejected by Zarf schema validation", async () => {
+    await expect(
+      renderManifests(PKG, {
+        values: {
+          keycloak: {
+            keycloak: {
+              image: { repository: "SHOULD_NOT_APPEAR" },
+            },
+          },
+        },
+      }),
+    ).rejects.toThrow("Additional property image is not allowed");
   });
 });
 

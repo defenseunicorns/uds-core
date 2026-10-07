@@ -9,9 +9,15 @@
  * Used in Pepr Validating Webhook Pods when vetting UDS Package resources for admission
  */
 import { Component, setupLogger } from "../../../logger";
+import { Expose, UDSPackage } from "../../crd";
+import {
+  AdvancedHTTPMatch,
+  ExposeMatch,
+  ExposeProtocol,
+  Mode,
+} from "../../crd/generated/package-v1alpha1";
+import { getExposureKey } from "../domain-utils";
 import { getUDPGatewayPortKey } from "../envoy-gateway/constants";
-import { UDSPackage } from "../../crd";
-import { ExposeProtocol, Mode } from "../../crd/generated/package-v1alpha1";
 const log = setupLogger(Component.OPERATOR_PACKAGES);
 
 // Map structure: namespace -> (package name -> package)
@@ -19,6 +25,24 @@ export type PackageNamespaceMap = Map<string, Map<string, UDSPackage>>;
 let packageNamespaceMap: PackageNamespaceMap;
 let ssoIndex: Map<string, Set<string>>;
 let udpGatewayPortIndex: Map<string, Set<string>>;
+
+function hasObjectProperties(value: object | undefined): boolean {
+  return value !== undefined && Object.keys(value).length > 0;
+}
+
+function hasEffectiveHTTPMatch(match: AdvancedHTTPMatch | ExposeMatch): boolean {
+  const hasQueryParamMatch = Object.values(match.queryParams ?? {}).some(hasObjectProperties);
+
+  return hasObjectProperties(match.uri) || hasObjectProperties(match.method) || hasQueryParamMatch;
+}
+
+function hasAdvancedHTTPMatch(expose: Expose): boolean {
+  const matches = expose.advancedHTTP?.match ?? expose.match;
+
+  // Istio treats the entries in match as OR conditions. A single unconstrained
+  // entry therefore makes the whole route a catch-all.
+  return Boolean(matches?.length && matches.every(hasEffectiveHTTPMatch));
+}
 
 /**
  * Initializes the package namespace map, along with the SSO client index and
@@ -97,6 +121,10 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
     return;
   }
 
+  // Read stored copy before deletion so FQDN cleanup uses the indexed spec, not the
+  // event-delivered object (which may be stale on watch reconnects).
+  const storedPkg = namespaceMap.get(name);
+
   // Remove the package
   namespaceMap.delete(name);
 
@@ -105,7 +133,10 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
     packageNamespaceMap.delete(namespace);
   }
 
-  removeIndexes(pkg);
+  // Use the stored spec because the event-delivered object may be stale on watch reconnects.
+  if (storedPkg) {
+    removeIndexes(storedPkg);
+  }
 
   if (logger) {
     log.debug(`Removed package: ${namespace}/${name} from package map`);
@@ -212,6 +243,38 @@ function removeIndexes(pkg: UDSPackage): void {
 }
 
 /**
+ * Finds the namespace of a package whose expose entry conflicts with the given entry.
+ * Catch-all entries conflict with any matching gateway and FQDN; two entries that both
+ * define advancedHTTP.match can share a host for path-based routing.
+ *
+ * @param {Expose} expose - The expose entry to look up.
+ * @param {string} [namespace] - The namespace requesting the lookup, which is excluded.
+ * @returns {string | undefined} - The namespace of the owning package, or undefined if not found.
+ */
+function findNamespaceForExpose(expose: Expose, namespace?: string): string | undefined {
+  const hasMatch = hasAdvancedHTTPMatch(expose);
+  const exposureKey = getExposureKey(expose);
+
+  for (const namespaceMap of packageNamespaceMap.values()) {
+    for (const pkg of namespaceMap.values()) {
+      const packageNamespace = pkg.metadata?.namespace;
+      if (!packageNamespace || packageNamespace === namespace) continue;
+
+      const hasConflictingExpose = (pkg.spec?.network?.expose ?? []).some(
+        indexedExpose =>
+          indexedExpose.protocol !== ExposeProtocol.UDP &&
+          getExposureKey(indexedExpose) === exposureKey &&
+          (!hasMatch || !hasAdvancedHTTPMatch(indexedExpose)),
+      );
+
+      if (hasConflictingExpose) return packageNamespace;
+    }
+  }
+
+  return undefined;
+}
+
+/**
  * Finds all packages that have ambient waypoint enabled
  * @returns Array of UDSPackage objects with ambient waypoint enabled
  */
@@ -248,6 +311,7 @@ export const PackageStore = {
   hasKey,
   getPkgName,
   findPackagesWithSsoClientId,
+  findNamespaceForExpose,
   findPackagesWithUdpGatewayPort,
   getAmbientPackages,
   getPackageByNamespace,

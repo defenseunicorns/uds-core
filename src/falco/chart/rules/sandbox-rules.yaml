@@ -1972,3 +1972,96 @@
   output: Container accessing host filesystem paths | file=%fd.name evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: WARNING
   tags: [maturity_sandbox, container, filesystem, mitre_privilege_escalation, T1611]
+
+#############################################################################
+# GPU / accelerator cryptojacking and unauthorized device access
+#
+# The existing cryptominer rules (Stratum protocol, known miner pool ports,
+# known miner process names) are CPU- and network-centric. They miss GPU
+# cryptojacking entirely: an attacker mining on a GPU need not use a renamed
+# known miner binary nor connect to a known pool domain, but it must open a
+# GPU character device to submit work. These rules add a complementary
+# device-access signal scoped to containers, where direct accelerator access
+# from an unexpected workload is anomalous. T1496 (Resource Hijacking).
+#############################################################################
+
+# GPU and accelerator character devices. Opening one of these is required to
+# submit compute work to NVIDIA (CUDA) or AMD (ROCm) hardware.
+#   /dev/nvidiactl, /dev/nvidia-uvm, /dev/nvidia-uvm-tools: NVIDIA control and
+#     Unified Virtual Memory devices.
+#   /dev/nvidia0../dev/nvidiaN: per-GPU NVIDIA devices (matched by prefix).
+#   /dev/kfd: AMD ROCm Kernel Fusion Driver compute device.
+#   /dev/dri/renderD*: DRM render nodes used by ROCm/OpenCL for compute.
+- list: gpu_device_files
+  items: [/dev/nvidiactl, /dev/nvidia-uvm, /dev/nvidia-uvm-tools, /dev/kfd]
+
+- macro: open_gpu_device
+  condition: >
+    (open_read or open_write)
+    and (fd.name in (gpu_device_files) or
+         fd.name startswith /dev/nvidia or
+         fd.name startswith /dev/dri/renderD)
+
+# Userspace tooling that queries or manages NVIDIA/AMD GPUs. Legitimate when run
+# by an ML/HPC workload; suspicious when spawned inside a workload that has no
+# business touching the accelerator (e.g. a web frontend or a sidecar).
+#
+# Names are the kernel comm form (task->comm is char[16]: 15 chars plus NUL), as
+# matched by proc.name. Do not "correct" these to their full binary names or they
+# will never match: nvidia-debugdum(p), nvidia-persiste(nced),
+# nvidia-cuda-mps(-control). Same convention as nvidia-installe and
+# unicorn_launche in falco_rules.yaml.
+- list: gpu_management_binaries
+  items: [nvidia-smi, nvidia-debugdum, nvidia-persiste, nvidia-cuda-mps, rocm-smi, rocminfo]
+
+# Tuning hook for environments where specific images legitimately use the GPU.
+# Override with the set of container images (or other criteria) that are
+# expected to access accelerators, e.g.:
+#   - macro: user_known_gpu_workloads
+#     condition: (container.image.repository in (my_ml_images))
+- macro: user_known_gpu_workloads
+  condition: (never_true)
+
+# Disabled by default: in clusters with legitimate ML, HPC, or rendering
+# workloads this rule is noisy until user_known_gpu_workloads is tuned to the
+# set of images expected to access the GPU. Enable after tuning.
+- rule: Container Accessing GPU Device
+  desc: >
+    Detects a container process opening an NVIDIA or AMD GPU or accelerator character device.
+    Opening such a device is required to submit compute work to the hardware, making this a
+    high-signal indicator of GPU cryptojacking when it originates from a workload that is not
+    expected to use accelerators. It complements the network- and process-name-centric
+    cryptominer rules, which a GPU miner can evade by using an unknown binary name and an
+    unknown mining pool. Because a miner cannot submit work to a GPU without opening the device,
+    this device open is a reliable behavioral chokepoint for the Resource Hijacking technique.
+  condition: >
+    open_gpu_device
+    and container
+    and not user_known_gpu_workloads
+  enabled: false
+  output: Container accessing GPU device | device=%fd.name evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
+  priority: CRITICAL
+  tags: [maturity_sandbox, container, filesystem, mitre_impact, T1496]
+
+# Disabled by default for the same reason as the rule above: it is gated on the
+# same untuned user_known_gpu_workloads macro, so until an operator declares
+# which images are expected to touch the accelerator this rule cannot tell a
+# routine nvidia-smi in an ML image from an attacker fingerprinting the GPU.
+# Enable after tuning.
+- rule: GPU Management Tool Run in Container
+  desc: >
+    Detects execution of an NVIDIA or AMD GPU management or query tool, such as nvidia-smi or
+    rocm-smi, inside a container. Attackers commonly run these tools immediately after gaining
+    access to a GPU-equipped node to fingerprint the available accelerators before deploying a
+    miner. Inside a workload container this is rarely legitimate outside of machine learning and
+    HPC images. It is a signature-style detection that pairs with the device-access rule to
+    provide both a behavioral and a signature view of the same accelerator-hijacking technique.
+  condition: >
+    spawned_process
+    and container
+    and proc.name in (gpu_management_binaries)
+    and not user_known_gpu_workloads
+  enabled: false
+  output: GPU management tool run in container | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
+  priority: CRITICAL
+  tags: [maturity_sandbox, container, process, mitre_impact, T1496]

@@ -157,6 +157,7 @@ export async function createProbeKeycloakClient(
   const client = await credentialsCreateOrUpdate({
     clientId: probeClientId,
     name: `${sso.name} Uptime Probe`,
+    fullScopeAllowed: false,
     serviceAccountsEnabled: true,
     standardFlowEnabled: false,
     protocolMappers: [
