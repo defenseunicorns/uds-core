@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.30.0/tasks/lint.yaml
+  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.30.1/tasks/lint.yaml
 
 tasks:
   - name: fix
@@ -20,6 +20,7 @@ tasks:
     actions:
       - description: install pepr deps
         cmd: npm ci
+      - task: remote:renovate
       - description: "Format check"
         cmd: npm run format:check
       - description: Build the Pepr module for values lint
