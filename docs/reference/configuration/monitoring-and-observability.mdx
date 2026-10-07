@@ -1,11 +1,66 @@
 ---
 title: Monitoring & Observability
-description: Complete reference for UDS Core monitoring configuration surfaces, covering built-in Grafana dashboards and the Package CR uptime probe fields.
+description: Reference for UDS Core monitoring configuration, including Grafana gateway selection, built-in dashboards, and uptime probes.
 sidebar:
   order: 3.002
 ---
 
-UDS Core's monitoring stack exposes configuration surfaces at two levels: built-in platform monitoring that works out of the box, and application-level uptime probes that operators configure through the `Package` CR.
+UDS Core configures Grafana access, built-in dashboards, and endpoint monitoring. You can select Grafana's gateway through Helm values and configure application uptime probes through the `Package` CR.
+
+## Grafana gateway
+
+Grafana uses the admin gateway by default. Set `grafana.uds-grafana-config.gateway` to `tenant` in a native Zarf values file to expose Grafana through the tenant gateway.
+
+The field belongs to the `uds-grafana-config` chart:
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `gateway` | string | `admin` | Selects the `admin` or `tenant` gateway for Grafana ingress and Keycloak redirect URIs |
+
+The UDS Operator maps these short values to the following Istio gateways. The hostname uses the selected gateway's domain:
+
+| Value | Istio gateway (namespace/name) | Grafana hostname |
+|---|---|---|
+| `admin` | `istio-admin-gateway/admin-gateway` | `grafana.<admin-domain>` |
+| `tenant` | `istio-tenant-gateway/tenant-gateway` | `grafana.<tenant-domain>` |
+
+The admin domain comes from `global.adminDomain`, and the tenant domain comes from `global.domain`. Reference [Zarf values](/reference/configuration/zarf-values/#domains) for domain defaults and precedence.
+
+Changing `gateway` updates the `Package` exposure and registered Keycloak redirect URIs. You must also override Grafana's `server.root_url` and `auth.generic_oauth.signout_redirect_url` to match the tenant hostname. These application URLs retain their admin defaults unless you override them.
+
+Gateway selection preserves Grafana's existing access restrictions: `/UDS Core/Admin` grants the Grafana `Admin` role, and `/UDS Core/Auditor` grants the `Viewer` role. Users still authenticate through Keycloak in the `uds` realm.
+
+### Tenant gateway example
+
+This native Zarf values file exposes Grafana at `https://grafana.example.com` and returns users there after logout. Configure DNS to resolve that hostname to the tenant gateway, and ensure the tenant gateway's TLS certificate covers it.
+
+```yaml title="grafana-tenant-values.yaml"
+global:
+  domain: example.com
+
+grafana:
+  uds-grafana-config:
+    gateway: tenant
+  grafana:
+    # grafana.ini and auth.generic_oauth are literal keys containing dots.
+    grafana.ini:
+      server:
+        root_url: https://grafana.example.com
+      auth.generic_oauth:
+        # URL-encode the Grafana login URL in post_logout_redirect_uri.
+        signout_redirect_url: >-
+          https://sso.example.com/realms/uds/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2Fgrafana.example.com%2Flogin
+```
+
+Deploy the Core package with this values file, replacing the archive filename with your package:
+
+```bash
+uds zarf package deploy zarf-package-core-amd64-x.x.x.tar.zst \
+  --values grafana-tenant-values.yaml \
+  --confirm
+```
+
+The resulting Grafana ingress, root URL, login callback, and post-logout return URL all use `grafana.example.com`. Replace `example.com` in the values file with your tenant domain, including the encoded logout return URL. Reference [Zarf values](/reference/configuration/zarf-values/) for the deployment requirements and chart value namespaces.
 
 ## Built-in monitoring
 
@@ -27,6 +82,8 @@ UDS Core includes endpoint probes for core services out of the box. These create
 | Keycloak (SSO)   | tenant  | `/`, `/realms/uds/.well-known/openid-configuration` | `uds-sso-tenant-uptime`     |
 | Keycloak (admin) | admin   | `/`                                                 | `uds-keycloak-admin-uptime` |
 | Grafana          | admin   | `/healthz`                                          | `uds-grafana-admin-uptime`  |
+
+If you select the tenant gateway for Grafana, its probe uses the tenant hostname and the name `uds-grafana-tenant-uptime`. The monitored path remains `/healthz`.
 
 #### Disabling default probes
 

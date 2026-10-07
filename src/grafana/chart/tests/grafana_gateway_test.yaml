@@ -1,0 +1,84 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Grafana Gateway Configuration
+set:
+  domain: "example.com"
+  adminDomain: "admin.example.com"
+templates:
+  - uds-package.yaml
+tests:
+  - it: should use the admin gateway and callbacks by default
+    asserts:
+      - equal:
+          path: spec.network.expose[0].gateway
+          value: admin
+      - equal:
+          path: spec.sso[0].redirectUris
+          value:
+            - "https://grafana.admin.example.com/login/generic_oauth"
+            - "https://grafana.admin.example.com/login"
+      - equal:
+          path: spec.sso[0].groups.anyOf
+          value:
+            - "/UDS Core/Admin"
+            - "/UDS Core/Auditor"
+
+  - it: should use the tenant gateway and callbacks while retaining SSO groups
+    set:
+      gateway: tenant
+    asserts:
+      - equal:
+          path: spec.network.expose[0].gateway
+          value: tenant
+      - equal:
+          path: spec.sso[0].redirectUris
+          value:
+            - "https://grafana.example.com/login/generic_oauth"
+            - "https://grafana.example.com/login"
+      - equal:
+          path: spec.sso[0].groups.anyOf
+          value:
+            - "/UDS Core/Admin"
+            - "/UDS Core/Auditor"
+
+  - it: should fall back to the admin domain when adminDomain is empty
+    set:
+      adminDomain: ""
+    asserts:
+      - equal:
+          path: spec.network.expose[0].gateway
+          value: admin
+      - equal:
+          path: spec.sso[0].redirectUris
+          value:
+            - "https://grafana.admin.example.com/login/generic_oauth"
+            - "https://grafana.admin.example.com/login"
+
+  - it: should fall back to the admin domain when the package variable is unresolved
+    set:
+      adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+    asserts:
+      - equal:
+          path: spec.network.expose[0].gateway
+          value: admin
+      - equal:
+          path: spec.sso[0].redirectUris
+          value:
+            - "https://grafana.admin.example.com/login/generic_oauth"
+            - "https://grafana.admin.example.com/login"
+
+  - it: should retain an explicit custom admin domain
+    set:
+      adminDomain: "operations.example.com"
+    asserts:
+      - equal:
+          path: spec.network.expose[0].gateway
+          value: admin
+      - equal:
+          path: spec.sso[0].redirectUris
+          value:
+            - "https://grafana.operations.example.com/login/generic_oauth"
+            - "https://grafana.operations.example.com/login"
