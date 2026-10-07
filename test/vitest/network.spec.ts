@@ -885,19 +885,6 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
     "https://sso.uds.dev/realms/master/.well-known/openid-configuration",
   ];
 
-  const UNTRUSTED_BACKCHANNEL_CURL = [
-    "curl",
-    "-sS",
-    "-m",
-    "3",
-    "-H",
-    "Host: sso.uds.dev",
-    "-H",
-    "X-Forwarded-Host: attacker.example",
-    "-w",
-    " HTTP_CODE:%{http_code}",
-    "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/.well-known/openid-configuration",
-  ];
   const FORGED_FORWARDING_HEADER_CURL = [
     "curl",
     "-s",
@@ -914,20 +901,6 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
   const redirect_response = await execInPod("test-admin-app", testAdminApp, "curl", SSO_CURL);
   const keycloakRedirectDebug = `Keycloak SSO redirect response: stdout=${redirect_response.stdout}, stderr=${redirect_response.stderr}`;
   expect(redirect_response.stdout, keycloakRedirectDebug).toContain("HTTP_CODE:301");
-
-  // Direct HTTP access to Keycloak must be reset even when a caller supplies a valid SSO host.
-  const denied_backchannel_response = await execInPod(
-    "test-admin-app",
-    testAdminApp,
-    "curl",
-    UNTRUSTED_BACKCHANNEL_CURL,
-  );
-  const backchannelDeniedDebug = `Keycloak direct HTTP response: exitCode=${denied_backchannel_response.exitCode}, stdout=${denied_backchannel_response.stdout}, stderr=${denied_backchannel_response.stderr}`;
-  expect(denied_backchannel_response.exitCode, backchannelDeniedDebug).toBe(56);
-  expect(denied_backchannel_response.stdout, backchannelDeniedDebug).toContain("HTTP_CODE:000");
-  expect(denied_backchannel_response.stderr, backchannelDeniedDebug).toContain(
-    "Connection reset by peer",
-  );
 
   // The tenant gateway must discard caller-supplied forwarding hosts before proxying to Keycloak.
   const alternate_host_discovery = await execInPod(

@@ -40,17 +40,12 @@ spec:
           app.kubernetes.io/name: prometheus-blackbox-exporter
         port: 9000
 
-      - description: "Keycloak backchannel access for Core services"
+      - description: "Keycloak backchannel access"
         direction: Ingress
         selector:
           app.kubernetes.io/name: keycloak
-        remoteNamespace: pepr-system
-        port: 8080
-      - description: "Keycloak backchannel access for Fleet"
-        direction: Ingress
-        selector:
-          app.kubernetes.io/name: keycloak
-        remoteNamespace: uds-fleet-command
+        # Allow access from anything in cluster using an empty namespace selector
+        remoteNamespace: "*"
         port: 8080
 
       # Keycloak OCSP to check certs cannot guarantee a static IP
