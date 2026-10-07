@@ -1404,6 +1404,29 @@ describe("pod-reload", () => {
       });
     });
 
+    it("retries creation pods even when an updated resource has an invalid selector", async () => {
+      const affected = pod("old-optional", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      setupK8sMock({ items: [affected] });
+      const createdSecret = secret();
+      createdSecret.metadata!.annotations = {
+        [SSA_CLEANUP_ANNOTATION]: "true",
+        "uds.dev/pod-reload-selector": "app:invalid",
+      };
+      vi.mocked(utils.reloadPods).mockRejectedValueOnce(new Error("creation reload failed"));
+
+      await expect(handleSecretUpdate(createdSecret)).rejects.toThrow("creation reload failed");
+      const updatedSecret = { ...createdSecret, data: { key: "bmV3" } } as kind.Secret;
+      await expect(handleSecretUpdate(updatedSecret)).rejects.toThrow("Invalid selector format");
+
+      expect(vi.mocked(utils.reloadPods).mock.calls[1]?.[1]).toEqual([affected]);
+      expect(secretReloadStateCache.get(`${namespace}/${resourceName}`)).toEqual({
+        checksum: computeResourceChecksum(updatedSecret.data!),
+        status: "updating",
+      });
+    });
+
     it("does not reload an overlapping pod twice when creation and update targets combine", async () => {
       const affected = pod("affected", [
         { name: "config", secret: { secretName: resourceName, optional: true } },

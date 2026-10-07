@@ -352,43 +352,60 @@ export async function handleResourceUpdate(
     const selectorStr = resource.metadata?.annotations?.["uds.dev/pod-reload-selector"];
 
     let updatePods: kind.Pod[];
-    if (selectorStr) {
-      const selector = parseSelectorString(selectorStr);
-      if (!selector) {
-        const errorMsg = `Invalid selector format in uds.dev/pod-reload-selector annotation for ${resourceType.toLowerCase()} ${namespace}/${name}: ${selectorStr}. Expected format: key1=value1,key2=value2`;
-        log.error(
-          { resource: name, namespace, selector: selectorStr, type: resourceType },
-          errorMsg,
+    try {
+      if (selectorStr) {
+        const selector = parseSelectorString(selectorStr);
+        if (!selector) {
+          const errorMsg = `Invalid selector format in uds.dev/pod-reload-selector annotation for ${resourceType.toLowerCase()} ${namespace}/${name}: ${selectorStr}. Expected format: key1=value1,key2=value2`;
+          log.error(
+            { resource: name, namespace, selector: selectorStr, type: resourceType },
+            errorMsg,
+          );
+          throw new Error(errorMsg);
+        }
+
+        log.debug(
+          { resource: name, namespace, selector, type: resourceType },
+          `Using explicit pod selector from ${resourceType.toLowerCase()} annotation for reload`,
         );
-        throw new Error(errorMsg);
-      }
 
-      log.debug(
-        { resource: name, namespace, selector, type: resourceType },
-        `Using explicit pod selector from ${resourceType.toLowerCase()} annotation for reload`,
-      );
+        // Build query with each label
+        let podQuery = K8s(kind.Pod).InNamespace(namespace);
+        for (const [key, value] of Object.entries(selector)) {
+          podQuery = podQuery.WithLabel(key, value);
+        }
 
-      // Build query with each label
-      let podQuery = K8s(kind.Pod).InNamespace(namespace);
-      for (const [key, value] of Object.entries(selector)) {
-        podQuery = podQuery.WithLabel(key, value);
+        async function getPodsWithSelector() {
+          return podQuery.Get();
+        }
+        const pods = await retryWithDelay(getPodsWithSelector, log);
+        updatePods = pods.items;
+      } else {
+        // No explicit selector, use auto-discovery
+        log.debug(
+          { resource: name, namespace, type: resourceType },
+          `Auto-discovering ${resourceType.toLowerCase()} consumers`,
+        );
+        async function getPodsUsingResource() {
+          return discoverResourceConsumers(namespace, name);
+        }
+        updatePods = await retryWithDelay(getPodsUsingResource, log);
       }
-
-      async function getPodsWithSelector() {
-        return podQuery.Get();
+    } catch (error) {
+      if (changedDuringCreation) {
+        // Update targeting failed, but the optional-mount pods can still finish creation reload.
+        if (podsToReload.length > 0) {
+          await reloadPods(
+            namespace,
+            podsToReload,
+            `${resourceType} ${name} change`,
+            log,
+            `${resourceType}Changed`,
+          );
+        }
+        checkpoint("updating");
       }
-      const pods = await retryWithDelay(getPodsWithSelector, log);
-      updatePods = pods.items;
-    } else {
-      // No explicit selector, use auto-discovery
-      log.debug(
-        { resource: name, namespace, type: resourceType },
-        `Auto-discovering ${resourceType.toLowerCase()} consumers`,
-      );
-      async function getPodsUsingResource() {
-        return discoverResourceConsumers(namespace, name);
-      }
-      updatePods = await retryWithDelay(getPodsUsingResource, log);
+      throw error;
     }
 
     // A changed resource can have old optional-mount pods and newer update consumers.
