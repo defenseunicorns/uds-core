@@ -99,7 +99,7 @@ jobs:
         # windows that cause webhook proxy errors.
         run: |
           for attempt in 1 2 3; do
-            if CLI_FEATURES=NextMode=true ./uds bundle dev deploy \
+            if CLI_FEATURES=NextMode=true uds bundle dev deploy \
               ./.github/bundles/aks \
               --config .github/bundles/aks/config.uds.hcl; then
               echo "CORE_ATTEMPTS=$attempt" >> "$GITHUB_ENV"
@@ -216,7 +216,7 @@ jobs:
         run: |
           set +e
           for attempt in 1 2 3; do
-            if CLI_FEATURES=NextMode=true ./uds bundle dev remove \
+            if CLI_FEATURES=NextMode=true uds bundle dev remove \
               ./.github/bundles/aks \
               --config .github/bundles/aks/config.uds.hcl; then
               break
