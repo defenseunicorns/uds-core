@@ -499,6 +499,37 @@ describe("networkPolicies", () => {
     });
   });
 
+  it("generates provider-independent ambient waypoint policies for external authorization", async () => {
+    const externalAuthorizationPkg: UDSPackage = {
+      metadata: {
+        name: "ollama",
+        namespace: "ollama",
+        generation: 1,
+      },
+      spec: {
+        network: {
+          serviceMesh: {
+            mode: Mode.Ambient,
+            externalAuthorization: {
+              provider: "opa",
+              selector: { "app.kubernetes.io/name": "ollama" },
+            },
+          },
+        },
+      },
+    };
+
+    const policies = await networkPolicies(externalAuthorizationPkg, "ollama", Mode.Ambient);
+    const names = policies.map(policy => policy.metadata?.name);
+
+    expect(names).toContain("allow-ollama-allow-egress-istiod");
+    expect(names).toContain("allow-ollama-Egress-Allow traffic from ollama-waypoint to app");
+    expect(names).toContain("allow-ollama-Ingress-Allow traffic from ollama-waypoint to app pods");
+    expect(
+      names.some(name => name?.includes("health checks from monitoring to ollama-waypoint")),
+    ).toBe(true);
+  });
+
   it("should skip directResponse services in expose", async () => {
     const directResponsePkg: UDSPackage = {
       ...mockPkg,

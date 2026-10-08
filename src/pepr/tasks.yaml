@@ -28,6 +28,7 @@ tasks:
           # Make the schema strict on additionalProperties
           uds zarf tools yq -i '(.. | select(has("additionalProperties") and .additionalProperties | select(length==0))) |= .additionalProperties = false' schemas/package-v1alpha1.schema.json
           uds zarf tools yq -i '.definitions.Package.additionalProperties = {}' schemas/package-v1alpha1.schema.json
+          uds zarf tools yq -i '.definitions.ExternalAuthorization.properties.selector.minProperties = 1' schemas/package-v1alpha1.schema.json
         description: "Generate JSON schema for packages.uds.dev"
 
       - cmd: |

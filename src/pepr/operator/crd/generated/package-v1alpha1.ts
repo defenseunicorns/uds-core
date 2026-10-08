@@ -770,9 +770,29 @@ export interface Checks {
  */
 export interface ServiceMesh {
   /**
+   * Protects matching workloads with a registered Istio external authorization provider.
+   */
+  externalAuthorization?: ExternalAuthorization;
+  /**
    * Set the service mesh mode for this package (namespace), defaults to ambient
    */
   mode?: Mode;
+}
+
+/**
+ * Protects matching workloads with a registered Istio external authorization provider.
+ */
+export interface ExternalAuthorization {
+  /**
+   * Name of an external authorization provider registered in Istio
+   * meshConfig.extensionProviders.
+   */
+  provider: string;
+  /**
+   * Labels that select workloads and Services to protect. Specify at least one label. The
+   * selector must not overlap an SSO enableAuthserviceSelector in the same package.
+   */
+  selector: { [key: string]: string };
 }
 
 /**
@@ -990,6 +1010,11 @@ export interface StatusObject {
    */
   conditions?: Condition[];
   endpoints?: string[];
+  /**
+   * The external authorization provider reconciled for the current package generation, or an
+   * empty string when disabled.
+   */
+  externalAuthorizationProvider?: string;
   /**
    * The current service mesh mode for this package
    */

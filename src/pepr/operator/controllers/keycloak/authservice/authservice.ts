@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -55,7 +55,11 @@ export async function authservice(
   // Reconcile each client
   for (const sso of authServiceClients) {
     if (isAmbient) {
-      await setupAmbientWaypoint(pkg, sso);
+      await setupAmbientWaypoint(pkg, {
+        id: sso.clientId,
+        selector: sso.enableAuthserviceSelector!,
+        type: "authservice",
+      });
     }
 
     const client = clients.get(sso.clientId);
@@ -99,9 +103,6 @@ export async function purgeAuthserviceClients(
 ): Promise<void> {
   const prevClients = pkg.status?.authserviceClients || [];
 
-  // Check if mesh mode changed
-  const meshModeChanged = previousMeshMode !== currentMeshMode;
-
   // First handle truly removed clients
   const removedClients = prevClients.filter(
     oldClient => !newAuthserviceClients.some(c => c.clientId === oldClient.clientId),
@@ -127,24 +128,23 @@ export async function purgeAuthserviceClients(
     }),
   );
 
-  // Then handle updated clients (selector changes or mesh mode change)
-  const updatedWaypointClients = meshModeChanged
-    ? prevClients // All clients need update if mesh mode changed
-    : prevClients.filter(oldClient => {
-        const newClient = newAuthserviceClients.find(c => c.clientId === oldClient.clientId);
-        if (!newClient) return false; // Already handled by removedClients
-        return JSON.stringify(oldClient.selector) !== JSON.stringify(newClient.selector);
-      });
+  // Selector changes are reconciled to the desired state by setupAmbientWaypoint.
+  // Remove labels here only when an existing ambient client moves to sidecar mode.
+  const clientsLeavingAmbient =
+    previousMeshMode === Mode.Ambient && currentMeshMode === Mode.Sidecar
+      ? prevClients.filter(oldClient =>
+          newAuthserviceClients.some(newClient => newClient.clientId === oldClient.clientId),
+        )
+      : [];
 
-  // Process updated clients (selector changes or mesh mode)
-  for (const client of updatedWaypointClients) {
+  for (const client of clientsLeavingAmbient) {
     const newClient = newAuthserviceClients.find(c => c.clientId === client.clientId);
     const fullWaypointName = getWaypointName(client.clientId);
     if (!newClient) continue;
 
     log.info(
       {
-        reason: meshModeChanged ? "mesh_mode_change" : "selector_changed",
+        reason: "mesh_mode_change",
       },
       `Updating authservice client ${client.clientId}`,
     );

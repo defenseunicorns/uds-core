@@ -12,10 +12,13 @@ import {
   Rule,
   Source,
 } from "../../crd/generated/istio/authorizationpolicy-v1";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { RemoteProtocol } from "../../crd/generated/package-v1alpha1";
+import { Mode, RemoteProtocol } from "../../crd/generated/package-v1alpha1";
 import { IstioState } from "../istio/namespace";
-import { getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
+import {
+  findMatchingWaypointTarget,
+  getWaypointName,
+  shouldUseAmbientWaypoint,
+} from "../istio/waypoint-utils";
 import {
   PROMETHEUS_PRINCIPAL,
   getAuthserviceClients,
@@ -271,12 +274,12 @@ export async function generateAuthorizationPolicies(
       // Skip UDP - authorization policies do not handle UDP traffic
       if (rule.remoteProtocol === RemoteProtocol.UDP) continue;
 
-      const sso = findMatchingSsoClient(pkg, rule.selector);
+      const waypointTarget = findMatchingWaypointTarget(pkg, rule.selector);
       const { source, ports } = processAllowRule(rule, pkgNamespace);
 
-      if (sso) {
+      if (waypointTarget) {
         // Waypoint service handling for allow rules
-        const waypointName = getWaypointName(sso.clientId);
+        const waypointName = getWaypointName(waypointTarget.id);
         const waypointSelector = { "istio.io/gateway-name": waypointName };
 
         const policyName = sanitizeResourceName(
@@ -320,11 +323,11 @@ export async function generateAuthorizationPolicies(
   // Process expose rules
   if (pkg.spec?.network?.expose) {
     for (const rule of pkg.spec.network.expose) {
-      const sso = findMatchingSsoClient(pkg, rule.selector);
+      const waypointTarget = findMatchingWaypointTarget(pkg, rule.selector);
 
-      if (sso) {
+      if (waypointTarget) {
         // Waypoint service handling
-        const waypointName = getWaypointName(sso.clientId);
+        const waypointName = getWaypointName(waypointTarget.id);
         const { source } = processExposeRule(rule);
         const waypointPorts = rule.port ? [rule.port.toString()] : [];
 
@@ -376,11 +379,11 @@ export async function generateAuthorizationPolicies(
       const ports: string[] = [monitor.targetPort.toString()];
 
       // Check if this monitor's selector matches an SSO client
-      const sso = findMatchingSsoClient(pkg, selector);
+      const waypointTarget = findMatchingWaypointTarget(pkg, selector);
 
-      if (sso) {
+      if (waypointTarget) {
         // Waypoint service handling for monitor rules
-        const waypointName = getWaypointName(sso.clientId);
+        const waypointName = getWaypointName(waypointTarget.id);
         const waypointSelector = { "istio.io/gateway-name": waypointName };
 
         const policyName = sanitizeResourceName(
@@ -416,6 +419,15 @@ export async function generateAuthorizationPolicies(
       const denyPolicy = createDenyAllExceptWaypointPolicy(pkg, waypointName, appSelector);
       policies.push(denyPolicy);
     }
+  }
+
+  // Process waypoint deny-all policies for external clients
+  const externalAuthorization = pkg.spec?.network?.serviceMesh?.externalAuthorization;
+  if (externalAuthorization && istioMode === IstioState.Ambient) {
+    const waypointName = getWaypointName(pkgName);
+    policies.push(
+      createDenyAllExceptWaypointPolicy(pkg, waypointName, externalAuthorization.selector),
+    );
   }
 
   // With Prometheus in Ambient mode, all traffic is sent over mTLS and the
