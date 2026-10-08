@@ -11,8 +11,8 @@ import { domain } from "./uds.config";
 const wildcardHosts = [`demo-8080.${domain}`, `demo-8081.${domain}`];
 const passthroughHost = `passthrough-test.${domain}`;
 
-async function connectToTenant(): Promise<ClientHttp2Session> {
-  const session = connect(`https://${wildcardHosts[0]}`, { rejectUnauthorized: false });
+async function connectToTenant(host = wildcardHosts[0]): Promise<ClientHttp2Session> {
+  const session = connect(`https://${host}`, { rejectUnauthorized: false });
   await once(session, "connect");
   return session;
 }
@@ -39,6 +39,13 @@ test("returns 421 when a tenant connection targets a different tenant authority"
     await expect(request(session, wildcardHosts[1])).resolves.toBe(421);
   } finally {
     session.close();
+  }
+
+  const alternateSession = await connectToTenant(wildcardHosts[1]);
+  try {
+    await expect(request(alternateSession, wildcardHosts[1])).resolves.toBe(200);
+  } finally {
+    alternateSession.close();
   }
 });
 
