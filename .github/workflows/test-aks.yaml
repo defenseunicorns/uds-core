@@ -85,7 +85,7 @@ jobs:
         run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
 
       - name: Get Resource Group Name
-        run: echo "AKS_RESOURCE_GROUP=$(tofu output -raw resource_group_name)" >> "$GITHUB_ENV"
+        run: echo "AKS_RESOURCE_GROUP=$(tofu output -raw resource_group_name)" >> $GITHUB_ENV
         working-directory: .github/test-infra/azure/aks
 
       - name: Configure Cluster DNS
@@ -95,16 +95,30 @@ jobs:
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
 
       - name: Deploy Core Bundle
+        # Remove a partial deployment before retrying so Init starts from a clean state.
         run: |
-          if CLI_FEATURES=NextMode=true uds bundle dev deploy \
-            ./.github/bundles/aks \
-            --config .github/bundles/aks/config.uds.hcl; then
-            echo "CORE_ATTEMPTS=1" >> "$GITHUB_ENV"
-          else
-            echo "CORE_ATTEMPTS=fail" >> "$GITHUB_ENV"
-            exit 1
-          fi
-        timeout-minutes: 40
+          for attempt in 1 2 3; do
+            if CLI_FEATURES=NextMode=true uds bundle dev deploy \
+              ./.github/bundles/aks \
+              --config .github/bundles/aks/config.uds.hcl; then
+              echo "CORE_ATTEMPTS=$attempt" >> $GITHUB_ENV
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Deploy failed on attempt $attempt; waiting 30s before removing the partial deployment..."
+              sleep 30
+              if ! CLI_FEATURES=NextMode=true uds bundle dev remove \
+                ./.github/bundles/aks \
+                --config .github/bundles/aks/config.uds.hcl; then
+                echo "CORE_ATTEMPTS=fail" >> $GITHUB_ENV
+                echo "Partial deployment removal failed; refusing to retry over the existing state."
+                exit 1
+              fi
+            fi
+          done
+          echo "CORE_ATTEMPTS=fail" >> $GITHUB_ENV
+          exit 1
+        timeout-minutes: 60
 
       - name: Test UDS Core
         # Retry up to 2 times on failure to ride out transient AKS apiserver
