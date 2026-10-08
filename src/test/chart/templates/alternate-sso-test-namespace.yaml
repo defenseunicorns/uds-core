@@ -1,0 +1,47 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: alternate-sso-test
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: alternate-sso-test
+  namespace: alternate-sso-test
+spec:
+  network:
+    allow:
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: alt-protected-oauth2-proxy
+        remoteNamespace: istio-tenant-gateway
+        remoteSelector:
+          app: tenant-ingressgateway
+        port: 443
+        description: "Alternate-host OIDC provider"
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: alt-protected-oauth2-proxy
+        remoteNamespace: alternate-sso-test
+        remoteSelector:
+          app.kubernetes.io/component: alt-protected-upstream
+        port: 9898
+        description: "Protected test app upstream"
+      - direction: Ingress
+        selector:
+          app.kubernetes.io/component: alt-protected-upstream
+        remoteNamespace: alternate-sso-test
+        remoteSelector:
+          app.kubernetes.io/name: alt-protected-oauth2-proxy
+        port: 9898
+        description: "Protected test app upstream ingress"
+    expose:
+      - service: alt-protected-oauth2-proxy
+        selector:
+          app.kubernetes.io/name: alt-protected-oauth2-proxy
+        gateway: tenant
+        host: alt-protected
+        port: 4180

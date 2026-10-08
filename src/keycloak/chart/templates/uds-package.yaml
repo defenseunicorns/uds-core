@@ -31,15 +31,6 @@ spec:
         remoteServiceAccount: kube-prometheus-stack-prometheus
         port: 15020
 
-      - description: "Keycloak metrics access for Blackbox Exporter"
-        direction: Ingress
-        selector:
-          app.kubernetes.io/name: keycloak
-        remoteNamespace: monitoring
-        remoteSelector:
-          app.kubernetes.io/name: prometheus-blackbox-exporter
-        port: 9000
-
       - description: "Keycloak backchannel access"
         direction: Ingress
         selector:
@@ -185,9 +176,6 @@ spec:
                 - istio-mtls-client-certificate
                 {{- end }}
               add:
-                x-forwarded-host: "%REQ(:AUTHORITY)%"
-                x-forwarded-port: "443"
-                x-forwarded-proto: "https"
                 {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
                 {{- end }}
@@ -220,9 +208,6 @@ spec:
                 - istio-mtls-client-certificate
                 {{- end }}
               add:
-                x-forwarded-host: "%REQ(:AUTHORITY)%"
-                x-forwarded-port: "443"
-                x-forwarded-proto: "https"
                 {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
                 {{- end }}
@@ -262,9 +247,6 @@ spec:
                 - istio-mtls-client-certificate
                 {{- end }}
               add:
-                x-forwarded-host: "%REQ(:AUTHORITY)%"
-                x-forwarded-port: "443"
-                x-forwarded-proto: "https"
                 {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
                 {{- end }}

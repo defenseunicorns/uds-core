@@ -53,7 +53,6 @@ variables = {
   velero_bucket_credential_key  = "cloud"
 
   keycloak_custom_terms_and_conditions = ""
-  keycloak_path_parameter_protection_additional_hosts = []
 
   minio_buckets  = []
   minio_svcaccts = []

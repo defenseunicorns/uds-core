@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { expect, test } from "@playwright/test";
-import { domain } from "./uds.config";
+import { expect, test, type Browser, type BrowserContext } from "@playwright/test";
 
+const domain = "uds.dev";
 const alternateSsoHost = `sso-alt.${domain}`;
 const alternateSsoIssuer = `https://${alternateSsoHost}/realms/uds`;
 const protectedAppUrl = `https://alt-protected.${domain}`;
 const clientId = "alt-podinfo-oidc";
+const primaryClientId = "podinfo";
 
 function decodeJwtClaims(token: string): Record<string, unknown> {
   const payload = token.split(".")[1];
@@ -29,12 +30,20 @@ function getHeader(headers: Record<string, unknown>, name: string): string {
   return header as string;
 }
 
-test("alternate-host OIDC login creates a protected-app session", async ({ browser }) => {
+type AlternateOidcSession = {
+  context: BrowserContext;
+  discoveryIssuer: string;
+  accessToken: string;
+  accessClaims: Record<string, unknown>;
+};
+
+async function loginThroughAlternateHost(browser: Browser): Promise<AlternateOidcSession> {
   const context = await browser.newContext({ ignoreHTTPSErrors: true, storageState: undefined });
-  const page = await context.newPage();
-  let callbackUrl: URL | undefined;
 
   try {
+    const page = await context.newPage();
+    let callbackUrl: URL | undefined;
+
     const discoveryResponse = await context.request.get(
       `https://${alternateSsoHost}/realms/uds/.well-known/openid-configuration`,
       {
@@ -51,11 +60,6 @@ test("alternate-host OIDC login creates a protected-app session", async ({ brows
     expect(discovery.issuer).toBe(alternateSsoIssuer);
     expect(new URL(discovery.authorization_endpoint).hostname).toBe(alternateSsoHost);
     expect(new URL(discovery.token_endpoint).hostname).toBe(alternateSsoHost);
-
-    const pathParameterResponse = await context.request.get(
-      `https://${alternateSsoHost}/realms;unexpected/uds/`,
-    );
-    expect(pathParameterResponse.status()).toBe(400);
 
     page.on("request", request => {
       const url = new URL(request.url());
@@ -122,20 +126,47 @@ test("alternate-host OIDC login creates a protected-app session", async ({ brows
     await expect(page).toHaveURL(protectedAppUrl);
     await expect(page.locator("body")).toContainText("greetings from podinfo");
 
-    const primaryPodinfoResponse = await context.request.get(`https://podinfo.${domain}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+    return {
+      context,
+      discoveryIssuer: discovery.issuer,
+      accessToken,
+      accessClaims,
+    };
+  } catch (error) {
+    await context.close();
+    throw error;
+  }
+}
+
+test("alternate-host OIDC login creates a protected-app session", async ({ browser }) => {
+  const session = await loginThroughAlternateHost(browser);
+  await session.context.close();
+});
+
+test("primary Podinfo rejects the alternate issuer when its audience is valid", async ({
+  browser,
+}) => {
+  const session = await loginThroughAlternateHost(browser);
+
+  try {
+    expect(session.accessClaims.iss).toBe(session.discoveryIssuer);
+    expect(session.accessClaims.aud).toContain(primaryClientId);
+
+    const response = await session.context.request.get(`https://podinfo.${domain}`, {
+      headers: { Authorization: `Bearer ${session.accessToken}` },
     });
+    const responseBody = await response.text();
     console.info(
-      "Podinfo response to the alternate-issuer token",
+      "Primary Podinfo response to an alternate-issuer token with a valid audience",
       JSON.stringify({
-        status: primaryPodinfoResponse.status(),
-        server: primaryPodinfoResponse.headers()["server"],
-        wwwAuthenticate: primaryPodinfoResponse.headers()["www-authenticate"],
-        body: (await primaryPodinfoResponse.text()).slice(0, 300),
+        status: response.status(),
+        server: response.headers()["server"],
+        wwwAuthenticate: response.headers()["www-authenticate"],
+        body: responseBody.slice(0, 300),
       }),
     );
-    expect([401, 403]).toContain(primaryPodinfoResponse.status());
+    expect([401, 403]).toContain(response.status());
   } finally {
-    await context.close();
+    await session.context.close();
   }
 });

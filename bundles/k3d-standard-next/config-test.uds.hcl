@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables = {
-  keycloak_path_parameter_protection_additional_hosts = ["sso-alt.uds.dev"]
   insecure_admin_password_generation = "true"
 
   classification_banners = [

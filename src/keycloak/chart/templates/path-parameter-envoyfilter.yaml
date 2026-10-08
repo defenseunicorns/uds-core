@@ -32,23 +32,11 @@ spec:
                 {{- $domain := .Values.domain }}
                 {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
 
-                -- Include Core's primary hosts. Operators can list additional Keycloak hostnames in chart values.
-                local keycloak_hosts = {
-                  "sso.{{ $domain }}",
-                  "keycloak.{{ $adminDomain }}",
-                  {{- range .Values.pathParameterProtectionAdditionalHosts }}
-                  {{ . | quote }},
-                  {{- end }}
-                }
-                local is_keycloak_host = false
-                for _, keycloak_host in ipairs(keycloak_hosts) do
-                  if host == keycloak_host then
-                    is_keycloak_host = true
-                    break
-                  end
-                end
-
-                if is_keycloak_host then
+                -- Only apply to Core's primary and admin Keycloak endpoints
+                if host and (
+                  host == "sso.{{ $domain }}" or
+                  host == "keycloak.{{ $adminDomain }}"
+                ) then
                   if path then
                     local invalid_semicolon = string.match(path, "^[^;]*;[^/]*/")
                     if invalid_semicolon then

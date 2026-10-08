@@ -24,8 +24,8 @@ tasks:
         default: "true"
 
     actions:
-      - description: Clean up an alternate Keycloak route left by an interrupted prior run
-        task: remove-owned-alt-sso-route
+      - description: Remove a legacy test-owned Keycloak route left by older test runs
+        task: remove-legacy-owned-alt-sso-route
       - description: "Run Test Apps E2E tests"
         task: create-deploy
         with:
@@ -85,26 +85,6 @@ tasks:
       - description: "Create build output directory"
         cmd: "mkdir -p build"
 
-      - description: Expose Keycloak on a temporary alternate SSO host for browser regression tests
-        cmd: |
-          ALT_ROUTE_MARKER="test.uds.dev/created-sso-alt-route"
-          if uds zarf tools kubectl get package keycloak -n keycloak -o json | jq -e '.spec.network.expose[]? | select(.host == "sso-alt" and .gateway == "tenant")' >/dev/null; then
-            # Keep ownership after an interrupted run; leave unmarked pre-existing routes alone.
-            :
-          else
-            uds zarf tools kubectl annotate package keycloak -n keycloak "${ALT_ROUTE_MARKER}=true" --overwrite
-            uds zarf tools kubectl patch package keycloak -n keycloak --type=json --field-manager=zarf -p='[{"op":"add","path":"/spec/network/expose/-","value":{"service":"keycloak-http","selector":{"app.kubernetes.io/name":"keycloak"},"gateway":"tenant","host":"sso-alt","port":8080,"advancedHTTP":{"headers":{"request":{"remove":["x-forwarded-host","x-forwarded-port","x-forwarded-prefix","x-forwarded-proto"],"add":{"x-forwarded-host":"%REQ(:AUTHORITY)%","x-forwarded-port":"443","x-forwarded-proto":"https"}}}}}}]'
-          fi
-          attempt=1
-          until curl --fail --silent --show-error --insecure "https://sso-alt.${DOMAIN:-uds.dev}/realms/uds/" -o /dev/null; do
-            if [ "$attempt" -ge 30 ]; then
-              echo "sso-alt Keycloak route did not become ready after 60 seconds"
-              exit 1
-            fi
-            sleep 2
-            attempt=$((attempt + 1))
-          done
-
       - description: Create zarf package for the test resources
         cmd: uds zarf package create src/test --confirm --skip-sbom -a ${{ index .inputs "architecture" }}
 
@@ -134,7 +114,7 @@ tasks:
             kind: Deployment
             name: alt-protected-oauth2-proxy
             namespace: podinfo
-            condition: available (test(keycloak): exercise alternate-host OIDC session)
+            condition: available
 
       - description: Verify the admin app is accessible
         wait:
@@ -267,10 +247,10 @@ tasks:
             fi
           fi
       - description: Remove the temporary alternate Keycloak host
-        task: remove-owned-alt-sso-route
+        task: remove-legacy-owned-alt-sso-route
 
-  - name: remove-owned-alt-sso-route
-    description: Remove the test-owned alternate Keycloak route, if present
+  - name: remove-legacy-owned-alt-sso-route
+    description: Remove the old test-owned Package exposure, if present
     actions:
       - cmd: |
           ALT_ROUTE_MARKER="test.uds.dev/created-sso-alt-route"

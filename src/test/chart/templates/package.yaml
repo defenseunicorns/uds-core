@@ -8,35 +8,6 @@ metadata:
   namespace: podinfo
 spec:
   network:
-    allow:
-      # OAuth2 Proxy must reach Keycloak's public issuer endpoints for discovery and code exchange.
-      - direction: Egress
-        selector:
-          app.kubernetes.io/name: alt-protected-oauth2-proxy
-        remoteNamespace: istio-tenant-gateway
-        remoteSelector:
-          app: tenant-ingressgateway
-        port: 443
-        description: "Alternate-host OIDC provider"
-      - direction: Egress
-        selector:
-          app.kubernetes.io/name: alt-protected-oauth2-proxy
-        remoteNamespace: podinfo
-        remoteSelector:
-          app.kubernetes.io/component: alt-protected-upstream
-        port: 9898
-        description: "Protected test app upstream"
-      - direction: Ingress
-        selector:
-          app.kubernetes.io/component: alt-protected-upstream
-        remoteNamespace: podinfo
-        remoteSelector:
-          app.kubernetes.io/name: alt-protected-oauth2-proxy
-        port: 9898
-        description: "Protected test app upstream ingress"
-    # Relying on default mesh mode
-    # serviceMesh:
-    #   mode: ambient
     expose:
       - service: podinfo
         selector:
@@ -44,12 +15,6 @@ spec:
         gateway: tenant
         host: podinfo
         port: 9898
-      - service: alt-protected-oauth2-proxy
-        selector:
-          app.kubernetes.io/name: alt-protected-oauth2-proxy
-        gateway: tenant
-        host: alt-protected
-        port: 4180
   monitor:
     - selector:
         app.kubernetes.io/name: podinfo
@@ -68,7 +33,7 @@ spec:
       clientId: podinfo
       fullScopeAllowed: false
       redirectUris:
-        - https://podinfo.{{ .Values.domain }}/login
+        - https://podinfo.uds.dev/login
       enableAuthserviceSelector:
         app.kubernetes.io/name: podinfo
     - name: alternate issuer regression client
@@ -76,13 +41,23 @@ spec:
       secret: alt-issuer-regression-secret
       fullScopeAllowed: false
       redirectUris:
-        - https://alt-protected.{{ .Values.domain }}/oauth2/callback
+        - https://alt-protected.uds.dev/oauth2/callback
       protocolMappers:
         - name: alternate issuer audience
           protocol: openid-connect
           protocolMapper: oidc-audience-mapper
           config:
             included.client.audience: alt-podinfo-oidc
+            access.token.claim: "true"
+            introspection.token.claim: "true"
+            id.token.claim: "false"
+            lightweight.claim: "false"
+            userinfo.token.claim: "false"
+        - name: primary Podinfo audience for issuer regression
+          protocol: openid-connect
+          protocolMapper: oidc-audience-mapper
+          config:
+            included.client.audience: podinfo
             access.token.claim: "true"
             introspection.token.claim: "true"
             id.token.claim: "false"

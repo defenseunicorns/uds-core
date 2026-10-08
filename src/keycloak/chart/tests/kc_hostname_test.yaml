@@ -24,44 +24,53 @@ tests:
           content:
             name: KC_HOSTNAME
 
-  - it: should overwrite forwarded host at every Keycloak gateway route
+  - it: should overwrite forwarded headers with the configured host at every Keycloak gateway route
     template: uds-package.yaml
     asserts:
       - contains:
           path: spec.network.expose[0].advancedHTTP.headers.request.remove
-          content: x-forwarded-host
+          content: Forwarded
+      - contains:
+          path: spec.network.expose[0].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Prefix
       - equal:
-          path: spec.network.expose[0].advancedHTTP.headers.request.add.x-forwarded-host
-          value: "%REQ(:AUTHORITY)%"
+          path: spec.network.expose[0].advancedHTTP.headers.request.set.X-Forwarded-Host
+          value: "sso.uds.dev"
       - equal:
-          path: spec.network.expose[0].advancedHTTP.headers.request.add.x-forwarded-proto
+          path: spec.network.expose[0].advancedHTTP.headers.request.set.X-Forwarded-Proto
           value: "https"
       - equal:
-          path: spec.network.expose[0].advancedHTTP.headers.request.add.x-forwarded-port
+          path: spec.network.expose[0].advancedHTTP.headers.request.set.X-Forwarded-Port
           value: "443"
       - contains:
           path: spec.network.expose[1].advancedHTTP.headers.request.remove
-          content: x-forwarded-host
+          content: Forwarded
+      - contains:
+          path: spec.network.expose[1].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Prefix
       - equal:
-          path: spec.network.expose[1].advancedHTTP.headers.request.add.x-forwarded-host
-          value: "%REQ(:AUTHORITY)%"
+          path: spec.network.expose[1].advancedHTTP.headers.request.set.X-Forwarded-Host
+          value: "sso.uds.dev"
       - equal:
-          path: spec.network.expose[1].advancedHTTP.headers.request.add.x-forwarded-proto
+          path: spec.network.expose[1].advancedHTTP.headers.request.set.X-Forwarded-Proto
           value: "https"
       - equal:
-          path: spec.network.expose[1].advancedHTTP.headers.request.add.x-forwarded-port
+          path: spec.network.expose[1].advancedHTTP.headers.request.set.X-Forwarded-Port
           value: "443"
       - contains:
           path: spec.network.expose[2].advancedHTTP.headers.request.remove
-          content: x-forwarded-host
+          content: Forwarded
+      - contains:
+          path: spec.network.expose[2].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Prefix
       - equal:
-          path: spec.network.expose[2].advancedHTTP.headers.request.add.x-forwarded-host
-          value: "%REQ(:AUTHORITY)%"
+          path: spec.network.expose[2].advancedHTTP.headers.request.set.X-Forwarded-Host
+          value: "keycloak.admin.uds.dev"
       - equal:
-          path: spec.network.expose[2].advancedHTTP.headers.request.add.x-forwarded-proto
+          path: spec.network.expose[2].advancedHTTP.headers.request.set.X-Forwarded-Proto
           value: "https"
       - equal:
-          path: spec.network.expose[2].advancedHTTP.headers.request.add.x-forwarded-port
+          path: spec.network.expose[2].advancedHTTP.headers.request.set.X-Forwarded-Port
           value: "443"
 
   - it: should preserve in-cluster Keycloak backchannel access

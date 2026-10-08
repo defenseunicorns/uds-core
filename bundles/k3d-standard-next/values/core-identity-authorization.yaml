@@ -17,14 +17,6 @@ authservice:
 
 keycloak:
   keycloak:
-{{- with index .vars "keycloak_path_parameter_protection_additional_hosts" }}
-{{- if . }}
-    pathParameterProtectionAdditionalHosts:
-{{- range . }}
-      - "{{ . }}"
-{{- end }}
-{{- end }}
-{{- end }}
 {{- with index .vars "insecure_admin_password_generation" }}
     insecureAdminPasswordGeneration:
       enabled: {{ . }}

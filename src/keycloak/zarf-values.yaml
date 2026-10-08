@@ -7,5 +7,4 @@ global:
   adminDomain: ""
 
 keycloak:
-  keycloak:
-    pathParameterProtectionAdditionalHosts: []
+  keycloak: {}

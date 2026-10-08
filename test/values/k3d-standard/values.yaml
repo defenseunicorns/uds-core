@@ -49,8 +49,6 @@ authservice:
     replicaCount: 1
 keycloak:
   keycloak:
-    pathParameterProtectionAdditionalHosts:
-      - "sso-alt.uds.dev"
     insecureAdminPasswordGeneration:
       enabled: true
     detailedObservability:

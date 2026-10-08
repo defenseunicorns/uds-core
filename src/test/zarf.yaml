@@ -7,11 +7,6 @@ metadata:
   description: "UDS Core Common test apps"
   url: https://github.com/defenseunicorns/uds-core
 
-variables:
-  - name: DOMAIN
-    description: Domain configured for the Core test cluster
-    default: uds.dev
-
 components:
   - name: vector-node-log-test-exemption
     required: true
@@ -72,6 +67,12 @@ components:
   - name: test-apps
     required: true
     manifests:
+      - name: keycloak-alternate-sso-gateway
+        files:
+          - "keycloak-alternate-sso-gateway.yaml"
+      - name: keycloak-alternate-sso-virtualservice
+        files:
+          - "keycloak-alternate-sso-virtualservice.yaml"
       - name: app-admin
         files:
           - "app-admin.yaml"

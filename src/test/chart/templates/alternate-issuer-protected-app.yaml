@@ -5,7 +5,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: alt-protected-podinfo
-  namespace: podinfo
+  namespace: alternate-sso-test
   labels:
     app.kubernetes.io/name: alt-protected-podinfo
 spec:
@@ -34,7 +34,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: alt-protected-podinfo
-  namespace: podinfo
+  namespace: alternate-sso-test
 spec:
   selector:
     app.kubernetes.io/component: alt-protected-upstream
@@ -47,7 +47,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: alt-protected-oauth2-proxy
-  namespace: podinfo
+  namespace: alternate-sso-test
 type: Opaque
 stringData:
   # Test-only client credential for the matching UDS test-package OIDC client.
@@ -57,7 +57,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: alt-protected-oauth2-proxy
-  namespace: podinfo
+  namespace: alternate-sso-test
   labels:
     app.kubernetes.io/name: alt-protected-oauth2-proxy
 spec:
@@ -75,11 +75,11 @@ spec:
           image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.5
           args:
             - --provider=keycloak-oidc
-            - --oidc-issuer-url=https://sso-alt.{{ .Values.domain }}/realms/uds
+            - --oidc-issuer-url=https://sso-alt.uds.dev/realms/uds
             - --client-id=alt-podinfo-oidc
             - --client-secret-file=/var/run/secrets/uds/client-secret
-            - --redirect-url=https://alt-protected.{{ .Values.domain }}/oauth2/callback
-            - --upstream=http://alt-protected-podinfo.podinfo.svc.cluster.local:9898/
+            - --redirect-url=https://alt-protected.uds.dev/oauth2/callback
+            - --upstream=http://alt-protected-podinfo.alternate-sso-test.svc.cluster.local:9898/
             - --http-address=0.0.0.0:4180
             - --email-domain=*
             - --cookie-secret=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
@@ -111,7 +111,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: alt-protected-oauth2-proxy
-  namespace: podinfo
+  namespace: alternate-sso-test
 spec:
   selector:
     app.kubernetes.io/name: alt-protected-oauth2-proxy
