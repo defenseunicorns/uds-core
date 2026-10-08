@@ -103,7 +103,7 @@ jobs:
         run: |
           for attempt in 1 2 3; do
             if CLI_FEATURES=NextMode=true ./uds bundle deploy \
-              ./uds-bundle-uds-core-aks-nightly-amd64-*.tar.zst \
+              .github/bundles/aks/uds-bundle-uds-core-aks-nightly-amd64-*.tar.zst \
               --config .github/bundles/aks/config.uds.hcl \
               --skip-signature-verification; then
               echo "CORE_ATTEMPTS=$attempt" >> $GITHUB_ENV
@@ -221,7 +221,7 @@ jobs:
           set +e
           for attempt in 1 2 3; do
             if CLI_FEATURES=NextMode=true ./uds bundle remove \
-              ./uds-bundle-uds-core-aks-nightly-amd64-*.tar.zst \
+              .github/bundles/aks/uds-bundle-uds-core-aks-nightly-amd64-*.tar.zst \
               --config .github/bundles/aks/config.uds.hcl \
               --skip-signature-verification; then
               break

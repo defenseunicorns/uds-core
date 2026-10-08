@@ -29,7 +29,7 @@ package "init" {
 }
 
 package "core" {
-  source     = "./build/zarf-package-core-${sys.arch}-${local.version}.tar.zst"
+  source     = "../../../build/zarf-package-core-${sys.arch}-${local.version}.tar.zst"
   depends_on = [package.init]
 
   signature_verification {
