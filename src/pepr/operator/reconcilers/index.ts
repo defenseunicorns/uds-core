@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -174,15 +174,21 @@ export async function handleFailure(
     };
   }
 
-  // Write an event for the error with the most detailed message available
-  await writeEvent(cr, { message: detailedMessage });
-
   // Update the status of the package with the error
-  updateStatus(cr, status).catch(finalErr => {
-    // If the status update fails, write log the error and and try to write an event
-    log.error({ err: finalErr }, `Error updating status for ${identifier} failed`);
-    void writeEvent(cr, { message: finalErr.message });
-  });
+  try {
+    await updateStatus(cr, status);
+  } catch (statusErr) {
+    uidSeen.delete(metadata.uid!);
+    log.error({ err: statusErr }, `Error updating status for ${identifier} failed`);
+    throw statusErr;
+  }
+
+  // Events are diagnostic; a failed Event write must not block the retry.
+  try {
+    await writeEvent(cr, { message: detailedMessage });
+  } catch (eventErr) {
+    log.warn({ err: eventErr }, `Error writing reconciliation event for ${identifier}`);
+  }
 }
 
 export function getReadinessConditions(ready: boolean = true) {

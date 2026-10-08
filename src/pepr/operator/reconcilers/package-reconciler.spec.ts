@@ -207,6 +207,43 @@ describe("packageReconciler", () => {
 
     expect(Log.error).toHaveBeenCalled();
   });
+
+  test("continues a scheduled retry when its warning Event cannot be written", async () => {
+    mockPackage.status = { phase: Phase.Retrying, retryAttempt: 1 };
+    mockWriteEvent.mockRejectedValueOnce(new Error("API unavailable"));
+    vi.useFakeTimers();
+
+    try {
+      const reconcile = packageReconciler(mockPackage);
+      await vi.advanceTimersByTimeAsync(3000);
+      await reconcile;
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(networkPolicies).toHaveBeenCalled();
+    expect(mockPatchStatus).toHaveBeenCalledWith(
+      expect.objectContaining({ status: expect.objectContaining({ phase: Phase.Ready }) }),
+    );
+  });
+
+  test("recovers a pending package after a temporary status write failure", async () => {
+    mockPatchStatus
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("API unavailable"));
+    (istioEgressResources as Mock).mockRejectedValueOnce(new Error("egress failed"));
+
+    await expect(packageReconciler(mockPackage)).rejects.toThrow("API unavailable");
+    expect(uidSeen.has("test-uid")).toBe(false);
+
+    // The next watch callback sees the Pending status left by the failed write.
+    mockPackage.status = { phase: Phase.Pending, observedGeneration: 1 };
+    await packageReconciler(mockPackage);
+
+    expect(mockPatchStatus).toHaveBeenCalledWith(
+      expect.objectContaining({ status: expect.objectContaining({ phase: Phase.Ready }) }),
+    );
+  });
 });
 
 describe("packageFinalizer", () => {

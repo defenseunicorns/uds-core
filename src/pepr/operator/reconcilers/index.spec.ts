@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -254,6 +254,43 @@ describe("handleFailure", () => {
         retryAttempt: 1,
       },
     });
+  });
+
+  it("retries even when the warning Event cannot be written", async () => {
+    const cr = {
+      kind: "Package",
+      apiVersion: "v1",
+      metadata: { namespace: "default", name: "test", generation: 1, uid: "event-failure" },
+    } as UDSPackage;
+    Create.mockRejectedValueOnce(new Error("API unavailable"));
+
+    await expect(
+      handleFailure({ status: 500, message: "reconcile failed" }, cr),
+    ).resolves.toBeUndefined();
+
+    expect(PatchStatus).toHaveBeenCalledWith(
+      expect.objectContaining({ status: expect.objectContaining({ phase: Phase.Retrying }) }),
+    );
+    expect(uidSeen.has("event-failure")).toBe(true);
+  });
+
+  it("allows the next callback to retry when the status update fails", async () => {
+    const cr = {
+      kind: "Package",
+      apiVersion: "v1",
+      metadata: { namespace: "default", name: "test", generation: 1, uid: "status-failure" },
+      status: { phase: Phase.Pending, observedGeneration: 1 },
+    } as UDSPackage;
+    uidSeen.add("status-failure");
+    PatchStatus.mockRejectedValueOnce(new Error("API unavailable"));
+
+    await expect(handleFailure({ status: 500, message: "reconcile failed" }, cr)).rejects.toThrow(
+      "API unavailable",
+    );
+
+    expect(uidSeen.has("status-failure")).toBe(false);
+    expect(shouldSkip(cr)).toBe(false);
+    expect(Create).not.toHaveBeenCalled();
   });
 
   it("should fail after 5 retries", async () => {

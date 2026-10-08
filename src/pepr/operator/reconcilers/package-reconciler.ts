@@ -72,9 +72,13 @@ export async function packageReconciler(pkg: UDSPackage) {
       `Waiting ${backOffSeconds} seconds before processing package ${namespace}/${name}, status.phase: ${pkg.status?.phase}, observedGeneration: ${pkg.status?.observedGeneration}, retryAttempt: ${pkg.status?.retryAttempt}`,
     );
 
-    await writeEvent(pkg, {
-      message: `Waiting ${backOffSeconds} seconds before retrying package`,
-    });
+    try {
+      await writeEvent(pkg, {
+        message: `Waiting ${backOffSeconds} seconds before retrying package`,
+      });
+    } catch (eventErr) {
+      log.warn({ err: eventErr }, `Error writing retry event for ${namespace}/${name}`);
+    }
 
     // wait for backOff seconds before retrying
     await new Promise(resolve => setTimeout(resolve, backOffSeconds * 1000));
