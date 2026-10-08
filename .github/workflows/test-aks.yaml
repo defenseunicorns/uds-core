@@ -85,7 +85,7 @@ jobs:
         run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
 
       - name: Get Resource Group Name
-        run: echo "AKS_RESOURCE_GROUP=$(tofu output -raw resource_group_name)" >> $GITHUB_ENV
+        run: echo "AKS_RESOURCE_GROUP=$(tofu output -raw resource_group_name)" >> "$GITHUB_ENV"
         working-directory: .github/test-infra/azure/aks
 
       - name: Configure Cluster DNS
@@ -95,25 +95,15 @@ jobs:
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
 
       - name: Deploy Core Bundle
-        # Resume retries so completed packages, including Init, are not redeployed.
         run: |
-          for attempt in 1 2 3; do
-            RESUME_ARGS=()
-            [ "$attempt" -gt 1 ] && RESUME_ARGS=(--resume)
-            if CLI_FEATURES=NextMode=true uds bundle dev deploy \
-              ./.github/bundles/aks \
-              --config .github/bundles/aks/config.uds.hcl \
-              "${RESUME_ARGS[@]}"; then
-              echo "CORE_ATTEMPTS=$attempt" >> "$GITHUB_ENV"
-              exit 0
-            fi
-            if [ "$attempt" -lt 3 ]; then
-              echo "Deploy failed on attempt $attempt; resuming in 30s..."
-              sleep 30
-            fi
-          done
-          echo "CORE_ATTEMPTS=fail" >> $GITHUB_ENV
-          exit 1
+          if CLI_FEATURES=NextMode=true uds bundle dev deploy \
+            ./.github/bundles/aks \
+            --config .github/bundles/aks/config.uds.hcl; then
+            echo "CORE_ATTEMPTS=1" >> "$GITHUB_ENV"
+          else
+            echo "CORE_ATTEMPTS=fail" >> "$GITHUB_ENV"
+            exit 1
+          fi
         timeout-minutes: 40
 
       - name: Test UDS Core
