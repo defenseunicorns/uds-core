@@ -178,6 +178,8 @@ export async function handleFailure(
   try {
     await updateStatus(cr, status);
   } catch (statusErr) {
+    // The earlier Pending write marked this UID as seen. If this write fails,
+    // shouldSkip would ignore the still-Pending Package on the next callback.
     uidSeen.delete(metadata.uid!);
     log.error({ err: statusErr }, `Error updating status for ${identifier} failed`);
     throw statusErr;
