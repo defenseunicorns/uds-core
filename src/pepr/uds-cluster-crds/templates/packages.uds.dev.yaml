@@ -60,9 +60,11 @@ spec:
           properties:
             status:
               type: object
+              default: {}
               properties:
                 observedGeneration:
                   type: integer
+                  default: 0
                 conditions:
                   description: Status conditions following Kubernetes-style conventions
                   type: array

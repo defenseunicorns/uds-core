@@ -688,9 +688,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
       properties: {
         status: {
           type: "object",
+          // Materialize status before reconciliation so readiness checks see generation 0.
+          default: {},
           properties: {
             observedGeneration: {
               type: "integer",
+              default: 0,
             },
             conditions: {
               description: "Status conditions following Kubernetes-style conventions",
