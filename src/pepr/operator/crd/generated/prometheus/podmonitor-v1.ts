@@ -776,7 +776,8 @@ export interface ClientID {
  */
 export interface ClientIDConfigMap {
   /**
-   * The key to select.
+   * The key to select from the ConfigMap's Data field.
+   * Keys in the BinaryData field are not currently propagated to container env vars.
    */
   key: string;
   /**
@@ -918,7 +919,8 @@ export interface PurpleCA {
  */
 export interface PurpleConfigMap {
   /**
-   * The key to select.
+   * The key to select from the ConfigMap's Data field.
+   * Keys in the BinaryData field are not currently propagated to container env vars.
    */
   key: string;
   /**
@@ -976,7 +978,8 @@ export interface PurpleCERT {
  */
 export interface FluffyConfigMap {
   /**
-   * The key to select.
+   * The key to select from the ConfigMap's Data field.
+   * Keys in the BinaryData field are not currently propagated to container env vars.
    */
   key: string;
   /**
@@ -1198,7 +1201,8 @@ export interface FluffyCA {
  */
 export interface TentacledConfigMap {
   /**
-   * The key to select.
+   * The key to select from the ConfigMap's Data field.
+   * Keys in the BinaryData field are not currently propagated to container env vars.
    */
   key: string;
   /**
@@ -1256,7 +1260,8 @@ export interface FluffyCERT {
  */
 export interface StickyConfigMap {
   /**
-   * The key to select.
+   * The key to select from the ConfigMap's Data field.
+   * Keys in the BinaryData field are not currently propagated to container env vars.
    */
   key: string;
   /**

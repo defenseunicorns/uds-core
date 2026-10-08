@@ -154,6 +154,9 @@
             "defaultCurlOptions": {
               "type": "string"
             },
+            "defaultShellOptions": {
+              "type": "string"
+            },
             "deploymentStrategy": {
               "properties": {
                 "type": {
@@ -166,9 +169,7 @@
               "properties": {},
               "type": "object"
             },
-            "dnsPolicy": {
-              "type": "string"
-            },
+            "dnsPolicy": {},
             "downloadDashboards": {
               "properties": {
                 "env": {
@@ -301,6 +302,17 @@
               },
               "type": "object"
             },
+            "goMemLimit": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "factor": {
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            },
             "gossipPortName": {
               "type": "string"
             },
@@ -419,6 +431,9 @@
                 },
                 "plugins": {
                   "properties": {
+                    "preinstall_auto_update": {
+                      "type": "string"
+                    },
                     "preinstall_disabled": {
                       "type": "boolean"
                     },
@@ -456,9 +471,7 @@
             "hostAliases": {
               "type": "array"
             },
-            "hostUsers": {
-              "type": "string"
-            },
+            "hostUsers": {},
             "imageRenderer": {
               "properties": {
                 "affinity": {
@@ -500,9 +513,7 @@
                   "properties": {},
                   "type": "object"
                 },
-                "dnsPolicy": {
-                  "type": "string"
-                },
+                "dnsPolicy": {},
                 "enabled": {
                   "type": "boolean"
                 },
@@ -551,9 +562,7 @@
                 "hostAliases": {
                   "type": "array"
                 },
-                "hostUsers": {
-                  "type": "string"
-                },
+                "hostUsers": {},
                 "networkPolicy": {
                   "properties": {
                     "extraIngressSelectors": {
@@ -582,9 +591,7 @@
                 "priorityClassName": {
                   "type": "string"
                 },
-                "progressDeadlineSeconds": {
-                  "type": "string"
-                },
+                "progressDeadlineSeconds": {},
                 "renderingCallbackURL": {
                   "type": "string"
                 },
@@ -891,9 +898,7 @@
             "podPortName": {
               "type": "string"
             },
-            "progressDeadlineSeconds": {
-              "type": "string"
-            },
+            "progressDeadlineSeconds": {},
             "rbac": {
               "properties": {
                 "create": {
@@ -1143,6 +1148,10 @@
               },
               "type": "object"
             },
+            "startupProbe": {
+              "properties": {},
+              "type": "object"
+            },
             "testFramework": {
               "properties": {
                 "enabled": {
@@ -1355,6 +1364,9 @@
                     "clusterLabel": {
                       "type": "string"
                     },
+                    "clusterPeerName": {
+                      "type": "string"
+                    },
                     "clusterPeerTimeout": {
                       "type": "string"
                     },
@@ -1378,24 +1390,16 @@
                     "dnsPolicy": {
                       "type": "string"
                     },
-                    "enableServiceLinks": {
-                      "type": "string"
-                    },
-                    "externalUrl": {
-                      "type": "string"
-                    },
+                    "enableServiceLinks": {},
+                    "externalUrl": {},
                     "forceEnableClusterMode": {
                       "type": "boolean"
                     },
                     "hostAliases": {
                       "type": "array"
                     },
-                    "hostNetwork": {
-                      "type": "boolean"
-                    },
-                    "hostUsers": {
-                      "type": "string"
-                    },
+                    "hostNetwork": {},
+                    "hostUsers": {},
                     "initContainers": {
                       "type": "array"
                     },
@@ -1467,16 +1471,12 @@
                     "secrets": {
                       "type": "array"
                     },
-                    "serviceName": {
-                      "type": "string"
-                    },
+                    "serviceName": {},
                     "storage": {
                       "properties": {},
                       "type": "object"
                     },
-                    "terminationGracePeriodSeconds": {
-                      "type": "string"
-                    },
+                    "terminationGracePeriodSeconds": {},
                     "tlsConfig": {
                       "properties": {},
                       "type": "object"
@@ -1867,6 +1867,10 @@
                         "sessionPersistence": {
                           "properties": {},
                           "type": "object"
+                        },
+                        "timeouts": {
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -1933,6 +1937,10 @@
                           "type": "array"
                         },
                         "sessionPersistence": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "timeouts": {
                           "properties": {},
                           "type": "object"
                         }
@@ -2065,9 +2073,7 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
-                    },
+                    "bearerTokenFile": {},
                     "enableHttp2": {
                       "type": "boolean"
                     },
@@ -2230,8 +2236,24 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     },
                     "enabled": {
                       "type": "boolean"
@@ -2820,9 +2842,7 @@
               },
               "type": "object"
             },
-            "extraManifests": {
-              "type": "string"
-            },
+            "extraManifests": {},
             "fullnameOverride": {
               "type": "string"
             },
@@ -2934,15 +2954,14 @@
                     "dashboardsConfigMapRefEnabled": {
                       "type": "boolean"
                     },
+                    "datasourcesEnabled": {
+                      "type": "boolean"
+                    },
                     "folder": {
                       "type": "string"
                     },
-                    "folderRef": {
-                      "type": "string"
-                    },
-                    "folderUID": {
-                      "type": "string"
-                    },
+                    "folderRef": {},
+                    "folderUID": {},
                     "matchLabels": {
                       "properties": {},
                       "type": "object"
@@ -3181,6 +3200,25 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "enabled": {
                       "type": "boolean"
                     },
@@ -3255,6 +3293,22 @@
                 },
                 "tlsConfig": {
                   "properties": {
+                    "ca": {
+                      "properties": {
+                        "configMap": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "insecureSkipVerify": {
                       "type": "boolean"
                     },
@@ -3300,12 +3354,8 @@
                       },
                       "type": "object"
                     },
-                    "port": {
-                      "type": "string"
-                    },
-                    "targetPort": {
-                      "type": "string"
-                    }
+                    "port": {},
+                    "targetPort": {}
                   },
                   "type": "object"
                 },
@@ -3315,15 +3365,29 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "enabled": {
                       "type": "boolean"
                     },
-                    "https": {
-                      "type": "string"
-                    },
-                    "insecureSkipVerify": {
-                      "type": "string"
-                    },
+                    "https": {},
                     "interval": {
                       "type": "string"
                     },
@@ -3358,14 +3422,35 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "serverName": {
-                      "type": "string"
-                    },
                     "targetLabels": {
                       "type": "array"
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "ca": {
+                          "properties": {
+                            "configMap": {
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "insecureSkipVerify": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -3428,8 +3513,24 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     },
                     "dnsmasqMetricRelabelings": {
                       "type": "array"
@@ -3525,28 +3626,32 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
-                    },
-                    "caFile": {
-                      "type": "string"
-                    },
-                    "certFile": {
-                      "type": "string"
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     },
                     "enabled": {
-                      "type": "boolean"
-                    },
-                    "insecureSkipVerify": {
                       "type": "boolean"
                     },
                     "interval": {
                       "type": "string"
                     },
                     "jobLabel": {
-                      "type": "string"
-                    },
-                    "keyFile": {
                       "type": "string"
                     },
                     "labelLimit": {
@@ -3580,14 +3685,19 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "serverName": {
-                      "type": "string"
-                    },
                     "targetLabels": {
                       "type": "array"
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "insecureSkipVerify": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -3643,8 +3753,24 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     },
                     "enabled": {
                       "type": "boolean"
@@ -3691,6 +3817,27 @@
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "ca": {
+                          "properties": {
+                            "configMap": {
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -3731,12 +3878,8 @@
                       },
                       "type": "object"
                     },
-                    "port": {
-                      "type": "string"
-                    },
-                    "targetPort": {
-                      "type": "string"
-                    }
+                    "port": {},
+                    "targetPort": {}
                   },
                   "type": "object"
                 },
@@ -3746,15 +3889,29 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "enabled": {
                       "type": "boolean"
                     },
-                    "https": {
-                      "type": "string"
-                    },
-                    "insecureSkipVerify": {
-                      "type": "string"
-                    },
+                    "https": {},
                     "interval": {
                       "type": "string"
                     },
@@ -3806,14 +3963,35 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "serverName": {
-                      "type": "string"
-                    },
                     "targetLabels": {
                       "type": "array"
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "ca": {
+                          "properties": {
+                            "configMap": {
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "insecureSkipVerify": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -3856,6 +4034,25 @@
                       "properties": {
                         "node": {
                           "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
                         }
                       },
                       "type": "object"
@@ -3916,9 +4113,6 @@
                       "type": "boolean"
                     },
                     "https": {
-                      "type": "boolean"
-                    },
-                    "insecureSkipVerify": {
                       "type": "boolean"
                     },
                     "interval": {
@@ -4042,6 +4236,30 @@
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "ca": {
+                          "properties": {
+                            "configMap": {
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "insecureSkipVerify": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
                     },
                     "trackTimestampsStaleness": {
                       "type": "boolean"
@@ -4233,9 +4451,7 @@
                     "flavor": {
                       "type": "string"
                     },
-                    "namespace": {
-                      "type": "string"
-                    }
+                    "namespace": {}
                   },
                   "type": "object"
                 },
@@ -4353,9 +4569,7 @@
                     "enableRemoteWriteReceiver": {
                       "type": "boolean"
                     },
-                    "enableServiceLinks": {
-                      "type": "string"
-                    },
+                    "enableServiceLinks": {},
                     "enforcedBodySizeLimit": {
                       "type": "string"
                     },
@@ -4403,9 +4617,7 @@
                     "hostNetwork": {
                       "type": "boolean"
                     },
-                    "hostUsers": {
-                      "type": "string"
-                    },
+                    "hostUsers": {},
                     "ignoreNamespaceSelectors": {
                       "type": "boolean"
                     },
@@ -4589,6 +4801,9 @@
                     "retention": {
                       "type": "string"
                     },
+                    "retentionPercentage": {
+                      "type": "string"
+                    },
                     "retentionSize": {
                       "type": "string"
                     },
@@ -4608,6 +4823,10 @@
                     },
                     "ruleSelectorNilUsesHelmValues": {
                       "type": "boolean"
+                    },
+                    "rules": {
+                      "properties": {},
+                      "type": "object"
                     },
                     "runtime": {
                       "properties": {},
@@ -4668,9 +4887,7 @@
                     "serviceMonitorSelectorNilUsesHelmValues": {
                       "type": "boolean"
                     },
-                    "serviceName": {
-                      "type": "string"
-                    },
+                    "serviceName": {},
                     "shardRetentionPolicy": {
                       "properties": {},
                       "type": "object"
@@ -4719,9 +4936,7 @@
                     "targetLimit": {
                       "type": "number"
                     },
-                    "terminationGracePeriodSeconds": {
-                      "type": "string"
-                    },
+                    "terminationGracePeriodSeconds": {},
                     "thanos": {
                       "properties": {},
                       "type": "object"
@@ -4738,7 +4953,14 @@
                     },
                     "tsdb": {
                       "properties": {
+                        "chunkEncoding": {
+                          "properties": {},
+                          "type": "object"
+                        },
                         "outOfOrderTimeWindow": {
+                          "type": "string"
+                        },
+                        "staleSeriesCompactionThreshold": {
                           "type": "string"
                         }
                       },
@@ -4861,6 +5083,10 @@
                         "sessionPersistence": {
                           "properties": {},
                           "type": "object"
+                        },
+                        "timeouts": {
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -4927,6 +5153,10 @@
                           "type": "array"
                         },
                         "sessionPersistence": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "timeouts": {
                           "properties": {},
                           "type": "object"
                         }
@@ -5001,9 +5231,7 @@
                     "publishNotReadyAddresses": {
                       "type": "boolean"
                     },
-                    "reloaderWebNodePort": {
-                      "type": "string"
-                    },
+                    "reloaderWebNodePort": {},
                     "reloaderWebPort": {
                       "type": "number"
                     },
@@ -5044,6 +5272,9 @@
                     "create": {
                       "type": "boolean"
                     },
+                    "createTokenSecret": {
+                      "type": "boolean"
+                    },
                     "name": {
                       "type": "string"
                     }
@@ -5059,9 +5290,7 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
-                    },
+                    "bearerTokenFile": {},
                     "interval": {
                       "type": "string"
                     },
@@ -5304,9 +5533,7 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
-                    },
+                    "bearerTokenFile": {},
                     "enabled": {
                       "type": "boolean"
                     },
@@ -5449,6 +5676,9 @@
                   },
                   "type": "object"
                 },
+                "prometheusScrape": {
+                  "type": "boolean"
+                },
                 "rbac": {
                   "properties": {
                     "pspEnabled": {
@@ -5549,9 +5779,7 @@
                             "duration": {
                               "type": "string"
                             },
-                            "revisionHistoryLimit": {
-                              "type": "string"
-                            }
+                            "revisionHistoryLimit": {}
                           },
                           "type": "object"
                         },
@@ -5563,9 +5791,7 @@
                             "duration": {
                               "type": "string"
                             },
-                            "revisionHistoryLimit": {
-                              "type": "string"
-                            }
+                            "revisionHistoryLimit": {}
                           },
                           "type": "object"
                         }
@@ -5794,8 +6020,7 @@
                       "type": "string"
                     },
                     "matchConditions": {
-                      "properties": {},
-                      "type": "object"
+                      "type": "array"
                     },
                     "mutatingWebhookConfiguration": {
                       "properties": {
@@ -5965,9 +6190,7 @@
                 "hostNetwork": {
                   "type": "boolean"
                 },
-                "hostUsers": {
-                  "type": "string"
-                },
+                "hostUsers": {},
                 "kubeletEndpointSliceEnabled": {
                   "type": "boolean"
                 },
@@ -6456,6 +6679,10 @@
                         "sessionPersistence": {
                           "properties": {},
                           "type": "object"
+                        },
+                        "timeouts": {
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -6550,9 +6777,7 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
-                    },
+                    "bearerTokenFile": {},
                     "interval": {
                       "type": "string"
                     },
@@ -6654,9 +6879,7 @@
                     "enableFeatures": {
                       "type": "array"
                     },
-                    "enableServiceLinks": {
-                      "type": "string"
-                    },
+                    "enableServiceLinks": {},
                     "enforcedNamespaceLabel": {
                       "type": "string"
                     },
@@ -6666,9 +6889,7 @@
                     "excludedFromEnforcement": {
                       "type": "array"
                     },
-                    "externalPrefix": {
-                      "type": "string"
-                    },
+                    "externalPrefix": {},
                     "externalPrefixNilUsesHelmValues": {
                       "type": "boolean"
                     },
@@ -6682,9 +6903,7 @@
                     "hostAliases": {
                       "type": "array"
                     },
-                    "hostUsers": {
-                      "type": "string"
-                    },
+                    "hostUsers": {},
                     "imagePullPolicy": {
                       "type": "string"
                     },
@@ -6704,9 +6923,7 @@
                     "logLevel": {
                       "type": "string"
                     },
-                    "minReadySeconds": {
-                      "type": "string"
-                    },
+                    "minReadySeconds": {},
                     "nodeSelector": {
                       "properties": {},
                       "type": "object"
@@ -6784,9 +7001,7 @@
                     "routePrefix": {
                       "type": "string"
                     },
-                    "ruleConcurrentEval": {
-                      "type": "string"
-                    },
+                    "ruleConcurrentEval": {},
                     "ruleGracePeriod": {
                       "type": "string"
                     },
@@ -6807,16 +7022,15 @@
                     "ruleSelectorNilUsesHelmValues": {
                       "type": "boolean"
                     },
-                    "serviceName": {
+                    "schedulerName": {
                       "type": "string"
                     },
+                    "serviceName": {},
                     "storage": {
                       "properties": {},
                       "type": "object"
                     },
-                    "terminationGracePeriodSeconds": {
-                      "type": "string"
-                    },
+                    "terminationGracePeriodSeconds": {},
                     "tolerations": {
                       "type": "array"
                     },
@@ -7145,12 +7359,8 @@
               "properties": {},
               "type": "object"
             },
-            "dnsConfig": {
-              "type": "string"
-            },
-            "dnsPolicy": {
-              "type": "string"
-            },
+            "dnsConfig": {},
+            "dnsPolicy": {},
             "extraArgs": {
               "type": "array"
             },
@@ -7402,9 +7612,7 @@
                   },
                   "type": "object"
                 },
-                "targets": {
-                  "type": "string"
-                },
+                "targets": {},
                 "tlsConfig": {
                   "properties": {},
                   "type": "object"
@@ -7604,9 +7812,7 @@
                 "create": {
                   "type": "boolean"
                 },
-                "name": {
-                  "type": "string"
-                }
+                "name": {}
               },
               "type": "object"
             },
@@ -7615,9 +7821,7 @@
                 "apiVersion": {
                   "type": "string"
                 },
-                "bearerTokenFile": {
-                  "type": "string"
-                },
+                "bearerTokenFile": {},
                 "defaults": {
                   "properties": {
                     "additionalMetricsRelabels": {
@@ -7690,9 +7894,7 @@
                   },
                   "type": "object"
                 },
-                "targets": {
-                  "type": "string"
-                },
+                "targets": {},
                 "tlsConfig": {
                   "properties": {},
                   "type": "object"

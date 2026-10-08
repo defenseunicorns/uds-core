@@ -28,7 +28,7 @@ jobs:
       pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
     env:
       SHA: ${{ github.sha }}
-      UDS_REGION: centralus
+      UDS_REGION: eastus2
       UDS_RESOURCE_GROUP_NAME: ${{ secrets.AZURE_RESOURCE_GROUP }}
       UDS_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
       UDS_CONTAINER_NAME: ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }}
@@ -57,7 +57,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Azure login
-        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -75,7 +75,7 @@ jobs:
         uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with:
           # renovate: datasource=github-tags depName=opentofu/opentofu extractVersion=^v?(?<version>.*)$
-          tofu_version: 1.12.6
+          tofu_version: v1.13.1
           tofu_wrapper: false
 
       - name: Create UDS Core Package
@@ -129,6 +129,7 @@ jobs:
               echo "TEST_ATTEMPTS=$attempt" >> $GITHUB_ENV
               exit 0
             fi
+            uds run -f src/test/tasks.yaml remove --no-progress
             if [ "$attempt" -lt 3 ]; then
               echo "Tests failed on attempt $attempt; sleeping 30s before retry..."
               sleep 30
@@ -163,7 +164,7 @@ jobs:
 
       - name: Azure login (refresh token for log collection)
         if: always()
-        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}

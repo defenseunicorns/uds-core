@@ -5,12 +5,12 @@ loki:
   image:
     registry: cgr.dev/defenseunicorns.com
     repository: loki-fips
-    tag: v3.7.7
+    tag: v3.7.8
 gateway:
   image:
     registry: cgr.dev/defenseunicorns.com
     repository: nginx-fips
-    tag: v1.31.5
+    tag: v1.31.6
 memcached:
   image:
     registry: cgr.dev/defenseunicorns.com
