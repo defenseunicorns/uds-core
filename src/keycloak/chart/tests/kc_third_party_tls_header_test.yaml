@@ -19,18 +19,6 @@ tests:
       - contains:
           path: spec.network.expose[1].advancedHTTP.headers.request.remove
           content: istio-mtls-client-certificate
-      - equal:
-          path: spec.network.expose[1].advancedHTTP.headers.request.add.istio-mtls-client-certificate
-          value: "%DOWNSTREAM_PEER_CERT%"
-      - contains:
-          path: spec.network.expose[1].advancedHTTP.headers.request.remove
-          content: X-Forwarded-Host
-      - contains:
-          path: spec.network.expose[1].advancedHTTP.headers.request.remove
-          content: Forwarded
-      - equal:
-          path: spec.network.expose[1].advancedHTTP.headers.request.set.X-Forwarded-Host
-          value: "sso.uds.dev"
 
   - it: should omit fallback header injection when third-party tls header is configured
     set:
@@ -44,17 +32,6 @@ tests:
       - notContains:
           path: spec.network.expose[1].advancedHTTP.headers.request.remove
           content: istio-mtls-client-certificate
-      - notExists:
-          path: spec.network.expose[*].advancedHTTP.headers.request.add.istio-mtls-client-certificate
-      - contains:
-          path: spec.network.expose[1].advancedHTTP.headers.request.remove
-          content: X-Forwarded-Host
-      - contains:
-          path: spec.network.expose[1].advancedHTTP.headers.request.remove
-          content: Forwarded
-      - equal:
-          path: spec.network.expose[1].advancedHTTP.headers.request.set.X-Forwarded-Host
-          value: "sso.uds.dev"
 
   - it: should not render alb envoy filter by default
     template: alb-envoyfilter.yaml

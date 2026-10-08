@@ -47,13 +47,13 @@ tasks:
         task: uds-common:keycloak-user
         with:
           group: "/UDS Core/Admin"
-      - description: "Run Ambient Playwright Test"
+      - description: "Run Ambient and Keycloak admin hostname Playwright Tests"
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
           docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" -e DOMAIN="${DOMAIN:-uds.dev}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.64.0-noble sh -c " \
             cd app && \
             npm ci && \
-            npx playwright test ambient-waypoint.test.ts \
+            npx playwright test ambient-waypoint.test.ts keycloak-hostname-admin.test.ts \
             "
         dir: test/playwright
       - description: "Run Secret Reload Tests"

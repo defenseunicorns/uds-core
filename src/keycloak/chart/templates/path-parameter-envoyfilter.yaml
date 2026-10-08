@@ -32,7 +32,7 @@ spec:
                 {{- $domain := .Values.domain }}
                 {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
 
-                -- Only apply to Core's primary and admin Keycloak endpoints
+                -- Only apply to keycloak endpoints
                 if host and (
                   host == "sso.{{ $domain }}" or
                   host == "keycloak.{{ $adminDomain }}"
