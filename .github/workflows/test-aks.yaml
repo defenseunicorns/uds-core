@@ -95,18 +95,20 @@ jobs:
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
 
       - name: Deploy Core Bundle
-        # Retry up to 2 times on failure to ride out transient AKS apiserver restart
-        # windows that cause webhook proxy errors.
+        # Resume retries so completed packages, including Init, are not redeployed.
         run: |
           for attempt in 1 2 3; do
+            RESUME_ARGS=()
+            [ "$attempt" -gt 1 ] && RESUME_ARGS=(--resume)
             if CLI_FEATURES=NextMode=true uds bundle dev deploy \
               ./.github/bundles/aks \
-              --config .github/bundles/aks/config.uds.hcl; then
+              --config .github/bundles/aks/config.uds.hcl \
+              "${RESUME_ARGS[@]}"; then
               echo "CORE_ATTEMPTS=$attempt" >> "$GITHUB_ENV"
               exit 0
             fi
             if [ "$attempt" -lt 3 ]; then
-              echo "Deploy failed on attempt $attempt; sleeping 30s before retry..."
+              echo "Deploy failed on attempt $attempt; resuming in 30s..."
               sleep 30
             fi
           done
