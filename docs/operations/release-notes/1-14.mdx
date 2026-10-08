@@ -13,6 +13,9 @@ import { Steps } from "@astrojs/starlight/components";
 UDS Core 1.14 adds keyless signatures to published Core packages and UDS CLI Next demo bundles. This release also adds default disruption budgets for HA Keycloak deployments, rejects conflicting HTTP expose routes across namespaces, and improves HTTP/2 gateway routing.
 
 > [!WARNING]
+> UDS Core 1.14.0 may prevent Common Access Card (CAC) certificate prompts when users start single sign-on (SSO) from a tenant-gateway application. Upgrade to 1.14.1, which restores the previous HTTP 421 protection. See [CAC login from tenant applications](#cac-login-from-tenant-applications) for details.
+
+> [!WARNING]
 > UDS Core 1.12 through 1.14 may disrupt login through an additional Keycloak SSO hostname. See [Known issue: additional Keycloak SSO hostnames](#known-issue-additional-keycloak-sso-hostnames) before upgrading.
 
 ### ⚠ Breaking changes
@@ -46,6 +49,12 @@ UDS Core 1.14 adds keyless signatures to published Core packages and UDS CLI Nex
 | Portal                | 0.5.1    | [0.5.2](https://github.com/defenseunicorns/uds-portal/releases/tag/v0.5.2)             |
 
 ## Upgrade considerations
+
+### CAC login from tenant applications
+
+UDS Core 1.14.0 changed the misdirected-request filter to allow HTTP/2 connection reuse when the requested host has a route on the selected gateway listener ([#2997](https://github.com/defenseunicorns/uds-core/pull/2997)). A browser can reuse a tenant application's `SIMPLE` TLS connection for `sso.<domain>`, bypassing the new TLS handshake that would request a client certificate under Keycloak's `OPTIONAL_MUTUAL` policy. Users may reach Keycloak without a CAC certificate prompt and cannot complete CAC login.
+
+Upgrade to 1.14.1, which restores the previous misdirected-request filter behavior ([#3068](https://github.com/defenseunicorns/uds-core/pull/3068)). Until you upgrade, quit and reopen the browser, then navigate directly to `https://sso.<domain>` before opening a tenant application. Opening another SSO application in the same browser session may not restore the certificate prompt.
 
 ### Known issue: additional Keycloak SSO hostnames
 
@@ -97,4 +106,4 @@ Before upgrading, review these changes:
 - [Build a functional layer bundle](/how-to-guides/platform-features/build-functional-layer-bundle/) - signed Core layer references
 - [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) - HTTP routing constraints
 - [UDS Core 1.14.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#1140-2026-09-30) - full changelog
-- [Full diff (1.13.1...1.14.0)](https://github.com/defenseunicorns/uds-core/compare/v1.13.1...v1.14.0) - all changes between versions
+- [Full diff (1.13.1...1.14.1)](https://github.com/defenseunicorns/uds-core/compare/v1.13.1...v1.14.1) - all changes between versions
