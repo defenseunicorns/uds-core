@@ -237,7 +237,7 @@ tasks:
           cd tmp/test-shim/uds-core
           git sparse-checkout set src/test tasks
       - description: "Deploy Latest Release Test Resources"
-        cmd: ./uds run -f src/test/tasks.yaml create-deploy --set validate_udp_expose=false
+        cmd: ./uds run -f src/test/tasks.yaml create-deploy
         dir: tmp/test-shim/uds-core/
       - description: "Clean up temporary files"
         cmd: rm -rf tmp/test-shim
