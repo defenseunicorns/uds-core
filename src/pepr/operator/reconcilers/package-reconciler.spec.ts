@@ -210,7 +210,7 @@ describe("packageReconciler", () => {
 
   test("continues a scheduled retry when its warning Event cannot be written", async () => {
     mockPackage.status = { phase: Phase.Retrying, retryAttempt: 1 };
-    mockWriteEvent.mockRejectedValueOnce(new Error("API unavailable"));
+    (writeEvent as Mock).mockRejectedValueOnce(new Error("API unavailable"));
     vi.useFakeTimers();
 
     try {
@@ -222,6 +222,7 @@ describe("packageReconciler", () => {
     }
 
     expect(networkPolicies).toHaveBeenCalled();
+    expect(writeEvent).toHaveBeenCalled();
     expect(mockPatchStatus).toHaveBeenCalledWith(
       expect.objectContaining({ status: expect.objectContaining({ phase: Phase.Ready }) }),
     );
