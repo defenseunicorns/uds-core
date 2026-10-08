@@ -145,6 +145,8 @@ tasks:
         dir: test/vitest
       - description: remove test resources
         task: test-resources:remove
+        with:
+          validate_udp_expose: ${{ .inputs.validate_udp_expose }}
 
   - name: unit-tests
     description: "Run uds-core source unit tests"
@@ -325,6 +327,7 @@ tasks:
       - task: create:k3d-standard-bundle-next
         with:
           create_options: "--skip-sbom"
+      - task: test-resources:cleanup-udp-expose
       # Note: we want to deploy from the bundle since we need overrides, but we don't want to redeploy k3d/zarf init so we pass `--packages` here
       - task: deploy:k3d-standard-bundle-next
         with:
@@ -347,6 +350,7 @@ tasks:
         with:
           create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
+      - task: test-resources:cleanup-udp-expose
       # Note: we want to deploy from the bundle since we need overrides, but we don't want to redeploy k3d/zarf init so we pass `--packages` here
       - task: deploy:k3d-standard-bundle-upgrade
         with:
