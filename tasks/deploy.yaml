@@ -195,6 +195,15 @@ tasks:
             .repository = \"${TARGET_REPO}/core\" | .ref = \"${LATEST_VERSION}\")" \
             tmp/core-shim/uds-bundle.yaml
 
+          # Release packages are signed starting with v1.14.0.
+          if [ "$(printf '%s\n' 1.14.0 "${LATEST_CORE_TAG}" | sort -V | head -n 1)" = 1.14.0 ]; then
+            ./uds zarf tools yq e -i '
+              .packages[] |= (select(.name == "core") |
+              .keylessVerification.certificateIdentityRegexp = "^https://github[.]com/defenseunicorns/uds-core/[.]github/workflows/publish[.]yaml@refs/tags/v[0-9]+[.][0-9]+[.][0-9]+$" |
+              .keylessVerification.certificateOIDCIssuer = "https://token.actions.githubusercontent.com")' \
+              tmp/core-shim/uds-bundle.yaml
+          fi
+
           # Create and deploy the bundle
           ./uds create tmp/core-shim --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
       - description: "Deploy the latest version from the bundle"

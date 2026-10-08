@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
-## [1.14.0](https://github.com/defenseunicorns/uds-core/compare/v1.13.0...v1.14.0) (2026-09-29)
+## [1.14.0](https://github.com/defenseunicorns/uds-core/compare/v1.13.0...v1.14.0) (2026-09-30)
 
 
 ### ⚠ BREAKING CHANGES
@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 
 * **ci:** parallelize checks and values tests ([#2978](https://github.com/defenseunicorns/uds-core/issues/2978)) ([685b7c3](https://github.com/defenseunicorns/uds-core/commit/685b7c3ffd5858dd53e7f5583c062e53339acb00))
 * **ci:** preserve node log writer exemption ([#2992](https://github.com/defenseunicorns/uds-core/issues/2992)) ([1dc5081](https://github.com/defenseunicorns/uds-core/commit/1dc50817cf1cbeb3d1f09d6f0f1b0f9733201391))
+* **ci:** restore checkpoint release permissions ([#3018](https://github.com/defenseunicorns/uds-core/issues/3018)) ([0a24dea](https://github.com/defenseunicorns/uds-core/commit/0a24dea4f85c68642b3875c40b3a8f92033fa677))
 * improve misdirected-request detection and add ci coverage ([#2997](https://github.com/defenseunicorns/uds-core/issues/2997)) ([41b87bc](https://github.com/defenseunicorns/uds-core/commit/41b87bcd5c27094979758695eb107a17a6572024))
 * **operator:** reject conflicting cross-namespace expose routes ([#2783](https://github.com/defenseunicorns/uds-core/issues/2783)) ([116f26c](https://github.com/defenseunicorns/uds-core/commit/116f26cd4cdab3721fa182daf7bf6b6068948270))
 * publishing workflow for signed zarf packages ([#2982](https://github.com/defenseunicorns/uds-core/issues/2982)) ([a3b41cc](https://github.com/defenseunicorns/uds-core/commit/a3b41cc245c92af079c597589e481e83fc95daef))
@@ -31,7 +32,6 @@ All notable changes to this project will be documented in this file.
 
 ### Miscellaneous
 
-* 1.14 release notes ([#3016](https://github.com/defenseunicorns/uds-core/issues/3016)) ([7dab543](https://github.com/defenseunicorns/uds-core/commit/7dab543a29ab96ce00f858c70d95d801cdeacfe6))
 * add upgrade considerations to 1.13 release notes ([#2994](https://github.com/defenseunicorns/uds-core/issues/2994)) ([b365eca](https://github.com/defenseunicorns/uds-core/commit/b365eca3dd2919d5a6c232588bba37bd6b550828))
 * allow velero's package CR for additional network policies ([#2977](https://github.com/defenseunicorns/uds-core/issues/2977)) ([9c40c14](https://github.com/defenseunicorns/uds-core/commit/9c40c141bda2ebfba244c36302a012706454a077))
 * bump identity-config to 0.32.0 ([#2986](https://github.com/defenseunicorns/uds-core/issues/2986)) ([724e139](https://github.com/defenseunicorns/uds-core/commit/724e1397fac539cf381ee66dda82afcb121290ee))
@@ -49,6 +49,11 @@ All notable changes to this project will be documented in this file.
 * enable test for vector host logs ingestion into loki ([#2971](https://github.com/defenseunicorns/uds-core/issues/2971)) ([dde6fb3](https://github.com/defenseunicorns/uds-core/commit/dde6fb35471c8546cedbec1d8d383fcf490de6f2))
 * modernize dev workflow w/ mise and hk ([#2976](https://github.com/defenseunicorns/uds-core/issues/2976)) ([f9793ac](https://github.com/defenseunicorns/uds-core/commit/f9793ac05140ac225513c38114b943485568a69f))
 * upgrade udproute to v1 from v1alpha2 ([#2999](https://github.com/defenseunicorns/uds-core/issues/2999)) ([4f3b72b](https://github.com/defenseunicorns/uds-core/commit/4f3b72b6ec00a073aead8fc513993d3f30b18920))
+
+
+### Documentation
+
+* restore UDS Core 1.14 release notes ([#3024](https://github.com/defenseunicorns/uds-core/issues/3024)) ([f00ae3b](https://github.com/defenseunicorns/uds-core/commit/f00ae3b175d2da5dc1af2bdab92b1fc5fc2653b9))
 
 ## [1.13.0](https://github.com/defenseunicorns/uds-core/compare/v1.12.0...v1.13.0) (2026-09-16)
 

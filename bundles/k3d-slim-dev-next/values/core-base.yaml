@@ -15,6 +15,10 @@ pepr-uds-core:
           cpu: "{{ .vars.pepr_admission_cpu_request }}"
 
 istio-controlplane:
+  cni:
+    istioOwnedCNIConfig: true
+    ambient:
+      enableAmbientDetectionRetry: true
   istiod:
     resources:
       requests:

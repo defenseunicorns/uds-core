@@ -10,6 +10,9 @@ sidebar:
 
 UDS Core 1.13 publishes UDS CLI Next demo bundles alongside the legacy bundles and moves primary demo bundle CI coverage to the Next workflow. This release also expands K3s compatibility testing across Kubernetes 1.34 through 1.36, lets you disable HTTP 421 misdirected-request protection, and improves upgrade reliability.
 
+> [!WARNING]
+> UDS Core 1.12 through 1.14 may disrupt login through an additional Keycloak SSO hostname. See [Known issue: additional Keycloak SSO hostnames](#known-issue-additional-keycloak-sso-hostnames) before upgrading.
+
 ### Notable features
 
 - **UDS CLI Next demo bundles:** UDS Core now publishes `k3d-core-demo-next` and `k3d-core-slim-dev-next` alongside their legacy counterparts. Primary CI workflows build, deploy, and test the Next bundles where possible, while the CLI compatibility matrix continues to validate legacy bundles during the transition. The standard Next bundle uses functional layer packages, reducing Core deployment times in CI by approximately 25 to 40 percent. Consuming the Next bundles requires UDS CLI v0.36.0 or newer with `NextMode` enabled ([#2941](https://github.com/defenseunicorns/uds-core/pull/2941)).
@@ -39,6 +42,12 @@ UDS Core 1.13 publishes UDS CLI Next demo bundles alongside the legacy bundles a
 
 > [!NOTE]
 > Upgrade directly to `v1.13.1` when possible. The `v1.13.1` patch updates UDS Identity Config to `0.32.0`.
+
+### Known issue: additional Keycloak SSO hostnames
+
+UDS Core 1.12 introduced configured public and administrative Keycloak hostnames ([#2898](https://github.com/defenseunicorns/uds-core/pull/2898)). Deployments that route an additional public SSO hostname to the same Keycloak instance, such as a vanity or VDI login domain, may fail to complete login on UDS Core 1.12 through 1.14. Users have reported the error "Restart login cookie not found" when accessing the additional hostname. OIDC clients that use that hostname for discovery and issuer validation may also be affected.
+
+If your deployment depends on an additional SSO hostname, test the complete login flow and token issuer validation in a non-production environment before upgrading. Defer the production upgrade if that flow fails, and contact Product Support. A generally applicable fix has not yet been validated.
 
 ### UDS Identity Config 0.32.0
 
