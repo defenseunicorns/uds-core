@@ -102,11 +102,10 @@ jobs:
         # windows that cause webhook proxy errors.
         run: |
           for attempt in 1 2 3; do
-            if CLI_FEATURES=NextMode=true ./uds bundle deploy \
-              .github/bundles/aks/uds-bundle-uds-core-aks-nightly-amd64-*.tar.zst \
-              --config .github/bundles/aks/config.uds.hcl \
-              --skip-signature-verification; then
-              echo "CORE_ATTEMPTS=$attempt" >> $GITHUB_ENV
+            if CLI_FEATURES=NextMode=true ./uds bundle dev deploy \
+              ./.github/bundles/aks \
+              --config .github/bundles/aks/config.uds.hcl; then
+              echo "CORE_ATTEMPTS=$attempt" >> "$GITHUB_ENV"
               exit 0
             fi
             if [ "$attempt" -lt 3 ]; then
@@ -220,10 +219,9 @@ jobs:
         run: |
           set +e
           for attempt in 1 2 3; do
-            if CLI_FEATURES=NextMode=true ./uds bundle remove \
-              .github/bundles/aks/uds-bundle-uds-core-aks-nightly-amd64-*.tar.zst \
-              --config .github/bundles/aks/config.uds.hcl \
-              --skip-signature-verification; then
+            if CLI_FEATURES=NextMode=true ./uds bundle dev remove \
+              ./.github/bundles/aks \
+              --config .github/bundles/aks/config.uds.hcl; then
               break
             fi
             echo "Remove failed on attempt $attempt"
