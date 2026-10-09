@@ -82,7 +82,7 @@ jobs:
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
-        run: CLI_FEATURES=NextMode=true uds bundle create .github/bundles/aks --architecture amd64 --unsigned
+        run: CLI_FEATURES=NextMode=true uds bundle create ./.github/bundles/aks --architecture amd64 --unsigned
 
       - name: Create IAC
         run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
