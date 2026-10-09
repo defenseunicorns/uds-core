@@ -127,7 +127,7 @@ jobs:
 
       - name: Test UDS Core
         id: test_uds_core
-        run: uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES="${{ matrix.flavor == 'registry1' && 'portal' || '' }}"; then
+        run: uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES="${{ matrix.flavor == 'registry1' && 'portal' || '' }}"
 
       - name: Debug Output
         if: ${{ always() }}
