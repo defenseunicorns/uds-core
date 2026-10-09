@@ -1,0 +1,112 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+istio-controlplane:
+  uds-global-istio-config:
+    classificationBanners:
+      - text: "SAMPLE BANNER"
+        enabledHosts:
+          - "sso.uds.dev"
+        pathPrefixes:
+          - "/realms/uds/account"
+      - text: "UNKNOWN"
+        addFooter: false
+        enabledHosts:
+          - "grafana.admin.uds.dev"
+      - text: "UNCLASSIFIED"
+        enabledHosts:
+          - "portal.uds.dev"
+
+istio-admin-gateway:
+  gateway:
+    service:
+      annotations:
+        service.beta.kubernetes.io/azure-load-balancer-internal: "false"
+        service.beta.kubernetes.io/azure-load-balancer-sku: "Standard"
+        service.beta.kubernetes.io/azure-load-balancer-resource-group: "{{ .vars.core.node_resource_group_name }}"
+
+istio-tenant-gateway:
+  gateway:
+    service:
+      annotations:
+        service.beta.kubernetes.io/azure-load-balancer-internal: "false"
+        service.beta.kubernetes.io/azure-load-balancer-sku: "Standard"
+        service.beta.kubernetes.io/azure-load-balancer-resource-group: "{{ .vars.core.node_resource_group_name }}"
+
+keycloak:
+  keycloak:
+    devMode: false
+    autoscaling:
+      enabled: true
+    detailedObservability:
+      alerts:
+        enabled: true
+    realmInitEnv:
+      FLEET_CLIENT_ENABLED: "true"
+    postgresql:
+      host: "{{ .vars.core.keycloak_db_host }}"
+      username: "{{ .vars.core.keycloak_db_username }}"
+      database: "{{ .vars.core.keycloak_db_database }}"
+      password: "{{ .vars.core.keycloak_db_password }}"
+
+loki:
+  loki:
+    loki:
+      storage:
+        type: "azure"
+      storage_config:
+        azure:
+          account_name: "{{ .vars.core.azure_loki_storage_account }}"
+          account_key: "{{ .vars.core.azure_loki_storage_account_access_key }}"
+          container_name: "{{ .vars.core.azure_loki_storage_account_container }}"
+    sidecar:
+      rules:
+        logLevel: DEBUG
+
+kube-prometheus-stack:
+  kube-prometheus-stack:
+    kube-state-metrics:
+      resources:
+        limits:
+          memory: 512Mi
+
+grafana:
+  grafana:
+    sidecar:
+      dashboards:
+        logLevel: DEBUG
+      datasources:
+        logLevel: DEBUG
+    autoscaling:
+      enabled: true
+  uds-grafana-config:
+    postgresql:
+      host: "{{ .vars.core.grafana_pg_host }}"
+      port: {{.vars.core.grafana_pg_port}}
+      database: "{{ .vars.core.grafana_pg_database }}"
+      password: "{{ .vars.core.grafana_pg_password }}"
+      user: "{{ .vars.core.grafana_pg_user }}"
+
+velero:
+  velero:
+    configuration:
+      backupStorageLocation:
+        - config:
+            storageAccount: "{{ .vars.core.azure_velero_storage_account }}"
+            storageAccountKeyEnvVar: AZURE_STORAGE_ACCOUNT_ACCESS_KEY
+            resourceGroup: "{{ .vars.core.azure_resource_group }}"
+            subscriptionId: "{{ .vars.core.azure_subscription_id }}"
+          bucket: "{{ .vars.core.azure_velero_storage_account_container }}"
+          name: "{{ .vars.core.velero_backup_storage_config_name }}"
+          provider: "{{ .vars.core.velero_storage_provider }}"
+    credentials:
+      useSecret: true
+      secretContents:
+        cloud: |
+          AZURE_STORAGE_ACCOUNT_ACCESS_KEY={{ .vars.core.azure_velero_storage_account_access_key }}
+          AZURE_CLOUD_NAME=AzurePublicCloud
+
+falco:
+  uds-falco-config:
+    sandboxRulesEnabled: true
+    incubatingRulesEnabled: true

@@ -82,13 +82,13 @@ jobs:
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
-        run: uds create .github/bundles/aks --confirm
+        run: CLI_FEATURES=NextMode=true uds bundle create ./.github/bundles/aks --architecture amd64 --unsigned
 
       - name: Create IAC
         run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
 
       - name: Get Resource Group Name
-        run: echo "AKS_RESOURCE_GROUP=$(tofu output -raw resource_group_name)" >> $GITHUB_ENV
+        run: echo "AKS_RESOURCE_GROUP=$(tofu output -raw resource_group_name)" >> "$GITHUB_ENV"
         working-directory: .github/test-infra/azure/aks
 
       - name: Configure Cluster DNS
@@ -98,27 +98,32 @@ jobs:
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
 
       - name: Deploy Core Bundle
-        env:
-          UDS_CONFIG: .github/bundles/aks/uds-config.yaml
-        # Retry up to 2 times on failure to ride out transient AKS apiserver restart
-        # windows that cause webhook proxy errors. --force-conflicts on retries works
-        # around zarf issue 4771 (field-manager conflicts on partial re-apply).
+        # Remove a partial deployment before retrying so Init starts from a clean state.
         run: |
           for attempt in 1 2 3; do
-            FORCE=""
-            [ "$attempt" -gt 1 ] && FORCE="--force-conflicts"
-            if uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm $FORCE; then
-              echo "CORE_ATTEMPTS=$attempt" >> $GITHUB_ENV
+            if CLI_FEATURES=NextMode=true uds bundle deploy \
+              .github/bundles/aks/uds-bundle-uds-core-aks-nightly-amd64-*.tar.zst \
+              --config .github/bundles/aks/config.uds.hcl \
+              --skip-signature-verification; then
+              echo "CORE_ATTEMPTS=$attempt" >> "$GITHUB_ENV"
               exit 0
             fi
             if [ "$attempt" -lt 3 ]; then
-              echo "Deploy failed on attempt $attempt; sleeping 30s before retry..."
+              echo "Deploy failed on attempt $attempt; waiting 30s before removing the partial deployment..."
               sleep 30
+              if ! CLI_FEATURES=NextMode=true uds bundle remove \
+                .github/bundles/aks/uds-bundle-uds-core-aks-nightly-amd64-*.tar.zst \
+                --config .github/bundles/aks/config.uds.hcl \
+                --skip-signature-verification; then
+                echo "CORE_ATTEMPTS=fail" >> "$GITHUB_ENV"
+                echo "Partial deployment removal failed; refusing to retry over the existing state."
+                exit 1
+              fi
             fi
           done
           echo "CORE_ATTEMPTS=fail" >> $GITHUB_ENV
           exit 1
-        timeout-minutes: 40
+        timeout-minutes: 60
 
       - name: Test UDS Core
         # Retry up to 2 times on failure to ride out transient AKS apiserver
@@ -220,7 +225,17 @@ jobs:
 
       - name: Remove UDS Core
         if: always()
-        run: set +e; for i in $(seq 0 2); do uds remove .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm; if [ $? -eq 0 ]; then break; fi; done
+        run: |
+          set +e
+          for attempt in 1 2 3; do
+            if CLI_FEATURES=NextMode=true uds bundle remove \
+              .github/bundles/aks/uds-bundle-uds-core-aks-nightly-amd64-*.tar.zst \
+              --config .github/bundles/aks/config.uds.hcl \
+              --skip-signature-verification; then
+              break
+            fi
+            echo "Remove failed on attempt $attempt"
+          done
         timeout-minutes: 10
         continue-on-error: true
 
