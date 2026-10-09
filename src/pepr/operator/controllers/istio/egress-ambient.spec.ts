@@ -1,10 +1,17 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi } from "vitest";
-import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
+import {
+  Allow,
+  Direction,
+  K8sGateway,
+  RemoteGenerated,
+  RemoteProtocol,
+  UDSPackage,
+} from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { purgeOrphans } from "../utils";
 import { defaultEgressMocks, updateEgressMocks } from "./defaultTestMocks";
@@ -20,11 +27,13 @@ import * as seMod from "./service-entry";
 
 // Mock purge orphans
 const mockPurgeOrphans: MockedFunction<() => Promise<void>> = vi.fn();
+const mockDeleteResourceIfUnchanged = vi.hoisted(() => vi.fn());
 vi.mock("../utils", async () => {
   const originalModule = (await vi.importActual("../utils")) as object;
   return {
     ...originalModule,
     purgeOrphans: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
+    deleteResourceIfUnchanged: mockDeleteResourceIfUnchanged.mockResolvedValue(true),
   };
 });
 
@@ -1038,17 +1047,32 @@ describe("test purgeAmbientEgressResources", () => {
 
     await purgeAmbientEgressResources({}, "1");
 
-    // Purges Gateway, ServiceEntry, and AuthorizationPolicy in ambient namespace
-    expect(mockPurgeOrphans).toHaveBeenCalledTimes(3);
+    // Purges ServiceEntry and AuthorizationPolicy; the shared waypoint is deleted directly.
+    expect(mockPurgeOrphans).toHaveBeenCalledTimes(2);
+  });
+
+  it("should delete the shared waypoint when no package contributes ambient egress", async () => {
+    updateEgressMocks(defaultEgressMocks);
+    const waypoint = {
+      metadata: { name: "egress-waypoint", namespace: "istio-egress-ambient" },
+    } as K8sGateway;
+    defaultEgressMocks.getWaypointMock.mockResolvedValueOnce({
+      items: [waypoint],
+    } as unknown as K8sGateway);
+
+    await purgeAmbientEgressResources({}, "1");
+
+    expect(mockDeleteResourceIfUnchanged).toHaveBeenCalledWith(waypoint);
   });
 
   it("should handle purge error", async () => {
-    const errorMessage = "Purge error";
+    const purgeError = new Error("Purge error");
 
-    mockPurgeOrphans.mockRejectedValueOnce(new Error(errorMessage));
+    mockPurgeOrphans.mockRejectedValueOnce(purgeError);
 
-    await expect(purgeAmbientEgressResources({}, "1")).rejects.toThrow(
-      "Failed to purge orphaned ambient egress resources",
-    );
+    await expect(purgeAmbientEgressResources({}, "1")).rejects.toMatchObject({
+      message: expect.stringContaining("Failed to purge orphaned ambient egress resources"),
+      cause: purgeError,
+    });
   });
 });

@@ -146,6 +146,57 @@ describe("test reconcileSharedEgressResources", () => {
     vi.clearAllMocks();
   });
 
+  it("loads all live ambient contributors before reconciling the first host package", async () => {
+    const liveContributor: UDSPackage = {
+      ...pkgWithAllow,
+      metadata: { name: "live-package", namespace: "live-namespace" },
+    };
+    const terminatingContributor: UDSPackage = {
+      ...pkgWithAllow,
+      metadata: {
+        name: "terminating-package",
+        namespace: "terminating-namespace",
+        deletionTimestamp: new Date("2026-09-28T00:00:00Z"),
+      },
+    };
+    updateEgressMocks({
+      ...defaultEgressMocks,
+      getPkgListMock: vi
+        .fn<() => Promise<{ items: UDSPackage[] }>>()
+        .mockResolvedValue({ items: [liveContributor, terminatingContributor] }),
+    });
+
+    await reconcileSharedEgressResources(
+      pkgWithAllow,
+      hostResourceMapMock,
+      PackageAction.AddOrUpdate,
+      Mode.Ambient,
+    );
+
+    expect(inMemoryAmbientPackageMap).toHaveProperty("live-package-live-namespace");
+    expect(inMemoryAmbientPackageMap).toHaveProperty("test-package-test-namespace");
+    expect(inMemoryAmbientPackageMap).not.toHaveProperty(
+      "terminating-package-terminating-namespace",
+    );
+    expect(applyAmbientEgressResources).toHaveBeenCalledWith(
+      inMemoryAmbientPackageMap,
+      expect.any(Number),
+    );
+    expect(purgeAmbientEgressResources).toHaveBeenCalledWith(
+      inMemoryAmbientPackageMap,
+      expect.any(String),
+    );
+
+    await reconcileSharedEgressResources(
+      liveContributor,
+      undefined,
+      PackageAction.Remove,
+      Mode.Ambient,
+    );
+
+    expect(inMemoryAmbientPackageMap).not.toHaveProperty("live-package-live-namespace");
+  });
+
   it("should populate in-memory vars on action AddOrUpdate, sidecar", async () => {
     updateEgressMocks(defaultEgressMocks);
 
@@ -191,6 +242,38 @@ describe("test reconcileSharedEgressResources", () => {
         ],
       },
     });
+  });
+
+  it("should retry after an apply failure", async () => {
+    updateEgressMocks(defaultEgressMocks);
+    const pkgWithAmbientEgress = {
+      ...pkgWithAllow,
+      metadata: { ...pkgWithAllow.metadata, name: "ambient-retry" },
+    };
+    const applyError = new Error("waypoint apply failed");
+    vi.mocked(applyAmbientEgressResources)
+      .mockRejectedValueOnce(applyError)
+      .mockResolvedValueOnce();
+
+    await expect(
+      reconcileSharedEgressResources(
+        pkgWithAmbientEgress,
+        hostResourceMapMock,
+        PackageAction.AddOrUpdate,
+        Mode.Ambient,
+      ),
+    ).rejects.toThrow("waypoint apply failed");
+
+    await expect(
+      reconcileSharedEgressResources(
+        pkgWithAmbientEgress,
+        hostResourceMapMock,
+        PackageAction.AddOrUpdate,
+        Mode.Ambient,
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(applyAmbientEgressResources).toHaveBeenCalledTimes(2);
   });
 
   it("should update in-memory vars on action AddOrUpdate, sidecar to ambient", async () => {
@@ -434,17 +517,23 @@ describe("test shared egress reconciliation serialization", () => {
       .mockRejectedValueOnce(new Error("apply failed"))
       .mockResolvedValueOnce();
 
+    const firstPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "serialization-failure-first" },
+    };
+    const secondPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "serialization-failure-second" },
+    };
+
     const first = reconcileSharedEgressResources(
-      pkgMock,
+      firstPackage,
       sharedHostResourceMap,
       PackageAction.AddOrUpdate,
       Mode.Sidecar,
     );
     const second = reconcileSharedEgressResources(
-      {
-        ...pkgMock,
-        metadata: { ...pkgMock.metadata, name: "second-package" },
-      },
+      secondPackage,
       sharedHostResourceMap,
       PackageAction.AddOrUpdate,
       Mode.Sidecar,
@@ -514,6 +603,17 @@ describe("test performEgressReconciliation", () => {
 
     // Purges sidecar (Gateway, VirtualService, ServiceEntry) and ambient (Gateway, ServiceEntry, AuthorizationPolicy)
     expect(purgeOrphans).toHaveBeenCalledTimes(6);
+  });
+
+  it("should preserve the low-level ambient apply error", async () => {
+    updateEgressMocks(defaultEgressMocks);
+    const applyError = new Error("waypoint apply conflict");
+    vi.mocked(applyAmbientEgressResources).mockRejectedValueOnce(applyError);
+
+    await expect(performEgressReconciliation()).rejects.toMatchObject({
+      message: expect.stringContaining("waypoint apply conflict"),
+      errors: [expect.objectContaining({ cause: applyError })],
+    });
   });
 
   it("should skip sidecar reconciliation when namespace is not found", async () => {
