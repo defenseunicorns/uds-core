@@ -4821,7 +4821,11 @@
                       "type": "number"
                     },
                     "nodeSelector": {
-                      "properties": {},
+                      "properties": {
+                        "kubernetes.io/os": {
+                          "type": "string"
+                        }
+                      },
                       "type": "object"
                     },
                     "paused": {
@@ -5744,7 +5748,11 @@
                       "type": "object"
                     },
                     "nodeSelector": {
-                      "properties": {},
+                      "properties": {
+                        "kubernetes.io/os": {
+                          "type": "string"
+                        }
+                      },
                       "type": "object"
                     },
                     "podAnnotations": {
@@ -8059,7 +8067,11 @@
                       "type": "string"
                     },
                     "nodeSelector": {
-                      "properties": {},
+                      "properties": {
+                        "kubernetes.io/os": {
+                          "type": "string"
+                        }
+                      },
                       "type": "object"
                     },
                     "otlp": {
@@ -9254,7 +9266,11 @@
                           "type": "object"
                         },
                         "nodeSelector": {
-                          "properties": {},
+                          "properties": {
+                            "kubernetes.io/os": {
+                              "type": "string"
+                            }
+                          },
                           "type": "object"
                         },
                         "podAnnotations": {
@@ -9454,7 +9470,11 @@
                           "type": "boolean"
                         },
                         "nodeSelector": {
-                          "properties": {},
+                          "properties": {
+                            "kubernetes.io/os": {
+                              "type": "string"
+                            }
+                          },
                           "type": "object"
                         },
                         "podAnnotations": {
@@ -9662,7 +9682,11 @@
                   "type": "object"
                 },
                 "nodeSelector": {
-                  "properties": {},
+                  "properties": {
+                    "kubernetes.io/os": {
+                      "type": "string"
+                    }
+                  },
                   "type": "object"
                 },
                 "podAnnotations": {
@@ -10326,7 +10350,11 @@
                     },
                     "minReadySeconds": {},
                     "nodeSelector": {
-                      "properties": {},
+                      "properties": {
+                        "kubernetes.io/os": {
+                          "type": "string"
+                        }
+                      },
                       "type": "object"
                     },
                     "objectStorageConfig": {
