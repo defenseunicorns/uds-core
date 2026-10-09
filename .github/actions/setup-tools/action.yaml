@@ -8,9 +8,9 @@ description: "Installs development tooling from mise.toml"
 runs:
   using: "composite"
   steps:
-    - uses: jdx/mise-action@7a4e45a543138629540c9a1616d08632b893e492 # v5.0.1
+    - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
       with:
         # renovate: datasource=github-releases depName=jdx/mise versioning=semver
-        version: 2026.10.3
+        version: 2026.10.4
         install: true
         cache: true
