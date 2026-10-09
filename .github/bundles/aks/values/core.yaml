@@ -82,7 +82,7 @@ grafana:
   uds-grafana-config:
     postgresql:
       host: "{{ .vars.core.grafana_pg_host }}"
-      port: {{.vars.core.grafana_pg_port}}
+      port: "{{.vars.core.grafana_pg_port}}"
       database: "{{ .vars.core.grafana_pg_database }}"
       password: "{{ .vars.core.grafana_pg_password }}"
       user: "{{ .vars.core.grafana_pg_user }}"
