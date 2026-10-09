@@ -52,9 +52,9 @@ UDS Core 1.14 adds keyless signatures to published Core packages and UDS CLI Nex
 
 ### Known issue: CAC login from tenant applications
 
-UDS Core 1.14.0 changed the misdirected-request filter to allow HTTP/2 connection reuse when the requested host has a route on the selected gateway listener ([#2997](https://github.com/defenseunicorns/uds-core/pull/2997)). A browser can reuse a tenant application's `SIMPLE` TLS connection for `sso.<domain>`, bypassing the new TLS handshake that would request a client certificate under Keycloak's `OPTIONAL_MUTUAL` policy. Users may reach Keycloak without a CAC certificate prompt and cannot complete CAC login.
+UDS Core 1.14.0 changed the misdirected-request filter to allow HTTP/2 connection reuse when the requested host has a route on the selected gateway listener ([#2997](https://github.com/defenseunicorns/uds-core/pull/2997)). A browser can reuse a tenant application's `SIMPLE` TLS connection for `sso.<domain>`, bypassing the new TLS handshake that would request a client certificate under Keycloak's `OPTIONAL_MUTUAL` policy. Users may reach Keycloak without a CAC certificate prompt and cannot complete CAC login. This issue is resolved in 1.14.1.
 
-Until you upgrade, quit and reopen the browser, then navigate directly to `https://sso.<domain>` before opening a tenant application. Opening another SSO application in the same browser session may not restore the certificate prompt.
+Until you are able to upgrade, quit and reopen the browser, then navigate directly to `https://sso.<domain>` before opening a tenant application. Opening another SSO application in the same browser session may not restore the certificate prompt.
 
 ### Known issue: additional Keycloak SSO hostnames
 
