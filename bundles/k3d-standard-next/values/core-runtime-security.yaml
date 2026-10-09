@@ -5,6 +5,7 @@ falco:
   falco:
     falcosidekick:
       replicaCount: 1
+# K0s exposes this containerd socket for Falco's CRI collector.
 {{- with index .vars "falco_cri_socket" }}
     collectors:
       containerEngine:
