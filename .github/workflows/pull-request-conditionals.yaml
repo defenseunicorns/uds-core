@@ -112,6 +112,7 @@ jobs:
               - "!.github/workflows/test-aks.yaml"
               - "!.github/workflows/test-eks.yaml"
               - "!.github/workflows/test-rke2.yaml"
+              - "!.github/workflows/test-k0s.yaml"
               - "!.github/bundles/**"
               - "!.github/test-infra/**"
               - "!tasks/iac.yaml"

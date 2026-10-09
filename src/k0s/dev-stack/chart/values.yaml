@@ -1,0 +1,49 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+extraPorts: []
+
+coreDnsOverrides: |
+  rewrite stop {
+    name regex (.*\.admin\.uds\.dev) admin-ingressgateway.istio-admin-gateway.svc.cluster.local answer auto
+  }
+  rewrite stop {
+    name regex (.*\.uds\.dev) tenant-ingressgateway.istio-tenant-gateway.svc.cluster.local answer auto
+  }
+
+# Enable the following to use a custom gateway
+# customGateway:
+#   domainName: uds2.dev
+
+passthrough:
+  enabled: false
+  subdomains: []
+    # Add any passthrough subdomains here; items should be unique
+    # e.g.,
+    # - mysubdomain
+    # - myothersubdomain
+images:
+  nginx:
+    repository: quay.io/nginx/nginx-unprivileged
+    # renovate: datasource=docker depName=quay.io/nginx/nginx-unprivileged versioning=docker
+    tag: 1.31.6-alpine
+  busybox:
+    repository: cgr.dev/chainguard/busybox
+    tag: latest@sha256:7b53dd5ae63b756fa4078f30ae13b879ebd44942d7aa9cfbc2e90641da75c3d6
+  wolfiBase:
+    repository: cgr.dev/chainguard/wolfi-base
+    tag: latest@sha256:05d24163df148be377275af8374c16523a1dc7e19bf4f1c689784791553c5e45
+  pause:
+    repository: registry.k8s.io/pause
+    # renovate: datasource=docker depName=registry.k8s.io/pause
+    tag: 3.10.2
+  localPathProvisioner:
+    repository: rancher/local-path-provisioner
+    # renovate: datasource=docker depName=rancher/local-path-provisioner
+    tag: v0.0.37
+
+metallb:
+  ipAddressPool: "###ZARF_VAR_BASE_IP###.200-###ZARF_VAR_BASE_IP###.215"
+
+nginx:
+  enabled: true

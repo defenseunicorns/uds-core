@@ -1,0 +1,8 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v2
+name: uds-dev-stack
+description: UDS dev stack chart
+type: application
+version: 0.21.0

@@ -5,6 +5,15 @@ falco:
   falco:
     falcosidekick:
       replicaCount: 1
+# K0s exposes this containerd socket for Falco's CRI collector.
+{{- with index .vars "falco_cri_socket" }}
+    collectors:
+      containerEngine:
+        engines:
+          cri:
+            sockets:
+              - "{{ . }}"
+{{- end }}
 
 {{- if or (index .vars "falco_sandbox_rules_enabled") (index .vars "falco_incubating_rules_enabled") (index .vars "falco_disabled_rules") }}
   uds-falco-config:
