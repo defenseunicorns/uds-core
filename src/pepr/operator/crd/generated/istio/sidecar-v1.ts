@@ -134,6 +134,10 @@ export interface InboundConnectionPoolHTTP {
    */
   http1MaxPendingRequests?: number;
   /**
+   * Configure HTTP/2 PING frames for upstream connections.
+   */
+  http2KeepAlive?: PurpleHttp2KeepAlive;
+  /**
    * Maximum number of active requests to a destination.
    */
   http2MaxRequests?: number;
@@ -170,6 +174,20 @@ export enum H2UpgradePolicy {
   Default = "DEFAULT",
   DoNotUpgrade = "DO_NOT_UPGRADE",
   Upgrade = "UPGRADE",
+}
+
+/**
+ * Configure HTTP/2 PING frames for upstream connections.
+ */
+export interface PurpleHttp2KeepAlive {
+  /**
+   * Send HTTP/2 PING frames at this interval.
+   */
+  interval?: string;
+  /**
+   * How long to wait for a response to an HTTP/2 PING frame before closing the connection.
+   */
+  timeout?: string;
 }
 
 /**
@@ -279,6 +297,10 @@ export interface ConnectionPoolHTTP {
    */
   http1MaxPendingRequests?: number;
   /**
+   * Configure HTTP/2 PING frames for upstream connections.
+   */
+  http2KeepAlive?: FluffyHttp2KeepAlive;
+  /**
    * Maximum number of active requests to a destination.
    */
   http2MaxRequests?: number;
@@ -303,6 +325,20 @@ export interface ConnectionPoolHTTP {
    * If set to true, client protocol will be preserved while initiating connection to backend.
    */
   useClientProtocol?: boolean;
+}
+
+/**
+ * Configure HTTP/2 PING frames for upstream connections.
+ */
+export interface FluffyHttp2KeepAlive {
+  /**
+   * Send HTTP/2 PING frames at this interval.
+   */
+  interval?: string;
+  /**
+   * How long to wait for a response to an HTTP/2 PING frame before closing the connection.
+   */
+  timeout?: string;
 }
 
 /**
@@ -405,6 +441,11 @@ export interface TLS {
    * asking the clients to use HTTPS.
    */
   httpsRedirect?: boolean;
+  /**
+   * Optional: If set to true, the proxy will try to validate the certificate, but even if the
+   * validation fails, it will allow the connection through.
+   */
+  insecureSkipVerify?: boolean;
   /**
    * Optional: Maximum TLS protocol version.
    *
