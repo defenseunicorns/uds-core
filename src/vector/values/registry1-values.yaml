@@ -3,4 +3,4 @@
 
 image:
   repository: registry1.dso.mil/ironbank/opensource/timberio/vector
-  tag: 0.58.0
+  tag: 0.59.0
