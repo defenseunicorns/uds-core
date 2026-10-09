@@ -1,0 +1,126 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+istio-controlplane:
+  uds-global-istio-config:
+    classificationBanners:
+      - text: "SAMPLE BANNER"
+        enabledHosts:
+          - "sso.uds.dev"
+        pathPrefixes:
+          - "/realms/uds/account"
+      - text: "UNKNOWN"
+        addFooter: false
+        enabledHosts:
+          - "grafana.admin.uds.dev"
+      - text: "UNCLASSIFIED"
+        enabledHosts:
+          - "portal.uds.dev"
+
+envoy-gateway:
+  uds-envoy-gateway-config:
+    envoyService:
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+        service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+
+velero:
+  velero:
+    credentials:
+      useSecret: {{.vars.core.velero_use_secret}}
+    serviceAccount:
+      server:
+        annotations:
+          eks.amazonaws.com/role-arn: "{{ .vars.core.velero_irsa_role_arn }}"
+    snapshotsEnabled: true
+    schedules:
+      udsbackup:
+        template:
+          snapshotVolumes: true
+    configuration:
+      backupStorageLocation:
+        - name: default
+          provider: aws
+          bucket: "{{ .vars.velero_bucket }}"
+          config:
+            region: "{{ .vars.velero_bucket_region }}"
+            s3ForcePathStyle: true
+            s3Url: "{{ .vars.velero_bucket_provider_url }}"
+      volumeSnapshotLocation:
+        - name: default
+          provider: aws
+          config:
+            region: "{{ .vars.velero_bucket_region }}"
+
+loki:
+  loki:
+    loki:
+      storage:
+        bucketNames:
+          chunks: "{{ .vars.core.loki_chunks_bucket }}"
+          admin: "{{ .vars.core.loki_admin_bucket }}"
+        s3:
+          endpoint: ""
+          secretAccessKey: ""
+          accessKeyId: ""
+          region: "{{ .vars.core.loki_s3_region }}"
+    serviceAccount:
+      annotations:
+        eks.amazonaws.com/role-arn: "{{ .vars.core.loki_irsa_role_arn }}"
+    sidecar:
+      rules:
+        logLevel: DEBUG
+
+grafana:
+  grafana:
+    sidecar:
+      dashboards:
+        logLevel: DEBUG
+      datasources:
+        logLevel: DEBUG
+    autoscaling:
+      enabled: {{.vars.core.grafana_ha}}
+  uds-grafana-config:
+    postgresql:
+      host: "{{ .vars.core.grafana_pg_host }}"
+      port: {{.vars.core.grafana_pg_port}}
+      database: "{{ .vars.core.grafana_pg_database }}"
+      password: "{{ .vars.core.grafana_pg_password }}"
+      user: "{{ .vars.core.grafana_pg_user }}"
+
+keycloak:
+  keycloak:
+    devMode: false
+    autoscaling:
+      enabled: true
+    detailedObservability:
+      alerts:
+        enabled: true
+    realmInitEnv:
+      FLEET_CLIENT_ENABLED: "true"
+    postgresql:
+      host: "{{ .vars.core.keycloak_db_host }}"
+      username: "{{ .vars.core.keycloak_db_username }}"
+      database: "{{ .vars.core.keycloak_db_database }}"
+      password: "{{ .vars.core.keycloak_db_password }}"
+
+falco:
+  uds-falco-config:
+    sandboxRulesEnabled: {{.vars.core.falco_sandbox_rules_enabled}}
+    incubatingRulesEnabled: {{.vars.core.falco_incubating_rules_enabled}}
+    overrides:
+      rules:
+        "Mount Launched in Privileged Container":
+          exceptions:
+            action: append
+            items:
+              - name: allow_csi_efs_node_mounts
+                fields: [k8s.ns.name, k8s.pod.name, proc.name]
+                comps: [=, startswith, =]
+                values:
+                  - [kube-system, efs-csi-node-, mount]
+              - name: allow_csi_ebs_node_mounts
+                fields: [k8s.ns.name, k8s.pod.name, proc.name]
+                comps: [=, startswith, =]
+                values:
+                  - [kube-system, ebs-csi-node, mount]

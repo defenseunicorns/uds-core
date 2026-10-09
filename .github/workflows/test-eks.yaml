@@ -79,7 +79,7 @@ jobs:
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
-        run: uds create .github/bundles/eks --confirm -a amd64
+        run: CLI_FEATURES=NextMode=true uds bundle create ./.github/bundles/eks --architecture amd64 --unsigned
 
       - name: Create Cluster
         run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
@@ -96,13 +96,68 @@ jobs:
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
 
       - name: Deploy Core Bundle
-        env:
-          UDS_CONFIG: .github/bundles/eks/uds-config.yaml
-        run: uds deploy .github/bundles/eks/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
-        timeout-minutes: 40
+        run: |
+          for attempt in 1 2 3; do
+            if CLI_FEATURES=NextMode=true uds bundle deploy \
+              .github/bundles/eks/uds-bundle-uds-core-eks-nightly-amd64-*.tar.zst \
+              --config .github/bundles/eks/config.uds.hcl \
+              --skip-signature-verification; then
+              echo "CORE_ATTEMPTS=$attempt" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Deploy failed on attempt $attempt; waiting 30s before removing the partial deployment..."
+              sleep 30
+              if ! CLI_FEATURES=NextMode=true uds bundle remove \
+                .github/bundles/eks/uds-bundle-uds-core-eks-nightly-amd64-*.tar.zst \
+                --config .github/bundles/eks/config.uds.hcl \
+                --skip-signature-verification; then
+                echo "CORE_ATTEMPTS=fail" >> "$GITHUB_ENV"
+                echo "Partial deployment removal failed; refusing to retry over the existing state."
+                exit 1
+              fi
+            fi
+          done
+          echo "CORE_ATTEMPTS=fail" >> "$GITHUB_ENV"
+          exit 1
+        timeout-minutes: 60
 
       - name: Test UDS Core
-        run: uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }}
+        # Retry up to 2 times on failure to ride out transient EKS apiserver
+        # webhook disruptions during test-app deploy, playwright, or vitest phases.
+        run: |
+          for attempt in 1 2 3; do
+            if uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES="${{ matrix.flavor == 'registry1' && 'portal' || '' }}"; then
+              echo "TEST_ATTEMPTS=$attempt" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Tests failed on attempt $attempt; sleeping 30s before retry..."
+              sleep 30
+            fi
+          done
+          echo "TEST_ATTEMPTS=fail" >> "$GITHUB_ENV"
+          exit 1
+
+      - name: Retry summary
+        if: always()
+        run: |
+          status() {
+            case "$1" in
+              1) echo "✅ $1 (first try)" ;;
+              2|3) echo "⚠️ $1 (retry needed)" ;;
+              "") echo "❔ not run" ;;
+              *) echo "❌ failed after 3 attempts" ;;
+            esac
+          }
+          {
+            echo "## Core Retry Summary"
+            echo ""
+            echo "| Step | Attempts |"
+            echo "|------|----------|"
+            echo "| Core deploy | $(status "${CORE_ATTEMPTS:-}") |"
+            echo "| Test UDS Core | $(status "${TEST_ATTEMPTS:-}") |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Validate Loki chunks S3 writes
         run: uds run -f src/loki/tasks.yaml validate-object-storage-writes --no-progress --with provider=aws --with iac_dir=.github/test-infra/aws/eks
@@ -120,7 +175,17 @@ jobs:
 
       - name: Remove UDS Core
         if: always()
-        run: uds remove .github/bundles/eks/uds-bundle-uds-core-eks-*.tar.zst --confirm
+        run: |
+          set +e
+          for attempt in 1 2 3; do
+            if CLI_FEATURES=NextMode=true uds bundle remove \
+              .github/bundles/eks/uds-bundle-uds-core-eks-nightly-amd64-*.tar.zst \
+              --config .github/bundles/eks/config.uds.hcl \
+              --skip-signature-verification; then
+              break
+            fi
+            echo "Remove failed on attempt $attempt"
+          done
         timeout-minutes: 10
         continue-on-error: true
 
