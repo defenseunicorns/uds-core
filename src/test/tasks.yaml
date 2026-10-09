@@ -42,13 +42,13 @@ tasks:
         task: uds-common:keycloak-user
         with:
           group: "/UDS Core/Admin"
-      - description: "Run Ambient Playwright Test"
+      - description: "Run Ambient and Keycloak admin hostname Playwright Tests"
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.64.0-noble sh -c " \
+          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" -e DOMAIN="${DOMAIN:-uds.dev}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.64.0-noble sh -c " \
             cd app && \
             npm ci && \
-            npx playwright test ambient-waypoint.test.ts \
+            npx playwright test ambient-waypoint.test.ts keycloak-hostname-admin.test.ts \
             "
         dir: test/playwright
       - description: "Run Secret Reload Tests"
@@ -98,9 +98,9 @@ tasks:
           fi
 
           if [ -n "$COMPONENTS" ]; then
-            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components "$COMPONENTS"
+            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components "$COMPONENTS" --set-variables "DOMAIN=${DOMAIN:-uds.dev}"
           else
-            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm
+            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --set-variables "DOMAIN=${DOMAIN:-uds.dev}"
           fi
 
       - description: Verify the admin app is accessible
@@ -233,7 +233,6 @@ tasks:
               fi
             fi
           fi
-
   - name: cleanup-udp-expose
     description: Remove UDP test Package resources applied directly by an older release before upgrade
     actions:

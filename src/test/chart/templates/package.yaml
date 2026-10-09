@@ -39,3 +39,30 @@ spec:
         - https://podinfo.uds.dev/login
       enableAuthserviceSelector:
         app.kubernetes.io/name: podinfo
+    - name: alternate issuer regression client
+      clientId: alt-podinfo-oidc
+      secret: alt-issuer-regression-secret
+      fullScopeAllowed: false
+      redirectUris:
+        - https://alt-protected.uds.dev/oauth2/callback
+      protocolMappers:
+        - name: alternate issuer audience
+          protocol: openid-connect
+          protocolMapper: oidc-audience-mapper
+          config:
+            included.client.audience: alt-podinfo-oidc
+            access.token.claim: "true"
+            introspection.token.claim: "true"
+            id.token.claim: "false"
+            lightweight.claim: "false"
+            userinfo.token.claim: "false"
+        - name: primary Podinfo audience for issuer regression
+          protocol: openid-connect
+          protocolMapper: oidc-audience-mapper
+          config:
+            included.client.audience: podinfo
+            access.token.claim: "true"
+            introspection.token.claim: "true"
+            id.token.claim: "false"
+            lightweight.claim: "false"
+            userinfo.token.claim: "false"

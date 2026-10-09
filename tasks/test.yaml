@@ -125,7 +125,7 @@ tasks:
         dir: test/playwright
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host --net=host -e FULL_CORE="true" -e FLAVOR="${FLAVOR}" -e VALIDATE_PASSTHROUGH="${{ .inputs.validate_passthrough }}" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.64.0-noble sh -c " \
+          docker run --rm --ipc=host --net=host -e FULL_CORE="true" -e FLAVOR="${FLAVOR}" -e VALIDATE_PASSTHROUGH="${{ .inputs.validate_passthrough }}" -e DOMAIN="${DOMAIN:-uds.dev}" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.64.0-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test \

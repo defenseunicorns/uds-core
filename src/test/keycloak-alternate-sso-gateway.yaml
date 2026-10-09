@@ -1,0 +1,22 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: keycloak-alternate-sso
+  namespace: istio-tenant-gateway
+spec:
+  selector:
+    app: tenant-ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https-keycloak-alternate-sso
+        protocol: HTTPS
+      hosts:
+        - sso-alt.uds.dev
+      tls:
+        mode: SIMPLE
+        credentialName: gateway-tls
+        minProtocolVersion: TLSV1_3
