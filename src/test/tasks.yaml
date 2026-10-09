@@ -24,8 +24,6 @@ tasks:
         default: "true"
 
     actions:
-      - description: Remove a legacy test-owned Keycloak route left by older test runs
-        task: remove-legacy-owned-alt-sso-route
       - description: "Run Test Apps E2E tests"
         task: create-deploy
         with:
@@ -246,23 +244,6 @@ tasks:
               fi
             fi
           fi
-      - description: Remove the temporary alternate Keycloak host
-        task: remove-legacy-owned-alt-sso-route
-
-  - name: remove-legacy-owned-alt-sso-route
-    description: Remove the old test-owned Package exposure, if present
-    actions:
-      - cmd: |
-          ALT_ROUTE_MARKER="test.uds.dev/created-sso-alt-route"
-          PACKAGE_JSON="$(uds zarf tools kubectl get package keycloak -n keycloak -o json)"
-          if [ "$(printf '%s' "$PACKAGE_JSON" | jq --arg marker "$ALT_ROUTE_MARKER" -r '.metadata.annotations[$marker] // ""')" = "true" ]; then
-            EXPOSE_INDEX="$(printf '%s' "$PACKAGE_JSON" | jq -r '[.spec.network.expose | to_entries[] | select(.value.host == "sso-alt" and .value.gateway == "tenant") | .key][0] // empty')"
-            if [ -n "$EXPOSE_INDEX" ]; then
-              uds zarf tools kubectl patch package keycloak -n keycloak --type=json --field-manager=zarf -p="[{\"op\":\"remove\",\"path\":\"/spec/network/expose/${EXPOSE_INDEX}\"}]"
-            fi
-            uds zarf tools kubectl annotate package keycloak -n keycloak "${ALT_ROUTE_MARKER}-"
-          fi
-
   - name: cleanup-udp-expose
     description: Remove UDP test Package resources applied directly by an older release before upgrade
     actions:

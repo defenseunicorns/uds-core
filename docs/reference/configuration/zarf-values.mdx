@@ -95,25 +95,6 @@ uds zarf package deploy zarf-package-core-amd64-x.x.x.tar.zst \
 
 The resulting domains are `example.com` and `admin.example.net`. If `ADMIN_DOMAIN` is also unset, the admin domain becomes `admin.example.com`.
 
-Custom `Package` routes do not inherit the forwarded-header sanitization on Core's built-in Keycloak routes. Remove caller-supplied forwarded headers and set trusted values on every custom Keycloak route. This prevents callers from changing the issuer, redirect, and action-link hostnames Keycloak generates.
-
-Add the following request-header settings under the custom route's `advancedHTTP` configuration:
-
-```yaml title="Keycloak Package route"
-advancedHTTP:
-  headers:
-    request:
-      remove:
-        - x-forwarded-host
-        - x-forwarded-port
-        - x-forwarded-prefix
-        - x-forwarded-proto
-      add:
-        x-forwarded-host: "%REQ(:AUTHORITY)%"
-        x-forwarded-port: "443"
-        x-forwarded-proto: "https"
-```
-
 ## Values files and variables
 
 UDS Core uses two Zarf values-file phases. Use `###ZARF_VAR_<NAME>###` in ordinary `valuesFiles` when Zarf should substitute a package variable directly. Declare that variable in the package definition, then use `templatedValuesFiles` with `.Variables.<NAME>` when explicit package values must take precedence over the variable or need a computed fallback. Keep those phases separate because Zarf substitutes variable tokens before evaluating Go templates.
