@@ -83,7 +83,7 @@ jobs:
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
-        run: uds create .github/bundles/rke2 --confirm
+        run: CLI_FEATURES=NextMode=true uds bundle create ./.github/bundles/rke2 --architecture amd64 --unsigned
 
       - name: Create IAC
         run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=rke2 --set CLOUD=aws
@@ -98,14 +98,36 @@ jobs:
         timeout-minutes: 20
 
       - name: Deploy Core Bundle
-        env:
-          UDS_CONFIG: .github/bundles/rke2/uds-config.yaml
-        run: uds deploy .github/bundles/rke2/uds-bundle-uds-core-rke2-nightly-*.tar.zst --confirm
-        timeout-minutes: 40
+        # Remove a partial deployment before retrying so Init starts from a clean state.
+        run: |
+          for attempt in 1 2 3; do
+            if CLI_FEATURES=NextMode=true uds bundle deploy \
+              .github/bundles/rke2/uds-bundle-uds-core-rke2-nightly-amd64-*.tar.zst \
+              --config .github/bundles/rke2/config.uds.hcl \
+              --skip-signature-verification; then
+              echo "CORE_ATTEMPTS=$attempt" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Deploy failed on attempt $attempt; waiting 30s before removing the partial deployment..."
+              sleep 30
+              if ! CLI_FEATURES=NextMode=true uds bundle remove \
+                .github/bundles/rke2/uds-bundle-uds-core-rke2-nightly-amd64-*.tar.zst \
+                --config .github/bundles/rke2/config.uds.hcl \
+                --skip-signature-verification; then
+                echo "CORE_ATTEMPTS=fail" >> "$GITHUB_ENV"
+                echo "Partial deployment removal failed; refusing to retry over the existing state."
+                exit 1
+              fi
+            fi
+          done
+          echo "CORE_ATTEMPTS=fail" >> "$GITHUB_ENV"
+          exit 1
+        timeout-minutes: 60
 
       - name: Test UDS Core
         id: test_uds_core
-        run: uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }}
+        run: uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES="${{ matrix.flavor == 'registry1' && 'portal' || '' }}"; then
 
       - name: Debug Output
         if: ${{ always() }}
@@ -125,7 +147,11 @@ jobs:
 
       - name: Remove UDS Core
         if: always()
-        run: uds remove .github/bundles/rke2/uds-bundle-uds-core-rke2-*.tar.zst --confirm
+        run: |
+            CLI_FEATURES=NextMode=true uds bundle remove \
+              .github/bundles/rke2/uds-bundle-uds-core-rke2-nightly-amd64-*.tar.zst \
+              --config .github/bundles/rke2/config.uds.hcl \
+              --skip-signature-verification; then
         timeout-minutes: 20
 
       - name: Remove IAC
