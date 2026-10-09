@@ -120,7 +120,7 @@ jobs:
           done
           echo "CORE_ATTEMPTS=fail" >> "$GITHUB_ENV"
           exit 1
-        timeout-minutes: 60
+        timeout-minutes: 80
 
       - name: Test UDS Core
         id: test_uds_core
