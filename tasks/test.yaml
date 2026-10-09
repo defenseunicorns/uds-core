@@ -110,8 +110,6 @@ tasks:
         default: "false"
     # Run each e2e test type from the e2e folder
     actions:
-      - description: Clean up an alternate Keycloak route left by an interrupted prior run
-        task: test-resources:remove-legacy-owned-alt-sso-route
       - description: "Setup the Doug User for testing"
         task: common-setup:keycloak-user
         with:

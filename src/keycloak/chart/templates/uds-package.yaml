@@ -165,6 +165,8 @@ spec:
             request:
               set:
                 X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
+                X-Forwarded-Proto: "https"
+                X-Forwarded-Port: "443"
               remove:
                 - Forwarded
                 - X-Forwarded-For
@@ -195,6 +197,8 @@ spec:
             request:
               set:
                 X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
+                X-Forwarded-Proto: "https"
+                X-Forwarded-Port: "443"
               remove:
                 - Forwarded
                 - X-Forwarded-For
@@ -232,6 +236,8 @@ spec:
             request:
               set:
                 X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
+                X-Forwarded-Proto: "https"
+                X-Forwarded-Port: "443"
               remove:
                 - Forwarded
                 - X-Forwarded-For

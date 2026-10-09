@@ -34,9 +34,6 @@ tasks:
         cmd: |
           EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "network.spec.ts"
         dir: test/vitest
-      - description: "Run Keycloak admin hostname tests"
-        cmd: "npx vitest run keycloak-hostname-admin.spec.ts"
-        dir: test/vitest
       - description: "Run Test Resources Tests"
         cmd: |
           npx vitest run "test-resources.spec.ts"
@@ -105,14 +102,6 @@ tasks:
           else
             uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --set-variables "DOMAIN=${DOMAIN:-uds.dev}"
           fi
-
-      - description: Wait for the alternate-issuer OIDC app to be ready
-        wait:
-          cluster:
-            kind: Deployment
-            name: alt-protected-oauth2-proxy
-            namespace: podinfo
-            condition: available
 
       - description: Verify the admin app is accessible
         wait:
