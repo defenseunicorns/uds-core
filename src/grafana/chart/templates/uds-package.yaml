@@ -20,8 +20,15 @@ spec:
       webOrigins:
         - "https://grafana.{{ $admin }}"
       redirectUris:
-        - "https://grafana.{{ $admin }}/login/generic_oauth"
-        - "https://grafana.{{ $admin }}/login"
+        {{- $domain := tpl .Values.domain . }}
+        {{- $admin := tpl .Values.adminDomain . }}
+        {{- $gateway := default "admin" .Values.gateway }}
+        {{- if or (not $admin) (eq $admin "###ZARF_VAR_ADMIN_DOMAIN###") }}
+          {{- $admin = printf "admin.%s" $domain }}
+        {{- end }}
+        {{- $grafanaDomain := ternary $admin $domain (eq $gateway "admin") }}
+        - "https://grafana.{{ $grafanaDomain }}/login/generic_oauth"
+        - "https://grafana.{{ $grafanaDomain }}/login"
       {{- if .Values.sso.groups }}
       groups:
         anyOf:
@@ -47,7 +54,7 @@ spec:
         selector:
           app.kubernetes.io/name: grafana
         host: grafana
-        gateway: admin
+        gateway: {{ $gateway | quote }}
         port: 80
         targetPort: 3000
         annotations:

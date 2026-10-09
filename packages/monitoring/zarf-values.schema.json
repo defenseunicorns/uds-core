@@ -1237,6 +1237,9 @@
             "extraDatasources": {
               "type": "array"
             },
+            "gateway": {
+              "type": "string"
+            },
             "postgresql": {
               "properties": {
                 "database": {
