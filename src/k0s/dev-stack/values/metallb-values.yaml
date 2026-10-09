@@ -1,0 +1,30 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+controller:
+  image:
+    repository: quay.io/metallb/controller
+    # renovate: datasource=docker depName=quay.io/metallb/controller
+    tag: v0.16.1
+speaker:
+  image:
+    repository: quay.io/metallb/speaker
+    # renovate: datasource=docker depName=quay.io/metallb/speaker
+    tag: v0.16.1
+frr-k8s:
+  frrk8s:
+    image:
+      repository: quay.io/metallb/frr-k8s
+      # renovate: datasource=docker depName=quay.io/metallb/frr-k8s
+      tag: v0.0.26
+    frr:
+      image:
+        repository: quay.io/frrouting/frr
+        # renovate: datasource=docker depName=quay.io/frrouting/frr
+        tag: 10.7.1
+
+crds:
+  # Allow MetalLB and the dev-stack charts to deploy before the admission
+  # service is ready. The package action switches the webhook back to Fail
+  # after the dev-stack resources are applied.
+  validationFailurePolicy: Ignore

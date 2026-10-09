@@ -5,8 +5,20 @@ name: K0s Test
 
 on:
   schedule:
-    - cron: "0 0 * * 0"  # Every Sunday Midnight (UTC) / Saturday 5pm MT
-  workflow_call: {}
+    - cron: "0 0 * * *"  # Every day at midnight UTC
+  pull_request:
+    # Milestoning triggers release-please PRs, which GitHub Actions does not trigger on creation.
+    types: [milestoned, opened, reopened, synchronize]
+    paths:
+      - ".github/workflows/test-k0s.yaml"
+      - "tasks/setup.yaml"
+      - "tasks/deploy.yaml"
+      - "tasks/create.yaml"
+      - "tasks/test.yaml"
+      - "bundles/k3d-standard-next/**"
+      - "src/k0s/**"
+      - ".release-please-manifest.json"
+      - "release-please-config.json"
 
 permissions:
   id-token: write
@@ -47,19 +59,12 @@ jobs:
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
 
-      - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
-
       - name: Setup K0s
         run: uds run -f tasks/setup.yaml k0s-test-cluster --no-progress
         timeout-minutes: 15
 
       - name: Deploy UDS Core
-        run: |
-          uds zarf tools yq '.falco.falco.collectors.containerEngine.engines.cri.sockets = ["/run/k0s/containerd.sock"]' \
-            test/values/k3d-standard/values.yaml > build/k0s/values.yaml
-          uds zarf package deploy build/zarf-package-core-amd64-*.tar.zst \
-            --values build/k0s/values.yaml --components '*' --confirm --no-progress
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/deploy.yaml k0s-standard-bundle-next --no-progress --set FLAVOR=${{ matrix.flavor }}
         timeout-minutes: 30
 
       - name: Test UDS Core

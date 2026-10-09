@@ -82,7 +82,7 @@ What: [Infrastructure specific bundles](https://github.com/defenseunicorns/uds-c
 
 The [K0s workflow](../../.github/workflows/test-k0s.yaml) deploys Core on a single-node K0s cluster in Docker and runs the non-k3d validation and end-to-end tests. It tests one version, pinned by `DEFAULT_K0S_VERSION` in [the setup tasks](../../tasks/setup.yaml). Renovate updates this pin to the latest K0s release.
 
-When: Weekly and before each release
+When: Nightly and on qualifying pull requests, including release pull requests when milestoned
 
 Where: K0s in Docker
 

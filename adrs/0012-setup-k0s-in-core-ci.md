@@ -8,11 +8,11 @@ Proposed
 
 ## Context
 
-Core needs a public, repeatable K0s environment before it deploys and tests a candidate build. Existing downstream artifacts and test runners may provide this later, but their availability, ownership, and fit remain under discussion. The current dynamic image rebuild is fragile.
+Core needs a public, repeatable K0s environment before it deploys and tests a candidate build. Existing downstream artifacts and test runners may provide this later, but their availability, ownership, and fit remain under discussion.
 
 ## Decision
 
-For now, Core CI will create the K0s environment in `tasks/setup.yaml` from public, open-source inputs and initialize it with Zarf. The setup must be explicit and self-contained. Do not introduce a shared package until there is a supported public artifact with clear ownership and demand.
+Core CI creates the K0s environment in `tasks/setup.yaml` from public inputs. Core owns a small K0s dev-stack package in `src/k0s/dev-stack`, with pinned upstream charts and local cluster configuration. The standard Next bundle initializes the cluster and deploys Core without its K3d package. Do not introduce a shared package until there is a supported public artifact with clear ownership and demand.
 
 UDS Foundations owns this integration until a shared package is accepted.
 

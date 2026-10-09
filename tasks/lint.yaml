@@ -208,6 +208,14 @@ tasks:
             exit 1
           fi
 
+          DEFAULT_K0S_VERSION=$(./uds zarf tools yq -r '.variables[] | select(.name == "DEFAULT_K0S_VERSION") | .default' tasks/setup.yaml)
+          DEFAULT_K0S_MINOR=$(printf '%s\n' "$DEFAULT_K0S_VERSION" | sed -nE 's/^v([0-9]+\.[0-9]+)\.[0-9]+\+k0s\.[0-9]+$/\1/p')
+          DOCUMENTED_K0S_MINOR=$(grep -F '| [K0s]' "$DOC_FILE" | grep -oE '\*\*[0-9]+\.[0-9]+\*\*' | tr -d '*')
+          if [ -z "$DEFAULT_K0S_MINOR" ] || [ "$DOCUMENTED_K0S_MINOR" != "$DEFAULT_K0S_MINOR" ]; then
+            echo "ERROR: Documented K0s minor does not match DEFAULT_K0S_VERSION"
+            exit 1
+          fi
+
           # Extract k8s versions from terraform config
           EKS_VERSION=$(grep -A3 'variable "kubernetes_version"' .github/test-infra/aws/eks/variables.tf | sed -n 's/.*default *= *"\([0-9]*\.[0-9]*\)".*/\1/p')
           AKS_VERSION=$(grep -A3 'variable "kubernetes_version"' .github/test-infra/azure/aks/variables.tf | sed -n 's/.*default *= *"\([0-9]*\.[0-9]*\)".*/\1/p')

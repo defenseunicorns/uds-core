@@ -5,10 +5,6 @@ variables:
   - name: DEFAULT_K0S_VERSION
     description: "Exact K0s version for distribution testing"
     default: "v1.36.4+k0s.1"
-  - name: K0S_DEV_STACK_VERSION
-    description: "UDS dev stack source used for K0s tests"
-    # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
-    default: "v0.21.0"
   - name: DEFAULT_K3S_VERSION
     description: "Expected K3s version in the default airgap uds-k3d package"
     default: "v1.37.1+k3s1"
@@ -16,6 +12,12 @@ variables:
 tasks:
   - name: k0s-test-cluster
     description: "Create a single-node K0s test cluster (Linux or macOS with Docker)"
+    actions:
+      - cmd: |
+          KUBECONFIG="$(pwd)/build/k0s/kubeconfig" uds run -f tasks/setup.yaml k0s-test-cluster-setup \
+            --set DEFAULT_K0S_VERSION="$DEFAULT_K0S_VERSION" --no-progress
+
+  - name: k0s-test-cluster-setup
     actions:
       - description: "Require KUBECONFIG to target the K0s test cluster"
         cmd: test "${KUBECONFIG}" = "$(pwd)/build/k0s/kubeconfig"
@@ -58,22 +60,14 @@ tasks:
                               loadbalance
                             }
           EOF
-      - description: "Download the dev stack source"
-        cmd: |
-          set -e
-          mkdir -p build/k0s/dev-stack
-          curl -fsSL "https://github.com/defenseunicorns/uds-k3d/archive/refs/tags/${K0S_DEV_STACK_VERSION}.tar.gz" \
-            | tar -xz --strip-components=1 -C build/k0s/dev-stack
       - description: "Start K0s with FIPS CNI compatibility libraries"
         shell:
           darwin: bash
           linux: bash
         cmd: |
           set -euo pipefail
-          # Reuse the pinned dev stack's glibc/OpenSSL layer with the K0s base image.
-          sed 's|FROM rancher/k3s:|FROM k0sproject/k0s:|' build/k0s/dev-stack/docker/Dockerfile \
-            | docker build --build-arg "K3S_TAG=${DEFAULT_K0S_VERSION/+k0s./-k0s.}" \
-                --tag uds-k0s-test --file - build/k0s/dev-stack/docker
+          docker build --build-arg "K0S_TAG=${DEFAULT_K0S_VERSION/+k0s./-k0s.}" \
+            --tag uds-k0s-test --file src/k0s/dev-stack/Dockerfile src/k0s/dev-stack
           docker run -d --name k0s-uds --hostname k0s-uds --privileged \
             --ulimit nofile=1048576:1048576 \
             --tmpfs /run -v /var/lib/k0s -v /var/log/pods -v /var/lib/kubelet \
@@ -101,18 +95,14 @@ tasks:
         maxTotalSeconds: 300
       - description: "Wait for K0s DNS"
         cmd: ./uds zarf tools kubectl rollout status deployment/coredns -n kube-system --timeout=300s
-      - description: "Deploy the existing dev stack without creating K3d"
+      - description: "Deploy the K0s dev stack"
         shell:
           darwin: bash
           linux: bash
         cmd: |
           set -euo pipefail
-          ./uds zarf tools yq -i '.components = [.components[] | select(.name == "uds-dev-stack")]' build/k0s/dev-stack/zarf.yaml
-          ./uds zarf package create build/k0s/dev-stack --confirm --skip-sbom --output build/k0s
-          ./uds zarf package deploy build/k0s/zarf-package-uds-k3d-*.tar.zst --confirm
-      - description: "Initialize K0s with Zarf"
-        # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
-        cmd: ./uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.86.0 --confirm
+          ./uds zarf package create src/k0s/dev-stack --confirm --skip-sbom --output build/k0s
+          ./uds zarf package deploy build/k0s/zarf-package-uds-k0s-dev-stack-*.tar.zst --confirm
 
   - name: create-k3d-cluster
     inputs:

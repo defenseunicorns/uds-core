@@ -59,6 +59,15 @@ tasks:
 
           CLI_FEATURES=NextMode=true ./uds bundle deploy bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-${UDS_ARCH}-${VERSION}.tar.zst "$@"
 
+  - name: k0s-standard-bundle-next
+    description: "Build and deploy the standard Next bundle on an existing K0s cluster"
+    actions:
+      - cmd: uds run -f tasks/create.yaml k3d-standard-bundle-next --with create_options="--skip-sbom" --set FLAVOR="$FLAVOR" --no-progress
+      - task: k3d-standard-bundle-next
+        with:
+          configFile: bundles/k3d-standard-next/config-k0s.uds.hcl
+          packages: init,core_crds,core_base,core_identity_authorization,core_logging,core_monitoring,core_runtime_security,core_backup_restore,core_portal,core_metrics_server
+
   - name: k3d-standard-bundle-ha
     actions:
       - description: "Deploy the UDS Core Standard Bundle"

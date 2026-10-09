@@ -75,12 +75,6 @@ jobs:
               - ".github/bundles/rke2/**"
               - ".github/test-infra/aws/rke2/**"
               - ".github/workflows/test-rke2.yaml"
-            k0s:
-              - "tasks/setup.yaml"
-              - "tasks/create.yaml"
-              - "tasks/test.yaml"
-              - "test/values/k3d-standard/values.yaml"
-              - ".github/workflows/test-k0s.yaml"
             eks:
               - "tasks/iac.yaml"
               - "src/loki/tasks.yaml"
@@ -101,13 +95,6 @@ jobs:
     name: Schedule RKE2
     if: ${{ contains(needs.check-paths.outputs.distros, 'rke2') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-rke2') }}
     uses: ./.github/workflows/test-rke2.yaml
-    secrets: inherit
-
-  run-k0s-test:
-    needs: check-paths
-    name: Schedule K0s
-    if: ${{ contains(needs.check-paths.outputs.distros, 'k0s') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-k0s') }}
-    uses: ./.github/workflows/test-k0s.yaml
     secrets: inherit
 
   run-aks-test:

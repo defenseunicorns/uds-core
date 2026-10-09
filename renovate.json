@@ -164,7 +164,6 @@
         ".github/workflows/test-iac.yaml",
         ".github/workflows/test-aks.yaml",
         ".github/workflows/test-rke2.yaml",
-        ".github/workflows/test-k0s.yaml",
         ".github/workflows/test-eks.yaml"
       ],
       "groupName": "iac-support-deps",
