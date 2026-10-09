@@ -182,6 +182,12 @@ describe("standard domain values", () => {
     expect(hosts).toContain(`*.${expectedDomain}`);
   });
 
+  it("tenant gateway root host uses expected domain", () => {
+    const r = findResource(manifests, "Gateway", "tenant-gateway", "istio-tenant-gateway");
+    const hosts = gatewayHosts(r);
+    expect(hosts).toContain(expectedDomain);
+  });
+
   it("tenant gateway sso host uses expected domain", () => {
     const r = findResource(manifests, "Gateway", "tenant-gateway", "istio-tenant-gateway");
     const hosts = gatewayHosts(r);

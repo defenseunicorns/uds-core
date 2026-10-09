@@ -54,6 +54,12 @@ packages:
                 service.beta.kubernetes.io/azure-load-balancer-resource-group: "${NODE_RESOURCE_GROUP_NAME}"
 
       istio-tenant-gateway:
+        uds-istio-config:
+          values:
+            - path: rootDomain.enabled
+              value: true
+            - path: rootDomain.server
+              value: tenant
         gateway:
           values:
             - path: service.annotations

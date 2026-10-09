@@ -138,10 +138,18 @@ tasks:
             address: demo-8081.uds.dev
             code: 200
 
+      - description: Verify the root domain app is accessible
+        wait:
+          network:
+            protocol: https
+            address: uds.dev
+            code: 200
+
       - description: Fetch the passthrough gateway IP address
         if: ${{ eq .inputs.validate_passthrough "true" }}
         maxRetries: 5
         task: utils:passthrough-gw-ip
+
       - description: Verify the passthrough app is accessible
         if: ${{ eq .inputs.validate_passthrough "true" }}
         maxRetries: 5
