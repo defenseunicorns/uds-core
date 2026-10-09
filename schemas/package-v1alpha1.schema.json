@@ -705,6 +705,10 @@
           "type": "integer",
           "description": "On a redirect, overwrite the port portion of the URL with this value."
         },
+        "prefixRewrite": {
+          "type": "string",
+          "description": "On a redirect, replace the matched prefix with this value."
+        },
         "redirectCode": {
           "type": "integer",
           "description": "On a redirect, Specifies the HTTP status code to use in the redirect response."
