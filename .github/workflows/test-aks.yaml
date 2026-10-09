@@ -96,20 +96,19 @@ jobs:
 
       - name: Deploy Core Bundle
         # Remove a partial deployment before retrying so Init starts from a clean state.
+        working-directory: .github/bundles/aks
         run: |
           for attempt in 1 2 3; do
-            if CLI_FEATURES=NextMode=true uds bundle dev deploy \
-              ./.github/bundles/aks \
-              --config .github/bundles/aks/config.uds.hcl; then
+            if CLI_FEATURES=NextMode=true uds bundle dev deploy . \
+              --config config.uds.hcl; then
               echo "CORE_ATTEMPTS=$attempt" >> $GITHUB_ENV
               exit 0
             fi
             if [ "$attempt" -lt 3 ]; then
               echo "Deploy failed on attempt $attempt; waiting 30s before removing the partial deployment..."
               sleep 30
-              if ! CLI_FEATURES=NextMode=true uds bundle dev remove \
-                ./.github/bundles/aks \
-                --config .github/bundles/aks/config.uds.hcl; then
+              if ! CLI_FEATURES=NextMode=true uds bundle dev remove . \
+                --config config.uds.hcl; then
                 echo "CORE_ATTEMPTS=fail" >> $GITHUB_ENV
                 echo "Partial deployment removal failed; refusing to retry over the existing state."
                 exit 1
@@ -219,12 +218,12 @@ jobs:
 
       - name: Remove UDS Core
         if: always()
+        working-directory: .github/bundles/aks
         run: |
           set +e
           for attempt in 1 2 3; do
-            if CLI_FEATURES=NextMode=true uds bundle dev remove \
-              ./.github/bundles/aks \
-              --config .github/bundles/aks/config.uds.hcl; then
+            if CLI_FEATURES=NextMode=true uds bundle dev remove . \
+              --config config.uds.hcl; then
               break
             fi
             echo "Remove failed on attempt $attempt"
