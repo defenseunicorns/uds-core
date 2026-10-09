@@ -104,6 +104,7 @@ jobs:
         timeout-minutes: 40
 
       - name: Test UDS Core
+        id: test_uds_core
         run: uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }}
 
       - name: Debug Output
@@ -117,17 +118,20 @@ jobs:
           suffix: -rke2-${{ matrix.flavor }}
           distro: "rke2"
 
+      - name: Remove test apps after failed tests
+        if: ${{ always() && steps.test_uds_core.outcome == 'failure' }}
+        run: uds run -f src/test/tasks.yaml remove --no-progress
+        timeout-minutes: 10
+
       - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/rke2/uds-bundle-uds-core-rke2-*.tar.zst --confirm
         timeout-minutes: 20
-        continue-on-error: true
 
       - name: Remove IAC
         if: always()
         run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=rke2 --set CLOUD=aws
         timeout-minutes: 10
-        continue-on-error: true
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'

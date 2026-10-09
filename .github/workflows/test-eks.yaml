@@ -123,41 +123,8 @@ jobs:
         timeout-minutes: 60
 
       - name: Test UDS Core
-        # Retry up to 2 times on failure to ride out transient EKS apiserver
-        # webhook disruptions during test-app deploy, playwright, or vitest phases.
-        run: |
-          for attempt in 1 2 3; do
-            if uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES="${{ matrix.flavor == 'registry1' && 'portal' || '' }}"; then
-              echo "TEST_ATTEMPTS=$attempt" >> "$GITHUB_ENV"
-              exit 0
-            fi
-            if [ "$attempt" -lt 3 ]; then
-              echo "Tests failed on attempt $attempt; sleeping 30s before retry..."
-              sleep 30
-            fi
-          done
-          echo "TEST_ATTEMPTS=fail" >> "$GITHUB_ENV"
-          exit 1
-
-      - name: Retry summary
-        if: always()
-        run: |
-          status() {
-            case "$1" in
-              1) echo "✅ $1 (first try)" ;;
-              2|3) echo "⚠️ $1 (retry needed)" ;;
-              "") echo "❔ not run" ;;
-              *) echo "❌ failed after 3 attempts" ;;
-            esac
-          }
-          {
-            echo "## Core Retry Summary"
-            echo ""
-            echo "| Step | Attempts |"
-            echo "|------|----------|"
-            echo "| Core deploy | $(status "${CORE_ATTEMPTS:-}") |"
-            echo "| Test UDS Core | $(status "${TEST_ATTEMPTS:-}") |"
-          } >> "$GITHUB_STEP_SUMMARY"
+        id: test_uds_core
+        run: uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }}
 
       - name: Validate Loki chunks S3 writes
         run: uds run -f src/loki/tasks.yaml validate-object-storage-writes --no-progress --with provider=aws --with iac_dir=.github/test-infra/aws/eks
@@ -173,6 +140,11 @@ jobs:
           suffix: -eks-${{ matrix.flavor }}
           distro: "eks"
 
+      - name: Remove test apps after failed tests
+        if: ${{ always() && steps.test_uds_core.outcome == 'failure' }}
+        run: uds run -f src/test/tasks.yaml remove --no-progress
+        timeout-minutes: 10
+
       - name: Remove UDS Core
         if: always()
         run: |
@@ -187,13 +159,11 @@ jobs:
             echo "Remove failed on attempt $attempt"
           done
         timeout-minutes: 10
-        continue-on-error: true
 
       - name: Teardown EKS cluster
         if: always()
         run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
         timeout-minutes: 30
-        continue-on-error: true
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'
