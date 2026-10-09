@@ -151,7 +151,7 @@ jobs:
             CLI_FEATURES=NextMode=true uds bundle remove \
               .github/bundles/rke2/uds-bundle-uds-core-rke2-nightly-amd64-*.tar.zst \
               --config .github/bundles/rke2/config.uds.hcl \
-              --skip-signature-verification; then
+              --skip-signature-verification
         timeout-minutes: 20
 
       - name: Remove IAC

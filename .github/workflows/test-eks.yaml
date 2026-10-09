@@ -157,6 +157,9 @@ jobs:
               break
             fi
             echo "Remove failed on attempt $attempt"
+          if [ "$attempt" -eq 3 ]; then
+            exit 1
+          fi
           done
         timeout-minutes: 10
 
