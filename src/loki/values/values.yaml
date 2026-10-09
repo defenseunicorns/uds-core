@@ -176,10 +176,10 @@ sidecar:
   resources:
     limits:
       cpu: 100m
-      memory: 100Mi
+      memory: 128Mi
     requests:
       cpu: 50m
-      memory: 50Mi
+      memory: 64Mi
   rules:
     # -- Whether or not to create a sidecar to ingest rule from specific ConfigMaps and/or Secrets.
     enabled: true
