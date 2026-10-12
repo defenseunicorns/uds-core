@@ -99,26 +99,13 @@ jobs:
         timeout-minutes: 3
         uses: ./.github/actions/debug-output
 
-      - name: Fix log permissions
-        if: always()
-        run: |
-          sudo chown $USER /tmp/zarf-*.log || echo ""
-          sudo chown $USER /tmp/uds-*.log || echo ""
-
-      - name: Upload debug logs
+      - name: Save logs
         if: always()
         timeout-minutes: 5
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: ./.github/actions/save-logs
         with:
-          name: debug-log-k0s-${{ matrix.flavor }}
-          retention-days: 30
-          path: |
-            /tmp/zarf-*.log
-            /tmp/uds-*.log
-            /tmp/maru-*.log
-            /tmp/debug-*.log
-            test/playwright/.playwright/output
-            test/playwright/.playwright/reports
+          suffix: -k0s-${{ matrix.flavor }}
+          distro: k0s
 
       - name: Remove K0s
         if: always()
