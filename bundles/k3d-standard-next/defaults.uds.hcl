@@ -7,6 +7,9 @@ variables = {
   pepr_watcher_cpu_request      = "200m"
   pepr_admission_cpu_request    = "200m"
 
+  root_domain_enabled = true
+  root_domain_server  = "tenant"
+
   authservice_redis_uri     = ""
   authservice_replica_count = "1"
 
