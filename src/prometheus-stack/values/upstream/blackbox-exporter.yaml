@@ -5,7 +5,7 @@
 image:
   registry: quay.io
   repository: prometheus/blackbox-exporter
-  tag: v0.28.0
+  tag: v0.29.0
 
 configReloader:
   image:
