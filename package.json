@@ -48,7 +48,8 @@
     "format:check": "eslint \"**/*.ts\" && prettier --check \"**/*.ts\""
   },
   "dependencies": {
-    "pepr": "2.0.0"
+    "kubernetes-fluent-client": "3.12.3",
+    "pepr": "2.0.3"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",
@@ -58,10 +59,10 @@
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.59.4",
     "@typescript-eslint/parser": "^8.59.4",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "^4.1.11",
     "eslint": "^10.0.0",
     "globals": "^17.0.0",
     "prettier": "^3.6.2",
-    "vitest": "^5.0.0"
+    "vitest": "^4.1.11"
   }
 }

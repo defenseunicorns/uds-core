@@ -7940,6 +7940,32 @@
                       "type": "array"
                     },
                     "containers": {
+                      "items": {
+                        "properties": {
+                          "lifecycle": {
+                            "properties": {
+                              "preStop": {
+                                "properties": {
+                                  "sleep": {
+                                    "properties": {
+                                      "seconds": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
                       "type": "array"
                     },
                     "convertClassicHistogramsToNHCB": {
