@@ -4,7 +4,7 @@
 variables:
   - name: GATEWAY_API_VERSION
     # renovate: datasource=github-tags depName=kubernetes-sigs/gateway-api versioning=semver extractVersion=^v(?<version>.*)$
-    default: "1.6.2"
+    default: "1.6.3"
 
 tasks:
   - name: validate
