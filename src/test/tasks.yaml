@@ -98,9 +98,9 @@ tasks:
           fi
 
           if [ -n "$COMPONENTS" ]; then
-            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components "$COMPONENTS" --set-variables "DOMAIN=${DOMAIN:-uds.dev}"
+            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components "$COMPONENTS"
           else
-            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --set-variables "DOMAIN=${DOMAIN:-uds.dev}"
+            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm
           fi
 
       - description: Verify the admin app is accessible
