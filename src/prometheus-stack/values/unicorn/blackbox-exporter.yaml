@@ -4,7 +4,7 @@
 image:
   registry: cgr.dev
   repository: defenseunicorns.com/prometheus-blackbox-exporter-fips
-  tag: 0.28.0
+  tag: v0.29.0
 
 configReloader:
   image:
