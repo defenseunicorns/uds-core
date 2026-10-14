@@ -78,7 +78,7 @@ grafana:
       datasources:
         logLevel: DEBUG
     autoscaling:
-      enabled: true
+      enabled: {{.vars.core.grafana_ha}}
   uds-grafana-config:
     postgresql:
       host: "{{ .vars.core.grafana_pg_host }}"
@@ -93,20 +93,20 @@ velero:
       backupStorageLocation:
         - config:
             storageAccount: "{{ .vars.core.azure_velero_storage_account }}"
-            storageAccountKeyEnvVar: AZURE_STORAGE_ACCOUNT_ACCESS_KEY
+            storageAccountKeyEnvVar: "{{ .vars.core.velero_client_secret_env_var }}"
             resourceGroup: "{{ .vars.core.azure_resource_group }}"
             subscriptionId: "{{ .vars.core.azure_subscription_id }}"
           bucket: "{{ .vars.core.azure_velero_storage_account_container }}"
-          name: default
-          provider: azure
+          name: "{{ .vars.core.velero_backup_storage_config_name }}"
+          provider: "{{ .vars.core.velero_storage_provider }}"
     credentials:
       useSecret: true
       secretContents:
         cloud: |
-          AZURE_STORAGE_ACCOUNT_ACCESS_KEY={{ .vars.core.azure_velero_storage_account_access_key }}
+          {{ .vars.core.velero_client_secret_env_var }}={{ .vars.core.azure_velero_storage_account_access_key }}
           AZURE_CLOUD_NAME=AzurePublicCloud
 
 falco:
   uds-falco-config:
-    sandboxRulesEnabled: true
-    incubatingRulesEnabled: true
+    sandboxRulesEnabled: {{.vars.core.falco_sandbox_rules_enabled}}
+    incubatingRulesEnabled: {{.vars.core.falco_incubating_rules_enabled}}

@@ -3,10 +3,14 @@
 
 zarf-registry:
   docker-registry:
+    affinity:
+      custom: {{printf "%q" .vars.init.registry_affinity_custom_uds}}
     persistence:
-      accessMode: ReadWriteMany
+      accessMode: "{{ .vars.init.registry_pvc_access_mode }}"
 
 zarf-seed-registry:
   docker-registry:
+    affinity:
+      custom: {{printf "%q" .vars.init.registry_affinity_custom_uds}}
     persistence:
-      accessMode: ReadWriteMany
+      accessMode: "{{ .vars.init.registry_pvc_access_mode }}"

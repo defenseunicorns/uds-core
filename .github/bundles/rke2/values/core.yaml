@@ -117,5 +117,5 @@ keycloak:
 
 falco:
   uds-falco-config:
-    sandboxRulesEnabled: true
-    incubatingRulesEnabled: true
+    sandboxRulesEnabled: {{.vars.core.falco_sandbox_rules_enabled}}
+    incubatingRulesEnabled: {{.vars.core.falco_incubating_rules_enabled}}
