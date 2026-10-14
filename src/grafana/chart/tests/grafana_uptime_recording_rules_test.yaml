@@ -1,0 +1,37 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Grafana Uptime Recording Rules
+set:
+  domain: "example.com"
+  adminDomain: "admin.example.com"
+templates:
+  - uptime-recording-rules.yaml
+capabilities:
+  apiVersions:
+    - monitoring.coreos.com/v1
+
+tests:
+  - it: should select the admin endpoint probe by default
+    asserts:
+      - equal:
+          path: spec.groups[0].rules[?(@.record == "uds:grafana_endpoint:up")].expr
+          value: min(probe_success{job="probe/grafana/uds-grafana-admin-uptime"})
+
+  - it: should select the tenant endpoint probe when the tenant gateway is configured
+    set:
+      gateway: tenant
+    asserts:
+      - equal:
+          path: spec.groups[0].rules[?(@.record == "uds:grafana_endpoint:up")].expr
+          value: min(probe_success{job="probe/grafana/uds-grafana-tenant-uptime"})
+
+  - it: should fall back to the admin endpoint probe when gateway is empty
+    set:
+      gateway: ""
+    asserts:
+      - equal:
+          path: spec.groups[0].rules[?(@.record == "uds:grafana_endpoint:up")].expr
+          value: min(probe_success{job="probe/grafana/uds-grafana-admin-uptime"})

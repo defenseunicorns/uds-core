@@ -2,6 +2,7 @@
 .idea/
 .idea/**
 build/**
+.ai/
 .DS_Store
 *.tar.zst
 zarf-sbom

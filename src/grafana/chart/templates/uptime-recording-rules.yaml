@@ -23,5 +23,5 @@ spec:
           labels:
             uds_layer: monitoring
             uds_component: grafana-endpoint
-          expr: min(probe_success{job="probe/grafana/uds-grafana-admin-uptime"})
+          expr: min(probe_success{job="probe/grafana/uds-grafana-{{ default "admin" .Values.gateway }}-uptime"})
 {{- end }}

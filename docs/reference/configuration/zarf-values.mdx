@@ -62,7 +62,7 @@ The source package definitions and component mapping files define the exact pass
 
 ## Domains
 
-Set the tenant and admin domains with the shared `global.domain` and `global.adminDomain` values. The tenant domain fans out to Keycloak, the tenant and passthrough Istio gateways, Pepr, and Portal. The admin domain configures the admin Istio gateway, Keycloak, Grafana, Pepr, and Portal.
+Set the tenant and admin domains with the shared `global.domain` and `global.adminDomain` values. The tenant domain fans out to Keycloak, the tenant and passthrough Istio gateways, Pepr, and Portal. The admin domain configures the admin Istio gateway, Keycloak, Pepr, and Portal. Grafana uses the admin domain by default. See [Grafana gateway](/reference/configuration/monitoring-and-observability/#grafana-gateway) for tenant routing and the required URL overrides.
 
 | Field | Type | Effective default | Description |
 |---|---|---|---|
