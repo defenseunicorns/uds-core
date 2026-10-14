@@ -96,6 +96,28 @@ describe("updateStatus", () => {
     });
   });
 
+  it("should retry a transient status patch failure", async () => {
+    vi.useFakeTimers();
+    PatchStatus.mockRejectedValueOnce(new Error("temporary Kubernetes failure"));
+
+    try {
+      const cr = { kind: "Package", metadata: { name: "test", namespace: "default" } };
+      const status = { phase: Phase.Ready } as PkgStatus;
+      const update = updateStatus(cr as UDSPackage, status);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      await update;
+
+      expect(PatchStatus).toHaveBeenCalledTimes(2);
+      expect(PatchStatus).toHaveBeenLastCalledWith({
+        metadata: { name: "test", namespace: "default" },
+        status,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("should normalize legacy string-list authserviceClients and populate selector from spec.sso", async () => {
     const cr = {
       kind: "Package",
@@ -286,9 +308,16 @@ describe("handleFailure", () => {
       metadata: { namespace: "default", name: "test", generation: 1, uid: "1" },
     };
     Create.mockResolvedValueOnce(undefined).mockRejectedValueOnce(eventError);
-    PatchStatus.mockRejectedValueOnce(statusError);
+    PatchStatus.mockRejectedValue(statusError);
 
-    await expect(handleFailure(err, cr as UDSPackage)).resolves.toBeUndefined();
+    vi.useFakeTimers();
+    try {
+      const handling = handleFailure(err, cr as UDSPackage);
+      await vi.advanceTimersByTimeAsync(4000);
+      await expect(handling).resolves.toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
 
     expect(Log.error).toHaveBeenCalledWith(
       { err: statusError },

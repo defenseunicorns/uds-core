@@ -7,6 +7,7 @@ import { K8s, kind } from "pepr";
 
 import { GenericKind } from "kubernetes-fluent-client";
 import { Component, setupLogger } from "../../logger";
+import { retryWithDelay } from "../controllers/utils";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
 import { buildMigratedAuthserviceStatus } from "../crd/migrate";
 import {
@@ -83,14 +84,20 @@ export async function updateStatus(cr: UDSPackage, status: PkgStatus) {
     migratedStatus.authserviceClients = normalized;
   }
 
-  // Update the status of the CRD
-  await K8s(UDSPackage).PatchStatus({
-    metadata: {
-      name: cr.metadata!.name,
-      namespace: cr.metadata!.namespace,
-    },
-    status: migratedStatus,
-  });
+  // Retry transient Kubernetes failures so the package does not remain Pending.
+  await retryWithDelay(
+    () =>
+      K8s(UDSPackage).PatchStatus({
+        metadata: {
+          name: cr.metadata!.name,
+          namespace: cr.metadata!.namespace,
+        },
+        status: migratedStatus,
+      }),
+    log,
+    5,
+    1000,
+  );
 
   // Track the UID of the CRD to know if it has been seen before
   uidSeen.add(cr.metadata!.uid!);
