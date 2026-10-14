@@ -360,6 +360,30 @@ describe("reloadPods", () => {
     );
   });
 
+  it("restarts a Deployment once when pods belong to different ReplicaSets", async () => {
+    const pods = ["old-rs", "new-rs"].map(name => ({
+      metadata: {
+        name: `${name}-pod`,
+        namespace: "default",
+        ownerReferences: [{ kind: "ReplicaSet", name, uid: name, controller: true }],
+      },
+    })) as kind.Pod[];
+    const replicaSet = (name: string) => ({
+      metadata: {
+        name,
+        ownerReferences: [{ kind: "Deployment", name: "test-deployment", controller: true }],
+      },
+    });
+    mockK8sClient.Get.mockResolvedValueOnce(replicaSet("old-rs"));
+    mockK8sClient.Get.mockResolvedValueOnce(makeTestDeployment());
+    mockK8sClient.Get.mockResolvedValueOnce(replicaSet("new-rs"));
+    mockK8sClient.Get.mockResolvedValueOnce(makeTestDeployment());
+
+    await reloadPods("default", pods, "Test eviction", mockLogger, "SecretChanged");
+
+    expect(mockK8sClient.Apply).toHaveBeenCalledTimes(1);
+  });
+
   it("should restart orphaned ReplicaSets when no Deployment owner", async () => {
     // Pod owned by a ReplicaSet without Deployment owner
     const pods = [

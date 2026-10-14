@@ -71,20 +71,20 @@ export async function reloadPods(
       continue;
     }
 
-    // Build a unique key for this controller to avoid duplicate handling
-    const controllerKey = `${controllerRef.kind}:${controllerRef.name}`;
-    if (handledControllers[controllerKey]) {
-      if (handledControllers[controllerKey] === "evict") {
-        managedPodsToEvict.push(pod);
-      }
-      continue;
-    }
-
     try {
       const resolved = await resolveControllerKindAndName(namespace, controllerRef, log);
       if (!resolved) {
         // Unhandled controller type, evict the pod directly
         podsToEvict.push(pod);
+        continue;
+      }
+
+      // Deduplicate by the controller we actually restart.
+      const controllerKey = `${resolved.kindClass.name ?? String(resolved.kindClass)}:${resolved.name}`;
+      if (handledControllers[controllerKey]) {
+        if (handledControllers[controllerKey] === "evict") {
+          managedPodsToEvict.push(pod);
+        }
         continue;
       }
 
