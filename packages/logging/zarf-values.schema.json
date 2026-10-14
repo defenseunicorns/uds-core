@@ -9,6 +9,43 @@
             "backend": {
               "properties": {
                 "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "properties": {
+                                  "matchLabels": {
+                                    "properties": {
+                                      "app.kubernetes.io/component": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/instance": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/name": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "topologyKey": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": [
                     "object",
                     "null"
@@ -3292,6 +3329,43 @@
             "gateway": {
               "properties": {
                 "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "properties": {
+                                  "matchLabels": {
+                                    "properties": {
+                                      "app.kubernetes.io/component": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/instance": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/name": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "topologyKey": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": [
                     "object",
                     "null"
@@ -8868,6 +8942,43 @@
             "read": {
               "properties": {
                 "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "properties": {
+                                  "matchLabels": {
+                                    "properties": {
+                                      "app.kubernetes.io/component": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/instance": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/name": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "topologyKey": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": [
                     "object",
                     "null"
@@ -10879,6 +10990,43 @@
             "write": {
               "properties": {
                 "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "properties": {
+                                  "matchLabels": {
+                                    "properties": {
+                                      "app.kubernetes.io/component": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/instance": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/name": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "topologyKey": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": [
                     "object",
                     "null"

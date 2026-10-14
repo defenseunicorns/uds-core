@@ -885,14 +885,16 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
     "https://sso.uds.dev/realms/master/.well-known/openid-configuration",
   ];
 
-  const KEYCLOAK_CURL = [
+  const FORGED_FORWARDING_HEADER_CURL = [
     "curl",
     "-s",
     "-m",
     "3",
+    "-H",
+    "X-Forwarded-Host: attacker.example",
     "-w",
     " HTTP_CODE:%{http_code}",
-    "https://keycloak-http.keycloak.svc.cluster.local:8080/realms/master/.well-known/openid-configuration",
+    "https://sso-alt.uds.dev/realms/uds/.well-known/openid-configuration",
   ];
 
   // Validate redirected request when hitting the external address
@@ -900,13 +902,18 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
   const keycloakRedirectDebug = `Keycloak SSO redirect response: stdout=${redirect_response.stdout}, stderr=${redirect_response.stderr}`;
   expect(redirect_response.stdout, keycloakRedirectDebug).toContain("HTTP_CODE:301");
 
-  // Validate denied request when hitting the internal address
-  const denied_keycloak_response = await execInPod(
+  // The tenant gateway must discard caller-supplied forwarding hosts before proxying to Keycloak.
+  const alternate_host_discovery = await execInPod(
     "test-admin-app",
     testAdminApp,
     "curl",
-    KEYCLOAK_CURL,
+    FORGED_FORWARDING_HEADER_CURL,
   );
-  const keycloakDeniedDebug = `Keycloak internal denied response: stdout=${denied_keycloak_response.stdout}, stderr=${denied_keycloak_response.stderr}`;
-  expect(isResponseError(denied_keycloak_response), keycloakDeniedDebug).toBe(true);
+  const discoveryDebug = `Alternate-host discovery with forged X-Forwarded-Host: exitCode=${alternate_host_discovery.exitCode}, stdout=${alternate_host_discovery.stdout}, stderr=${alternate_host_discovery.stderr}`;
+  expect(alternate_host_discovery.exitCode, discoveryDebug).toBe(0);
+  const [discoveryBody, responseCode] = alternate_host_discovery.stdout.split(" HTTP_CODE:");
+  expect(responseCode, discoveryDebug).toBe("200");
+  expect(JSON.parse(discoveryBody).issuer, discoveryDebug).toBe(
+    "https://sso-alt.uds.dev/realms/uds",
+  );
 });
