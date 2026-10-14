@@ -54,6 +54,8 @@ vi.mock("pepr", async importOriginal => {
       Secret: "Secret",
       ConfigMap: "ConfigMap",
       StatefulSet: "StatefulSet",
+      DaemonSet: "DaemonSet",
+      ReplicaSet: "ReplicaSet",
     },
   };
 });
@@ -1617,6 +1619,51 @@ describe("pod-reload", () => {
 
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
+
+    it.each([
+      ["StatefulSet", "OnDelete"],
+      ["DaemonSet", "OnDelete"],
+      ["ReplicaSet", undefined],
+    ])(
+      "reloads an old pod owned by a %s despite a newer controller timestamp",
+      async (controllerKind, updateStrategy) => {
+        const affected = pod("old-optional", [
+          { name: "config", secret: { secretName: resourceName, optional: true } },
+        ]);
+        affected.metadata!.ownerReferences = [
+          {
+            apiVersion: "apps/v1",
+            kind: controllerKind,
+            name: "controller",
+            uid: "owner",
+            controller: true,
+          },
+        ];
+        const createdSecret = secret();
+        createdSecret.metadata!.annotations = { [SSA_CLEANUP_ANNOTATION]: "true" };
+        setupK8sMock({ items: [affected] });
+        vi.mocked(utils.resolveControllerKindAndName).mockResolvedValue({
+          kindClass: kind[controllerKind as "StatefulSet" | "DaemonSet" | "ReplicaSet"],
+          name: "controller",
+        });
+        mockGet.mockImplementation((name?: string) =>
+          name
+            ? Promise.resolve({
+                spec: {
+                  updateStrategy: updateStrategy ? { type: updateStrategy } : undefined,
+                  template: {
+                    metadata: { annotations: { "uds.dev/restartedAt": "2026-09-30T10:06:00Z" } },
+                  },
+                },
+              })
+            : Promise.resolve({ items: [affected] }),
+        );
+
+        await handleSecretUpdate(createdSecret);
+
+        expect(vi.mocked(utils.reloadPods).mock.calls[0]?.[1]).toEqual([affected]);
+      },
+    );
 
     it("reloads when the controller restart and resource creation share a second", async () => {
       const affected = pod("old-optional", [

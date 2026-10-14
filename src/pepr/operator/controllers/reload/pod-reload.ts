@@ -311,10 +311,15 @@ export async function handleResourceUpdate(
         const controller = await K8s(resolved.kindClass).InNamespace(namespace).Get(resolved.name);
         const restartedAt =
           controller?.spec?.template?.metadata?.annotations?.["uds.dev/restartedAt"];
+        const rollsPodsOnTemplateChange =
+          resolved.kindClass !== kind.ReplicaSet &&
+          controller?.spec?.updateStrategy?.type !== "OnDelete";
 
+        // A newer template only covers existing pods when the controller rolls them.
         // Same-second timestamps cannot establish whether the restart preceded creation.
         if (
           !state &&
+          rollsPodsOnTemplateChange &&
           resourceCreatedAt !== undefined &&
           restartedAt &&
           Math.floor(Date.parse(restartedAt) / 1000) > Math.floor(resourceCreatedAt / 1000)
