@@ -29,7 +29,6 @@ cluster-config.yaml
 uds-docs/
 uds-docs/**
 **/uds-config.yaml
-**/config.uds.hcl
 
 *.tar
 
