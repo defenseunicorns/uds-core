@@ -9,7 +9,7 @@ import { UDSConfig } from "../../config/config";
 import { KeycloakClientMode } from "../../config/types";
 import { UDSPackage } from "../../../crd";
 import { Client } from "../types";
-import { baseUrl, isAuthError, log, throwErrorIfNeeded } from "./common";
+import { baseUrl, isAuthError, KeycloakHttpError, log, throwErrorIfNeeded } from "./common";
 import {
   assertPackageCanDeleteClient,
   assertCurrentPackageUid,
@@ -204,7 +204,7 @@ export async function credentialsCreateOrUpdate(
   try {
     await postClient(createRequest);
   } catch (error) {
-    if (getHttpStatus(error) !== 409) {
+    if (!(error instanceof KeycloakHttpError && error.httpStatus === 409)) {
       throw error;
     }
 
@@ -457,15 +457,4 @@ function requireClientId(client: Pick<Partial<Client>, "clientId">): string {
     throw new Error("A client ID is required for Package-managed Keycloak operations");
   }
   return client.clientId;
-}
-
-function getHttpStatus(error: unknown): number | undefined {
-  if (typeof error !== "object" || error === null) {
-    return undefined;
-  }
-  const candidate = error as { httpStatus?: unknown; status?: unknown };
-  if (typeof candidate.httpStatus === "number") {
-    return candidate.httpStatus;
-  }
-  return typeof candidate.status === "number" ? candidate.status : undefined;
 }

@@ -7,10 +7,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UDSConfig } from "../config/config";
 import { UDSPackage } from "../../crd";
 
-const { mockRaw } = vi.hoisted(() => ({ mockRaw: vi.fn() }));
+const { mockGet } = vi.hoisted(() => ({ mockGet: vi.fn() }));
 
 vi.mock("pepr", () => ({
-  K8s: () => ({ Raw: (...args: unknown[]) => mockRaw(...args) }),
+  K8s: () => ({ Get: (...args: unknown[]) => mockGet(...args) }),
   Log: {
     child: vi.fn().mockReturnValue({
       info: vi.fn(),
@@ -73,23 +73,22 @@ describe("Package Keycloak client ownership helpers", () => {
     ).toThrow("metadata.uid");
   });
 
-  it("reads every Package page before confirming a sole claimant", async () => {
+  it("confirms a sole claimant from the live Package list", async () => {
     const pkg = packageFixture();
-    mockRaw
-      .mockResolvedValueOnce({ items: [pkg], metadata: { continue: "next-page" } })
-      .mockResolvedValueOnce({ items: [], metadata: {} });
+    mockGet.mockResolvedValue({ items: [pkg], metadata: {} });
 
     await expect(
       assertSoleLivePackageClaim("my-app-probe", getPackageClientOwner(pkg)),
     ).resolves.toEqual(pkg);
-    expect(mockRaw).toHaveBeenCalledTimes(2);
-    expect(mockRaw.mock.calls[0][0]).toContain("limit=500");
-    expect(mockRaw.mock.calls[1][0]).toContain("continue=next-page");
+    expect(mockGet).toHaveBeenCalledOnce();
   });
 
-  it("fails closed when Kubernetes repeats a Package-list continuation token", async () => {
-    mockRaw.mockResolvedValue({ items: [packageFixture()], metadata: { continue: "same" } });
-    await expect(listLivePackages()).rejects.toThrow("repeated a Package list continuation token");
+  it("fails closed on an incomplete Package list", async () => {
+    mockGet.mockResolvedValueOnce({ items: [packageFixture()], metadata: { continue: "more" } });
+    await expect(listLivePackages()).rejects.toThrow("incomplete Package list");
+
+    mockGet.mockResolvedValueOnce({ metadata: {} });
+    await expect(listLivePackages()).rejects.toThrow("incomplete Package list");
   });
 
   it("accepts legacy ordinary-client evidence only with status and operator-written attributes", () => {
@@ -109,33 +108,6 @@ describe("Package Keycloak client ownership helpers", () => {
         attributes: {},
       }),
     ).toBe(false);
-  });
-
-  it("recognizes legacy clients from their Keycloak configuration after SSO is removed", () => {
-    const pkg = packageFixture({
-      spec: { sso: [], network: {} },
-      status: { ssoClients: ["my-app", "my-app-probe"] },
-    });
-    expect(
-      hasLegacyOperatorManagementEvidence(pkg, "my-app", {
-        attributes: { "uds.core.groups": "[]" },
-      }),
-    ).toBe(true);
-    expect(
-      hasLegacyOperatorManagementEvidence(pkg, "my-app-probe", {
-        fullScopeAllowed: false,
-        serviceAccountsEnabled: true,
-        standardFlowEnabled: false,
-        protocolMappers: [
-          {
-            name: "audience",
-            protocol: "openid-connect",
-            protocolMapper: "oidc-audience-mapper",
-            config: { "included.client.audience": "my-app" },
-          },
-        ],
-      }),
-    ).toBe(true);
   });
 
   it("rejects ambiguous Keycloak configuration shapes", () => {

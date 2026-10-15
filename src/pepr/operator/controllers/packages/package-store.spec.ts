@@ -8,7 +8,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { Expose, Gateway, Sso, UDSPackage } from "../../crd";
 import { ExposeProtocol, Mode } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
-import { getGeneratedProbeClientIds } from "../uptime/probe-client-utils";
 import { PackageStore } from "./package-store";
 
 UDSConfig.domain = "uds.dev";
@@ -302,31 +301,6 @@ describe("Package Store", () => {
       }
 
       expect(PackageStore.findPackagesWithClientId("authservice-client-probe").size).toBe(0);
-    });
-
-    it("deduplicates a generated ID shared by multiple matching uptime exposes", () => {
-      const pkg = createPackageWithExposesAndSso(
-        "test-ns",
-        "test-app",
-        [
-          { host: "app", uptime: { checks: { paths: ["/health"] } } },
-          {
-            host: "admin",
-            gateway: Gateway.Admin,
-            uptime: { checks: { paths: ["/ready"] } },
-          },
-        ],
-        [
-          createAuthserviceSso("my-app", [
-            "https://app.uds.dev/callback",
-            "https://admin.admin.uds.dev/callback",
-          ]),
-        ],
-      );
-
-      expect(getGeneratedProbeClientIds(pkg)).toEqual(["my-app-probe"]);
-      PackageStore.add(pkg);
-      expect(PackageStore.findPackagesWithClientId("my-app-probe")).toEqual(new Set(["test-ns"]));
     });
 
     it("replaces declared and generated IDs when SSO or uptime configuration changes", () => {

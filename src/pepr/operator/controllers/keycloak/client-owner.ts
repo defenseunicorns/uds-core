@@ -10,21 +10,11 @@ import { getGeneratedProbeClientIds, getProbeClientId } from "../uptime/probe-cl
 
 export const PACKAGE_OWNER_UID_ATTRIBUTE = "uds.core.package-uid";
 
-const PACKAGE_COLLECTION_URL = "/apis/uds.dev/v1alpha1/packages";
-const PACKAGE_PAGE_SIZE = 500;
-
 /** The Kubernetes identity used to prove ownership of an operator-managed client. */
 export interface PackageClientOwner {
   uid: string;
   namespace: string;
   name: string;
-}
-
-interface PackageListPage {
-  items?: UDSPackage[];
-  metadata?: {
-    continue?: string;
-  };
 }
 
 /**
@@ -49,44 +39,16 @@ export function getEffectivePackageClientIds(pkg: UDSPackage): Set<string> {
   ]);
 }
 
-/**
- * Read every current Package using the API's continuation token. A partial list
- * cannot prove that a Package is the sole claimant, so malformed or repeated
- * continuation results fail closed.
- */
+/** Read every current Package; a partial list cannot prove sole ownership. */
 export async function listLivePackages(): Promise<UDSPackage[]> {
-  const packages: UDSPackage[] = [];
-  const seenContinueTokens = new Set<string>();
-  let continuation: string | undefined;
-
-  do {
-    const query = new URLSearchParams({ limit: PACKAGE_PAGE_SIZE.toString() });
-    if (continuation) {
-      query.set("continue", continuation);
-    }
-
-    const page = (await K8s(UDSPackage).Raw(
-      `${PACKAGE_COLLECTION_URL}?${query.toString()}`,
-    )) as unknown as PackageListPage;
-    if (!page || !Array.isArray(page.items)) {
-      throw new Error(
-        "Kubernetes returned an incomplete Package list; client ownership cannot be verified",
-      );
-    }
-
-    packages.push(...page.items);
-    continuation = page.metadata?.continue || undefined;
-    if (continuation && seenContinueTokens.has(continuation)) {
-      throw new Error(
-        "Kubernetes repeated a Package list continuation token; client ownership cannot be verified",
-      );
-    }
-    if (continuation) {
-      seenContinueTokens.add(continuation);
-    }
-  } while (continuation);
-
-  return packages;
+  const list = await K8s(UDSPackage).Get();
+  // Get returns raw JSON with "continue", though V1ListMeta types it as "_continue".
+  if (!Array.isArray(list?.items) || Reflect.get(list?.metadata ?? {}, "continue")) {
+    throw new Error(
+      "Kubernetes returned an incomplete Package list; client ownership cannot be verified",
+    );
+  }
+  return list.items;
 }
 
 /**

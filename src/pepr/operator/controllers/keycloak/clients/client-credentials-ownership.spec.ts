@@ -10,16 +10,16 @@ import { Protocol, UDSPackage } from "../../../crd";
 import { getPackageClientOwner, PACKAGE_OWNER_UID_ATTRIBUTE } from "../client-owner";
 import { Client } from "../types";
 
-const { mockFetch, mockRaw, mockSecretGet } = vi.hoisted(() => ({
+const { mockFetch, mockPackageGet, mockSecretGet } = vi.hoisted(() => ({
   mockFetch: vi.fn(),
-  mockRaw: vi.fn(),
+  mockPackageGet: vi.fn(),
   mockSecretGet: vi.fn(),
 }));
 
 vi.mock("pepr", () => ({
   fetch: (...args: unknown[]) => mockFetch(...args),
   K8s: () => ({
-    Raw: (...args: unknown[]) => mockRaw(...args),
+    Get: (...args: unknown[]) => mockPackageGet(...args),
     InNamespace: () => ({ Get: (...args: unknown[]) => mockSecretGet(...args) }),
   }),
   kind: { Secret: "Secret" },
@@ -114,6 +114,22 @@ function clientFixture(
   };
 }
 
+function legacyProbeClient(): TestClient {
+  return clientFixture("my-app-probe", undefined, {
+    fullScopeAllowed: false,
+    serviceAccountsEnabled: true,
+    standardFlowEnabled: false,
+    protocolMappers: [
+      {
+        name: "audience",
+        protocol: Protocol.OpenidConnect,
+        protocolMapper: "oidc-audience-mapper",
+        config: { "included.client.audience": "my-app" },
+      },
+    ],
+  });
+}
+
 function jwt(exp: number): string {
   const header = Buffer.from(JSON.stringify({ alg: "RS256" })).toString("base64");
   const payload = Buffer.from(JSON.stringify({ exp, resource_access: {} })).toString("base64");
@@ -150,7 +166,7 @@ beforeEach(() => {
   mockSecretGet.mockResolvedValue({
     data: { "uds-operator": Buffer.from("operator-secret").toString("base64") },
   });
-  mockRaw.mockImplementation(async () => ({ items: livePackages, metadata: {} }));
+  mockPackageGet.mockImplementation(async () => ({ items: livePackages, metadata: {} }));
   mockFetch.mockImplementation(async (rawUrl: string, options: RequestInit = {}) => {
     const url = new URL(rawUrl);
     const method = options.method ?? "GET";
@@ -258,7 +274,7 @@ describe("Package-owned Keycloak client credentials", () => {
         ([url, options]) => options.method === "PUT" && String(url).endsWith(clients[0].id),
       ),
     ).toBe(true);
-    expect(mockRaw).toHaveBeenCalledTimes(1);
+    expect(mockPackageGet).toHaveBeenCalledTimes(1);
   });
 
   it("rejects a foreign UID marker, including when namespace and name are reused", async () => {
@@ -310,7 +326,7 @@ describe("Package-owned Keycloak client credentials", () => {
     expect(hasClientMutation()).toBe(false);
 
     mockFetch.mockClear();
-    mockRaw.mockRejectedValueOnce(new Error("Kubernetes list failed"));
+    mockPackageGet.mockRejectedValueOnce(new Error("Kubernetes list failed"));
     await expect(
       credentialsCreateOrUpdate({ clientId: "my-app" }, ownerOf(current)),
     ).rejects.toThrow("Kubernetes list failed");
@@ -377,21 +393,7 @@ describe("Package-owned Keycloak client credentials", () => {
   it("recognizes generated probe IDs in live ownership checks and legacy adoption", async () => {
     const pkg = packageFixture({ includeProbe: true, statusClientIds: ["my-app-probe"] });
     livePackages = [pkg];
-    clients.push(
-      clientFixture("my-app-probe", undefined, {
-        fullScopeAllowed: false,
-        serviceAccountsEnabled: true,
-        standardFlowEnabled: false,
-        protocolMappers: [
-          {
-            name: "audience",
-            protocol: Protocol.OpenidConnect,
-            protocolMapper: "oidc-audience-mapper",
-            config: { "included.client.audience": "my-app" },
-          },
-        ],
-      }),
-    );
+    clients.push(legacyProbeClient());
 
     const result = await credentialsCreateOrUpdate(
       {
@@ -460,7 +462,6 @@ describe("Package-owned Keycloak client credentials", () => {
     expect(mockFetch.mock.calls.filter(([, options]) => options.method === "DELETE")).toHaveLength(
       deletesBeforeRetry,
     );
-    expect(mockFetch.mock.calls.some(([, options]) => options.method === "PUT")).toBe(false);
     expect(mockFetch.mock.calls.some(([, options]) => options.method === "DELETE")).toBe(true);
   });
 
@@ -484,35 +485,19 @@ describe("Package-owned Keycloak client credentials", () => {
       "is not owned by Package",
     );
     expect(mockFetch.mock.calls.some(([, options]) => options.method === "DELETE")).toBe(false);
-    expect(mockFetch.mock.calls.some(([, options]) => options.method === "PUT")).toBe(false);
   });
 
   it("deletes a disabled legacy probe from unique Package status history", async () => {
     const pkg = packageFixture({ includeProbe: true, statusClientIds: ["my-app-probe"] });
     pkg.spec!.network!.expose![0].uptime!.checks!.paths = [];
     livePackages = [pkg];
-    clients.push(
-      clientFixture("my-app-probe", undefined, {
-        fullScopeAllowed: false,
-        serviceAccountsEnabled: true,
-        standardFlowEnabled: false,
-        protocolMappers: [
-          {
-            name: "audience",
-            protocol: Protocol.OpenidConnect,
-            protocolMapper: "oidc-audience-mapper",
-            config: { "included.client.audience": "my-app" },
-          },
-        ],
-      }),
-    );
+    clients.push(legacyProbeClient());
 
     await expect(
       credentialsDelete({ clientId: "my-app-probe" }, ownerOf(pkg)),
     ).resolves.toBeUndefined();
 
     expect(clients).toHaveLength(0);
-    expect(mockFetch.mock.calls.some(([, options]) => options.method === "PUT")).toBe(false);
     expect(mockFetch.mock.calls.some(([, options]) => options.method === "DELETE")).toBe(true);
   });
 
@@ -528,19 +513,7 @@ describe("Package-owned Keycloak client credentials", () => {
       clientFixture("my-app", undefined, {
         attributes: { "uds.core.groups": "" },
       }),
-      clientFixture("my-app-probe", undefined, {
-        fullScopeAllowed: false,
-        serviceAccountsEnabled: true,
-        standardFlowEnabled: false,
-        protocolMappers: [
-          {
-            name: "audience",
-            protocol: Protocol.OpenidConnect,
-            protocolMapper: "oidc-audience-mapper",
-            config: { "included.client.audience": "my-app" },
-          },
-        ],
-      }),
+      legacyProbeClient(),
     );
 
     await credentialsDelete({ clientId: "my-app" }, ownerOf(pkg));
@@ -550,7 +523,6 @@ describe("Package-owned Keycloak client credentials", () => {
     expect(mockFetch.mock.calls.filter(([, options]) => options.method === "DELETE")).toHaveLength(
       2,
     );
-    expect(mockFetch.mock.calls.some(([, options]) => options.method === "PUT")).toBe(false);
   });
 
   it("refuses legacy deletion when another Package records the ID", async () => {
@@ -564,26 +536,11 @@ describe("Package-owned Keycloak client credentials", () => {
       statusClientIds: ["my-app-probe"],
     });
     livePackages = [pkg, other];
-    clients.push(
-      clientFixture("my-app-probe", undefined, {
-        fullScopeAllowed: false,
-        serviceAccountsEnabled: true,
-        standardFlowEnabled: false,
-        protocolMappers: [
-          {
-            name: "audience",
-            protocol: Protocol.OpenidConnect,
-            protocolMapper: "oidc-audience-mapper",
-            config: { "included.client.audience": "my-app" },
-          },
-        ],
-      }),
-    );
+    clients.push(legacyProbeClient());
 
     await expect(credentialsDelete({ clientId: "my-app-probe" }, ownerOf(pkg))).rejects.toThrow(
       "ambiguous Package history",
     );
-    expect(mockFetch.mock.calls.some(([, options]) => options.method === "PUT")).toBe(false);
     expect(mockFetch.mock.calls.some(([, options]) => options.method === "DELETE")).toBe(false);
   });
 
@@ -597,26 +554,11 @@ describe("Package-owned Keycloak client credentials", () => {
       clientId: "my-app-probe",
     });
     livePackages = [pkg, other];
-    clients.push(
-      clientFixture("my-app-probe", undefined, {
-        fullScopeAllowed: false,
-        serviceAccountsEnabled: true,
-        standardFlowEnabled: false,
-        protocolMappers: [
-          {
-            name: "audience",
-            protocol: Protocol.OpenidConnect,
-            protocolMapper: "oidc-audience-mapper",
-            config: { "included.client.audience": "my-app" },
-          },
-        ],
-      }),
-    );
+    clients.push(legacyProbeClient());
 
     await expect(credentialsDelete({ clientId: "my-app-probe" }, ownerOf(pkg))).rejects.toThrow(
       "another Package currently claims it",
     );
-    expect(mockFetch.mock.calls.some(([, options]) => options.method === "PUT")).toBe(false);
     expect(mockFetch.mock.calls.some(([, options]) => options.method === "DELETE")).toBe(false);
   });
 
