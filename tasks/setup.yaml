@@ -21,45 +21,10 @@ tasks:
     actions:
       - description: "Require KUBECONFIG to target the K0s test cluster"
         cmd: test "${KUBECONFIG}" = "$(pwd)/build/k0s/kubeconfig"
-      - description: "Configure K0s DNS for UDS hostnames"
+      - description: "Copy K0s configuration"
         cmd: |
           mkdir -p build/k0s
-          cat > build/k0s/config.yaml <<'EOF'
-          apiVersion: k0s.k0sproject.io/v1beta1
-          kind: ClusterConfig
-          metadata:
-            name: uds
-          spec:
-            network:
-              coreDNS:
-                patches:
-                  - target:
-                      kind: ConfigMap
-                      name: coredns
-                      namespace: kube-system
-                    patch:
-                      type: MergePatch
-                      content: |
-                        data:
-                          Corefile: |
-                            .:53 {
-                              errors
-                              health
-                              ready
-                              rewrite stop name regex (.*\.admin\.uds\.dev) admin-ingressgateway.istio-admin-gateway.svc.cluster.local answer auto
-                              rewrite stop name regex (.*\.uds\.dev) tenant-ingressgateway.istio-tenant-gateway.svc.cluster.local answer auto
-                              kubernetes cluster.local in-addr.arpa ip6.arpa {
-                                pods insecure
-                                fallthrough in-addr.arpa ip6.arpa
-                              }
-                              prometheus :9153
-                              forward . /etc/resolv.conf
-                              cache 30
-                              loop
-                              reload
-                              loadbalance
-                            }
-          EOF
+          cp .github/test-infra/k0s/dev-stack/config.yaml build/k0s/config.yaml
       - description: "Start K0s with FIPS CNI compatibility libraries"
         shell:
           darwin: bash
@@ -67,12 +32,12 @@ tasks:
         cmd: |
           set -euo pipefail
           docker build --build-arg "K0S_TAG=${DEFAULT_K0S_VERSION/+k0s./-k0s.}" \
-            --tag uds-k0s-test --file src/k0s/dev-stack/Dockerfile src/k0s/dev-stack
+            --tag uds-k0s-test --file .github/test-infra/k0s/dev-stack/Dockerfile .github/test-infra/k0s/dev-stack
           docker run -d --name k0s-uds --hostname k0s-uds --privileged \
             --ulimit nofile=1048576:1048576 \
             --tmpfs /run -v /var/lib/k0s -v /var/log/pods -v /var/lib/kubelet \
             -v "$(pwd)/build/k0s/config.yaml:/etc/k0s/k0s.yaml:ro" \
-            -p 127.0.0.1:6443:6443 uds-k0s-test \
+            -p 127.0.0.1:6443:6443 -p 127.0.0.1:80:80 -p 127.0.0.1:443:443 uds-k0s-test \
             k0s controller --single --config=/etc/k0s/k0s.yaml \
             --disable-components=metrics-server --kubelet-root-dir=/var/lib/kubelet
           test "$(docker exec k0s-uds k0s version)" = "$DEFAULT_K0S_VERSION"
@@ -101,7 +66,7 @@ tasks:
           linux: bash
         cmd: |
           set -euo pipefail
-          ./uds zarf package create src/k0s/dev-stack --confirm --skip-sbom --output build/k0s
+          ./uds zarf package create .github/test-infra/k0s/dev-stack --confirm --skip-sbom --output build/k0s
           ./uds zarf package deploy build/k0s/zarf-package-uds-k0s-dev-stack-*.tar.zst --confirm
 
   - name: create-k3d-cluster

@@ -1,0 +1,34 @@
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: uds
+spec:
+  network:
+    coreDNS:
+      patches:
+        - target:
+            kind: ConfigMap
+            name: coredns
+            namespace: kube-system
+          patch:
+            type: MergePatch
+            content: |
+              data:
+                Corefile: |
+                  .:53 {
+                    errors
+                    health
+                    ready
+                    rewrite stop name regex (.*\.admin\.uds\.dev) admin-ingressgateway.istio-admin-gateway.svc.cluster.local answer auto
+                    rewrite stop name regex (.*\.uds\.dev) tenant-ingressgateway.istio-tenant-gateway.svc.cluster.local answer auto
+                    kubernetes cluster.local in-addr.arpa ip6.arpa {
+                      pods insecure
+                      fallthrough in-addr.arpa ip6.arpa
+                    }
+                    prometheus :9153
+                    forward . /etc/resolv.conf
+                    cache 30
+                    loop
+                    reload
+                    loadbalance
+                  }

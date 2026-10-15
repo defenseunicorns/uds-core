@@ -68,7 +68,6 @@ tasks:
     actions:
       - cmd: |
           for package in $(ls src); do
-            [ -f "src/${package}/tasks.yaml" ] || continue
             if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
               if [ ${package} = "istio" ]; then
                 ./uds run -f src/${package}/tasks.yaml validate --no-progress --with validate_passthrough=${{ .inputs.validate_passthrough }}
@@ -239,11 +238,15 @@ tasks:
   - name: uds-core-non-k3d
     description: "Validate and Test UDS Core deployment on a non K3d Cluster"
     inputs:
+      setup_hosts:
+        description: Whether to add gateway addresses to /etc/hosts
+        default: "true"
       validate_udp_expose:
         description: Whether to validate UDP expose routes through the default Envoy Gateway
         default: "true"
     actions:
       - task: util:setup-hosts
+        if: ${{ eq .inputs.setup_hosts "true" }}
       - task: validate-packages
         with:
           validate_passthrough: "false"
