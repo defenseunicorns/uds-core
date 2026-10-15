@@ -7,11 +7,34 @@ import fs from "fs";
 import { fetch, K8s, kind } from "pepr";
 import { UDSConfig } from "../../config/config";
 import { KeycloakClientMode } from "../../config/types";
+import { UDSPackage } from "../../../crd";
 import { Client } from "../types";
 import { baseUrl, isAuthError, log, throwErrorIfNeeded } from "./common";
+import {
+  assertPackageCanDeleteClient,
+  assertCurrentPackageUid,
+  assertSoleLivePackageClaimIn,
+  assertUnambiguousPackageHistory,
+  assertSoleLivePackageClaim,
+  hasLegacyOperatorManagementEvidence,
+  isCompletedPackageClientHandoff,
+  listLivePackages,
+  PACKAGE_OWNER_UID_ATTRIBUTE,
+  PackageClientOwner,
+} from "../client-owner";
 
 export interface ClientWithId extends Client {
   id: string;
+}
+
+interface ClientSummary {
+  id?: string;
+  clientId?: string;
+}
+
+interface ClientRepresentation extends Partial<Client> {
+  id?: string;
+  clientId?: string;
 }
 
 export interface KeycloakAccessTokenResponse {
@@ -23,6 +46,7 @@ export function parseKeycloakToken(token: string) {
 }
 
 const clientsAdminUrl = `${baseUrl}/admin/realms/uds/clients`;
+const CLIENT_SEARCH_LIMIT = 100;
 const clientCredentialsUrl = `${baseUrl}/realms/uds/protocol/openid-connect/token`;
 const SECRET_NAMESPACE = "keycloak";
 const SECRET_NAME = "keycloak-client-secrets";
@@ -162,80 +186,286 @@ export async function credentialsGetAccessToken(): Promise<string> {
   return tokenRefreshPromise;
 }
 
-export async function credentialsCreateOrUpdate(client: Partial<Client>) {
-  log.info(`credentialsCreateOrUpdate: creating/updating client ${client.clientId}`);
-  const existingClient = await credentialsGet(client);
-  if (existingClient) {
-    return credentialsUpdate(client);
-  } else {
-    return credentialsCreate(client);
+export async function credentialsCreateOrUpdate(
+  client: Partial<Client>,
+  owner: PackageClientOwner,
+): Promise<ClientWithId> {
+  const clientId = requireClientId(client);
+  log.info(`credentialsCreateOrUpdate: creating/updating client ${clientId}`);
+
+  let existing = await findExactClient(clientId);
+  if (existing) {
+    return updateClientByUuid(client, owner, existing, clientId);
+  }
+
+  // Verify current ownership immediately before creating a realm-global client.
+  await assertSoleLivePackageClaim(clientId, owner);
+  const createRequest = addOwnerMarker(client, owner);
+  try {
+    await postClient(createRequest);
+  } catch (error) {
+    if (getHttpStatus(error) !== 409) {
+      throw error;
+    }
+
+    // A client may have appeared after the initial lookup. Re-check live
+    // Package claims and prove ownership before any update or secret return.
+    existing = await findExactClient(clientId);
+    if (!existing) {
+      throw new Error(
+        `Keycloak rejected creation of client "${clientId}" and no exact client match exists`,
+      );
+    }
+    return updateClientByUuid(client, owner, existing, clientId);
+  }
+
+  const created = await findExactClient(clientId);
+  if (!created) {
+    throw new Error(
+      `Keycloak accepted creation of client "${clientId}" but the client could not be retrieved`,
+    );
+  }
+  assertOwnerMarker(created, clientId, owner);
+  return created as ClientWithId;
+}
+
+/** Delete a client after verifying its UID marker or unique legacy ownership evidence. */
+export async function credentialsDelete(
+  client: Pick<Partial<Client>, "clientId">,
+  owner: PackageClientOwner,
+): Promise<void> {
+  const clientId = requireClientId(client);
+  log.info(`credentialsDelete: deleting client ${clientId}`);
+  const existing = await findExactClient(clientId);
+  if (!existing) {
+    return;
+  }
+
+  const marker = getOwnerMarker(existing);
+  const packages = await listLivePackages();
+  const liveOwner = assertCurrentPackageUid(packages, owner, clientId);
+  if (marker === undefined) {
+    assertPackageCanDeleteClient(packages, clientId, owner);
+    assertUnambiguousPackageHistory(packages, clientId, owner);
+  }
+
+  const token = await credentialsGetAccessToken();
+  const verified = await getClientByUuid(existing.id!, clientId);
+  if (!verified) {
+    return;
+  }
+  const currentMarker = getOwnerMarker(verified);
+  if (currentMarker !== undefined && currentMarker !== owner.uid) {
+    const markerWasStable = marker === undefined || marker === currentMarker;
+    if (
+      markerWasStable &&
+      isCompletedPackageClientHandoff(packages, clientId, owner, currentMarker)
+    ) {
+      // The former owner's delete succeeded, but its status update did not.
+      // The new owner's verified UUID and marker must remain untouched.
+      return;
+    }
+    throw ownershipMismatchError(clientId, owner, currentMarker);
+  }
+  if (marker !== undefined && currentMarker === undefined) {
+    throw ownershipMismatchError(clientId, owner, currentMarker);
+  }
+  if (marker === undefined) {
+    // Legacy clients need configuration evidence from this exact UUID even if
+    // a concurrent safe adoption added our UID marker during verification.
+    assertLegacyAdoptionEvidence(verified, clientId, liveOwner);
+  }
+
+  const response = await fetch(`${clientsAdminUrl}/${encodeURIComponent(existing.id!)}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+  });
+  if (response.status === 404) {
+    return;
+  }
+  await throwErrorIfNeeded(response, () => resetCachedToken());
+}
+
+async function updateClientByUuid(
+  client: Partial<Client>,
+  owner: PackageClientOwner,
+  initial: ClientRepresentation,
+  clientId: string,
+): Promise<ClientWithId> {
+  const id = initial.id!;
+  const initialMarker = getOwnerMarker(initial);
+  if (initialMarker !== undefined && initialMarker !== owner.uid) {
+    throw ownershipMismatchError(clientId, owner, initialMarker);
+  }
+
+  const packages = await listLivePackages();
+  const liveOwner = assertSoleLivePackageClaimIn(packages, clientId, owner);
+  if (initialMarker === undefined) {
+    assertUnambiguousPackageHistory(packages, clientId, owner);
+    assertLegacyAdoptionEvidence(initial, clientId, liveOwner);
+  }
+  const token = await credentialsGetAccessToken();
+  const existing = await getClientByUuid(id, clientId);
+  if (!existing) {
+    throw new Error(`Keycloak client "${clientId}" disappeared before update`);
+  }
+  const marker = getOwnerMarker(existing);
+  if (marker !== owner.uid && marker !== undefined) {
+    throw ownershipMismatchError(clientId, owner, marker);
+  }
+  if (marker === undefined) {
+    assertUnambiguousPackageHistory(packages, clientId, owner);
+    assertLegacyAdoptionEvidence(existing, clientId, liveOwner);
+  }
+  await putClientByUuid(addOwnerMarker(client, owner), id, token);
+  const updated = await getClientByUuid(id, clientId);
+  if (!updated) {
+    throw new Error(`Keycloak client "${clientId}" disappeared after update`);
+  }
+  assertOwnerMarker(updated, clientId, owner);
+  return updated as ClientWithId;
+}
+
+function assertLegacyAdoptionEvidence(
+  client: ClientRepresentation,
+  clientId: string,
+  liveOwner: UDSPackage,
+): void {
+  if (!hasLegacyOperatorManagementEvidence(liveOwner, clientId, client)) {
+    throw new Error(
+      `Keycloak client "${clientId}" has no owner marker and lacks sufficient Package history to adopt it safely`,
+    );
   }
 }
 
-export async function credentialsCreate(client: Partial<Client>) {
-  log.info(`credentialsCreate: creating client ${client.clientId}`);
+function addOwnerMarker(client: Partial<Client>, owner: PackageClientOwner): Partial<Client> {
+  return {
+    ...client,
+    attributes: {
+      ...client.attributes,
+      [PACKAGE_OWNER_UID_ATTRIBUTE]: owner.uid,
+    },
+  };
+}
+
+async function findExactClient(clientId: string): Promise<ClientRepresentation | undefined> {
+  const query = new URLSearchParams({ clientId, first: "0", max: CLIENT_SEARCH_LIMIT.toString() });
+  const response = await fetch<ClientSummary[]>(`${clientsAdminUrl}?${query.toString()}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${await credentialsGetAccessToken()}`,
+    },
+  });
+  await throwErrorIfNeeded(response, () => resetCachedToken());
+  if (!Array.isArray(response.data) || response.data.length >= CLIENT_SEARCH_LIMIT) {
+    throw new Error(`Keycloak client lookup for "${clientId}" was incomplete`);
+  }
+  const matches = response.data.filter(client => client.clientId === clientId);
+  if (matches.length > 1) {
+    throw new Error(`Keycloak returned multiple exact matches for client "${clientId}"`);
+  }
+  const match = matches[0];
+  if (!match) {
+    return undefined;
+  }
+  if (!match.id) {
+    throw new Error(
+      `Keycloak returned an exact match for client "${clientId}" without an internal ID`,
+    );
+  }
+  const fullClient = await getClientByUuid(match.id, clientId);
+  if (!fullClient) {
+    throw new Error(`Keycloak client "${clientId}" disappeared during ownership verification`);
+  }
+  return fullClient;
+}
+
+async function getClientByUuid(
+  id: string,
+  expectedClientId: string,
+): Promise<ClientRepresentation | undefined> {
+  const token = await credentialsGetAccessToken();
+  const response = await fetch<ClientRepresentation>(
+    `${clientsAdminUrl}/${encodeURIComponent(id)}`,
+    {
+      method: "GET",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    },
+  );
+  if (response.status === 404) {
+    return undefined;
+  }
+  await throwErrorIfNeeded(response, () => resetCachedToken());
+  if (response.data?.id !== id || response.data.clientId !== expectedClientId) {
+    throw new Error(`Keycloak UUID lookup did not return the exact client "${expectedClientId}"`);
+  }
+  return response.data;
+}
+
+async function postClient(client: Partial<Client>): Promise<void> {
   const token = await credentialsGetAccessToken();
   const response = await fetch(clientsAdminUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(client),
   });
-  await throwErrorIfNeeded(response, () => {
-    resetCachedToken();
-  });
-  return credentialsGet(client);
+  await throwErrorIfNeeded(response, () => resetCachedToken());
 }
 
-export async function credentialsGet(client: Partial<Client>) {
-  log.info(`credentialsGet: retrieving client ${client.clientId}`);
-  const token = await credentialsGetAccessToken();
-  const url = `${clientsAdminUrl}?clientId=${encodeURIComponent(client.clientId!)}`;
-  // There's no Client GET REST endpoint that obtains a client based on client_id (the logical client name, like uds-operator).
-  // All Admin REST endpoints for client operator on the database Client ID, which is a UUID. The only interface that allows to
-  // obtain the Client using the client_id is the collection interface which returns a singular collection with
-  // the Client in it.
-  const response = await fetch<ClientWithId[]>(url, {
-    method: "GET",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-  });
-  await throwErrorIfNeeded(response, () => {
-    resetCachedToken();
-  });
-  return response.data[0];
-}
-
-export async function credentialsUpdate(client: Partial<Client>) {
-  log.info(`credentialsUpdate: updating client ${client.clientId}`);
-  const token = await credentialsGetAccessToken();
-  const existing = await credentialsGet(client);
-  if (!existing || !existing.id) {
-    throw new Error(`Failed to retrieve existing client, ${client.clientId}`);
-  }
-  const url = `${clientsAdminUrl}/${encodeURIComponent(existing.id)}`;
-  const response = await fetch(url, {
+async function putClientByUuid(
+  client: ClientRepresentation,
+  id: string,
+  token?: string,
+): Promise<void> {
+  const requestToken = token ?? (await credentialsGetAccessToken());
+  const response = await fetch(`${clientsAdminUrl}/${encodeURIComponent(id)}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${requestToken}` },
     body: JSON.stringify(client),
   });
-  await throwErrorIfNeeded(response, () => {
-    resetCachedToken();
-  });
-  return credentialsGet(client);
+  await throwErrorIfNeeded(response, () => resetCachedToken());
 }
 
-export async function credentialsDelete(client: Partial<Client>) {
-  log.info(`credentialsDelete: deleting client ${client.clientId}`);
-  const token = await credentialsGetAccessToken();
-  const existing = await credentialsGet(client);
-  if (!existing || !existing.id) {
-    throw new Error(`Failed to retrieve existing client, ${client.clientId}`);
+function assertOwnerMarker(
+  client: ClientRepresentation,
+  clientId: string,
+  owner: PackageClientOwner,
+): void {
+  const marker = getOwnerMarker(client);
+  if (marker !== owner.uid) {
+    throw ownershipMismatchError(clientId, owner, marker);
   }
-  const url = `${clientsAdminUrl}/${encodeURIComponent(existing.id)}`;
-  const response = await fetch(url, {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-  });
-  await throwErrorIfNeeded(response, () => {
-    resetCachedToken();
-  });
+}
+
+function getOwnerMarker(client: ClientRepresentation): string | undefined {
+  return client.attributes?.[PACKAGE_OWNER_UID_ATTRIBUTE];
+}
+
+function ownershipMismatchError(
+  clientId: string,
+  owner: PackageClientOwner,
+  actualOwnerUid: string | undefined,
+): Error {
+  return new Error(
+    `Keycloak client "${clientId}" is not owned by Package ${owner.namespace}/${owner.name} (UID ${owner.uid}); current owner marker is ${actualOwnerUid ?? "missing"}`,
+  );
+}
+
+function requireClientId(client: Pick<Partial<Client>, "clientId">): string {
+  if (!client.clientId) {
+    throw new Error("A client ID is required for Package-managed Keycloak operations");
+  }
+  return client.clientId;
+}
+
+function getHttpStatus(error: unknown): number | undefined {
+  if (typeof error !== "object" || error === null) {
+    return undefined;
+  }
+  const candidate = error as { httpStatus?: unknown; status?: unknown };
+  if (typeof candidate.httpStatus === "number") {
+    return candidate.httpStatus;
+  }
+  return typeof candidate.status === "number" ? candidate.status : undefined;
 }

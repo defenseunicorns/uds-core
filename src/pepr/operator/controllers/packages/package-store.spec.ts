@@ -5,9 +5,10 @@
 
 import { PeprValidateRequest } from "pepr";
 import { beforeEach, describe, expect, it } from "vitest";
-import { Gateway, UDSPackage } from "../../crd";
+import { Expose, Gateway, Sso, UDSPackage } from "../../crd";
 import { ExposeProtocol, Mode } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
+import { getGeneratedProbeClientIds } from "../uptime/probe-client-utils";
 import { PackageStore } from "./package-store";
 
 UDSConfig.domain = "uds.dev";
@@ -79,6 +80,30 @@ const createPackageWithSsoClient = (
   };
 };
 
+const createPackageWithExposesAndSso = (
+  namespace: string,
+  name: string,
+  expose: Expose[],
+  sso: Sso[],
+): UDSPackage => ({
+  metadata: { namespace, name },
+  spec: {
+    network: { expose, allow: [] },
+    sso,
+    monitor: [],
+  },
+});
+
+const createAuthserviceSso = (
+  clientId: string,
+  redirectUris = ["https://app.uds.dev/callback"],
+): Sso => ({
+  clientId,
+  name: "Test Authservice Client",
+  redirectUris,
+  enableAuthserviceSelector: { app: "app" },
+});
+
 const createPackageWithUDPExpose = (
   namespace: string,
   name: string,
@@ -147,7 +172,7 @@ describe("Package Store", () => {
     expect(PackageStore.hasKey(ns)).toEqual(false);
   });
 
-  describe("findPackagesWithSsoClientId", () => {
+  describe("findPackagesWithClientId", () => {
     // Reset the PackageStore before each test
     beforeEach(() => {
       PackageStore.init();
@@ -159,7 +184,7 @@ describe("Package Store", () => {
       PackageStore.add(pkg);
 
       // Find namespaces with the client ID
-      const result = PackageStore.findPackagesWithSsoClientId("test-client-id");
+      const result = PackageStore.findPackagesWithClientId("test-client-id");
 
       // Verify the result
       expect(result.size).toEqual(1);
@@ -176,7 +201,7 @@ describe("Package Store", () => {
       PackageStore.add(pkg);
 
       // Find namespaces with a non-existent client ID
-      const result = PackageStore.findPackagesWithSsoClientId("non-existent-client-id");
+      const result = PackageStore.findPackagesWithClientId("non-existent-client-id");
 
       // Verify the result is empty
       expect(result.size).toEqual(0);
@@ -190,7 +215,7 @@ describe("Package Store", () => {
       PackageStore.add(pkg2);
 
       // Find namespaces with the shared client ID
-      const result = PackageStore.findPackagesWithSsoClientId("shared-client-id");
+      const result = PackageStore.findPackagesWithClientId("shared-client-id");
 
       // Verify the result contains both namespaces
       expect(result.size).toEqual(2);
@@ -218,7 +243,7 @@ describe("Package Store", () => {
       PackageStore.add(pkg);
 
       // Find namespaces with the second client ID
-      const result = PackageStore.findPackagesWithSsoClientId("client-id-2");
+      const result = PackageStore.findPackagesWithClientId("client-id-2");
 
       // Verify the result
       expect(result.size).toEqual(1);
@@ -229,12 +254,115 @@ describe("Package Store", () => {
       expect(pkgName).toEqual("test-app");
     });
 
-    it("Should remove stale SSO client IDs when a package is updated", () => {
-      PackageStore.add(createPackageWithSsoClient("test-ns", "test-app", "old-client"));
-      PackageStore.add(createPackageWithSsoClient("test-ns", "test-app", "new-client"));
+    it("indexes declared and generated probe client IDs from the current Package spec", () => {
+      const pkg = createPackageWithExposesAndSso(
+        "test-ns",
+        "test-app",
+        [{ host: "app", uptime: { checks: { paths: ["/health"] } } }],
+        [createAuthserviceSso("my-app")],
+      );
 
-      expect(PackageStore.findPackagesWithSsoClientId("old-client").size).toBe(0);
-      expect(PackageStore.findPackagesWithSsoClientId("new-client").has("test-ns")).toBe(true);
+      PackageStore.add(pkg);
+
+      expect(PackageStore.findPackagesWithClientId("my-app").has("test-ns")).toBe(true);
+      expect(PackageStore.findPackagesWithClientId("my-app-probe").has("test-ns")).toBe(true);
+    });
+
+    it("does not index a probe ID without active matching Authservice uptime checks", () => {
+      const authserviceSso = createAuthserviceSso("authservice-client");
+      const packages = [
+        createPackageWithExposesAndSso(
+          "non-authservice-ns",
+          "non-authservice",
+          [{ host: "app", uptime: { checks: { paths: ["/"] } } }],
+          [{ ...authserviceSso, enableAuthserviceSelector: undefined }],
+        ),
+        createPackageWithExposesAndSso(
+          "no-paths-ns",
+          "no-paths",
+          [{ host: "app" }],
+          [authserviceSso],
+        ),
+        createPackageWithExposesAndSso(
+          "empty-paths-ns",
+          "empty-paths",
+          [{ host: "app", uptime: { checks: { paths: [] } } }],
+          [authserviceSso],
+        ),
+        createPackageWithExposesAndSso(
+          "nonmatching-redirect-ns",
+          "nonmatching-redirect",
+          [{ host: "app", uptime: { checks: { paths: ["/"] } } }],
+          [createAuthserviceSso("authservice-client", ["https://other.uds.dev/callback"])],
+        ),
+      ];
+
+      for (const pkg of packages) {
+        PackageStore.add(pkg);
+      }
+
+      expect(PackageStore.findPackagesWithClientId("authservice-client-probe").size).toBe(0);
+    });
+
+    it("deduplicates a generated ID shared by multiple matching uptime exposes", () => {
+      const pkg = createPackageWithExposesAndSso(
+        "test-ns",
+        "test-app",
+        [
+          { host: "app", uptime: { checks: { paths: ["/health"] } } },
+          {
+            host: "admin",
+            gateway: Gateway.Admin,
+            uptime: { checks: { paths: ["/ready"] } },
+          },
+        ],
+        [
+          createAuthserviceSso("my-app", [
+            "https://app.uds.dev/callback",
+            "https://admin.admin.uds.dev/callback",
+          ]),
+        ],
+      );
+
+      expect(getGeneratedProbeClientIds(pkg)).toEqual(["my-app-probe"]);
+      PackageStore.add(pkg);
+      expect(PackageStore.findPackagesWithClientId("my-app-probe")).toEqual(new Set(["test-ns"]));
+    });
+
+    it("replaces declared and generated IDs when SSO or uptime configuration changes", () => {
+      const originalPkg = createPackageWithExposesAndSso(
+        "test-ns",
+        "test-app",
+        [{ host: "app", uptime: { checks: { paths: ["/"] } } }],
+        [createAuthserviceSso("old-client")],
+      );
+      PackageStore.add(originalPkg);
+
+      const changedSsoPkg = createPackageWithExposesAndSso(
+        "test-ns",
+        "test-app",
+        [{ host: "app", uptime: { checks: { paths: ["/"] } } }],
+        [createAuthserviceSso("new-client")],
+      );
+      PackageStore.add(changedSsoPkg);
+
+      expect(PackageStore.findPackagesWithClientId("old-client").size).toBe(0);
+      expect(PackageStore.findPackagesWithClientId("old-client-probe").size).toBe(0);
+      expect(PackageStore.findPackagesWithClientId("new-client").has("test-ns")).toBe(true);
+      expect(PackageStore.findPackagesWithClientId("new-client-probe").has("test-ns")).toBe(true);
+
+      const withoutUptimePkg = createPackageWithExposesAndSso(
+        "test-ns",
+        "test-app",
+        [{ host: "app" }],
+        [createAuthserviceSso("new-client")],
+      );
+      PackageStore.add(withoutUptimePkg);
+      expect(PackageStore.findPackagesWithClientId("new-client-probe").size).toBe(0);
+      expect(PackageStore.findPackagesWithClientId("new-client").has("test-ns")).toBe(true);
+
+      PackageStore.remove(withoutUptimePkg);
+      expect(PackageStore.findPackagesWithClientId("new-client").size).toBe(0);
     });
   });
 
@@ -318,12 +446,16 @@ describe("Package Store", () => {
       const storedPkg: UDSPackage = {
         metadata: { namespace: "test-ns", name: "test-app" },
         spec: {
-          network: { expose: [{ host: "app" }], allow: [] },
+          network: {
+            expose: [{ host: "app", uptime: { checks: { paths: ["/"] } } }],
+            allow: [],
+          },
           sso: [
             {
               clientId: "stored-client",
               name: "Stored Client",
               redirectUris: ["https://app.uds.dev/callback"],
+              enableAuthserviceSelector: { app: "app" },
             },
           ],
           monitor: [],
@@ -342,7 +474,8 @@ describe("Package Store", () => {
       PackageStore.remove(stalePkg);
 
       expect(PackageStore.findNamespaceForExpose({ host: "app" })).toBeUndefined();
-      expect(PackageStore.findPackagesWithSsoClientId("stored-client").size).toBe(0);
+      expect(PackageStore.findPackagesWithClientId("stored-client").size).toBe(0);
+      expect(PackageStore.findPackagesWithClientId("stored-client-probe").size).toBe(0);
     });
 
     it("replaces old expose entry with new one when a package is updated", () => {

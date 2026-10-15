@@ -11,6 +11,7 @@ import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { credentialsCreateOrUpdate, credentialsDelete } from "./clients/client-credentials";
 import { throwErrorIfNeeded } from "./clients/common";
 import { Client, clientKeys } from "./types";
+import { getPackageClientOwner } from "./client-owner";
 
 const samlDescriptorUrl =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor";
@@ -73,9 +74,10 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
   // Check for any clients that are no longer in the package and remove them
   const currentClients = pkg.status?.ssoClients || [];
   const toRemove = currentClients.filter(client => !newClients.includes(client));
+  const owner = getPackageClientOwner(pkg);
   for (const ref of toRemove) {
     try {
-      await credentialsDelete({ clientId: ref });
+      await credentialsDelete({ clientId: ref }, owner);
     } catch (err) {
       log.warn(
         pkg.metadata,
@@ -162,9 +164,10 @@ export async function syncClient({ secretConfig, ...clientReq }: Sso, pkg: UDSPa
     delete keycloakClient.fullScopeAllowed;
   }
   const pkgRef = `${pkg.metadata?.namespace}/${pkg.metadata?.name}`;
+  const owner = getPackageClientOwner(pkg);
 
   const syncedClient = await retryOnce(
-    () => credentialsCreateOrUpdate(keycloakClient),
+    () => credentialsCreateOrUpdate(keycloakClient, owner),
     `Failed to process Keycloak request for client '${client.clientId}', package ${pkgRef}`,
   );
 
