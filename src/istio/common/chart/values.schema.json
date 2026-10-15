@@ -9,6 +9,10 @@
           "type": "boolean",
           "description": "Indicates whether to add a footer to the classification banner."
         },
+        "cssOnly": {
+          "type": "boolean",
+          "description": "Draw the banner with CSS pseudo-elements without inserting elements into the HTML body. The banner overlays application content."
+        },
         "enabledHosts": {
           "type": "array",
           "items": {

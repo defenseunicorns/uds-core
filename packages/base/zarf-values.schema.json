@@ -900,6 +900,9 @@
                 "addFooter": {
                   "type": "boolean"
                 },
+                "cssOnly": {
+                  "type": "boolean"
+                },
                 "enabledHosts": {
                   "type": "array"
                 },

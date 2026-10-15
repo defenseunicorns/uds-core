@@ -122,25 +122,26 @@ spec:
               end))
             end
 
-            -- Enabled applications receive real rows for the initial banners and a constrained,
-            -- scrollable middle row. The fallback pseudo-elements appear only if hydration removes
-            -- the injected elements; they do not add nodes to React's document tree.
-            local function viewportLayoutStyle(addFooter, classification, colors)
+            -- CSS-only banners leave the body tree intact for applications that hydrate the
+            -- entire document. Other banners retain the viewport frame and use pseudo-elements
+            -- only if hydration removes their injected body elements.
+            local function viewportLayoutStyle(addFooter, classification, colors, cssOnly)
               local gridRows = "24px minmax(0, 1fr)"
-              local fallbackSelectors = "body:not(:has(> #classification-banner-top))::before"
+              local fallbackSelectors = cssOnly and "body::before" or "body:not(:has(> #classification-banner-top))::before"
               local footerFallback = ""
               if addFooter then
                 gridRows = gridRows .. " 24px"
-                fallbackSelectors = fallbackSelectors .. ", body:not(:has(> #classification-banner-bottom))::after"
+                fallbackSelectors = fallbackSelectors .. (cssOnly and ", body::after" or ", body:not(:has(> #classification-banner-bottom))::after")
                 footerFallback = [[
-              body:not(:has(> #classification-banner-bottom))::after {
+              ]] .. (cssOnly and "body::after" or "body:not(:has(> #classification-banner-bottom))::after") .. [[ {
                 bottom: 0 !important;
               }
             ]]
               end
 
-              return [[
-            <style id="classification-banner-viewport-layout">
+              local viewportFrame = ""
+              if not cssOnly then
+                viewportFrame = [[
               html,
               body {
                 height: 100%;
@@ -170,8 +171,12 @@ spec:
                 overflow-y: auto;
                 position: relative;
               }
+            ]]
+              end
 
-              ]] .. fallbackSelectors .. [[ {
+              return [[
+            <style id="classification-banner-viewport-layout">
+              ]] .. viewportFrame .. fallbackSelectors .. [[ {
                 align-items: center !important;
                 background-color: ]] .. colors.backgroundColor .. [[ !important;
                 box-sizing: border-box !important;
@@ -196,7 +201,7 @@ spec:
                 z-index: 2147483647 !important;
               }
 
-              body:not(:has(> #classification-banner-top))::before {
+              ]] .. (cssOnly and "body::before" or "body:not(:has(> #classification-banner-top))::before") .. [[ {
                 top: 0 !important;
               }
               ]] .. footerFallback .. [[
@@ -221,6 +226,7 @@ spec:
                 banner = {
                   classification = {{ if hasKey $banner "text" }}{{ $banner.text | quote }}{{ else }}"UNKNOWN"{{ end }},
                   addFooter = {{ if hasKey $banner "addFooter" }}{{ $banner.addFooter }}{{ else }}true{{ end }},
+                  cssOnly = {{ if hasKey $banner "cssOnly" }}{{ $banner.cssOnly }}{{ else }}false{{ end }},
                 },
               },
               {{- end }}
@@ -265,9 +271,10 @@ spec:
 
               return {
                 addFooter = banner.addFooter,
+                cssOnly = banner.cssOnly,
                 footer = "<div id=\"classification-banner-bottom\" style=\"" .. style .. "\">" .. classification .. "</div>",
                 header = "<div id=\"classification-banner-top\" style=\"" .. style .. "\">" .. classification .. "</div>",
-                viewportLayoutStyle = viewportLayoutStyle(banner.addFooter, classification, colors),
+                viewportLayoutStyle = viewportLayoutStyle(banner.addFooter, classification, colors, banner.cssOnly),
               }
             end
 
@@ -295,6 +302,10 @@ spec:
                   1
                 )
                 state.head = matches > 0
+              end
+
+              if presentation.cssOnly then
+                return html
               end
 
               if not state.body then

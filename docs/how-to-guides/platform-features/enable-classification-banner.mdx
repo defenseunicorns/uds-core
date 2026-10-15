@@ -21,9 +21,9 @@ Before configuring classification banners, confirm that you meet these prerequis
 
 ## Before you begin
 
-The classification banner is injected into HTTP responses by an Istio EnvoyFilter on the gateway. A CSS-only viewport frame places the application in a scrollable row between dedicated banner rows, including applications with fixed navigation or roots sized to the full viewport.
+The classification banner is injected into HTTP responses by an Istio EnvoyFilter on the gateway. By default, the filter inserts banner elements around the application body and places the content in a scrollable row. If client hydration replaces those elements, CSS keeps the markings visible while the injected style remains in the document head.
 
-Because both modes modify the HTML response body, validate the banner in a staging environment before adopting it. For custom-built applications, implementing the banner natively within the application is often a more reliable approach.
+For applications that hydrate the entire HTML document, set `cssOnly: true` on that banner entry. This mode inserts only a style into the document head and draws fixed markings with CSS pseudo-elements. It leaves the body structure intact, but the markings can overlay application content. Test the page's layout and hydration in a staging environment. Implementing the banner natively within a custom-built application remains the most reliable way to control its layout.
 
 The `classificationBanners` array configures one or more banners. UDS Core continues to support the previous `classificationBanner` object for backward compatibility, but new configurations should use `classificationBanners`.
 
@@ -56,6 +56,8 @@ The `classificationBanners` array configures one or more banners. UDS Core conti
                        - mission-app.{{ .Values.domain }}
                    - text: "SECRET//NOFORN"
                      addFooter: false
+                     # Preserve the body tree for applications that hydrate the document.
+                     cssOnly: true
                      enabledHosts:
                        - mission-app.{{ .Values.domain }}
                      pathPrefixes:
@@ -96,9 +98,9 @@ The `classificationBanners` array configures one or more banners. UDS Core conti
 
 ## Verification
 
-Open hosts and paths from each configured banner in a browser. Each page should show the assigned classification text and color at the top. Verify that a path-specific banner overrides the host-only fallback on the same host. If `addFooter` is enabled for that banner, the same banner appears at the bottom.
+Open hosts and paths from each configured banner in a browser. Each page should show the assigned classification text and color at the top, including after client hydration completes. Verify that a path-specific banner overrides the host-only fallback on the same host. If `addFooter` is enabled for that banner, the same banner appears at the bottom.
 
-Confirm that the application is constrained between the banners and that its content scrolls within the middle row. Confirm that fixed navigation, dialogs, and other overlays do not cover either banner.
+For the default mode, confirm that the application is constrained between the banners and its content scrolls within the middle row. For `cssOnly` mode, confirm that content and controls remain usable beneath the fixed markings. Check the browser console for hydration errors in either mode.
 
 ## Troubleshooting
 
@@ -116,7 +118,7 @@ uds zarf tools kubectl get envoyfilter classification-banner -n istio-system -o 
 
 **Symptom:** The banner HTML is injected but the page layout is disrupted or the banner is invisible.
 
-**Solution:** The banner uses a CSS-only frame with dedicated banner rows and a scrollable content row. If an application still breaks because it depends on a specific body structure, implement the classification banner natively within the application instead of relying on EnvoyFilter injection.
+**Solution:** The default banner uses dedicated rows and a scrollable content row. If hydration replaces the injected elements, CSS pseudo-elements keep the markings visible, but the body rewrite can still cause a hydration error. Set `cssOnly: true` for applications that hydrate the whole document, then check whether the fixed markings overlap content. This mode depends on the injected style remaining in the document head. If the application removes that style or the markings obstruct its content, implement the banner natively within the application.
 
 ## Related documentation
 
