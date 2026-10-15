@@ -15,13 +15,22 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^\\.github\\/workflows\\/test-kubernetes-matrix\\.yaml$/",
         "/^tasks\\/setup\\.yaml$/"
       ],
       "matchStrings": ["(?<currentValue>v\\d+\\.\\d+\\.\\d+\\+k3s\\d+)"],
       "depNameTemplate": "k3s-io/k3s",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\+k3s(?<build>\\d+)$"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github\\/workflows\\/test-kubernetes-matrix\\.yaml$/"],
+      "matchStrings": ["(?<currentValue>v\\d+\\.\\d+\\.\\d+\\+k3s\\d+)"],
+      "depNameTemplate": "ghcr.io/defenseunicorns/uds-k3d/k3s",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-k3s(?<build>\\d+)$",
+      "currentValueTemplate": "{{{replace '\\+k3s' '-k3s' currentValue}}}",
+      "autoReplaceStringTemplate": "{{{replace '-k3s' '+k3s' newValue}}}"
     },
     {
       "customType": "regex",
@@ -222,9 +231,9 @@
         ".github/workflows/test-kubernetes-matrix.yaml"
       ],
       "matchDepNames": [
-        "k3s-io/k3s"
+        "ghcr.io/defenseunicorns/uds-k3d/k3s"
       ],
-      "allowedVersions": "/^v{{major}}\\.{{minor}}\\.\\d+\\+k3s\\d+$/",
+      "allowedVersions": "/^v{{major}}\\.{{minor}}\\.\\d+-k3s\\d+$/",
       "groupName": "k3s test matrix",
       "commitMessageTopic": "k3s test matrix"
     },
