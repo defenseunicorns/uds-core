@@ -15,6 +15,10 @@ import {
 } from "../controllers/envoy-gateway/udp-route-resources";
 import { createHostResourceMap, reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
+import {
+  cleanupExternalAuthorization,
+  externalAuthorization,
+} from "../controllers/istio/external-authorization";
 import { istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import { PackageAction } from "../controllers/istio/types";
@@ -121,6 +125,8 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
     );
   }
 
+  const externalAuthorizationPolicyCount = await externalAuthorization(pkg);
+
   // Create the Istio ingress resources per the package configuration
   endpoints = await istioResources(pkg, namespace!);
 
@@ -154,11 +160,14 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
     conditions: getReadinessConditions(true),
     ssoClients: [...ssoClients.keys(), ...probeSsoClients],
     authserviceClients,
+    externalAuthorizationProvider:
+      pkg.spec?.network?.serviceMesh?.externalAuthorization?.provider ?? "",
     endpoints,
     monitors,
     probes,
     networkPolicyCount: netPol.length,
-    authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
+    authorizationPolicyCount:
+      authPol.length + authserviceClients.length * 2 + externalAuthorizationPolicyCount,
     meshMode: istioMode,
     observedGeneration: metadata.generation,
     retryAttempt: 0, // todo: make this nullable when kfc generates the type
@@ -239,6 +248,24 @@ export async function packageFinalizer(pkg: UDSPackage) {
     );
     await writeEvent(pkg, {
       message: `Removal of AuthService configuration failed: ${e.message}. AuthService configuration secret should be reviewed and cleaned up as needed.`,
+      reason: "RemovalFailed",
+      type: "Warning",
+    });
+    await updateStatus(pkg, { phase: Phase.RemovalFailed });
+    return false;
+  }
+
+  // Remove external authorization waypoint labels before owner references remove its resources.
+  try {
+    await retryWithDelay(async function cleanupExternalAuthorizationConfig() {
+      return cleanupExternalAuthorization(pkg);
+    }, log);
+  } catch (e) {
+    log.debug(
+      `Removal of external authorization configuration failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+    );
+    await writeEvent(pkg, {
+      message: `Removal of external authorization configuration failed: ${e.message}. Waypoint labels must be reviewed and cleaned up as needed.`,
       reason: "RemovalFailed",
       type: "Warning",
     });

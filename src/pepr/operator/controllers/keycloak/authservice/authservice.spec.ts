@@ -13,7 +13,7 @@ vi.mock("../../ca-bundles/ca-bundle", () => ({
 import { Sso, UDSPackage } from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
 import { buildCABundleContent } from "../../ca-bundles/ca-bundle";
-import { cleanupWaypointLabels } from "../../istio/ambient-waypoint";
+import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
 import { Client } from "../types";
 import * as authorizationPolicy from "./authorization-policy";
@@ -178,34 +178,22 @@ describe("purgeAuthserviceClients", () => {
     mockUpdate.mockResolvedValue({});
   });
 
-  it("should handle selector changes for existing clients", async () => {
-    // Arrange
+  it("should clean up waypoint labels when moving from ambient to sidecar mode", async () => {
     const pkg = createMockPackage("test-pkg");
-    const originalClient: AuthserviceClient = {
+    const client: AuthserviceClient = {
       clientId: "test-client",
-      selector: { "app.kubernetes.io/name": "old-selector" },
+      selector: { "app.kubernetes.io/name": "test-app" },
     };
-    const updatedClient: AuthserviceClient = {
-      clientId: "test-client",
-      selector: { "app.kubernetes.io/name": "new-selector" },
-    };
-
     pkg.status = {
       ...pkg.status,
-      authserviceClients: [originalClient],
+      authserviceClients: [client],
     };
 
-    // Set up the mock response for this test
-    mockGet.mockResolvedValueOnce(mockSecretResponse);
-
-    // Act
     const { purgeAuthserviceClients } = await import("./authservice.js");
-    await purgeAuthserviceClients(pkg, [updatedClient], Mode.Ambient, Mode.Ambient);
+    await purgeAuthserviceClients(pkg, [client], Mode.Ambient, Mode.Sidecar);
 
-    // Assert
     expect(getWaypointName).toHaveBeenCalledWith("test-client");
     expect(cleanupWaypointLabels).toHaveBeenCalledWith("test-ns", "test-client-waypoint");
-    expect(pkg.status?.authserviceClients).toHaveLength(1);
   });
 
   it("should handle empty initial clients list", async () => {
@@ -230,10 +218,32 @@ describe("purgeAuthserviceClients", () => {
 describe("authservice", () => {
   const mockClient = {
     clientId: "test-client",
-    clientSecret: "test-secret",
+    name: "test",
     redirectUris: ["http://test.com/callback"],
+    secret: "test-secret",
+    alwaysDisplayInConsole: false,
+    attributes: {},
+    authenticationFlowBindingOverrides: {},
+    bearerOnly: false,
+    clientAuthenticatorType: "client-secret",
+    consentRequired: false,
+    defaultClientScopes: [],
+    defaultRoles: [],
+    directAccessGrantsEnabled: false,
+    enabled: true,
+    frontchannelLogout: false,
+    fullScopeAllowed: false,
+    implicitFlowEnabled: false,
+    nodeReRegistrationTimeout: 0,
+    notBefore: 0,
+    optionalClientScopes: [],
+    protocol: "openid-connect",
+    publicClient: false,
+    serviceAccountsEnabled: false,
+    standardFlowEnabled: false,
+    surrogateAuthRequired: false,
     webOrigins: ["http://test.com"],
-  };
+  } satisfies Client;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -318,6 +328,77 @@ describe("authservice", () => {
       clientId: "test-client",
       selector: { "app.kubernetes.io/name": "test-app" },
     });
+  });
+
+  it("should reconcile selector changes through the ambient waypoint without cleaning new labels", async () => {
+    const oldSelector = { "app.kubernetes.io/name": "old-app" };
+    const newSelector = { "app.kubernetes.io/name": "new-app" };
+    const pkg = createMockPackage("test-pkg", {}, [
+      {
+        name: "test-sso",
+        clientId: "test-client",
+        enableAuthserviceSelector: newSelector,
+      },
+    ]);
+    pkg.spec!.network = { serviceMesh: { mode: Mode.Ambient } };
+    pkg.status = {
+      ...pkg.status,
+      meshMode: Mode.Ambient,
+      authserviceClients: [
+        {
+          clientId: "test-client",
+          selector: oldSelector,
+        },
+      ],
+    };
+    const clients = new Map([["test-client", mockClient]]);
+
+    const result = await authservice(pkg, clients);
+
+    expect(setupAmbientWaypoint).toHaveBeenCalledWith(pkg, {
+      id: "test-client",
+      selector: newSelector,
+      type: "authservice",
+    });
+    expect(cleanupWaypointLabels).not.toHaveBeenCalled();
+    expect(result).toEqual([
+      {
+        clientId: "test-client",
+        selector: newSelector,
+      },
+    ]);
+  });
+
+  it("should reconcile waypoint labels when moving from sidecar to ambient mode", async () => {
+    const selector = { "app.kubernetes.io/name": "test-app" };
+    const pkg = createMockPackage("test-pkg", {}, [
+      {
+        name: "test-sso",
+        clientId: "test-client",
+        enableAuthserviceSelector: selector,
+      },
+    ]);
+    pkg.spec!.network = { serviceMesh: { mode: Mode.Ambient } };
+    pkg.status = {
+      ...pkg.status,
+      meshMode: Mode.Sidecar,
+      authserviceClients: [
+        {
+          clientId: "test-client",
+          selector,
+        },
+      ],
+    };
+    const clients = new Map([["test-client", mockClient]]);
+
+    await authservice(pkg, clients);
+
+    expect(setupAmbientWaypoint).toHaveBeenCalledWith(pkg, {
+      id: "test-client",
+      selector,
+      type: "authservice",
+    });
+    expect(cleanupWaypointLabels).not.toHaveBeenCalled();
   });
 });
 

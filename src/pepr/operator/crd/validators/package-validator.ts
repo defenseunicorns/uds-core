@@ -19,6 +19,10 @@ import { migrate } from "../migrate";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
 
+function selectorsOverlap(first: Record<string, string>, second: Record<string, string>): boolean {
+  return Object.entries(first).every(([key, value]) => !(key in second) || second[key] === value);
+}
+
 export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const rawExposeList = req.Raw.spec?.network?.expose ?? [];
 
@@ -34,6 +38,20 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
+  }
+
+  const externalAuthorization = pkg.spec?.network?.serviceMesh?.externalAuthorization;
+  if (externalAuthorization) {
+    const overlappingClient = pkg.spec?.sso?.find(
+      client =>
+        client.enableAuthserviceSelector !== undefined &&
+        selectorsOverlap(externalAuthorization.selector, client.enableAuthserviceSelector),
+    );
+    if (overlappingClient) {
+      return req.Deny(
+        `externalAuthorization.selector overlaps enableAuthserviceSelector for SSO client "${overlappingClient.clientId}". Use disjoint selectors because a workload cannot use both operator-managed Authservice and external authorization.`,
+      );
+    }
   }
 
   // Check if a package already exists in the target namespace

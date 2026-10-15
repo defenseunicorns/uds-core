@@ -472,7 +472,25 @@ Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT</td></tr><tr><td style="
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">mode</td><td style="white-space: nowrap;">string (enum):<ul><li><code>sidecar</code></li><li><code>ambient</code></li></ul></td><td>Set the service mesh mode for this package (namespace), defaults to ambient</td></tr>
+    <tr><td style="white-space: nowrap;">externalAuthorization</td><td style="white-space: nowrap;"><a href="#ExternalAuthorization">ExternalAuthorization</a></td><td>Protects matching workloads with a registered Istio external authorization provider.</td></tr><tr><td style="white-space: nowrap;">mode</td><td style="white-space: nowrap;">string (enum):<ul><li><code>sidecar</code></li><li><code>ambient</code></li></ul></td><td>Set the service mesh mode for this package (namespace), defaults to ambient</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="ExternalAuthorization"></a>
+<div style="margin-left: 100px; padding-top: 30px;">
+
+##### ExternalAuthorization
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">provider</td><td style="white-space: nowrap;">string</td><td>Name of an external authorization provider registered in Istio meshConfig.extensionProviders.</td></tr><tr><td style="white-space: nowrap;">selector</td><td style="white-space: nowrap;"></td><td>Labels that select workloads and Services to protect. Specify at least one label. The selector must not overlap an SSO enableAuthserviceSelector in the same package.</td></tr>
   </tbody>
 </table>
 </div>

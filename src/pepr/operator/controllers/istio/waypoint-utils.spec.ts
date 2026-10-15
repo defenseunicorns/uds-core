@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -8,8 +8,10 @@ import { describe, expect, it, test, vi } from "vitest";
 import { Sso, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import {
+  findMatchingWaypointTarget,
   getPodSelector,
   getWaypointName,
+  getWaypointTargets,
   hasAuthserviceSSO,
   matchesLabels,
   serviceMatchesSelector,
@@ -108,10 +110,61 @@ describe("shouldUseAmbientWaypoint", () => {
       } as UDSPackage,
       expected: true,
     },
+    {
+      name: "should return true for external authorization in ambient mode",
+      pkg: {
+        metadata: { name: "test", namespace: "test" },
+        spec: {
+          network: {
+            serviceMesh: {
+              mode: Mode.Ambient,
+              externalAuthorization: {
+                provider: "opa",
+                selector: { app: "test" },
+              },
+            },
+          },
+        },
+      } as UDSPackage,
+      expected: true,
+    },
   ];
 
   it.each(testCases)("$name", ({ pkg, expected }) => {
     expect(shouldUseAmbientWaypoint(pkg)).toBe(expected);
+  });
+});
+
+describe("external authorization waypoint targets", () => {
+  const pkg: UDSPackage = {
+    metadata: { name: "test-package", namespace: "test" },
+    spec: {
+      network: {
+        serviceMesh: {
+          mode: Mode.Ambient,
+          externalAuthorization: {
+            provider: "opa",
+            selector: { app: "ollama" },
+          },
+        },
+      },
+    },
+  };
+
+  it("uses the package name and configured selector", () => {
+    expect(getWaypointTargets(pkg)).toContainEqual({
+      id: "test-package",
+      selector: { app: "ollama" },
+      type: "external-authorization",
+    });
+  });
+
+  it("matches workload labels in ambient mode", () => {
+    expect(findMatchingWaypointTarget(pkg, { app: "ollama", tier: "api" })).toEqual({
+      id: "test-package",
+      selector: { app: "ollama" },
+      type: "external-authorization",
+    });
   });
 });
 
