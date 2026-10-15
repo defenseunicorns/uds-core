@@ -6,7 +6,7 @@ templates:
   - uds-package.yaml
 
 tests:
-  - it: pins forwarding metadata and sets HSTS on every route
+  - it: sanitizes forwarded request metadata and sets trusted HTTPS headers and HSTS on every route
     asserts:
       - equal:
           path: spec.network.expose[*].advancedHTTP.headers.response.add.Vary
@@ -15,21 +15,18 @@ tests:
           path: spec.network.expose[0].advancedHTTP.headers.request.set
           value:
             X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
-            X-Forwarded-Host: sso.uds.dev
             X-Forwarded-Proto: https
             X-Forwarded-Port: "443"
       - equal:
           path: spec.network.expose[1].advancedHTTP.headers.request.set
           value:
             X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
-            X-Forwarded-Host: sso.uds.dev
             X-Forwarded-Proto: https
             X-Forwarded-Port: "443"
       - equal:
           path: spec.network.expose[2].advancedHTTP.headers.request.set
           value:
             X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
-            X-Forwarded-Host: keycloak.admin.uds.dev
             X-Forwarded-Proto: https
             X-Forwarded-Port: "443"
       - equal:
@@ -67,7 +64,7 @@ tests:
           any: true
           content:
             gateway: passthrough
-  - it: pins forwarding metadata and sets HSTS on every route with custom domains and third-party TLS
+  - it: sanitizes forwarded request metadata and sets trusted HTTPS headers and HSTS with custom domains and third-party TLS
     set:
       domain: example.com
       adminDomain: ops.example.com
@@ -80,21 +77,18 @@ tests:
           path: spec.network.expose[0].advancedHTTP.headers.request.set
           value:
             X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
-            X-Forwarded-Host: sso.example.com
             X-Forwarded-Proto: https
             X-Forwarded-Port: "443"
       - equal:
           path: spec.network.expose[1].advancedHTTP.headers.request.set
           value:
             X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
-            X-Forwarded-Host: sso.example.com
             X-Forwarded-Proto: https
             X-Forwarded-Port: "443"
       - equal:
           path: spec.network.expose[2].advancedHTTP.headers.request.set
           value:
             X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
-            X-Forwarded-Host: keycloak.ops.example.com
             X-Forwarded-Proto: https
             X-Forwarded-Port: "443"
       - equal:
