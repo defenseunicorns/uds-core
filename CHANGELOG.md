@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.16.0](https://github.com/defenseunicorns/uds-core/compare/v1.15.0...v1.16.0) (2026-10-15)
+
+
+### Miscellaneous
+
+* **deps:** bump fast-copy from 4.0.2 to 4.2.0 ([#3094](https://github.com/defenseunicorns/uds-core/issues/3094)) ([7e32116](https://github.com/defenseunicorns/uds-core/commit/7e3211653bbb10cb70a32fbe794079717ae80c62))
+* **deps:** bump proxy-addr from 2.0.7 to 2.0.8 ([#3093](https://github.com/defenseunicorns/uds-core/issues/3093)) ([2c00965](https://github.com/defenseunicorns/uds-core/commit/2c00965912abe976d7f5fbaf5e9c2375101a86f3))
+* **deps:** bump source-map-js from 1.2.1 to 1.2.2 in /test/vitest ([#3092](https://github.com/defenseunicorns/uds-core/issues/3092)) ([dfcb106](https://github.com/defenseunicorns/uds-core/commit/dfcb106309d3e3b2b82f41344594ad26de4f442d))
+* **deps:** update prometheus-stack to v92.7.0 ([#3088](https://github.com/defenseunicorns/uds-core/issues/3088)) ([0aa4f08](https://github.com/defenseunicorns/uds-core/commit/0aa4f0866cabbb1539d4429df975ef467af59e4c))
+* **deps:** update velero to v12.2.1 ([#3062](https://github.com/defenseunicorns/uds-core/issues/3062)) ([f737a8c](https://github.com/defenseunicorns/uds-core/commit/f737a8c619b41afb2988fe98b519fec16a452792))
+
 ## [1.15.0](https://github.com/defenseunicorns/uds-core/compare/v1.14.0...v1.15.0) (2026-10-13)
 
 
