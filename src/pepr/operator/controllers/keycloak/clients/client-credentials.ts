@@ -7,7 +7,6 @@ import fs from "fs";
 import { fetch, K8s, kind } from "pepr";
 import { UDSConfig } from "../../config/config";
 import { KeycloakClientMode } from "../../config/types";
-import { UDSPackage } from "../../../crd";
 import { Client } from "../types";
 import { baseUrl, isAuthError, KeycloakHttpError, log, throwErrorIfNeeded } from "./common";
 import {
@@ -16,7 +15,6 @@ import {
   assertSoleLivePackageClaimIn,
   assertUnambiguousPackageHistory,
   assertSoleLivePackageClaim,
-  hasLegacyOperatorManagementEvidence,
   isCompletedPackageClientHandoff,
   listLivePackages,
   PACKAGE_OWNER_UID_ATTRIBUTE,
@@ -243,7 +241,7 @@ export async function credentialsDelete(
 
   const marker = getOwnerMarker(existing);
   const packages = await listLivePackages();
-  const liveOwner = assertCurrentPackageUid(packages, owner, clientId);
+  assertCurrentPackageUid(packages, owner, clientId);
   if (marker === undefined) {
     assertPackageCanDeleteClient(packages, clientId, owner);
     assertUnambiguousPackageHistory(packages, clientId, owner);
@@ -270,11 +268,6 @@ export async function credentialsDelete(
   if (marker !== undefined && currentMarker === undefined) {
     throw ownershipMismatchError(clientId, owner, currentMarker);
   }
-  if (marker === undefined) {
-    // Legacy clients need configuration evidence from this exact UUID even if
-    // a concurrent safe adoption added our UID marker during verification.
-    assertLegacyAdoptionEvidence(verified, clientId, liveOwner);
-  }
 
   const response = await fetch(`${clientsAdminUrl}/${encodeURIComponent(existing.id!)}`, {
     method: "DELETE",
@@ -299,10 +292,9 @@ async function updateClientByUuid(
   }
 
   const packages = await listLivePackages();
-  const liveOwner = assertSoleLivePackageClaimIn(packages, clientId, owner);
+  assertSoleLivePackageClaimIn(packages, clientId, owner);
   if (initialMarker === undefined) {
     assertUnambiguousPackageHistory(packages, clientId, owner);
-    assertLegacyAdoptionEvidence(initial, clientId, liveOwner);
   }
   const token = await credentialsGetAccessToken();
   const existing = await getClientByUuid(id, clientId);
@@ -313,10 +305,6 @@ async function updateClientByUuid(
   if (marker !== owner.uid && marker !== undefined) {
     throw ownershipMismatchError(clientId, owner, marker);
   }
-  if (marker === undefined) {
-    assertUnambiguousPackageHistory(packages, clientId, owner);
-    assertLegacyAdoptionEvidence(existing, clientId, liveOwner);
-  }
   await putClientByUuid(addOwnerMarker(client, owner), id, token);
   const updated = await getClientByUuid(id, clientId);
   if (!updated) {
@@ -324,18 +312,6 @@ async function updateClientByUuid(
   }
   assertOwnerMarker(updated, clientId, owner);
   return updated as ClientWithId;
-}
-
-function assertLegacyAdoptionEvidence(
-  client: ClientRepresentation,
-  clientId: string,
-  liveOwner: UDSPackage,
-): void {
-  if (!hasLegacyOperatorManagementEvidence(liveOwner, clientId, client)) {
-    throw new Error(
-      `Keycloak client "${clientId}" has no owner marker and lacks sufficient Package history to adopt it safely`,
-    );
-  }
 }
 
 function addOwnerMarker(client: Partial<Client>, owner: PackageClientOwner): Partial<Client> {

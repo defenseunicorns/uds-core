@@ -24,7 +24,6 @@ vi.mock("pepr", () => ({
 import {
   assertSoleLivePackageClaim,
   getPackageClientOwner,
-  hasLegacyOperatorManagementEvidence,
   listLivePackages,
 } from "./client-owner";
 
@@ -89,44 +88,5 @@ describe("Package Keycloak client ownership helpers", () => {
 
     mockGet.mockResolvedValueOnce({ metadata: {} });
     await expect(listLivePackages()).rejects.toThrow("incomplete Package list");
-  });
-
-  it("accepts legacy ordinary-client evidence only with status and operator-written attributes", () => {
-    const pkg = packageFixture({ status: { ssoClients: ["my-app"] } });
-    expect(
-      hasLegacyOperatorManagementEvidence(pkg, "my-app", {
-        attributes: { "uds.core.groups": "[]" },
-      }),
-    ).toBe(true);
-    expect(
-      hasLegacyOperatorManagementEvidence(packageFixture(), "my-app", {
-        attributes: { "uds.core.groups": "[]" },
-      }),
-    ).toBe(false);
-    expect(
-      hasLegacyOperatorManagementEvidence(pkg, "my-app", {
-        attributes: {},
-      }),
-    ).toBe(false);
-  });
-
-  it("rejects ambiguous Keycloak configuration shapes", () => {
-    const pkg = packageFixture({ status: { ssoClients: ["my-app-probe"] } });
-    expect(
-      hasLegacyOperatorManagementEvidence(pkg, "my-app-probe", {
-        attributes: { "uds.core.groups": "[]" },
-        fullScopeAllowed: false,
-        serviceAccountsEnabled: true,
-        standardFlowEnabled: false,
-        protocolMappers: [
-          {
-            name: "audience",
-            protocol: "openid-connect",
-            protocolMapper: "oidc-audience-mapper",
-            config: { "included.client.audience": "my-app" },
-          },
-        ],
-      }),
-    ).toBe(false);
   });
 });

@@ -32,7 +32,7 @@ The application reads its credentials from this secret and speaks directly to Ke
 
 If your application expects credentials in a specific format (JSON config file, properties file, etc.), you can use `secretConfig.template` to control the secret layout.
 
-The operator marks each Keycloak client with its owning `Package` UID. After an upgrade, it adopts an unmarked client only when one current `Package` claims its ID, that `Package` alone records the ID in `status.ssoClients`, and the client has a recognized operator-managed configuration. Cleanup of an unmarked client also requires unique status history and no other current `Package` claim. Ambiguous clients fail reconciliation and need administrator review.
+The operator marks each Keycloak client with its owning `Package` UID. During an upgrade, it adopts an unmarked client only when the requesting `Package` UID is live, that `Package` is the sole current spec claimant, and it is the only live `Package` that records the client ID in `status.ssoClients`. This applies to ordinary SSO clients and generated uptime probe clients. Cleanup of an unmarked client uses the same unique status history and requires that no other current `Package` claims the ID. Clients without this history or with competing claims fail closed and require an administrator to resolve the Keycloak client or `Package` claim before retrying. Status history corroborates that Core reconciled the ID, but does not prove the Keycloak client was not replaced outside Core.
 
 ## Steps
 

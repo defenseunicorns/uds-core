@@ -5,8 +5,7 @@
 
 import { K8s } from "pepr";
 import { UDSPackage } from "../../crd";
-import { SsoProtocol } from "../../crd/generated/package-v1alpha1";
-import { getGeneratedProbeClientIds, getProbeClientId } from "../uptime/probe-client-utils";
+import { getGeneratedProbeClientIds } from "../uptime/probe-client-utils";
 
 export const PACKAGE_OWNER_UID_ATTRIBUTE = "uds.core.package-uid";
 
@@ -170,48 +169,4 @@ export function assertUnambiguousPackageHistory(
     );
   }
   return currentOwner;
-}
-
-/**
- * Determine whether a legacy, unmarked Keycloak client has one operator-managed
- * configuration shape and unique operator-written Package status corroboration.
- */
-export function hasLegacyOperatorManagementEvidence(
-  pkg: UDSPackage,
-  clientId: string,
-  client: {
-    attributes?: Record<string, string>;
-    fullScopeAllowed?: boolean;
-    serviceAccountsEnabled?: boolean;
-    standardFlowEnabled?: boolean;
-    protocolMappers?: Array<{
-      name?: string;
-      protocol?: string;
-      protocolMapper?: string;
-      config?: Record<string, string>;
-    }>;
-  },
-): boolean {
-  if (!pkg.status?.ssoClients?.includes(clientId)) {
-    return false;
-  }
-
-  // convertSsoToClient always writes this attribute, even with no declared groups.
-  const ordinaryClient = Object.hasOwn(client.attributes ?? {}, "uds.core.groups");
-  const audienceMappers = (client.protocolMappers ?? []).filter(
-    mapper =>
-      mapper.name === "audience" &&
-      mapper.protocol === SsoProtocol.OpenidConnect &&
-      mapper.protocolMapper === "oidc-audience-mapper",
-  );
-  const audienceClientId = audienceMappers[0]?.config?.["included.client.audience"];
-  const probeClient =
-    client.fullScopeAllowed === false &&
-    client.serviceAccountsEnabled === true &&
-    client.standardFlowEnabled === false &&
-    audienceMappers.length === 1 &&
-    typeof audienceClientId === "string" &&
-    getProbeClientId(audienceClientId) === clientId;
-
-  return ordinaryClient !== probeClient;
 }

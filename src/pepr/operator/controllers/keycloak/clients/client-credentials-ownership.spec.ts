@@ -6,21 +6,30 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UDSConfig } from "../../config/config";
 import { KeycloakClientMode } from "../../config/types";
-import { Protocol, UDSPackage } from "../../../crd";
+import { UDSPackage } from "../../../crd";
 import { getPackageClientOwner, PACKAGE_OWNER_UID_ATTRIBUTE } from "../client-owner";
 import { Client } from "../types";
+import { syncClient } from "../client-sync";
 
-const { mockFetch, mockPackageGet, mockSecretGet } = vi.hoisted(() => ({
-  mockFetch: vi.fn(),
-  mockPackageGet: vi.fn(),
-  mockSecretGet: vi.fn(),
-}));
+const { mockFetch, mockPackageGet, mockSecretGet, mockSecretNamespace, mockApply } = vi.hoisted(
+  () => ({
+    mockFetch: vi.fn(),
+    mockPackageGet: vi.fn(),
+    mockSecretGet: vi.fn(),
+    mockSecretNamespace: vi.fn(),
+    mockApply: vi.fn().mockResolvedValue({}),
+  }),
+);
 
 vi.mock("pepr", () => ({
   fetch: (...args: unknown[]) => mockFetch(...args),
   K8s: () => ({
     Get: (...args: unknown[]) => mockPackageGet(...args),
-    InNamespace: () => ({ Get: (...args: unknown[]) => mockSecretGet(...args) }),
+    Apply: (...args: unknown[]) => mockApply(...args),
+    InNamespace: (namespace: string) => {
+      mockSecretNamespace(namespace);
+      return { Get: (...args: unknown[]) => mockSecretGet(...args) };
+    },
   }),
   kind: { Secret: "Secret" },
   Log: {
@@ -54,6 +63,7 @@ let livePackages: UDSPackage[] = [];
 let conflictOnCreate: TestClient | undefined;
 let inexactSearchClient: TestClient | undefined;
 let inexactSearchFor: string | undefined;
+let stripOwnerMarkerAfterPut = false;
 let nextId = 0;
 
 function packageFixture({
@@ -114,22 +124,6 @@ function clientFixture(
   };
 }
 
-function legacyProbeClient(): TestClient {
-  return clientFixture("my-app-probe", undefined, {
-    fullScopeAllowed: false,
-    serviceAccountsEnabled: true,
-    standardFlowEnabled: false,
-    protocolMappers: [
-      {
-        name: "audience",
-        protocol: Protocol.OpenidConnect,
-        protocolMapper: "oidc-audience-mapper",
-        config: { "included.client.audience": "my-app" },
-      },
-    ],
-  });
-}
-
 function jwt(exp: number): string {
   const header = Buffer.from(JSON.stringify({ alg: "RS256" })).toString("base64");
   const payload = Buffer.from(JSON.stringify({ exp, resource_access: {} })).toString("base64");
@@ -161,6 +155,7 @@ beforeEach(() => {
   conflictOnCreate = undefined;
   inexactSearchClient = undefined;
   inexactSearchFor = undefined;
+  stripOwnerMarkerAfterPut = false;
   nextId = 0;
   UDSConfig.keycloakClientMode = KeycloakClientMode.CLIENT_SECRET;
   mockSecretGet.mockResolvedValue({
@@ -214,6 +209,9 @@ beforeEach(() => {
     if (method === "PUT" && index >= 0) {
       const body = JSON.parse(String(options.body)) as Partial<TestClient>;
       clients[index] = { ...clients[index], ...body, secret: clients[index].secret };
+      if (stripOwnerMarkerAfterPut) {
+        delete clients[index].attributes?.[PACKAGE_OWNER_UID_ATTRIBUTE];
+      }
       return response(204);
     }
     if (method === "DELETE" && index >= 0) {
@@ -333,20 +331,17 @@ describe("Package-owned Keycloak client credentials", () => {
     expect(hasClientMutation()).toBe(false);
   });
 
-  it("adopts a legacy ordinary client only with Package status and operator configuration evidence", async () => {
+  it("adopts a legacy ordinary client with unique status history when groups are absent", async () => {
     const pkg = packageFixture({ statusClientIds: ["my-app"] });
     livePackages = [pkg];
-    clients.push(
-      clientFixture("my-app", undefined, {
-        attributes: { "uds.core.groups": "[]", "custom.attribute": "keep" },
-      }),
-    );
+    // v1.15.0 wrote this attribute, but Keycloak may omit it on a later read.
+    clients.push(clientFixture("my-app", undefined, { attributes: {} }));
 
     const result = await credentialsCreateOrUpdate(
       {
         clientId: "my-app",
         name: "My app",
-        attributes: { "uds.core.groups": "[]", "custom.attribute": "keep" },
+        attributes: { "uds.core.groups": "", "custom.attribute": "keep" },
       },
       ownerOf(pkg),
     );
@@ -355,8 +350,68 @@ describe("Package-owned Keycloak client credentials", () => {
     expect(result.attributes?.[PACKAGE_OWNER_UID_ATTRIBUTE]).toBe(pkg.metadata?.uid);
   });
 
-  it("does not adopt an unmarked client with insufficient Package history", async () => {
-    const pkg = packageFixture();
+  it("adopts public clients without depending on a Kubernetes Secret", async () => {
+    const pkg = packageFixture({ statusClientIds: ["my-app"] });
+    livePackages = [pkg];
+    clients.push(
+      clientFixture("my-app", undefined, {
+        attributes: {},
+        publicClient: true,
+        secret: undefined,
+      }),
+    );
+
+    const synced = await syncClient({ ...pkg.spec!.sso![0], publicClient: true }, pkg);
+
+    expect(synced.attributes?.[PACKAGE_OWNER_UID_ATTRIBUTE]).toBe(pkg.metadata?.uid);
+    expect(mockApply).not.toHaveBeenCalled();
+    expect(mockSecretNamespace.mock.calls).toEqual([["keycloak"]]);
+  });
+
+  it("adopts a legacy client with a custom template without reading an existing app Secret", async () => {
+    const pkg = packageFixture({ statusClientIds: ["my-app"] });
+    livePackages = [pkg];
+    clients.push(clientFixture("my-app", undefined, { attributes: {} }));
+
+    await syncClient(
+      {
+        ...pkg.spec!.sso![0],
+        secretConfig: {
+          name: "custom-client-secret",
+          template: { CLIENT_SECRET: "clientField(secret)" },
+        },
+      },
+      pkg,
+    );
+
+    expect(clients[0].attributes?.[PACKAGE_OWNER_UID_ATTRIBUTE]).toBe(pkg.metadata?.uid);
+    expect(mockApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ name: "custom-client-secret" }),
+        data: { CLIENT_SECRET: Buffer.from("secret-my-app").toString("base64") },
+      }),
+    );
+    // The application Secret is only written; the sole read is the Keycloak token Secret.
+    expect(mockSecretGet).toHaveBeenCalledTimes(1);
+    expect(mockSecretNamespace.mock.calls).toEqual([["keycloak"]]);
+  });
+
+  it("does not publish a Secret when the legacy marker cannot be verified", async () => {
+    const pkg = packageFixture({ statusClientIds: ["my-app"] });
+    livePackages = [pkg];
+    clients.push(clientFixture("my-app", undefined, { attributes: {} }));
+    stripOwnerMarkerAfterPut = true;
+
+    await expect(syncClient(pkg.spec!.sso![0], pkg)).rejects.toThrow(
+      "Failed to process Keycloak request",
+    );
+
+    expect(mockFetch.mock.calls.some(([, options]) => options.method === "PUT")).toBe(true);
+    expect(mockApply).not.toHaveBeenCalled();
+  });
+
+  it("does not adopt an unmarked client after Package recreation without its status history", async () => {
+    const pkg = packageFixture({ uid: "recreated-package-uid" });
     livePackages = [pkg];
     clients.push(
       clientFixture("my-app", undefined, { attributes: { "custom.attribute": "value" } }),
@@ -378,11 +433,7 @@ describe("Package-owned Keycloak client credentials", () => {
       statusClientIds: ["my-app"],
     });
     livePackages = [pkg, other];
-    clients.push(
-      clientFixture("my-app", undefined, {
-        attributes: { "uds.core.groups": "[]" },
-      }),
-    );
+    clients.push(clientFixture("my-app", undefined, { attributes: {} }));
 
     await expect(
       credentialsCreateOrUpdate({ clientId: "my-app", name: "My app" }, ownerOf(pkg)),
@@ -393,7 +444,7 @@ describe("Package-owned Keycloak client credentials", () => {
   it("recognizes generated probe IDs in live ownership checks and legacy adoption", async () => {
     const pkg = packageFixture({ includeProbe: true, statusClientIds: ["my-app-probe"] });
     livePackages = [pkg];
-    clients.push(legacyProbeClient());
+    clients.push(clientFixture("my-app-probe", undefined, { attributes: {} }));
 
     const result = await credentialsCreateOrUpdate(
       {
@@ -414,6 +465,41 @@ describe("Package-owned Keycloak client credentials", () => {
     await expect(
       credentialsDelete({ clientId: "already-gone" }, ownerOf(packageFixture())),
     ).resolves.toBeUndefined();
+    expect(mockFetch.mock.calls.some(([, options]) => options.method === "DELETE")).toBe(false);
+  });
+
+  it("deletes unmarked ordinary and probe clients during finalization while IDs remain in the spec", async () => {
+    const pkg = packageFixture({
+      includeProbe: true,
+      statusClientIds: ["my-app", "my-app-probe"],
+    });
+    livePackages = [pkg];
+    clients.push(
+      clientFixture("my-app", undefined, { attributes: {} }),
+      clientFixture("my-app-probe", undefined, { attributes: {} }),
+    );
+
+    await expect(credentialsDelete({ clientId: "my-app" }, ownerOf(pkg))).resolves.toBeUndefined();
+    await expect(
+      credentialsDelete({ clientId: "my-app-probe" }, ownerOf(pkg)),
+    ).resolves.toBeUndefined();
+
+    expect(clients).toHaveLength(0);
+    expect(mockFetch.mock.calls.filter(([, options]) => options.method === "DELETE")).toHaveLength(
+      2,
+    );
+  });
+
+  it("refuses legacy deletion when the Package has no recorded history", async () => {
+    const pkg = packageFixture();
+    livePackages = [pkg];
+    clients.push(clientFixture("my-app", undefined, { attributes: {} }));
+
+    await expect(credentialsDelete({ clientId: "my-app" }, ownerOf(pkg))).rejects.toThrow(
+      "no recorded history",
+    );
+
+    expect(clients).toHaveLength(1);
     expect(mockFetch.mock.calls.some(([, options]) => options.method === "DELETE")).toBe(false);
   });
 
@@ -491,7 +577,7 @@ describe("Package-owned Keycloak client credentials", () => {
     const pkg = packageFixture({ includeProbe: true, statusClientIds: ["my-app-probe"] });
     pkg.spec!.network!.expose![0].uptime!.checks!.paths = [];
     livePackages = [pkg];
-    clients.push(legacyProbeClient());
+    clients.push(clientFixture("my-app-probe", undefined, { attributes: {} }));
 
     await expect(
       credentialsDelete({ clientId: "my-app-probe" }, ownerOf(pkg)),
@@ -511,9 +597,9 @@ describe("Package-owned Keycloak client credentials", () => {
     livePackages = [pkg];
     clients.push(
       clientFixture("my-app", undefined, {
-        attributes: { "uds.core.groups": "" },
+        attributes: {},
       }),
-      legacyProbeClient(),
+      clientFixture("my-app-probe", undefined, { attributes: {} }),
     );
 
     await credentialsDelete({ clientId: "my-app" }, ownerOf(pkg));
@@ -536,7 +622,7 @@ describe("Package-owned Keycloak client credentials", () => {
       statusClientIds: ["my-app-probe"],
     });
     livePackages = [pkg, other];
-    clients.push(legacyProbeClient());
+    clients.push(clientFixture("my-app-probe", undefined, { attributes: {} }));
 
     await expect(credentialsDelete({ clientId: "my-app-probe" }, ownerOf(pkg))).rejects.toThrow(
       "ambiguous Package history",
@@ -554,7 +640,7 @@ describe("Package-owned Keycloak client credentials", () => {
       clientId: "my-app-probe",
     });
     livePackages = [pkg, other];
-    clients.push(legacyProbeClient());
+    clients.push(clientFixture("my-app-probe", undefined, { attributes: {} }));
 
     await expect(credentialsDelete({ clientId: "my-app-probe" }, ownerOf(pkg))).rejects.toThrow(
       "another Package currently claims it",
