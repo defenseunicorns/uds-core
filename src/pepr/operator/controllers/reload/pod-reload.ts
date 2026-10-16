@@ -21,6 +21,7 @@ export type ResourceType = "Secret" | "ConfigMap";
 interface ReloadState {
   checksum: string;
   status: "creating" | "creationAndUpdatePending" | "updating" | "complete";
+  restartAt: string;
 }
 
 // Maps to store resource checksums and states for change detection
@@ -191,6 +192,8 @@ export async function handleResourceUpdate(
   const currentChecksum = computeResourceChecksum(data);
 
   const state = stateCache.get(cacheKey);
+  const restartAt =
+    state?.checksum === currentChecksum ? state.restartAt : new Date().toISOString();
   const isCreation =
     !state || state.status === "creating" || state.status === "creationAndUpdatePending";
   const changedDuringCreation =
@@ -202,7 +205,7 @@ export async function handleResourceUpdate(
   }
 
   function checkpoint(status: ReloadState["status"]) {
-    stateCache.set(cacheKey, { checksum: currentChecksum, status });
+    stateCache.set(cacheKey, { checksum: currentChecksum, status, restartAt });
   }
 
   try {
@@ -338,6 +341,7 @@ export async function handleResourceUpdate(
             `${resourceType} ${name} change`,
             log,
             `${resourceType}Changed`,
+            restartAt,
           );
         }
         checkpoint("complete");
@@ -406,6 +410,7 @@ export async function handleResourceUpdate(
             `${resourceType} ${name} change`,
             log,
             `${resourceType}Changed`,
+            restartAt,
           );
         }
         checkpoint("updating");
@@ -441,6 +446,7 @@ export async function handleResourceUpdate(
         `${resourceType} ${name} change`,
         log,
         `${resourceType}Changed`,
+        restartAt,
       );
     }
     checkpoint("complete");

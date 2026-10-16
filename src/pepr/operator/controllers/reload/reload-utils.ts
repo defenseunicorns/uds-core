@@ -27,6 +27,7 @@ import { createEvent, retryWithDelay } from "../utils";
  * @param message The reason for eviction/restart (for logging)
  * @param log Logger instance for logging
  * @param reason Resource type responsible for eviction/restart (for logging)
+ * @param restartAt Timestamp to reuse while retrying the same resource change
  */
 export async function reloadPods(
   namespace: string,
@@ -34,6 +35,7 @@ export async function reloadPods(
   message: string,
   log: Logger,
   reason: string,
+  restartAt?: string,
 ) {
   if (pods.length === 0) {
     log.warn(`No pods provided for eviction in namespace ${namespace}`);
@@ -95,6 +97,7 @@ export async function reloadPods(
         message,
         log,
         reason,
+        restartAt,
       );
       const updateStrategy = (controller as { spec?: { updateStrategy?: { type?: string } } }).spec
         ?.updateStrategy?.type;
@@ -281,6 +284,7 @@ async function cleanupControllerEntry(
  * @param message The reason for the restart (used in event message and logs)
  * @param log Logger instance for logging
  * @param reason The event reason string (used in the Kubernetes event)
+ * @param restartAt Timestamp to write to the controller template
  */
 export async function restartController(
   namespace: string,
@@ -289,6 +293,7 @@ export async function restartController(
   message: string,
   log: Logger,
   reason: string,
+  restartAt = new Date().toISOString(),
 ) {
   // Get the controller kind name for logging
   const controllerKindName = controllerKind?.name ?? String(controllerKind);
@@ -316,7 +321,7 @@ export async function restartController(
         template: {
           metadata: {
             annotations: {
-              "uds.dev/restartedAt": new Date().toISOString(),
+              "uds.dev/restartedAt": restartAt,
             },
           },
         },

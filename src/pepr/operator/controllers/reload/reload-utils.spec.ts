@@ -531,6 +531,59 @@ describe("reloadPods", () => {
     expect(mockK8sClient.Evict).toHaveBeenCalledTimes(2);
   });
 
+  it("reuses a successful rolling restart while retrying a failed OnDelete eviction", async () => {
+    const pods = [
+      {
+        metadata: {
+          name: "deployment-pod",
+          ownerReferences: [
+            { kind: "Deployment", name: "deployment", uid: "deployment-owner", controller: true },
+          ],
+        },
+      },
+      {
+        metadata: {
+          name: "ondelete-pod",
+          ownerReferences: [
+            { kind: "StatefulSet", name: "ondelete", uid: "ondelete-owner", controller: true },
+          ],
+        },
+      },
+    ] as kind.Pod[];
+    const deploymentClient = createMockK8sClient();
+    deploymentClient.Get.mockResolvedValue(makeTestDeployment());
+    const onDeleteClient = createMockK8sClient();
+    onDeleteClient.Get.mockResolvedValue({
+      metadata: { name: "ondelete", namespace: "default", uid: "ondelete-owner" },
+      spec: { updateStrategy: { type: "OnDelete" } },
+    });
+    vi.mocked(K8s as Mock).mockImplementation(resourceKind => {
+      if (resourceKind === kind.Deployment) return deploymentClient;
+      if (resourceKind === kind.StatefulSet) return onDeleteClient;
+      return mockK8sClient;
+    });
+    mockK8sClient.Evict.mockRejectedValueOnce(new Error("eviction denied"));
+    const restartAt = "2026-10-16T10:00:00.000Z";
+
+    await expect(
+      reloadPods("default", pods, "Test eviction", mockLogger, "SecretChanged", restartAt),
+    ).rejects.toThrow("Failed to reload pods");
+    await reloadPods("default", pods, "Test eviction", mockLogger, "SecretChanged", restartAt);
+
+    expect(deploymentClient.Apply).toHaveBeenCalledTimes(2);
+    expect(deploymentClient.Apply).toHaveBeenNthCalledWith(
+      1,
+      { spec: { template: { metadata: { annotations: { "uds.dev/restartedAt": restartAt } } } } },
+      { force: true },
+    );
+    expect(deploymentClient.Apply).toHaveBeenNthCalledWith(
+      2,
+      { spec: { template: { metadata: { annotations: { "uds.dev/restartedAt": restartAt } } } } },
+      { force: true },
+    );
+    expect(mockK8sClient.Evict).toHaveBeenCalledTimes(2);
+  });
+
   it("should report an error if controller applying fails", async () => {
     // Create a statefulset-controlled pod
     const pods = [

@@ -422,6 +422,7 @@ describe("pod-reload", () => {
         "Secret test-secret change",
         expect.anything(),
         "SecretChanged",
+        expect.any(String),
       );
     });
 
@@ -520,6 +521,7 @@ describe("pod-reload", () => {
         "Secret multi-selector-secret change",
         expect.anything(),
         "SecretChanged",
+        expect.any(String),
       );
     });
 
@@ -951,6 +953,7 @@ describe("pod-reload", () => {
         "ConfigMap test-configmap change",
         expect.anything(),
         "ConfigMapChanged",
+        expect.any(String),
       );
     });
   });
@@ -1195,6 +1198,7 @@ describe("pod-reload", () => {
         expect.any(String),
         expect.anything(),
         expect.any(String),
+        expect.any(String),
       );
       expect(utils.reloadPods).toHaveBeenCalledTimes(1);
     });
@@ -1213,6 +1217,7 @@ describe("pod-reload", () => {
         [affected],
         expect.any(String),
         expect.anything(),
+        expect.any(String),
         expect.any(String),
       );
     });
@@ -1235,6 +1240,7 @@ describe("pod-reload", () => {
         expect.any(String),
         expect.anything(),
         expect.any(String),
+        expect.any(String),
       );
     });
 
@@ -1255,6 +1261,7 @@ describe("pod-reload", () => {
         [affected],
         expect.any(String),
         expect.anything(),
+        expect.any(String),
         expect.any(String),
       );
     });
@@ -1400,7 +1407,7 @@ describe("pod-reload", () => {
 
       expect(utils.reloadPods).toHaveBeenCalledTimes(2);
       expect(vi.mocked(utils.reloadPods).mock.calls[1]?.[1]).toEqual([oldPod, newerPod]);
-      expect(secretReloadStateCache.get(`${namespace}/${resourceName}`)).toEqual({
+      expect(secretReloadStateCache.get(`${namespace}/${resourceName}`)).toMatchObject({
         checksum: computeResourceChecksum(updatedSecret.data!),
         status: "complete",
       });
@@ -1423,7 +1430,7 @@ describe("pod-reload", () => {
       await expect(handleSecretUpdate(updatedSecret)).rejects.toThrow("Invalid selector format");
 
       expect(vi.mocked(utils.reloadPods).mock.calls[1]?.[1]).toEqual([affected]);
-      expect(secretReloadStateCache.get(`${namespace}/${resourceName}`)).toEqual({
+      expect(secretReloadStateCache.get(`${namespace}/${resourceName}`)).toMatchObject({
         checksum: computeResourceChecksum(updatedSecret.data!),
         status: "updating",
       });
@@ -1523,9 +1530,12 @@ describe("pod-reload", () => {
       });
 
       await expect(handleSecretUpdate(createdSecret)).rejects.toThrow("eviction failed");
+      const firstRestartAt = vi.mocked(utils.reloadPods).mock.calls[0]?.[5];
       await handleSecretUpdate(createdSecret);
 
       expect(utils.reloadPods).toHaveBeenCalledTimes(2);
+      expect(firstRestartAt).toEqual(expect.any(String));
+      expect(vi.mocked(utils.reloadPods).mock.calls[1]?.[5]).toBe(firstRestartAt);
     });
 
     it("retries an old OnDelete pod after a failed combined reload", async () => {
