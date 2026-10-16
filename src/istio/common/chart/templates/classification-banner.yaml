@@ -114,17 +114,48 @@ spec:
               end
             end
 
-            -- Enabled applications receive real rows for the banners and a constrained,
-            -- scrollable middle row for the original page. This is CSS-only, so application CSP
-            -- can continue to reject inline JavaScript without disabling the layout adjustment.
-            local function viewportLayoutStyle(addFooter)
+            -- Keep a CSS banner visible when full-document hydration replaces the injected
+            -- body elements. Escape CSS string delimiters and HTML raw-text delimiters.
+            local function cssString(text)
+              return (text:gsub("[\\\"<>\n\r\f]", function(character)
+                return string.format("\\%X ", string.byte(character))
+              end))
+            end
+
+            -- CSS-only banners leave the body tree intact for applications that hydrate the
+            -- entire document. Reserve viewport space with CSS, and anchor the markings on html
+            -- so the transformed body can contain full-viewport application roots.
+            local function viewportLayoutStyle(addFooter, classification, colors, cssOnly)
               local gridRows = "24px minmax(0, 1fr)"
+              local fallbackSelectors = cssOnly and "html::before" or "html:not(:has(body > #classification-banner-top))::before"
+              local footerFallback = ""
               if addFooter then
                 gridRows = gridRows .. " 24px"
+                fallbackSelectors = fallbackSelectors .. (cssOnly and ", html::after" or ", html:not(:has(body > #classification-banner-bottom))::after")
+                footerFallback = [[
+              ]] .. (cssOnly and "html::after" or "html:not(:has(body > #classification-banner-bottom))::after") .. [[ {
+                bottom: 0 !important;
+              }
+            ]]
               end
 
-              return [[
-            <style id="classification-banner-viewport-layout">
+              local viewportFrame = ""
+              if cssOnly then
+                local reservedHeight = addFooter and "48px" or "24px"
+                viewportFrame = [[
+              body {
+                box-sizing: border-box !important;
+                height: calc(100vh - ]] .. reservedHeight .. [[) !important;
+                height: calc(100dvh - ]] .. reservedHeight .. [[) !important;
+                margin: 24px 0 0 !important;
+                min-height: 0 !important;
+                overflow: auto !important;
+                transform: translateZ(0) !important;
+                width: 100% !important;
+              }
+            ]]
+              else
+                viewportFrame = [[
               html,
               body {
                 height: 100%;
@@ -154,6 +185,49 @@ spec:
                 overflow-y: auto;
                 position: relative;
               }
+
+              /* Hydration can remove the injected wrapper. Keep the remaining body between
+                 the markings and contain fixed application roots within that space. */
+              body:not(:has(> #classification-page-content)) {
+                display: block !important;
+                inset: 24px 0 ]] .. (addFooter and "24px" or "0") .. [[ !important;
+                overflow: auto !important;
+                transform: translateZ(0) !important;
+              }
+            ]]
+              end
+
+              return [[
+            <style id="classification-banner-viewport-layout">
+              ]] .. viewportFrame .. fallbackSelectors .. [[ {
+                align-items: center !important;
+                background-color: ]] .. colors.backgroundColor .. [[ !important;
+                box-sizing: border-box !important;
+                color: ]] .. colors.textColor .. [[ !important;
+                content: "]] .. cssString(classification) .. [[" !important;
+                display: flex !important;
+                font-family: Arial, Helvetica, sans-serif !important;
+                font-size: 16px !important;
+                font-weight: 400 !important;
+                height: 24px !important;
+                justify-content: center !important;
+                left: 0 !important;
+                line-height: 24px !important;
+                overflow: hidden !important;
+                padding: 0 8px !important;
+                pointer-events: none !important;
+                position: fixed !important;
+                right: 0 !important;
+                text-align: center !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+                z-index: 2147483647 !important;
+              }
+
+              ]] .. (cssOnly and "html::before" or "html:not(:has(body > #classification-banner-top))::before") .. [[ {
+                top: 0 !important;
+              }
+              ]] .. footerFallback .. [[
             </style>
             ]]
             end
@@ -175,6 +249,7 @@ spec:
                 banner = {
                   classification = {{ if hasKey $banner "text" }}{{ $banner.text | quote }}{{ else }}"UNKNOWN"{{ end }},
                   addFooter = {{ if hasKey $banner "addFooter" }}{{ $banner.addFooter }}{{ else }}true{{ end }},
+                  cssOnly = {{ if hasKey $banner "cssOnly" }}{{ $banner.cssOnly }}{{ else }}false{{ end }},
                 },
               },
               {{- end }}
@@ -219,9 +294,10 @@ spec:
 
               return {
                 addFooter = banner.addFooter,
+                cssOnly = banner.cssOnly,
                 footer = "<div id=\"classification-banner-bottom\" style=\"" .. style .. "\">" .. classification .. "</div>",
                 header = "<div id=\"classification-banner-top\" style=\"" .. style .. "\">" .. classification .. "</div>",
-                viewportLayoutStyle = viewportLayoutStyle(banner.addFooter),
+                viewportLayoutStyle = viewportLayoutStyle(banner.addFooter, classification, colors, banner.cssOnly),
               }
             end
 
@@ -249,6 +325,10 @@ spec:
                   1
                 )
                 state.head = matches > 0
+              end
+
+              if presentation.cssOnly then
+                return html
               end
 
               if not state.body then
