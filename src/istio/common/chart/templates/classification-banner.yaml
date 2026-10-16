@@ -123,24 +123,38 @@ spec:
             end
 
             -- CSS-only banners leave the body tree intact for applications that hydrate the
-            -- entire document. Other banners retain the viewport frame and use pseudo-elements
-            -- only if hydration removes their injected body elements.
+            -- entire document. Reserve viewport space with CSS, and anchor the markings on html
+            -- so the transformed body can contain full-viewport application roots.
             local function viewportLayoutStyle(addFooter, classification, colors, cssOnly)
               local gridRows = "24px minmax(0, 1fr)"
-              local fallbackSelectors = cssOnly and "body::before" or "body:not(:has(> #classification-banner-top))::before"
+              local fallbackSelectors = cssOnly and "html::before" or "html:not(:has(body > #classification-banner-top))::before"
               local footerFallback = ""
               if addFooter then
                 gridRows = gridRows .. " 24px"
-                fallbackSelectors = fallbackSelectors .. (cssOnly and ", body::after" or ", body:not(:has(> #classification-banner-bottom))::after")
+                fallbackSelectors = fallbackSelectors .. (cssOnly and ", html::after" or ", html:not(:has(body > #classification-banner-bottom))::after")
                 footerFallback = [[
-              ]] .. (cssOnly and "body::after" or "body:not(:has(> #classification-banner-bottom))::after") .. [[ {
+              ]] .. (cssOnly and "html::after" or "html:not(:has(body > #classification-banner-bottom))::after") .. [[ {
                 bottom: 0 !important;
               }
             ]]
               end
 
               local viewportFrame = ""
-              if not cssOnly then
+              if cssOnly then
+                local reservedHeight = addFooter and "48px" or "24px"
+                viewportFrame = [[
+              body {
+                box-sizing: border-box !important;
+                height: calc(100vh - ]] .. reservedHeight .. [[) !important;
+                height: calc(100dvh - ]] .. reservedHeight .. [[) !important;
+                margin: 24px 0 0 !important;
+                min-height: 0 !important;
+                overflow: auto !important;
+                transform: translateZ(0) !important;
+                width: 100% !important;
+              }
+            ]]
+              else
                 viewportFrame = [[
               html,
               body {
@@ -170,6 +184,15 @@ spec:
                 overflow-x: hidden;
                 overflow-y: auto;
                 position: relative;
+              }
+
+              /* Hydration can remove the injected wrapper. Keep the remaining body between
+                 the markings and contain fixed application roots within that space. */
+              body:not(:has(> #classification-page-content)) {
+                display: block !important;
+                inset: 24px 0 ]] .. (addFooter and "24px" or "0") .. [[ !important;
+                overflow: auto !important;
+                transform: translateZ(0) !important;
               }
             ]]
               end
@@ -201,7 +224,7 @@ spec:
                 z-index: 2147483647 !important;
               }
 
-              ]] .. (cssOnly and "body::before" or "body:not(:has(> #classification-banner-top))::before") .. [[ {
+              ]] .. (cssOnly and "html::before" or "html:not(:has(body > #classification-banner-top))::before") .. [[ {
                 top: 0 !important;
               }
               ]] .. footerFallback .. [[
