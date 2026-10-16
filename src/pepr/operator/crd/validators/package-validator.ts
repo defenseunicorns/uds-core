@@ -12,6 +12,7 @@ import { generateVSName } from "../../controllers/istio/virtual-service";
 import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
 import { PackageStore } from "../../controllers/packages/package-store";
+import { getGeneratedProbeClientIds } from "../../controllers/uptime/probe-client-utils";
 import { getFqdn } from "../../controllers/domain-utils";
 import { sanitizeResourceName } from "../../controllers/utils";
 import { ExposeProtocol, Kind, Mode } from "../../crd/generated/package-v1alpha1";
@@ -344,6 +345,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   }
 
   const ssoClients = pkg.spec?.sso ?? [];
+  const generatedProbeClientIds = getGeneratedProbeClientIds(pkg);
 
   // Ensure the client IDs are unique
   const clientIDs = new Set<string>();
@@ -379,18 +381,6 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     }
     clientIDs.add(client.clientId);
 
-    // Check for global uniqueness (across all packages/namespaces)
-    const namespacesWithClientId = PackageStore.findPackagesWithSsoClientId(client.clientId);
-
-    // If we find namespaces with this client ID, make sure it's only the current namespace being updated
-    if (namespacesWithClientId.size > 0) {
-      const isOwnedByCurrentPackage = namespacesWithClientId.has(ns);
-
-      // If this client ID exists in other namespaces, deny the request
-      if (!isOwnedByCurrentPackage) {
-        return req.Deny(`The client ID "${client.clientId}" is already in use by another package.`);
-      }
-    }
     // Don't allow illegal k8s resource names for the secret name
     if (
       client.secretConfig?.name &&
@@ -527,6 +517,24 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
             `The client ID "${client.clientId}" has redirectUris containing root paths ("/"). Authservice clients cannot have root path redirect URIs.`,
           );
         }
+      }
+    }
+  }
+
+  // Allow terminating Packages to complete cleanup even if a client ID now collides.
+  if (!deletionTimestamp) {
+    const declaredProbeClientId = generatedProbeClientIds.find(clientId => clientIDs.has(clientId));
+    if (declaredProbeClientId) {
+      return req.Deny(
+        `The client ID "${declaredProbeClientId}" is declared in this Package and is also generated for an uptime probe.`,
+      );
+    }
+
+    const effectiveClientIds = new Set([...clientIDs, ...generatedProbeClientIds]);
+    for (const clientId of effectiveClientIds) {
+      const namespacesWithClientId = PackageStore.findPackagesWithClientId(clientId);
+      if (Array.from(namespacesWithClientId).some(ownerNamespace => ownerNamespace !== ns)) {
+        return req.Deny(`The client ID "${clientId}" is already in use by another Package.`);
       }
     }
   }

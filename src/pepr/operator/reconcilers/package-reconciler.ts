@@ -140,11 +140,9 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
 
   // Purge orphaned SSO clients now that both keycloak and probe clients are known
   const allSsoClients = [...ssoClients.keys(), ...probeSsoClients];
-  try {
-    await purgeSSOClients(pkg, allSsoClients);
-  } catch (e) {
-    log.error(e, `Failed to purge orphaned SSO clients for ${pkg.metadata!.name!}: ${e}`);
-  }
+  // Keep the prior status.ssoClients list intact until every cleanup succeeds.
+  // A failure must leave the Package retryable with the old IDs still recorded.
+  await purgeSSOClients(pkg, allSsoClients);
 
   // Create the CA Bundle Config Map if needed
   await caBundleConfigMap(pkg, namespace!);

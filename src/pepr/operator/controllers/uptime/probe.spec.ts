@@ -4,17 +4,20 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { Expose, Sso } from "../../crd";
+import { Expose, Sso, UDSPackage } from "../../crd";
 import { UDSConfig } from "../config/config";
-import { createProbeKeycloakClient, generateProbe, getAuthserviceSso } from "./probe";
+import { getAuthserviceSso, getProbeClientId } from "./probe-client-utils";
+import { createProbeKeycloakClient, generateProbe, probe } from "./probe";
 
-const { credentialsCreateOrUpdate } = vi.hoisted(() => ({
+const { credentialsCreateOrUpdate, mockUpdateBlackboxConfig } = vi.hoisted(() => ({
   credentialsCreateOrUpdate: vi.fn(),
+  mockUpdateBlackboxConfig: vi.fn(),
 }));
 
 vi.mock("../keycloak/clients/client-credentials", () => ({
   credentialsCreateOrUpdate,
 }));
+vi.mock("./config", () => ({ updateBlackboxConfig: mockUpdateBlackboxConfig }));
 
 UDSConfig.domain = "uds.dev";
 UDSConfig.adminDomain = "admin.uds.dev";
@@ -203,23 +206,66 @@ describe("getAuthserviceSso", () => {
 
 describe("createProbeKeycloakClient", () => {
   it("disables full scope for the probe client", async () => {
+    const expectedProbeClientId = getProbeClientId("uds-app");
     credentialsCreateOrUpdate.mockResolvedValue({
-      clientId: "uds-app-probe",
+      clientId: expectedProbeClientId,
       secret: "secret",
     });
 
-    await createProbeKeycloakClient({
-      name: "App SSO",
-      clientId: "uds-app",
-      redirectUris: ["https://app.uds.dev/login"],
-      enableAuthserviceSelector: { app: "app" },
-    });
+    const pkg: UDSPackage = {
+      metadata: {
+        name: "test-package",
+        namespace: "test-namespace",
+        uid: "test-package-uid",
+      },
+      spec: {},
+    };
+
+    await createProbeKeycloakClient(
+      {
+        name: "App SSO",
+        clientId: "uds-app",
+        redirectUris: ["https://app.uds.dev/login"],
+        enableAuthserviceSelector: { app: "app" },
+      },
+      pkg,
+    );
 
     expect(credentialsCreateOrUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        clientId: "uds-app-probe",
+        clientId: expectedProbeClientId,
         fullScopeAllowed: false,
       }),
+      { uid: "test-package-uid", namespace: "test-namespace", name: "test-package" },
     );
+    expect(expectedProbeClientId).toBe("uds-app-probe");
+  });
+
+  it("does not update Blackbox credentials when the Package does not own its probe client", async () => {
+    credentialsCreateOrUpdate.mockRejectedValueOnce(new Error("owner UID mismatch"));
+    const pkg = {
+      metadata: { name: "app", namespace: "app-ns", uid: "package-uid" },
+      spec: {
+        sso: [
+          {
+            name: "App SSO",
+            clientId: "uds-app",
+            redirectUris: ["https://app.uds.dev/login"],
+            enableAuthserviceSelector: { app: "app" },
+          },
+        ],
+        network: {
+          expose: [
+            {
+              host: "app",
+              uptime: { checks: { paths: ["/health"] } },
+            },
+          ],
+        },
+      },
+    };
+
+    await expect(probe(pkg, "app-ns")).rejects.toThrow("Failed to process Probes");
+    expect(mockUpdateBlackboxConfig).not.toHaveBeenCalled();
   });
 });

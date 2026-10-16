@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, Mock, MockedFunction, test, vi } from "vi
 // ---- Vitest mocks ----
 vi.mock("kubernetes-fluent-client");
 vi.mock("../../config");
+vi.mock("../controllers/config/config", () => ({ UDSConfig: { isIdentityDeployed: false } }));
 vi.mock("../controllers/ca-bundles/ca-bundle", () => ({ caBundleConfigMap: vi.fn() }));
 vi.mock("../controllers/envoy-gateway/udp-route-resources", () => ({
   envoyGatewayResources: vi.fn(),
@@ -79,6 +80,7 @@ vi.mock("pepr", () => ({
 import { K8s, Log } from "pepr";
 import { uidSeen, writeEvent } from ".";
 import { caBundleConfigMap } from "../controllers/ca-bundles/ca-bundle";
+import { UDSConfig } from "../controllers/config/config";
 import {
   envoyGatewayResources,
   hasDefaultModeUDPExpose,
@@ -93,7 +95,7 @@ import {
   authservice,
   purgeAuthserviceClients,
 } from "../controllers/keycloak/authservice/authservice";
-import { purgeSSOClients } from "../controllers/keycloak/client-sync";
+import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
@@ -177,6 +179,7 @@ describe("packageReconciler", () => {
       status: { phase: Phase.Pending, observedGeneration: 0 },
     };
     mockPatchStatus.mockReset().mockResolvedValue(undefined);
+    UDSConfig.isIdentityDeployed = false;
     (K8s as Mock).mockImplementation(() => ({ Create: vi.fn(), PatchStatus: mockPatchStatus }));
     (networkPolicies as Mock).mockResolvedValue([]);
     (generateAuthorizationPolicies as Mock).mockResolvedValue([]);
@@ -206,6 +209,29 @@ describe("packageReconciler", () => {
     await packageReconciler(mockPackage);
 
     expect(Log.error).toHaveBeenCalled();
+  });
+
+  test("does not mark a Package Ready or replace its SSO IDs when client cleanup fails", async () => {
+    UDSConfig.isIdentityDeployed = true;
+    mockPackage.spec = { sso: [] };
+    mockPackage.status = {
+      phase: Phase.Retrying,
+      observedGeneration: 0,
+      retryAttempt: 0,
+      ssoClients: ["old-client"],
+    };
+    (keycloak as Mock).mockResolvedValue(new Map());
+    (purgeSSOClients as Mock).mockRejectedValue(new Error("owner UID mismatch"));
+
+    await packageReconciler(mockPackage);
+
+    expect(purgeSSOClients).toHaveBeenCalledWith(mockPackage, []);
+    expect(
+      (mockPatchStatus as Mock).mock.calls.some(
+        ([payload]) => payload?.status?.phase === Phase.Ready,
+      ),
+    ).toBe(false);
+    expect(mockPackage.status?.ssoClients).toEqual(["old-client"]);
   });
 });
 

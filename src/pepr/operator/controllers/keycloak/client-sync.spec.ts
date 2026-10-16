@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, MockedFunction, vi } from "vitest";
 import { Protocol, Sso, UDSPackage } from "../../crd";
-import { syncClient } from "./client-sync";
+import { purgeSSOClients, syncClient } from "./client-sync";
 import * as clientCredentials from "./clients/client-credentials";
 
 // Shared spy used inside the hoisted vi.mock factory for pepr's fetch. vi.hoisted
@@ -484,6 +484,7 @@ describe("syncClient secretConfig preservation", () => {
       metadata: {
         name: "test-package",
         namespace: "test-namespace",
+        uid: "test-package-uid",
         generation: 1,
       },
       spec: {},
@@ -533,6 +534,7 @@ describe("syncClient secretConfig preservation", () => {
       metadata: {
         name: "test-package",
         namespace: "test-namespace",
+        uid: "test-package-uid",
         generation: 1,
       },
       spec: {},
@@ -569,6 +571,57 @@ describe("syncClient secretConfig preservation", () => {
     const appliedResource = mockApply.mock.calls[0][0] as { metadata: { name: string } };
     expect(appliedResource.metadata.name).toBe("custom-secret-name");
   });
+
+  it("does not publish a Secret when Keycloak ownership verification fails", async () => {
+    const mockSso: Sso = { clientId: "test-client", name: "Test Client" };
+    const mockPkg: UDSPackage = {
+      metadata: {
+        name: "test-package",
+        namespace: "test-namespace",
+        uid: "test-package-uid",
+        generation: 1,
+      },
+      spec: {},
+    };
+    const mockCredentialsCreateOrUpdate =
+      clientCredentials.credentialsCreateOrUpdate as MockedFunction<
+        typeof clientCredentials.credentialsCreateOrUpdate
+      >;
+    mockCredentialsCreateOrUpdate.mockRejectedValue(new Error("owner UID mismatch"));
+    mockApply.mockClear();
+
+    await expect(syncClient(mockSso, mockPkg)).rejects.toThrow(
+      "Failed to process Keycloak request",
+    );
+
+    expect(mockApply).not.toHaveBeenCalled();
+    expect(mockCredentialsCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ clientId: "test-client" }),
+      { uid: "test-package-uid", namespace: "test-namespace", name: "test-package" },
+    );
+  });
+});
+
+describe("purgeSSOClients ownership", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("passes the Package UID to every cleanup request", async () => {
+    const pkg: UDSPackage = {
+      metadata: {
+        name: "test-package",
+        namespace: "test-namespace",
+        uid: "test-package-uid",
+      },
+      status: { ssoClients: ["old-client"] },
+    };
+
+    await purgeSSOClients(pkg, []);
+
+    expect(clientCredentials.credentialsDelete).toHaveBeenCalledWith(
+      { clientId: "old-client" },
+      { uid: "test-package-uid", namespace: "test-namespace", name: "test-package" },
+    );
+  });
 });
 
 describe("syncClient SAML certificate handling", () => {
@@ -578,6 +631,7 @@ describe("syncClient SAML certificate handling", () => {
     metadata: {
       name: "test-package",
       namespace: "test-namespace",
+      uid: "test-package-uid",
       generation: 1,
     },
     spec: {},
