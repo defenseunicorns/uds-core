@@ -4765,6 +4765,9 @@
                     "clusterLabel": {
                       "type": "string"
                     },
+                    "clusterPeerName": {
+                      "type": "string"
+                    },
                     "clusterPeerTimeout": {
                       "type": "string"
                     },
@@ -4796,9 +4799,7 @@
                     "hostAliases": {
                       "type": "array"
                     },
-                    "hostNetwork": {
-                      "type": "boolean"
-                    },
+                    "hostNetwork": {},
                     "hostUsers": {},
                     "initContainers": {
                       "type": "array"
@@ -4820,7 +4821,11 @@
                       "type": "number"
                     },
                     "nodeSelector": {
-                      "properties": {},
+                      "properties": {
+                        "kubernetes.io/os": {
+                          "type": "string"
+                        }
+                      },
                       "type": "object"
                     },
                     "paused": {
@@ -5267,6 +5272,10 @@
                         "sessionPersistence": {
                           "properties": {},
                           "type": "object"
+                        },
+                        "timeouts": {
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -5333,6 +5342,10 @@
                           "type": "array"
                         },
                         "sessionPersistence": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "timeouts": {
                           "properties": {},
                           "type": "object"
                         }
@@ -5628,8 +5641,24 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     },
                     "enabled": {
                       "type": "boolean"
@@ -5719,7 +5748,11 @@
                       "type": "object"
                     },
                     "nodeSelector": {
-                      "properties": {},
+                      "properties": {
+                        "kubernetes.io/os": {
+                          "type": "string"
+                        }
+                      },
                       "type": "object"
                     },
                     "podAnnotations": {
@@ -6330,6 +6363,9 @@
                     "dashboardsConfigMapRefEnabled": {
                       "type": "boolean"
                     },
+                    "datasourcesEnabled": {
+                      "type": "boolean"
+                    },
                     "folder": {
                       "type": "string"
                     },
@@ -6573,6 +6609,25 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "enabled": {
                       "type": "boolean"
                     },
@@ -6647,6 +6702,22 @@
                 },
                 "tlsConfig": {
                   "properties": {
+                    "ca": {
+                      "properties": {
+                        "configMap": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "insecureSkipVerify": {
                       "type": "boolean"
                     },
@@ -6703,11 +6774,29 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "enabled": {
                       "type": "boolean"
                     },
                     "https": {},
-                    "insecureSkipVerify": {},
                     "interval": {
                       "type": "string"
                     },
@@ -6742,12 +6831,35 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "serverName": {},
                     "targetLabels": {
                       "type": "array"
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "ca": {
+                          "properties": {
+                            "configMap": {
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "insecureSkipVerify": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -6810,8 +6922,24 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     },
                     "dnsmasqMetricRelabelings": {
                       "type": "array"
@@ -6907,28 +7035,32 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
-                    },
-                    "caFile": {
-                      "type": "string"
-                    },
-                    "certFile": {
-                      "type": "string"
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     },
                     "enabled": {
-                      "type": "boolean"
-                    },
-                    "insecureSkipVerify": {
                       "type": "boolean"
                     },
                     "interval": {
                       "type": "string"
                     },
                     "jobLabel": {
-                      "type": "string"
-                    },
-                    "keyFile": {
                       "type": "string"
                     },
                     "labelLimit": {
@@ -6962,14 +7094,19 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "serverName": {
-                      "type": "string"
-                    },
                     "targetLabels": {
                       "type": "array"
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "insecureSkipVerify": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -7025,8 +7162,24 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     },
                     "enabled": {
                       "type": "boolean"
@@ -7073,6 +7226,27 @@
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "ca": {
+                          "properties": {
+                            "configMap": {
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -7124,11 +7298,29 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "enabled": {
                       "type": "boolean"
                     },
                     "https": {},
-                    "insecureSkipVerify": {},
                     "interval": {
                       "type": "string"
                     },
@@ -7180,12 +7372,35 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "serverName": {},
                     "targetLabels": {
                       "type": "array"
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "ca": {
+                          "properties": {
+                            "configMap": {
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "insecureSkipVerify": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -7228,6 +7443,25 @@
                       "properties": {
                         "node": {
                           "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "authorization": {
+                      "properties": {
+                        "credentials": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
                         }
                       },
                       "type": "object"
@@ -7288,9 +7522,6 @@
                       "type": "boolean"
                     },
                     "https": {
-                      "type": "boolean"
-                    },
-                    "insecureSkipVerify": {
                       "type": "boolean"
                     },
                     "interval": {
@@ -7414,6 +7645,30 @@
                     },
                     "targetLimit": {
                       "type": "number"
+                    },
+                    "tlsConfig": {
+                      "properties": {
+                        "ca": {
+                          "properties": {
+                            "configMap": {
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "insecureSkipVerify": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
                     },
                     "trackTimestampsStaleness": {
                       "type": "boolean"
@@ -7693,6 +7948,32 @@
                       "type": "array"
                     },
                     "containers": {
+                      "items": {
+                        "properties": {
+                          "lifecycle": {
+                            "properties": {
+                              "preStop": {
+                                "properties": {
+                                  "sleep": {
+                                    "properties": {
+                                      "seconds": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
                       "type": "array"
                     },
                     "convertClassicHistogramsToNHCB": {
@@ -7812,7 +8093,11 @@
                       "type": "string"
                     },
                     "nodeSelector": {
-                      "properties": {},
+                      "properties": {
+                        "kubernetes.io/os": {
+                          "type": "string"
+                        }
+                      },
                       "type": "object"
                     },
                     "otlp": {
@@ -7955,6 +8240,9 @@
                     "retention": {
                       "type": "string"
                     },
+                    "retentionPercentage": {
+                      "type": "string"
+                    },
                     "retentionSize": {
                       "type": "string"
                     },
@@ -7974,6 +8262,10 @@
                     },
                     "ruleSelectorNilUsesHelmValues": {
                       "type": "boolean"
+                    },
+                    "rules": {
+                      "properties": {},
+                      "type": "object"
                     },
                     "runtime": {
                       "properties": {},
@@ -8100,7 +8392,14 @@
                     },
                     "tsdb": {
                       "properties": {
+                        "chunkEncoding": {
+                          "properties": {},
+                          "type": "object"
+                        },
                         "outOfOrderTimeWindow": {
+                          "type": "string"
+                        },
+                        "staleSeriesCompactionThreshold": {
                           "type": "string"
                         }
                       },
@@ -8223,6 +8522,10 @@
                         "sessionPersistence": {
                           "properties": {},
                           "type": "object"
+                        },
+                        "timeouts": {
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -8289,6 +8592,10 @@
                           "type": "array"
                         },
                         "sessionPersistence": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "timeouts": {
                           "properties": {},
                           "type": "object"
                         }
@@ -8402,6 +8709,9 @@
                       "type": "boolean"
                     },
                     "create": {
+                      "type": "boolean"
+                    },
+                    "createTokenSecret": {
                       "type": "boolean"
                     },
                     "name": {
@@ -8805,6 +9115,9 @@
                   },
                   "type": "object"
                 },
+                "prometheusScrape": {
+                  "type": "boolean"
+                },
                 "rbac": {
                   "properties": {
                     "pspEnabled": {
@@ -8979,7 +9292,11 @@
                           "type": "object"
                         },
                         "nodeSelector": {
-                          "properties": {},
+                          "properties": {
+                            "kubernetes.io/os": {
+                              "type": "string"
+                            }
+                          },
                           "type": "object"
                         },
                         "podAnnotations": {
@@ -9146,8 +9463,7 @@
                       "type": "string"
                     },
                     "matchConditions": {
-                      "properties": {},
-                      "type": "object"
+                      "type": "array"
                     },
                     "mutatingWebhookConfiguration": {
                       "properties": {
@@ -9180,7 +9496,11 @@
                           "type": "boolean"
                         },
                         "nodeSelector": {
-                          "properties": {},
+                          "properties": {
+                            "kubernetes.io/os": {
+                              "type": "string"
+                            }
+                          },
                           "type": "object"
                         },
                         "podAnnotations": {
@@ -9388,7 +9708,11 @@
                   "type": "object"
                 },
                 "nodeSelector": {
-                  "properties": {},
+                  "properties": {
+                    "kubernetes.io/os": {
+                      "type": "string"
+                    }
+                  },
                   "type": "object"
                 },
                 "podAnnotations": {
@@ -9806,6 +10130,10 @@
                         "sessionPersistence": {
                           "properties": {},
                           "type": "object"
+                        },
+                        "timeouts": {
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -10048,7 +10376,11 @@
                     },
                     "minReadySeconds": {},
                     "nodeSelector": {
-                      "properties": {},
+                      "properties": {
+                        "kubernetes.io/os": {
+                          "type": "string"
+                        }
+                      },
                       "type": "object"
                     },
                     "objectStorageConfig": {
@@ -10144,6 +10476,9 @@
                     },
                     "ruleSelectorNilUsesHelmValues": {
                       "type": "boolean"
+                    },
+                    "schedulerName": {
+                      "type": "string"
                     },
                     "serviceName": {},
                     "storage": {
@@ -10295,6 +10630,43 @@
             "backend": {
               "properties": {
                 "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "properties": {
+                                  "matchLabels": {
+                                    "properties": {
+                                      "app.kubernetes.io/component": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/instance": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/name": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "topologyKey": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": [
                     "object",
                     "null"
@@ -13578,6 +13950,43 @@
             "gateway": {
               "properties": {
                 "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "properties": {
+                                  "matchLabels": {
+                                    "properties": {
+                                      "app.kubernetes.io/component": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/instance": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/name": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "topologyKey": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": [
                     "object",
                     "null"
@@ -19154,6 +19563,43 @@
             "read": {
               "properties": {
                 "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "properties": {
+                                  "matchLabels": {
+                                    "properties": {
+                                      "app.kubernetes.io/component": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/instance": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/name": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "topologyKey": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": [
                     "object",
                     "null"
@@ -21165,6 +21611,43 @@
             "write": {
               "properties": {
                 "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "properties": {
+                                  "matchLabels": {
+                                    "properties": {
+                                      "app.kubernetes.io/component": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/instance": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/name": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "topologyKey": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": [
                     "object",
                     "null"
@@ -22139,7 +22622,9 @@
                       "name": {
                         "type": "string"
                       },
-                      "value": {}
+                      "value": {
+                        "type": "string"
+                      }
                     },
                     "type": "object"
                   },
@@ -22465,7 +22950,9 @@
                       "name": {
                         "type": "string"
                       },
-                      "value": {}
+                      "value": {
+                        "type": "string"
+                      }
                     },
                     "type": "object"
                   },

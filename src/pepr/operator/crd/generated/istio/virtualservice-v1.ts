@@ -543,6 +543,10 @@ export interface Redirect {
    */
   port?: number;
   /**
+   * On a redirect, replace the matched prefix with this value.
+   */
+  prefixRewrite?: string;
+  /**
    * On a redirect, Specifies the HTTP status code to use in the redirect response.
    */
   redirectCode?: number;

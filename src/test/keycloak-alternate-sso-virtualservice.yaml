@@ -1,0 +1,33 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: keycloak-alternate-sso
+  namespace: istio-tenant-gateway
+spec:
+  hosts:
+    - sso-alt.uds.dev
+  gateways:
+    - istio-tenant-gateway/keycloak-alternate-sso
+  http:
+    - headers:
+        request:
+          remove:
+            - Forwarded
+            - X-Forwarded-For
+            - X-Forwarded-Host
+            - X-Forwarded-Proto
+            - X-Forwarded-Port
+            - X-Forwarded-Prefix
+          set:
+            X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
+            X-Forwarded-Host: sso-alt.uds.dev
+            X-Forwarded-Proto: https
+            X-Forwarded-Port: "443"
+      route:
+        - destination:
+            host: keycloak-http.keycloak.svc.cluster.local
+            port:
+              number: 8080

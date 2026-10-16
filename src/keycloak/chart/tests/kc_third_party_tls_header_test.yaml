@@ -17,7 +17,7 @@ tests:
           value:
             istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
       - contains:
-          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          path: spec.network.expose[1].advancedHTTP.headers.request.remove
           content: istio-mtls-client-certificate
 
   - it: should omit fallback header injection when third-party tls header is configured
@@ -30,7 +30,7 @@ tests:
       - notExists:
           path: spec.network.expose[*].advancedHTTP.headers.request.add
       - notContains:
-          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          path: spec.network.expose[1].advancedHTTP.headers.request.remove
           content: istio-mtls-client-certificate
 
   - it: should not render alb envoy filter by default

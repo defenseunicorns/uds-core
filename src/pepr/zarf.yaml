@@ -105,6 +105,8 @@ components:
       path: ../../dist
     charts:
       - name: module
+        # Preserve the legacy release until UDS Core plans a migration for the shared pepr-system namespace.
+        releaseName: module
         valuesFiles:
           - values.yaml
         values:

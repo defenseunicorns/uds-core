@@ -9,7 +9,6 @@ import { expect, test } from "@playwright/test";
 import { domain } from "./uds.config";
 
 const wildcardHosts = [`demo-8080.${domain}`, `demo-8081.${domain}`];
-const tenantHosts = [wildcardHosts[0], wildcardHosts[1], wildcardHosts[0], wildcardHosts[1]];
 const passthroughHost = `passthrough-test.${domain}`;
 
 async function connectToTenant(): Promise<ClientHttp2Session> {
@@ -32,13 +31,12 @@ async function request(session: ClientHttp2Session, authority: string): Promise<
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test("serves tenant hosts on one HTTP/2 connection", async () => {
+test("returns 421 when a tenant connection targets a different tenant authority", async () => {
   const session = await connectToTenant();
 
   try {
-    for (const host of tenantHosts) {
-      await expect(request(session, host)).resolves.toBe(200);
-    }
+    await expect(request(session, wildcardHosts[0])).resolves.toBe(200);
+    await expect(request(session, wildcardHosts[1])).resolves.toBe(421);
   } finally {
     session.close();
   }
