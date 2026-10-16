@@ -5,10 +5,10 @@ sidebar:
   order: 4.004
 ---
 
-UDS Packages expose configuration through [Zarf Values](/reference/configuration/zarf-values/), a structured mechanism for passing Helm chart values at deploy time. In general, expose most non-sensitive chart values and restrict values that would break package integrity or weaken security, such as image references, ingress, or security settings.
+UDS Packages expose configuration through [Zarf Values](/reference/configuration/zarf-values/), a structured mechanism for passing Helm Chart values at deploy time. In general, expose most non-sensitive chart values and restrict values that would break package integrity or weaken security, such as image references, ingress, or security settings.
 
 > [!NOTE]
-> Zarf Values is currently an **Alpha** feature and may change as it matures (see [zarf-dev/zarf#3946](https://github.com/zarf-dev/zarf/issues/3946)). UDS Core requires UDS CLI `v0.34.0` or later for its values workflow. Use values for package configuration; retain [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/) only when required for backwards compatibility.
+> This page uses [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt) terminology.
 
 ## Values structure
 
@@ -17,19 +17,39 @@ Define the top-level `values` key in your root `zarf.yaml` and reference:
 - A `zarf-values.yaml` for defaults
 - A `zarf-values.schema.json` for validation
 
-The schema should follow [JSON Schema](https://json-schema.org/). You should use `uds zarf dev generate-schema` to generate it from the package definition, chart values, and value mappings.
+The schema **MUST** follow [JSON Schema](https://json-schema.org/) and you **SHOULD** use `uds zarf dev generate-schema` to generate it from the package definition, chart values, and value mappings.
 
-Add value mappings (`sourcePath` and `targetPath`) near your chart definitions (commonly in `common/zarf.yaml`). Keep mappings as flat as practical and expose the highest sensible node in the values tree.
+Add value mappings (`sourcePath` and `targetPath`) near your chart definitions (commonly in `common/zarf.yaml`), keeping mappings as flat as practical and exposing the highest sensible node in the values tree.
 
-If the list of mappings gets unwieldy, consider inverting the mappings using higher level keys with `excludePaths` instead.
+If individual mappings become unwieldy, consider mapping higher-level nodes and using `excludePaths` to omit settings that deployers should not override.
 
-Use values for package configuration. Use `###ZARF_VAR_<NAME>###` in ordinary `valuesFiles` only when an existing variable must remain compatible. Declare that variable in the package definition, then use `templatedValuesFiles` with `.Variables.<NAME>` when explicit package values must take precedence over the variable or need a computed fallback. Keep those phases separate because Zarf substitutes variable tokens before evaluating Go templates.
+Use values for package configuration, retaining `###ZARF_VAR_<NAME>###` in ordinary `valuesFiles` only when an existing variable must remain compatible. Declare any such variable in the package definition and use `templatedValuesFiles` with `.Variables.<NAME>` when explicit package values must take precedence over the variable or need a computed fallback. Because Zarf substitutes variable tokens before evaluating Go templates, keep those phases separate.
+
+> [!NOTE]
+> You **SHOULD** expose the UDS integration settings your application supports through chart values and map them to normalized package values, reusing common names and groupings so deployers can configure packages consistently without editing Helm templates.
+>
+> These settings **SHOULD** live alongside the UDS-specific resources they configure, either in a separate `config` chart when you use an upstream application chart or directly in a local application chart tailored for UDS.
+>
+> Use the following conventions where they apply, exposing only the options your integration supports rather than adding every setting to every application:
+>
+> | Values pattern | Guidance |
+> | --- | --- |
+> | `domain` | Set the base domain for application URLs and SSO redirect URIs. |
+> | `subdomain`, `gateway` | Set the exposed host prefix and Istio gateway in `Package.spec.network.expose`, using service-specific host keys when the application exposes multiple services. |
+> | `additionalNetworkAllow` | Append deployment-specific rules to `Package.spec.network.allow` without replacing required application rules, defaulting the list to `[]` and scoping additions to the necessary traffic. |
+> | `sso.enabled`, `sso.protocol` | Configure SSO and the generated `Secret` the application consumes, exposing only supported protocols and keeping SSO enabled by default when the package requires it. |
+> | `sso.requiredGroups`, `sso.adminGroups`, `sso.defaultClientScopes` | Configure login restrictions and client scopes alongside application-specific administrator-group mappings. |
+> | Dependency groups such as `postgres`, `redis`, and `storage` | Group connection settings and network-rule inputs such as `internal`, `namespace`, `selector`, and `port` to support the application's in-cluster or external dependency options. |
+>
+> You **SHOULD** define shared settings once at the package level and map them into every chart that consumes them so the application and its UDS resources stay consistent. For example, a dependency override should update both the application's connection configuration and the config chart's network rules, just as a hostname override should keep application URLs and SSO redirects aligned.
+>
+> Document supported keys and defaults in the package `documentation` and validate them through its values schema, following the chart-mapping and schema examples below.
+>
+> Reference the [UDS Reference Package](https://github.com/uds-packages/reference-package/blob/main/chart/values.yaml) for an example of how these values can be used in practice and [UDS `Package` CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) for the resources these values configure.
 
 ## Example configuration
 
-The following example shows a complete values setup for an nginx package.
-
-Define values and map them into chart values within the Zarf package definition:
+The following nginx example defines package values and maps them into application and UDS config charts within the Zarf package definition:
 
 ```yaml title="common/zarf.yaml"
 kind: ZarfPackageConfig
@@ -67,7 +87,9 @@ components:
               - .nginx.readinessProbe
 ```
 
-The first mapping passes the package-level `global.domain` value to the `uds-nginx-config` chart as `domain`. The second mapping passes the application values to the nginx chart.
+The first mapping passes the package-level `global.domain` value to the `uds-nginx-config` chart as `domain`, while the second passes the application values to the nginx chart.
+
+The root `zarf.yaml` declares the defaults and schema files, imports the common component, and adds flavor-specific values and images:
 
 ```yaml title="zarf.yaml"
 kind: ZarfPackageConfig
