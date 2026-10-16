@@ -5,14 +5,14 @@ sidebar:
   order: 4.003
 ---
 
-UDS Packages must meet a set of standards to ensure they are secure, maintainable, and compatible with UDS Core. This page defines those standards using [RFC-2119](https://datatracker.ietf.org/doc/html/rfc2119) terminology: **MUST** indicates a mandatory requirement, **SHOULD** a strong recommendation, and **MAY** an optional practice.
+This page defines engineering standards for secure, maintainable UDS Packages that integrate with UDS Core. It uses [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) terminology: **MUST** indicates a mandatory requirement, **SHOULD** a strong recommendation, and **MAY** an optional practice. These terms have the same meaning regardless of who maintains the package.
+
+UDS Packages are Zarf packages that integrate with UDS Core and follow these additional standards. Deploying successfully on UDS Core does not by itself demonstrate that a package meets these standards.
 
 > [!NOTE]
-> Use this page as a pre-publish checklist for **UDS Packages**. UDS Packages are Zarf Packages that are integrated with the UDS Core platform and follow additional standards to ensure consistency - not everything Zarf can do can be in a UDS Package.
+> Packages maintained by Defense Unicorns or accepted for distribution through Defense Unicorns-managed ecosystem services **MUST** meet these standards. Independent maintainers **SHOULD** follow the same standards; operators of other environments define their own acceptance requirements.
 >
-> For step-by-step guidance on building a package that meets these requirements, see [Create a UDS Package](/how-to-guides/packaging-applications/create-uds-package/).
->
-> These requirements are mandatory for Defense Unicorns engineers. For external maintainers, they are strongly recommended to promote consistency, quality, and security across the UDS ecosystem.
+> Use this page as a pre-publish checklist. For step-by-step guidance on building a package that meets these requirements, see [Create a UDS Package](/how-to-guides/packaging-applications/create-uds-package/).
 
 ## Security, policy, and hardening
 
@@ -24,13 +24,13 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 
 - **MUST** be declaratively defined as a [Zarf package](https://docs.zarf.dev/ref/create/).
 - **MUST** integrate declaratively (i.e. no clickops) with the UDS Operator.
-- **MUST** be capable of operating within the airgap (internet-disconnected).
+- **MUST** support operation within the airgap and test installation, startup, and core user workflows without internet access.
 - **MUST** not use local commands outside of `coreutils` or `./zarf` self references within `zarf actions`.
-- **MUST** use Helm charts for rendering Kubernetes resources. When available and suitable for UDS packaging, an upstream chart **MUST** be used. When using an upstream chart, UDS-specific configurations **SHOULD** be encapsulated in a separate `config` Helm chart.
+- **MUST** use [Helm charts](https://docs.zarf.dev/ref/components/#helm-charts) for rendering Kubernetes resources. When available and suitable for UDS packaging, an upstream chart **MUST** be used. When using an upstream chart, UDS-specific configurations **SHOULD** be encapsulated in a separate `config` Helm chart.
   > This keeps the package structure clean and maintainable by separating concerns into inspectable units. Using upstream charts also makes it easier to incorporate upstream changes over time.
 - **MUST** (except if the application provides no application metrics) implement monitors for each application metrics endpoint using its built-in chart monitors, `monitor` key, or manual monitors in the config chart. [Monitor Resource](/how-to-guides/monitoring-and-observability/capture-application-metrics/)
 - **MUST** include package documentation in a root-level `docs` folder (for configuration and dependencies) and include it in the Zarf package under the [`documentation` key](https://docs.zarf.dev/schema/v1alpha1-package/#ZarfPackage).
-- **MUST** include application metadata for UDS Registry publishing. See [Package Metadata](/concepts/configuration-and-packaging/package-metadata/).
+- **MUST** review [Package Metadata](/concepts/configuration-and-packaging/package-metadata/) and decide which recommended annotations to include for the package and the UDS products that consume it.
 - **SHOULD** follow the [Package Values](/concepts/configuration-and-packaging/package-values/) guidance for exposing package configuration.
   > [Zarf Values](https://docs.zarf.dev/ref/examples/values-templating/) is currently an **Beta** feature and may change as it matures (see [zarf-dev/zarf#3946](https://github.com/zarf-dev/zarf/issues/3946)). Use values for package configuration. Retain existing [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/) only when needed for backwards compatibility, and combine them with explicit values through `templatedValuesFiles`.
 - **SHOULD** limit the use of [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/) and prioritize configuring packages via [Zarf Values](https://docs.zarf.dev/ref/examples/values-templating/).
@@ -52,7 +52,7 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 
 ## Identity and access management
 
-- **MUST** use and create a Keycloak client through the `sso` key for any UDS Package providing an end-user login. [SSO Resource](/how-to-guides/packaging-applications/create-uds-package/)
+- **MUST** protect end-user access through UDS Core single sign-on (SSO), using the `sso` key to configure a Keycloak client. Use the application's [native OIDC or SAML integration](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/), or [Authservice](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) where appropriate. An application-local login alone does not satisfy this requirement.
 - **SHOULD** name the Keycloak client `<App> Login` (i.e. `Mattermost Login`) to provide login UX consistency.
 - **SHOULD** clearly mark the Keycloak client id with the group and app name `uds-<group>-<application>` (i.e. `uds-swf-mattermost`) to provide consistency in the Keycloak UI.
 - **MAY** end any generated Keycloak client secrets with `sso` to easily locate them when querying the cluster.
@@ -60,13 +60,16 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 
 ## Testing
 
+Validate package behavior before release:
+
 - **MUST** implement Journey testing, covering the basic user flows and features of the application. (see [Testing Guidelines](/how-to-guides/packaging-applications/package-testing/))
 - **MUST** implement Upgrade Testing to ensure that the current development package works when deployed over the previously released one. (see [Testing Guidelines](/how-to-guides/packaging-applications/package-testing/))
+- **MUST** automatically run journey and upgrade tests as part of release validation.
 
 ## Package maintenance
 
-- **MUST** be actively maintained by clear package maintainers (identified in something like a `CODEOWNERS` file).
-- **MUST** have a dependency management bot (such as renovate) configured to open PRs/MRs to update the core package and support dependencies.
+- **MUST** identify the maintainers responsible for package updates, security fixes, and release approval in the package repository, for example in a `CODEOWNERS` file.
+- **MUST** automate dependency update detection and initiate a tracked update workflow for the application and its packaging dependencies, using a dependency management bot such as Renovate. Tracked workflows may use pull requests, merge requests, or issue-tracker tasks.
 - **MUST** publish the package to an organizationally identified package registry, using a namespace and name that clearly identifies the application (e.g., `ghcr.io/uds-packages/neuvector`).
 - **SHOULD** be created from the [UDS Package Template](https://github.com/uds-packages/template).
 - **SHOULD** lint configurations with appropriate tooling, such as [`yamllint`](https://github.com/adrienverge/yamllint) and [`zarf dev lint`](https://docs.zarf.dev/commands/zarf_dev_lint/).
