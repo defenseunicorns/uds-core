@@ -33,6 +33,14 @@ prometheus:
     podMetadata:
       labels:
         app: prometheus
+    # Give a newly started reloader time to install its SIGTERM handler before
+    # Kubernetes stops a Prometheus pod during a rapid StatefulSet revision.
+    containers:
+      - name: config-reloader
+        lifecycle:
+          preStop:
+            sleep:
+              seconds: 10
     podMonitorSelectorNilUsesHelmValues: false
     probeSelectorNilUsesHelmValues: false
     resources:

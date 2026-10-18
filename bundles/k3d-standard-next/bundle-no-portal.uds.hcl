@@ -14,7 +14,7 @@ uds {
 
 locals {
   # x-release-please-start-version
-  version = "1.14.0"
+  version = "1.15.0"
   # x-release-please-end
 }
 
