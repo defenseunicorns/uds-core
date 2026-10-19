@@ -53,9 +53,9 @@ runs:
         sudo mv test/playwright/.playwright/* /tmp/playwright || true
       shell: bash
 
-    # Loop over all pods and use kubectl logs since we don't have the same direct node access as k3d
+    # K3d and K0s collect pod logs directly from their Docker nodes.
     - name: Cluster Pod Logs
-      if: ${{ inputs.distro != 'k3d' }}
+      if: ${{ inputs.distro != 'k3d' && inputs.distro != 'k0s' }}
       run: |
         echo "::group::Collecting logs for all pods"
         mkdir -p /tmp/pod-logs

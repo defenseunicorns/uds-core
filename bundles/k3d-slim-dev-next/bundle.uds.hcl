@@ -7,7 +7,7 @@ uds {
 
 locals {
   # x-release-please-start-version
-  version = "1.14.0"
+  version = "1.15.0"
   # x-release-please-end
 }
 
@@ -24,7 +24,7 @@ package "uds_k3d_dev" {
 }
 
 package "init" {
-  source = "oci://ghcr.io/zarf-dev/packages/init:v0.87.0"
+  source = "oci://ghcr.io/zarf-dev/packages/init:v0.88.0"
   signature_verification {
     keyless {
       certificate_identity_regexp = "https://github\\.com/zarf-dev/zarf/\\.github/workflows/release\\.yml@refs/tags/v\\d+\\.\\d+\\.\\d+"

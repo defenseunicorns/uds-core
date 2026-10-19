@@ -1,0 +1,86 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json
+
+kind: ZarfPackageConfig
+metadata:
+  name: uds-k0s-dev-stack
+  description: "Development services for K0s distribution testing"
+  yolo: true
+  version: 0.1.0
+variables:
+  - name: NGINX_EXTRA_PORTS
+    description: Optionally allow more ports through Nginx
+    default: "[]"
+  - name: DOMAIN
+    description: Cluster domain
+    default: uds.dev
+  - name: ADMIN_DOMAIN
+    description: Domain for admin services, defaults to `admin.DOMAIN`
+components:
+  - name: uds-dev-stack
+    required: true
+    description: Install MetalLB, NGINX, Minio, local-path-rwx and Ensure MachineID to meet UDS developer needs without later config changes
+    actions:
+      onDeploy:
+        before:
+          - cmd: ./zarf tools kubectl get nodes -o=jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' | cut -d'.' -f1-3
+            description: Load network ip base for MetalLB
+            setVariables:
+              - name: BASE_IP
+        after:
+          - description: Set MetalLB admission webhooks to fail closed after the dev stack is deployed
+            maxTotalSeconds: 30
+            maxRetries: 3
+            cmd: |
+              ./zarf tools kubectl get validatingwebhookconfiguration metallb-webhook-configuration >/dev/null
+              webhook_patch="$({
+                ./zarf tools kubectl get validatingwebhookconfiguration metallb-webhook-configuration -o json |
+                  ./zarf tools yq -o=json '[.webhooks | to_entries[] | {"op": "replace", "path": ("/webhooks/" + (.key | tostring) + "/failurePolicy"), "value": "Fail"}]'
+              })"
+              ./zarf tools kubectl patch validatingwebhookconfiguration metallb-webhook-configuration \
+                --type=json \
+                --patch="${webhook_patch}"
+          - cmd: ./zarf tools kubectl rollout restart deployment coredns -n kube-system
+            description: Restart CoreDNS to pick up internal DNS override for uds.dev
+        onFailure:
+          - description: Restore MetalLB admission webhooks to fail closed after deployment failure
+            maxTotalSeconds: 30
+            maxRetries: 3
+            cmd: |
+              set -e
+              webhook_config="$(./zarf tools kubectl get validatingwebhookconfiguration metallb-webhook-configuration --ignore-not-found -o json)"
+              if [ -z "${webhook_config}" ]; then
+                echo "MetalLB admission webhook configuration is not present; skipping cleanup"
+                exit 0
+              fi
+              webhook_patch="$(printf '%s' "${webhook_config}" |
+                ./zarf tools yq -o=json '[.webhooks | to_entries[] | {"op": "replace", "path": ("/webhooks/" + (.key | tostring) + "/failurePolicy"), "value": "Fail"}]')"
+              ./zarf tools kubectl patch validatingwebhookconfiguration metallb-webhook-configuration \
+                --type=json \
+                --patch="${webhook_patch}"
+    charts:
+      - name: metallb
+        namespace: kube-system
+        url: https://metallb.github.io/metallb
+        version: 0.16.1
+        valuesFiles:
+          - values/metallb-values.yaml
+      - name: uds-dev-stack
+        namespace: kube-system
+        localPath: chart
+        version: 0.21.0
+        valuesFiles:
+          - values/dev-stack-values.yaml
+        variables:
+          - name: COREDNS_OVERRIDES
+            # Defaults contain rewrites of `*.uds.dev` to the UDS core Istio tenant and admin gateways
+            description: CoreDNS overrides
+            path: coreDnsOverrides
+      - name: minio
+        namespace: uds-dev-stack
+        version: 5.4.0
+        url: https://charts.min.io/
+        valuesFiles:
+          - values/minio-values.yaml

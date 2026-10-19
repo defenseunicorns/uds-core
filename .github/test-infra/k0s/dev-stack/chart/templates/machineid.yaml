@@ -1,0 +1,46 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ensure-machine-id
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: ensure-machine-id
+spec:
+  selector:
+    matchLabels:
+      name: ensure-machine-id
+  template:
+    metadata:
+      labels:
+        name: ensure-machine-id
+    spec:
+      initContainers:
+        - name: generate-machine-id
+          image: {{.Values.images.wolfiBase.repository}}:{{.Values.images.wolfiBase.tag}}
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - echo "B0D07F1F43F246409516ADBDCCC86FCE" > /mnt/host/etc/machine-id;
+          volumeMounts:
+            - name: machine-id
+              mountPath: /mnt/host/etc
+              readOnly: false
+          securityContext:
+            privileged: true
+            runAsUser: 0
+      containers:
+        - name: pause
+          image: {{.Values.images.pause.repository}}:{{.Values.images.pause.tag}}
+          resources:
+            limits:
+              cpu: "0.1"
+              memory: "50Mi"
+      volumes:
+        - name: machine-id
+          hostPath:
+            path: /etc
+
+      hostPID: true
