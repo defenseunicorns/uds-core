@@ -14,7 +14,7 @@ includes:
   - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.30.1/tasks/setup.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.32.1/tasks/setup.yaml
   - private-pki: ../test/playwright/private-pki/tasks.yaml
   - trust-bundle: ../test/vitest/trust-bundle/tasks.yaml
 
@@ -125,7 +125,7 @@ tasks:
         dir: test/playwright
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host --net=host -e FULL_CORE="true" -e FLAVOR="${FLAVOR}" -e VALIDATE_PASSTHROUGH="${{ .inputs.validate_passthrough }}" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.63.0-noble sh -c " \
+          docker run --rm --ipc=host --net=host -e FULL_CORE="true" -e FLAVOR="${FLAVOR}" -e VALIDATE_PASSTHROUGH="${{ .inputs.validate_passthrough }}" -e DOMAIN="${DOMAIN:-uds.dev}" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.64.1-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test \
@@ -145,6 +145,8 @@ tasks:
         dir: test/vitest
       - description: remove test resources
         task: test-resources:remove
+        with:
+          validate_udp_expose: ${{ .inputs.validate_udp_expose }}
 
   - name: unit-tests
     description: "Run uds-core source unit tests"
@@ -236,11 +238,15 @@ tasks:
   - name: uds-core-non-k3d
     description: "Validate and Test UDS Core deployment on a non K3d Cluster"
     inputs:
+      setup_hosts:
+        description: Whether to add gateway addresses to /etc/hosts
+        default: "true"
       validate_udp_expose:
         description: Whether to validate UDP expose routes through the default Envoy Gateway
         default: "true"
     actions:
       - task: util:setup-hosts
+        if: ${{ eq .inputs.setup_hosts "true" }}
       - task: validate-packages
         with:
           validate_passthrough: "false"
@@ -325,6 +331,7 @@ tasks:
       - task: create:k3d-standard-bundle-next
         with:
           create_options: "--skip-sbom"
+      - task: test-resources:cleanup-udp-expose
       # Note: we want to deploy from the bundle since we need overrides, but we don't want to redeploy k3d/zarf init so we pass `--packages` here
       - task: deploy:k3d-standard-bundle-next
         with:
@@ -347,6 +354,7 @@ tasks:
         with:
           create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
+      - task: test-resources:cleanup-udp-expose
       # Note: we want to deploy from the bundle since we need overrides, but we don't want to redeploy k3d/zarf init so we pass `--packages` here
       - task: deploy:k3d-standard-bundle-upgrade
         with:
