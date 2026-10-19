@@ -5,7 +5,7 @@ sidebar:
   order: 4.005
 ---
 
-Packages published to [UDS Registry](https://registry.defenseunicorns.com/) and consumed by other UDS products support a set of standard metadata annotations that improve discoverability and user experience across UDS products.
+This page defines standard metadata annotations for UDS Packages. UDS products use these annotations to support package discovery and presentation, regardless of where a package is published.
 
 > [!NOTE]
 > This page uses [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt) terminology.
@@ -22,7 +22,7 @@ metadata:
 
 ## Production annotations
 
-The following annotations are recommended for production packages and are used across UDS products:
+You **SHOULD** include the annotations that apply to your package and the UDS products that consume it. The Products column identifies which products use each annotation.
 
 | Annotation | Description | Example | Products |
 | --- | --- | --- | --- |
@@ -33,6 +33,8 @@ The following annotations are recommended for production packages and are used a
 | `dev.uds.icon` | Base64 icon as [data URI](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs) | `"data:image/png;base64,iVBORw0KGgo..."` | [UDS Registry](https://registry.defenseunicorns.com/), [UDS Fleet](https://defenseunicorns.com/platform/uds-fleet/), [UDS Portal](https://github.com/defenseunicorns/uds-portal) |
 
 ## Implementation guidelines
+
+These guidelines apply to the annotations you choose to include.
 
 **Title (`dev.uds.title`)**
 
@@ -74,7 +76,7 @@ The following annotations are recommended for production packages and are used a
 
 **Keywords (`dev.uds.keywords`)**
 
-- **MUST** be a comma-with-space-separated string of 3-7 relevant search terms.
+- **MUST** be a comma-with-space-separated string of relevant search terms (recommended 3-7).
 - **SHOULD** include alternative terms and abbreviations users might search for.
 
 **Tagline (`dev.uds.tagline`)**
@@ -83,16 +85,20 @@ The following annotations are recommended for production packages and are used a
 
 **Icon (`dev.uds.icon`)**
 
+Icons appear in square UI slots from 24x24 to 80x80 CSS pixels. Choose artwork that remains legible at each size and keep the encoded value compact to limit growth in `zarf.yaml` and OCI annotations.
+
 - **MUST** be encoded as a base64 [data URI](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs).
-- **SHOULD** use `.png` or `.svg` (`.svg` recommended), square aspect ratio, transparent background.
-- **RECOMMENDED** size: `200x200px`.
+- **SHOULD** keep the complete data URI within 64 KiB (65,536 bytes), including the media type prefix and base64 payload.
+- **SHOULD** use SVG (preferred) or PNG with a square canvas and transparent background.
+- **SHOULD** use raster images of at least 160x160 pixels to support the largest UI size at 2x pixel density. Larger images are acceptable within the byte budget.
+- **SHOULD** include a valid, square `viewBox` for SVG icons; fixed pixel dimensions are not required.
 
 > [!TIP]
 > Keep annotations concise and user-centered. Think about how the package appears in registry search and detail views.
 
 ## Provisional annotations
 
-These annotations are experimental and may evolve over time:
+These annotations are experimental and may evolve over time.  They **MAY** be used where applicable for your application.
 
 | Annotation | Description | Example | Products |
 | --- | --- | --- | --- |
