@@ -91,6 +91,33 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
 }
 
 /**
+ * Record a client only after Keycloak has verified its Package ownership.
+ * Incremental status writes keep newly created clients available for cleanup
+ * if a later reconciliation step fails.
+ */
+export async function recordVerifiedSsoClient(pkg: UDSPackage, clientId: string): Promise<void> {
+  const currentClients = pkg.status?.ssoClients ?? [];
+  if (currentClients.includes(clientId)) {
+    return;
+  }
+
+  const ssoClients = [...currentClients, clientId];
+  const { namespace, name } = pkg.metadata!;
+  await retryOnce(
+    () =>
+      K8s(UDSPackage).PatchStatus({
+        metadata: { namespace, name },
+        status: { ssoClients },
+      }),
+    `Failed to record verified Keycloak client '${clientId}' for package ${namespace}/${name}`,
+  );
+
+  // Keep successive writes in this reconciliation as a union rather than
+  // rebuilding from the original watch event status each time.
+  pkg.status = { ...pkg.status, ssoClients };
+}
+
+/**
  * Need to convert the SSO object into a Client Object to avoid
  * passing groups to keycloak and attributes to the package.sso
  * @param sso
@@ -170,6 +197,8 @@ export async function syncClient({ secretConfig, ...clientReq }: Sso, pkg: UDSPa
     () => credentialsCreateOrUpdate(keycloakClient, owner),
     `Failed to process Keycloak request for client '${client.clientId}', package ${pkgRef}`,
   );
+
+  await recordVerifiedSsoClient(pkg, syncedClient.clientId);
 
   // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
   delete syncedClient.registrationAccessToken;

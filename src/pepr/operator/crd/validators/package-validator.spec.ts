@@ -2068,6 +2068,22 @@ describe("Test validation of Package CRs", () => {
       redirectUris: ["https://app.uds.dev/callback"],
       enableAuthserviceSelector: { app: "my-app" },
     };
+    const addSharedClientClaimants = () => {
+      for (const [namespace, name] of [
+        ["ns-a", "app-a"],
+        ["ns-b", "app-b"],
+      ]) {
+        PackageStore.add(
+          makeMockReq(
+            { metadata: { namespace, name } },
+            [],
+            [],
+            [{ clientId: "shared-client" }],
+            [],
+          ).Raw,
+        );
+      }
+    };
 
     it("denies a declaration that collides with an existing generated probe ID", async () => {
       const existingPackage = makeMockReq(
@@ -2175,24 +2191,7 @@ describe("Test validation of Package CRs", () => {
     });
 
     it("denies a collision when the index contains the current and another namespace", async () => {
-      PackageStore.add(
-        makeMockReq(
-          { metadata: { namespace: "ns-a", name: "app-a" } },
-          [],
-          [],
-          [{ clientId: "shared-client" }],
-          [],
-        ).Raw,
-      );
-      PackageStore.add(
-        makeMockReq(
-          { metadata: { namespace: "ns-b", name: "app-b" } },
-          [],
-          [],
-          [{ clientId: "shared-client" }],
-          [],
-        ).Raw,
-      );
+      addSharedClientClaimants();
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-a", name: "app-a" } },
@@ -2209,24 +2208,7 @@ describe("Test validation of Package CRs", () => {
     });
 
     it("allows a terminating Package to complete updates despite an existing collision", async () => {
-      PackageStore.add(
-        makeMockReq(
-          { metadata: { namespace: "ns-a", name: "app-a" } },
-          [],
-          [],
-          [{ clientId: "shared-client" }],
-          [],
-        ).Raw,
-      );
-      PackageStore.add(
-        makeMockReq(
-          { metadata: { namespace: "ns-b", name: "app-b" } },
-          [],
-          [],
-          [{ clientId: "shared-client" }],
-          [],
-        ).Raw,
-      );
+      addSharedClientClaimants();
 
       const mockReq = makeMockReq(
         {

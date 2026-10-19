@@ -297,8 +297,9 @@ describe("Package-owned Keycloak client credentials", () => {
     ).toBe(false);
   });
 
-  it("prevents mutations for stale owners, duplicate live claims, and Package list failures", async () => {
+  it("prevents mutations for invalid owners, duplicate claims, and incomplete Package lists", async () => {
     const current = packageFixture({ uid: "current-uid" });
+    expect(() => ownerOf(packageFixture({ uid: "" }))).toThrow("metadata.uid");
     livePackages = [current];
     await expect(
       credentialsCreateOrUpdate({ clientId: "my-app" }, { ...ownerOf(current), uid: "stale-uid" }),
@@ -328,6 +329,17 @@ describe("Package-owned Keycloak client credentials", () => {
     await expect(
       credentialsCreateOrUpdate({ clientId: "my-app" }, ownerOf(current)),
     ).rejects.toThrow("Kubernetes list failed");
+    expect(hasClientMutation()).toBe(false);
+
+    mockPackageGet.mockResolvedValueOnce({ items: livePackages, metadata: { continue: "more" } });
+    await expect(
+      credentialsCreateOrUpdate({ clientId: "my-app" }, ownerOf(current)),
+    ).rejects.toThrow("incomplete Package list");
+
+    mockPackageGet.mockResolvedValueOnce({ metadata: {} });
+    await expect(
+      credentialsCreateOrUpdate({ clientId: "my-app" }, ownerOf(current)),
+    ).rejects.toThrow("incomplete Package list");
     expect(hasClientMutation()).toBe(false);
   });
 

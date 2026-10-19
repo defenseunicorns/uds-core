@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, MockedFunction, vi } from "vitest";
 import { Protocol, Sso, UDSPackage } from "../../crd";
-import { purgeSSOClients, syncClient } from "./client-sync";
+import { keycloak, purgeSSOClients, syncClient } from "./client-sync";
 import * as clientCredentials from "./clients/client-credentials";
 
 // Shared spy used inside the hoisted vi.mock factory for pepr's fetch. vi.hoisted
@@ -40,6 +40,7 @@ import { Client } from "./types";
 
 // Mock the K8s Apply function
 const mockApply = vi.fn().mockImplementation(resource => Promise.resolve(resource));
+const mockPatchStatus = vi.fn().mockResolvedValue({});
 
 // Mock the pepr module
 vi.mock("pepr", () => {
@@ -47,6 +48,7 @@ vi.mock("pepr", () => {
     fetch: (...args: unknown[]) => mockFetch(...args),
     K8s: () => ({
       Apply: mockApply,
+      PatchStatus: mockPatchStatus,
     }),
     kind: {
       Secret: "Secret",
@@ -571,35 +573,6 @@ describe("syncClient secretConfig preservation", () => {
     const appliedResource = mockApply.mock.calls[0][0] as { metadata: { name: string } };
     expect(appliedResource.metadata.name).toBe("custom-secret-name");
   });
-
-  it("does not publish a Secret when Keycloak ownership verification fails", async () => {
-    const mockSso: Sso = { clientId: "test-client", name: "Test Client" };
-    const mockPkg: UDSPackage = {
-      metadata: {
-        name: "test-package",
-        namespace: "test-namespace",
-        uid: "test-package-uid",
-        generation: 1,
-      },
-      spec: {},
-    };
-    const mockCredentialsCreateOrUpdate =
-      clientCredentials.credentialsCreateOrUpdate as MockedFunction<
-        typeof clientCredentials.credentialsCreateOrUpdate
-      >;
-    mockCredentialsCreateOrUpdate.mockRejectedValue(new Error("owner UID mismatch"));
-    mockApply.mockClear();
-
-    await expect(syncClient(mockSso, mockPkg)).rejects.toThrow(
-      "Failed to process Keycloak request",
-    );
-
-    expect(mockApply).not.toHaveBeenCalled();
-    expect(mockCredentialsCreateOrUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ clientId: "test-client" }),
-      { uid: "test-package-uid", namespace: "test-namespace", name: "test-package" },
-    );
-  });
 });
 
 describe("purgeSSOClients ownership", () => {
@@ -621,6 +594,91 @@ describe("purgeSSOClients ownership", () => {
       { clientId: "old-client" },
       { uid: "test-package-uid", namespace: "test-namespace", name: "test-package" },
     );
+  });
+});
+
+describe("verified client status history", () => {
+  const pkg: UDSPackage = {
+    metadata: {
+      name: "test-package",
+      namespace: "test-namespace",
+      uid: "test-package-uid",
+      generation: 1,
+    },
+    spec: {},
+  };
+
+  const sso = (clientId: string): Sso => ({
+    clientId,
+    name: clientId,
+    redirectUris: ["https://example.com/callback"],
+  });
+
+  let mockCredentialsCreateOrUpdate: MockedFunction<
+    typeof clientCredentials.credentialsCreateOrUpdate
+  >;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPatchStatus.mockReset().mockResolvedValue({});
+    mockApply.mockResolvedValue({});
+    mockCredentialsCreateOrUpdate = clientCredentials.credentialsCreateOrUpdate as MockedFunction<
+      typeof clientCredentials.credentialsCreateOrUpdate
+    >;
+    mockCredentialsCreateOrUpdate.mockImplementation(
+      async client =>
+        ({
+          ...client,
+          clientId: client.clientId,
+          publicClient: false,
+        }) as Client & { id: string },
+    );
+    pkg.status = undefined;
+    pkg.spec = {};
+  });
+
+  it("keeps a verified client available for cleanup after a later failure and spec removal", async () => {
+    const samlClient = { ...sso("new-client"), protocol: Protocol.Saml };
+    pkg.spec = { sso: [samlClient] };
+    mockFetch.mockResolvedValue({ ok: false, status: 503, statusText: "Service Unavailable" });
+
+    await expect(syncClient(samlClient, pkg)).rejects.toThrow(/Failed to get SAML IdP certificate/);
+    expect(pkg.status?.ssoClients).toEqual(["new-client"]);
+
+    pkg.spec = { sso: [] };
+    await purgeSSOClients(pkg, []);
+
+    expect(clientCredentials.credentialsDelete).toHaveBeenCalledWith(
+      { clientId: "new-client" },
+      { uid: "test-package-uid", namespace: "test-namespace", name: "test-package" },
+    );
+  });
+
+  it("unions status history across multiple newly verified clients", async () => {
+    pkg.spec = { sso: [sso("first-client"), sso("second-client")] };
+
+    await keycloak(pkg);
+
+    expect(mockPatchStatus).toHaveBeenNthCalledWith(1, {
+      metadata: { name: "test-package", namespace: "test-namespace" },
+      status: { ssoClients: ["first-client"] },
+    });
+    expect(mockPatchStatus).toHaveBeenNthCalledWith(2, {
+      metadata: { name: "test-package", namespace: "test-namespace" },
+      status: { ssoClients: ["first-client", "second-client"] },
+    });
+    expect(pkg.status?.ssoClients).toEqual(["first-client", "second-client"]);
+  });
+
+  it("does not publish credentials when status persistence keeps failing", async () => {
+    mockPatchStatus.mockRejectedValue(new Error("status unavailable"));
+
+    await expect(syncClient(sso("unrecorded-client"), pkg)).rejects.toThrow(
+      /Failed to record verified Keycloak client/,
+    );
+
+    expect(mockPatchStatus).toHaveBeenCalledTimes(2);
+    expect(mockApply).not.toHaveBeenCalled();
   });
 });
 
@@ -653,6 +711,7 @@ describe("syncClient SAML certificate handling", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPatchStatus.mockReset().mockResolvedValue({});
     mockCredentialsCreateOrUpdate = clientCredentials.credentialsCreateOrUpdate as MockedFunction<
       typeof clientCredentials.credentialsCreateOrUpdate
     >;

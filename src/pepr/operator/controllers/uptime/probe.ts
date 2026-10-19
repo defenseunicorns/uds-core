@@ -8,6 +8,7 @@ import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { ClientWithId, credentialsCreateOrUpdate } from "../keycloak/clients/client-credentials";
 import { getPackageClientOwner } from "../keycloak/client-owner";
+import { recordVerifiedSsoClient } from "../keycloak/client-sync";
 import { updateBlackboxConfig } from "./config";
 import { Expose, Gateway, Protocol, PrometheusProbe, Sso, UDSPackage } from "../../crd";
 import { getFqdn } from "../domain-utils";
@@ -183,6 +184,8 @@ export async function createProbeKeycloakClient(
     },
     getPackageClientOwner(pkg),
   );
+
+  await recordVerifiedSsoClient(pkg, client.clientId);
 
   const { clientId, secret } = client as ClientWithId;
   if (!secret) {
