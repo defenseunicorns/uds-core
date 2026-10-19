@@ -1,4 +1,4 @@
-# 12. Route Falco alerts to an owned Slack channel
+# 12. Route Falco detections to Slack for review
 
 Date: 2026-09-29
 
@@ -8,36 +8,66 @@ Proposed
 
 ## Context
 
-[INFRA-150](https://linear.app/defense-unicorns/issue/INFRA-150/enable-falco-alerting-sent-to-rootly-or-slack) asks where Registry operators should receive Falco detections and whether some detections should page responders. Joel recommended starting with an ADR, favored a Slack channel over Rootly as the first destination, and asked how operators would monitor, tune, and respond to the alerts.
+[INFRA-150](https://linear.app/defense-unicorns/issue/INFRA-150/enable-falco-alerting-sent-to-rootly-or-slack) asks how Registry operators should see, assess, and respond to Falco detections. UDS Core already sends the events to Loki, but Registry has no agreed notification route or review process. Falcosidekick supports a Slack webhook through existing UDS Core overrides, and [Ark uses that output](https://github.com/defenseunicorns/infra-ark/blob/dev/tofu/core-packages.tf).
 
-UDS Core already enables Falcosidekick and sends Falco events to Loki. It also supports the [Slack webhook and network egress overrides](../docs/how-to-guides/runtime-security/route-runtime-alerts.mdx) needed to send selected events to Slack. [Ark uses this route](https://github.com/defenseunicorns/infra-ark/blob/dev/tofu/core-packages.tf) with a `warning` minimum priority.
+Falco priority is a starting filter, not a measure of whether a detection needs a response. Registry does not yet have representative detections to establish alert volume or choose rules for paging. A local UDS Core test produced this shortened Falcosidekick event when a disposable pod searched an empty directory:
+
+```json
+{
+  "priority": "Warning",
+  "rule": "Search Private Keys or Passwords",
+  "source": "syscall",
+  "output_fields": {
+    "k8s.ns.name": "kube-system",
+    "k8s.pod.name": "falco-adr-example",
+    "proc.cmdline": "find /tmp/falco-adr-example -name id_rsa"
+  }
+}
+```
+
+The same test produced a `Notice` event when an operator opened a shell in the pod. Both events reached Loki. The `Warning` search was benign, while a shell in another workload could merit review. This example shows event content, not normal alert volume or Slack message formatting.
 
 ## Decision
 
-For the first Registry rollout, send Falco events with priority `warning` or higher from Falcosidekick directly to a dedicated, Registry-owned Slack channel. Continue sending all Falco events to Loki. Do not add automatic Rootly paging in this iteration. Review actual alert volume and response needs before deciding whether any rule should page.
+The UDS Core team owns the Falco alerting capability and its operating guidance. For the first Registry rollout, the Registry deployment will send detections at `warning` priority or higher from Falcosidekick to a restricted Slack channel. It will continue sending all detections to Loki. Slack is a review channel, not a paging destination; this iteration will not send Falco detections to Rootly.
 
-The Registry deployment will set `falcosidekick.config.slack.webhookurl` as a sensitive value, `falcosidekick.config.slack.minimumpriority` to `warning`, and `falcosidekick.config.slack.outputformat` to `text` as Ark does. It will allow Falcosidekick egress to `hooks.slack.com` on TLS port `443` through `additionalNetworkAllow`. The [Slack webhook determines the destination channel](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/). UDS Core does not need a new alerting component or default outbound Slack connection for this deployment-specific configuration.
+The deployment will use the existing [Slack webhook and network egress overrides](../docs/how-to-guides/runtime-security/route-runtime-alerts.mdx). The `warning` minimum follows Ark's configuration as an initial filter, not a validated threshold. UDS Core does not need another alerting component or a default outbound Slack connection.
 
-Before enabling the route, the Registry team will name the channel owner, backup, and review cadence, and restrict channel access to responders. Falco rule output can include process command lines. The initial operating procedure is:
+Before enabling the route, the UDS Core team will name a reviewer, review cadence, and escalation path. The reviewer will check Slack and query Loki for the `NOTICE` rules in the first two rows below. At rollout, operators will reproduce the harmless `Search Private Keys or Passwords` example above in an approved test pod and confirm it reaches Falcosidekick, Loki, and Slack. They will use real detections to tune rules and routing. The affected workload determines the responding team; a namespace such as `uds-system` does not establish ownership by itself.
 
-1. At rollout, after webhook or network-policy changes, and weekly thereafter, trigger a known `warning` detection from an approved test workload. The [`Search Private Keys or Passwords` integration test](../test/vitest/falco-integration.spec.ts) demonstrates one suitable rule. Confirm the same event appears in Slack and Loki, and inspect the Slack payload during rollout. If it reaches Loki but not Slack, check Falcosidekick logs, egress, and the webhook.
-2. During the first week, review the channel daily. Use Loki to inspect the rule, workload, and surrounding events. Record repeated expected detections and adjust targeted rule exceptions or the notification threshold after review; retain the original events in Loki.
-3. For a credible detection, investigate it and use the existing incident escalation process when human response is urgent. A Slack message alone does not provide a paging or response-time guarantee.
+## Rule assessment
 
-The [runtime alert routing guide](../docs/how-to-guides/runtime-security/route-runtime-alerts.mdx), [Falco tuning guide](../docs/how-to-guides/runtime-security/tune-falco-detections.mdx), and [Loki query guide](../docs/how-to-guides/runtime-security/query-falco-events.mdx) cover the existing configuration and investigation paths.
+The current [stable rules](../src/falco/chart/rules/stable-rules.yaml) suggest the following response levels. These are candidates for tuning after rollout, not rule-specific routes or automatic pages in the first iteration. Operators must check the affected workload and whether the activity was expected before escalating.
+
+| Response level to evaluate | Rules |
+| --- | --- |
+| Investigate promptly if seen; consider paging after validation | `Detect release_agent File Container Escapes`, `Drop and execute new binary in container`, `Fileless execution via memfd_create`, `Netcat Remote Code Execution in Container`, `Redirect STDOUT/STDIN to Network Connection in Container`, `Linux Kernel Module Injection Detected`, `Debugfs Launched in Privileged Container`, `Clear Log Activities` |
+| Review if seen; no automatic page | `Directory traversal monitored file read`, `Read sensitive file trusted after startup`, `Read sensitive file untrusted`, `Run shell untrusted`, `Remove Bulk Data from Disk`, `Create Symlink Over Sensitive Files`, `Create Hardlink Over Sensitive Files`, `Packet socket created in container`, `PTRACE attached to process`, `Execution from /dev/shm`, `Disallowed SSH Connection Non Standard Port` |
+| Usually low signal; consider Loki-only after the trial | `System user interactive`, `Terminal shell in container`, `Search Private Keys or Passwords`, `PTRACE anti-debug attempt`, `Find AWS Credentials` |
+| Disabled by default | `Contact K8S API Server From Container`, disabled in [Falco defaults](../src/falco/chart/values.yaml) because of noise |
+
+The initial `warning` filter does not match these response levels. It sends the two search rules to Slack but misses `Run shell untrusted` and `Redirect STDOUT/STDIN to Network Connection in Container`, which Falco marks `NOTICE`. Review real detections before promoting a rule or adding paging. A page-worthy route needs a named responder and evidence that expected activity will not wake them routinely.
 
 ## Consequences
 
-The initial route has these operational limits:
+The initial route has these limits:
 
-- The `warning` threshold may need tuning after the team sees actual alert volume.
-- Weekly delivery checks leave a known test event in Slack and Loki.
-- Channel review does not guarantee immediate response outside the team's stated review cadence. A follow-up decision must name the rules, destination, and on-call behavior before adding paging.
+- A priority filter can send benign `Warning` events to Slack and leave potentially useful `Notice` events in Loki. Operators must review actual detections before changing the filter or adding rule-specific routes.
+- Slack does not acknowledge alerts or guarantee response time. Operators use the existing incident process when a detection needs urgent response.
+- Falco output can include process command lines. Channel access must remain limited to responders.
+- A controlled test verifies delivery, but cannot establish normal alert volume or whether a rule should page.
 
 ## Alternatives considered
 
-These alternatives add noise or paging complexity before Registry has alert-volume data:
+These options remain available if real detections show a need for them:
 
-- **Send all events to Slack.** Lower-priority events remain available in Loki; forwarding them immediately would increase channel noise.
-- **Send events directly to Rootly or page by priority.** Priority alone does not establish that a detection warrants waking an on-call responder. Defer paging until operators have reviewed real detections and selected specific rules.
-- **Build a custom Slack integration.** Falcosidekick's native output already supports the proposed route, as Ark demonstrates.
+- **Send all detections to Slack.** This could make the channel too noisy to review.
+- **Page through Rootly or Alertmanager.** Priority alone does not identify which detections justify paging. Select rules and responders after reviewing real events.
+- **Route automatically by namespace.** Namespace helps identify the source workload but does not always identify its owner.
+- **Build a custom Slack integration.** Falcosidekick already supports the initial route.
+
+## Related documentation
+
+- [Route Falco alerts](../docs/how-to-guides/runtime-security/route-runtime-alerts.mdx) - Configure Falcosidekick destinations and network egress.
+- [Tune Falco detections](../docs/how-to-guides/runtime-security/tune-falco-detections.mdx) - Adjust rules after reviewing events.
+- [Query Falco events](../docs/how-to-guides/runtime-security/query-falco-events.mdx) - Inspect detections in Loki.
