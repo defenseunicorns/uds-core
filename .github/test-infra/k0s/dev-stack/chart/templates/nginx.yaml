@@ -1,0 +1,139 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.nginx.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: {{ .Release.Namespace }}
+data:
+  nginx.conf: |
+    events {
+        worker_connections  1024;
+    }
+
+    stream {
+        map $ssl_preread_server_name $selected_upstream {
+            hostnames;
+            {{- if .Values.adminDomain }}
+            *.{{ .Values.adminDomain }} backend_admin;
+            {{ .Values.adminDomain }} backend_admin;
+            {{- else }}
+            *.admin.{{ .Values.domain }} backend_admin;
+            admin.{{ .Values.domain }} backend_admin;
+            {{- end }}
+            *.{{ .Values.domain }} backend_tenant;
+            {{ .Values.domain }} backend_tenant;
+            {{- if .Values.customGateway | default false}}
+            *.{{ .Values.customGateway.domainName }} backend_custom_gateway;
+            {{ .Values.customGateway.domainName }} backend_custom_gateway;
+            {{- end }}
+            {{- if .Values.passthrough.enabled | default false}}
+            {{- range .Values.passthrough.subdomains }}
+            {{ . }}.{{ $.Values.domain }} backend_passthrough;
+            {{- end }}
+            {{- end }}
+        }
+
+        upstream backend_admin {
+            server ###ZARF_VAR_BASE_IP###.200:443;
+        }
+
+        upstream backend_tenant {
+            server ###ZARF_VAR_BASE_IP###.201:443;
+        }
+
+        {{- if .Values.customGateway | default false}}
+        upstream backend_custom_gateway {
+            {{- if .Values.passthrough.enabled | default false}}
+            server ###ZARF_VAR_BASE_IP###.203:443;
+            {{- else }}
+            server ###ZARF_VAR_BASE_IP###.202:443;
+            {{- end }}
+        }
+        {{- end }}
+
+        {{- if .Values.passthrough.enabled | default false}}
+        upstream backend_passthrough {
+            server ###ZARF_VAR_BASE_IP###.202:443;
+        }
+        {{- end }}
+
+        server {
+            listen 443;
+            proxy_pass $selected_upstream;
+            ssl_preread on;
+        }
+
+        {{- range .Values.extraPorts }}
+        upstream backend_tenant_{{ . }} {
+            server ###ZARF_VAR_BASE_IP###.201:{{ . }};
+        }
+
+        server {
+            listen {{ . }};
+            proxy_pass backend_tenant_{{ . }};
+        }
+        {{- end }}
+    }
+
+    http {
+      # Redirect server block
+      server {
+          listen 80;
+          server_name _;
+          return 301 https://$host$request_uri;
+      }
+
+      # The unprivileged nginx image requires the tmp paths to be in /tmp (https://github.com/nginx/docker-nginx-unprivileged)
+      client_body_temp_path /tmp/client_temp;
+      proxy_temp_path       /tmp/proxy_temp_path;
+      fastcgi_temp_path     /tmp/fastcgi_temp;
+      uwsgi_temp_path       /tmp/uwsgi_temp;
+      scgi_temp_path        /tmp/scgi_temp;
+    }
+
+    # The unprivileged nginx image requires the PID to be in /tmp (https://github.com/nginx/docker-nginx-unprivileged)
+    pid /tmp/nginx.pid;
+
+    error_log /dev/stderr;
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nginx
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      name: nginx
+  template:
+    metadata:
+      labels:
+        name: nginx
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+        - name: nginx
+          image: {{ .Values.images.nginx.repository }}:{{ .Values.images.nginx.tag }}
+          command: ["nginx", "-g", "daemon off;"]
+          ports:
+            - containerPort: 80
+              hostPort: 80
+            - containerPort: 443
+              hostPort: 443
+          {{- range .Values.extraPorts }}
+            - containerPort: {{ . }}
+              hostPort: {{ . }}
+          {{- end }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+      volumes:
+        - name: config-volume
+          configMap:
+            name: nginx-config
+{{- end }}
