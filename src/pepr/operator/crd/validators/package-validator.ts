@@ -380,9 +380,11 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     clientIDs.add(client.clientId);
 
     // Check for global uniqueness (across all packages/namespaces)
-    const namespacesWithClientId = PackageStore.findPackagesWithSsoClientId(client.clientId);
-    if (Array.from(namespacesWithClientId).some(namespace => namespace !== ns)) {
-      return req.Deny(`The client ID "${client.clientId}" is already in use by another package.`);
+    if (!deletionTimestamp) {
+      const namespacesWithClientId = PackageStore.findPackagesWithSsoClientId(client.clientId);
+      if (Array.from(namespacesWithClientId).some(namespace => namespace !== ns)) {
+        return req.Deny(`The client ID "${client.clientId}" is already in use by another package.`);
+      }
     }
     // Don't allow illegal k8s resource names for the secret name
     if (
@@ -524,15 +526,17 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     }
   }
 
-  for (const probeClientId of PackageStore.getProbeClientIds(pkg)) {
-    if (clientIDs.has(probeClientId)) {
-      return req.Deny(
-        `The client ID "${probeClientId}" is reserved for the probe client of "${probeClientId.slice(0, -6)}".`,
-      );
-    }
-    const namespacesWithClientId = PackageStore.findPackagesWithSsoClientId(probeClientId);
-    if (Array.from(namespacesWithClientId).some(namespace => namespace !== ns)) {
-      return req.Deny(`The client ID "${probeClientId}" is already in use by another package.`);
+  if (!deletionTimestamp) {
+    for (const probeClientId of PackageStore.getProbeClientIds(pkg)) {
+      if (clientIDs.has(probeClientId)) {
+        return req.Deny(
+          `The client ID "${probeClientId}" is reserved for the probe client of "${probeClientId.slice(0, -6)}".`,
+        );
+      }
+      const namespacesWithClientId = PackageStore.findPackagesWithSsoClientId(probeClientId);
+      if (Array.from(namespacesWithClientId).some(namespace => namespace !== ns)) {
+        return req.Deny(`The client ID "${probeClientId}" is already in use by another package.`);
+      }
     }
   }
 

@@ -1378,7 +1378,7 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
-  it("denies a declared client ID reserved as another Package's probe", async () => {
+  it("denies a declared client ID reserved as another Package's probe unless deleting", async () => {
     PackageStore.add(
       makeMockReq(
         { metadata: { namespace: "owner-system", name: "owner" } },
@@ -1395,9 +1395,14 @@ describe("Test validation of Package CRs", () => {
     expect(req.Deny).toHaveBeenCalledWith(
       'The client ID "app-probe" is already in use by another package.',
     );
+    vi.mocked(req.Deny).mockClear();
+    req.Raw.metadata!.deletionTimestamp = new Date("2026-01-01T00:00:00Z");
+    await validator(req);
+    expect(req.Approve).toHaveBeenCalledOnce();
+    expect(req.Deny).not.toHaveBeenCalled();
   });
 
-  it("denies a probe reservation that collides with another Package's declared ID", async () => {
+  it("denies a probe reservation that collides with another Package's declared ID unless deleting", async () => {
     PackageStore.add(
       makeMockReq(
         { metadata: { namespace: "owner-system", name: "owner" } },
@@ -1420,6 +1425,11 @@ describe("Test validation of Package CRs", () => {
     expect(req.Deny).toHaveBeenCalledWith(
       'The client ID "app-probe" is already in use by another package.',
     );
+    vi.mocked(req.Deny).mockClear();
+    req.Raw.metadata!.deletionTimestamp = new Date("2026-01-01T00:00:00Z");
+    await validator(req);
+    expect(req.Approve).toHaveBeenCalledOnce();
+    expect(req.Deny).not.toHaveBeenCalled();
   });
 
   it("denies a Package that declares both an SSO client and its reserved probe ID", async () => {
