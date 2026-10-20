@@ -7,6 +7,7 @@ ARG K0S_TAG
 ARG WOLFI_IMAGE="cgr.dev/chainguard/wolfi-base:latest@sha256:c2a4815b6ca49b9bbafd451b4bde690d567a86b2b6b54877faac8082a7bc4296"
 
 FROM ${WOLFI_IMAGE} AS wolfi
+RUN apk add --no-cache libcrypto3
 FROM k0sproject/k0s:${K0S_TAG}
 
 # Glob picks up the arch-specific ELF interpreter (ld-linux-x86-64.so.2 or ld-linux-aarch64.so.1).
