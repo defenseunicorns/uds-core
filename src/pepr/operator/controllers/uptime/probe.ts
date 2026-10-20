@@ -7,13 +7,13 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { ClientWithId, credentialsCreateOrUpdate } from "../keycloak/clients/client-credentials";
-import { getPackageClientOwner } from "../keycloak/client-owner";
-import { recordVerifiedSsoClient } from "../keycloak/client-sync";
 import { updateBlackboxConfig } from "./config";
 import { Expose, Gateway, Protocol, PrometheusProbe, Sso, UDSPackage } from "../../crd";
 import { getFqdn } from "../domain-utils";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
-import { getAuthserviceSso, getProbeClientId } from "./probe-client-utils";
+import { getAuthserviceSso } from "./probe-client-utils";
+
+export { getAuthserviceSso } from "./probe-client-utils";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_UPTIME);
@@ -59,7 +59,7 @@ export async function probe(
 
       // If Authservice is enabled, create a probe Keycloak client for the matched SSO entry
       if (authserviceSso) {
-        const { clientId, secret } = await createProbeKeycloakClient(authserviceSso, pkg);
+        const { clientId, secret } = await createProbeKeycloakClient(authserviceSso);
         log.debug(
           `Probe Keycloak client ready: clientId=${clientId} secret.length=${secret?.length}`,
         );
@@ -151,41 +151,34 @@ export function generateProbe(
  * The client uses service account credentials and includes an audience mapper for the app's SSO client.
  *
  * @param sso The matched SSO entry whose clientId is used to derive the probe client ID and audience
- * @param pkg The Package that owns the generated client
  */
 export async function createProbeKeycloakClient(
   sso: Sso,
-  pkg: UDSPackage,
 ): Promise<{ clientId: string; secret: string }> {
-  const probeClientId = getProbeClientId(sso.clientId);
+  const probeClientId = `${sso.clientId}-probe`;
 
-  const client = await credentialsCreateOrUpdate(
-    {
-      clientId: probeClientId,
-      name: `${sso.name} Uptime Probe`,
-      fullScopeAllowed: false,
-      serviceAccountsEnabled: true,
-      standardFlowEnabled: false,
-      protocolMappers: [
-        {
-          name: "audience",
-          protocol: Protocol.OpenidConnect,
-          protocolMapper: "oidc-audience-mapper",
-          config: {
-            "included.client.audience": sso.clientId,
-            "access.token.claim": "true",
-            "introspection.token.claim": "true",
-            "id.token.claim": "false",
-            "lightweight.claim": "false",
-            "userinfo.token.claim": "false",
-          },
+  const client = await credentialsCreateOrUpdate({
+    clientId: probeClientId,
+    name: `${sso.name} Uptime Probe`,
+    fullScopeAllowed: false,
+    serviceAccountsEnabled: true,
+    standardFlowEnabled: false,
+    protocolMappers: [
+      {
+        name: "audience",
+        protocol: Protocol.OpenidConnect,
+        protocolMapper: "oidc-audience-mapper",
+        config: {
+          "included.client.audience": sso.clientId,
+          "access.token.claim": "true",
+          "introspection.token.claim": "true",
+          "id.token.claim": "false",
+          "lightweight.claim": "false",
+          "userinfo.token.claim": "false",
         },
-      ],
-    },
-    getPackageClientOwner(pkg),
-  );
-
-  await recordVerifiedSsoClient(pkg, client.clientId);
+      },
+    ],
+  });
 
   const { clientId, secret } = client as ClientWithId;
   if (!secret) {

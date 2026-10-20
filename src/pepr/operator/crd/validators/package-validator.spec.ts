@@ -18,7 +18,6 @@ import {
   UDSPackage,
 } from "..";
 import { UDSConfig } from "../../controllers/config/config";
-import { PACKAGE_OWNER_UID_ATTRIBUTE } from "../../controllers/keycloak/client-owner";
 import { PackageStore } from "../../controllers/packages/package-store";
 import { Mode, RemoteProtocol } from "../generated/package-v1alpha1";
 import { validator } from "./package-validator";
@@ -1379,6 +1378,82 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
+  it("denies a declared client ID reserved as another Package's probe", async () => {
+    PackageStore.add(
+      makeMockReq(
+        { metadata: { namespace: "owner-system", name: "owner" } },
+        [{ host: "app", uptime: { checks: { paths: ["/health"] } } }],
+        [],
+        [{ clientId: "app", enableAuthserviceSelector: { app: "app" } }],
+        [],
+      ).Raw,
+    );
+    const req = makeMockReq({}, [], [], [{ clientId: "app-probe" }], []);
+
+    await validator(req);
+
+    expect(req.Deny).toHaveBeenCalledWith(
+      'The client ID "app-probe" is already in use by another package.',
+    );
+  });
+
+  it("denies a probe reservation that collides with another Package's declared ID", async () => {
+    PackageStore.add(
+      makeMockReq(
+        { metadata: { namespace: "owner-system", name: "owner" } },
+        [],
+        [],
+        [{ clientId: "app-probe" }],
+        [],
+      ).Raw,
+    );
+    const req = makeMockReq(
+      {},
+      [{ host: "app", uptime: { checks: { paths: ["/health"] } } }],
+      [],
+      [{ clientId: "app", enableAuthserviceSelector: { app: "app" } }],
+      [],
+    );
+
+    await validator(req);
+
+    expect(req.Deny).toHaveBeenCalledWith(
+      'The client ID "app-probe" is already in use by another package.',
+    );
+  });
+
+  it("denies a Package that declares both an SSO client and its reserved probe ID", async () => {
+    const req = makeMockReq(
+      {},
+      [{ host: "app", uptime: { checks: { paths: ["/health"] } } }],
+      [],
+      [{ clientId: "app", enableAuthserviceSelector: { app: "app" } }, { clientId: "app-probe" }],
+      [],
+    );
+
+    await validator(req);
+
+    expect(req.Deny).toHaveBeenCalledWith(
+      'The client ID "app-probe" is reserved for the probe client of "app".',
+    );
+  });
+
+  it("allows a standalone SSO client ID ending in -probe", async () => {
+    const req = makeMockReq({}, [], [], [{ clientId: "app-probe" }], []);
+
+    await validator(req);
+
+    expect(req.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows app and app-probe when app does not generate a probe", async () => {
+    const req = makeMockReq({}, [], [], [{ clientId: "app" }, { clientId: "app-probe" }], []);
+
+    await validator(req);
+
+    expect(req.Approve).toHaveBeenCalledTimes(1);
+  });
+
   it("denies clients with invalid secret names", async () => {
     const mockReq = makeMockReq(
       {},
@@ -2058,178 +2133,6 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
-  describe("effective client ID admission", () => {
-    const uptimeExpose = {
-      host: "app",
-      uptime: { checks: { paths: ["/health"] } },
-    };
-    const authserviceClient = {
-      clientId: "my-app",
-      redirectUris: ["https://app.uds.dev/callback"],
-      enableAuthserviceSelector: { app: "my-app" },
-    };
-    const addSharedClientClaimants = () => {
-      for (const [namespace, name] of [
-        ["ns-a", "app-a"],
-        ["ns-b", "app-b"],
-      ]) {
-        PackageStore.add(
-          makeMockReq(
-            { metadata: { namespace, name } },
-            [],
-            [],
-            [{ clientId: "shared-client" }],
-            [],
-          ).Raw,
-        );
-      }
-    };
-
-    it("denies a declaration that collides with an existing generated probe ID", async () => {
-      const existingPackage = makeMockReq(
-        { metadata: { namespace: "ns-a", name: "app-a" } },
-        [uptimeExpose],
-        [],
-        [authserviceClient],
-        [],
-      );
-      PackageStore.add(existingPackage.Raw);
-
-      const mockReq = makeMockReq(
-        { metadata: { namespace: "ns-b", name: "app-b" } },
-        [],
-        [],
-        [{ clientId: "my-app-probe" }],
-        [],
-      );
-      await validator(mockReq);
-
-      expect(mockReq.Deny).toHaveBeenCalledWith(
-        'The client ID "my-app-probe" is already in use by another Package.',
-      );
-    });
-
-    it("denies a generated probe ID that collides with an existing declaration", async () => {
-      const existingPackage = makeMockReq(
-        { metadata: { namespace: "ns-a", name: "app-a" } },
-        [],
-        [],
-        [{ clientId: "my-app-probe" }],
-        [],
-      );
-      PackageStore.add(existingPackage.Raw);
-
-      const mockReq = makeMockReq(
-        { metadata: { namespace: "ns-b", name: "app-b" } },
-        [uptimeExpose],
-        [],
-        [authserviceClient],
-        [],
-      );
-      await validator(mockReq);
-
-      expect(mockReq.Deny).toHaveBeenCalledWith(
-        'The client ID "my-app-probe" is already in use by another Package.',
-      );
-    });
-
-    it("denies a declared ID that is also generated by the same Package", async () => {
-      const mockReq = makeMockReq(
-        {},
-        [uptimeExpose],
-        [],
-        [authserviceClient, { clientId: "my-app-probe" }],
-        [],
-      );
-      await validator(mockReq);
-
-      expect(mockReq.Deny).toHaveBeenCalledWith(
-        'The client ID "my-app-probe" is declared in this Package and is also generated for an uptime probe.',
-      );
-    });
-
-    it("allows multiple uptime exposes that share the same generated ID", async () => {
-      const mockReq = makeMockReq(
-        {},
-        [
-          uptimeExpose,
-          {
-            host: "admin",
-            gateway: Gateway.Admin,
-            uptime: { checks: { paths: ["/ready"] } },
-          },
-        ],
-        [],
-        [
-          {
-            ...authserviceClient,
-            redirectUris: ["https://app.uds.dev/callback", "https://admin.admin.uds.dev/callback"],
-          },
-        ],
-        [],
-      );
-      await validator(mockReq);
-
-      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
-    });
-
-    it("allows an update that retains the Package's own declared and generated IDs", async () => {
-      const metadata = { namespace: "update-ns", name: "app" };
-      const existingPackage = makeMockReq(
-        { metadata },
-        [uptimeExpose],
-        [],
-        [authserviceClient],
-        [],
-      );
-      PackageStore.add(existingPackage.Raw);
-
-      const mockReq = makeMockReq({ metadata }, [uptimeExpose], [], [authserviceClient], []);
-      await validator(mockReq);
-
-      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
-    });
-
-    it("denies a collision when the index contains the current and another namespace", async () => {
-      addSharedClientClaimants();
-
-      const mockReq = makeMockReq(
-        { metadata: { namespace: "ns-a", name: "app-a" } },
-        [],
-        [],
-        [{ clientId: "shared-client" }],
-        [],
-      );
-      await validator(mockReq);
-
-      expect(mockReq.Deny).toHaveBeenCalledWith(
-        'The client ID "shared-client" is already in use by another Package.',
-      );
-    });
-
-    it("allows a terminating Package to complete updates despite an existing collision", async () => {
-      addSharedClientClaimants();
-
-      const mockReq = makeMockReq(
-        {
-          metadata: {
-            namespace: "ns-a",
-            name: "app-a",
-            deletionTimestamp: new Date("2026-01-01T00:00:00Z"),
-          },
-        },
-        [],
-        [],
-        [{ clientId: "shared-client" }],
-        [],
-      );
-      await validator(mockReq);
-
-      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
-      expect(mockReq.Deny).not.toHaveBeenCalled();
-    });
-  });
-
   it("url parsing failure when redirectUri is not a valid URL", async () => {
     const mockReq = makeMockReq(
       {},
@@ -2529,28 +2432,5 @@ describe("Test proper generation of a unique name for service monitors", () => {
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("Package ownership attributes", () => {
-  afterEach(() => {
-    vi.resetAllMocks();
-    PackageStore.init();
-  });
-
-  it("rejects Package SSO attributes that attempt to set the operator ownership marker", async () => {
-    const mockReq = makeMockReq(
-      {},
-      [],
-      [],
-      [{ attributes: { [PACKAGE_OWNER_UID_ATTRIBUTE]: "user-controlled-uid" } }],
-      [],
-    );
-
-    await validator(mockReq);
-
-    expect(mockReq.Deny).toHaveBeenCalledWith(
-      expect.stringContaining(`unsupported attribute "${PACKAGE_OWNER_UID_ATTRIBUTE}"`),
-    );
   });
 });

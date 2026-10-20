@@ -5,7 +5,7 @@ sidebar:
   order: 5.007
 ---
 
-import { Steps } from "@astrojs/starlight/components";
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -24,8 +24,6 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
 
 > [!NOTE]
 > Uptime checks for Authservice-protected applications are fully supported. The UDS Operator automatically creates a dedicated Keycloak service account client and configures OAuth2 authentication for the probe.
->
-> An active Authservice uptime check generates the Keycloak client ID `<clientId>-probe`. Package admission reserves that ID alongside IDs declared in `spec.sso` and rejects a collision with another Package.
 >
 > UDS Core also ships default probe alerts (`UDSProbeEndpointDown`, `UDSProbeTLSExpiryWarning`, and `UDSProbeTLSExpiryCritical`) through `PrometheusRule` resources in the `uds-prometheus-config` chart. To tune or disable these defaults, see [Create metric alerting rules](/how-to-guides/monitoring-and-observability/create-metric-alerting-rules/).
 
@@ -183,12 +181,12 @@ Confirm uptime monitoring is working:
 
 Blackbox Exporter provides the following key metrics for alerting and dashboarding:
 
-| Metric                           | Description                                   |
-| -------------------------------- | --------------------------------------------- |
-| `probe_success`                  | Whether the probe succeeded (1) or failed (0) |
-| `probe_duration_seconds`         | Total probe duration                          |
-| `probe_http_status_code`         | HTTP response status code                     |
-| `probe_ssl_earliest_cert_expiry` | SSL certificate expiration timestamp          |
+| Metric | Description |
+|---|---|
+| `probe_success` | Whether the probe succeeded (1) or failed (0) |
+| `probe_duration_seconds` | Total probe duration |
+| `probe_http_status_code` | HTTP response status code |
+| `probe_ssl_earliest_cert_expiry` | SSL certificate expiration timestamp |
 
 Example PromQL queries:
 
