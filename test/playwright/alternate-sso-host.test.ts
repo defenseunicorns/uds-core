@@ -138,35 +138,31 @@ async function loginThroughAlternateHost(browser: Browser): Promise<AlternateOid
   }
 }
 
-test("alternate-host OIDC login creates a protected-app session", async ({ browser }) => {
-  const session = await loginThroughAlternateHost(browser);
-  await session.context.close();
-});
+test(
+  "alternate-host login creates a protected session and primary Podinfo rejects its token",
+  async ({ browser }) => {
+    const session = await loginThroughAlternateHost(browser);
 
-test("primary Podinfo rejects the alternate issuer when its audience is valid", async ({
-  browser,
-}) => {
-  const session = await loginThroughAlternateHost(browser);
+    try {
+      expect(session.accessClaims.iss).toBe(session.discoveryIssuer);
+      expect(session.accessClaims.aud).toContain(primaryClientId);
 
-  try {
-    expect(session.accessClaims.iss).toBe(session.discoveryIssuer);
-    expect(session.accessClaims.aud).toContain(primaryClientId);
-
-    const response = await session.context.request.get(`https://podinfo.${domain}`, {
-      headers: { Authorization: `Bearer ${session.accessToken}` },
-    });
-    const responseBody = await response.text();
-    console.info(
-      "Primary Podinfo response to an alternate-issuer token with a valid audience",
-      JSON.stringify({
-        status: response.status(),
-        server: response.headers()["server"],
-        wwwAuthenticate: response.headers()["www-authenticate"],
-        body: responseBody.slice(0, 300),
-      }),
-    );
-    expect([401, 403]).toContain(response.status());
-  } finally {
-    await session.context.close();
-  }
-});
+      const response = await session.context.request.get(`https://podinfo.${domain}`, {
+        headers: { Authorization: `Bearer ${session.accessToken}` },
+      });
+      const responseBody = await response.text();
+      console.info(
+        "Primary Podinfo response to an alternate-issuer token with a valid audience",
+        JSON.stringify({
+          status: response.status(),
+          server: response.headers()["server"],
+          wwwAuthenticate: response.headers()["www-authenticate"],
+          body: responseBody.slice(0, 300),
+        }),
+      );
+      expect([401, 403]).toContain(response.status());
+    } finally {
+      await session.context.close();
+    }
+  },
+);
