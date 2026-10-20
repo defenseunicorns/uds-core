@@ -4,6 +4,7 @@
  */
 
 import { type PeprValidateRequest } from "pepr";
+import { isDeepStrictEqual } from "node:util";
 
 import { Direction, Gateway, Protocol, RemoteGenerated, RemoteProtocol, UDSPackage } from "..";
 import { UDSConfig } from "../../controllers/config/config";
@@ -20,6 +21,13 @@ import { migrate } from "../migrate";
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
 
 export async function validator(req: PeprValidateRequest<UDSPackage>) {
+  if (req.Raw.metadata?.deletionTimestamp) {
+    const oldPkg = req.OldResource as UDSPackage | undefined;
+    if (!oldPkg || !isDeepStrictEqual(req.Raw.spec, oldPkg.spec)) {
+      return req.Deny("Package spec cannot change during deletion.");
+    }
+  }
+
   const rawExposeList = req.Raw.spec?.network?.expose ?? [];
 
   // We need to detect deprecated `expose.match` even after migrate() moves it to `advancedHTTP.match`.

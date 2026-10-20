@@ -478,6 +478,7 @@ describe("Test validation of Package CRs", () => {
         [],
         [],
       );
+      Object.defineProperty(mockReq, "OldResource", { value: structuredClone(mockReq.Raw) });
       await validator(mockReq);
       expect(mockReq.Approve).toHaveBeenCalledTimes(1);
       expect(mockReq.Deny).not.toHaveBeenCalled();
@@ -1396,10 +1397,15 @@ describe("Test validation of Package CRs", () => {
       'The client ID "app-probe" is already in use by another package.',
     );
     vi.mocked(req.Deny).mockClear();
+    Object.defineProperty(req, "OldResource", { value: structuredClone(req.Raw) });
     req.Raw.metadata!.deletionTimestamp = new Date("2026-01-01T00:00:00Z");
     await validator(req);
     expect(req.Approve).toHaveBeenCalledOnce();
     expect(req.Deny).not.toHaveBeenCalled();
+
+    req.Raw.spec!.sso![0].clientId = "new-claim";
+    await validator(req);
+    expect(req.Deny).toHaveBeenCalledWith("Package spec cannot change during deletion.");
   });
 
   it("denies a probe reservation that collides with another Package's declared ID unless deleting", async () => {
@@ -1426,10 +1432,31 @@ describe("Test validation of Package CRs", () => {
       'The client ID "app-probe" is already in use by another package.',
     );
     vi.mocked(req.Deny).mockClear();
+    Object.defineProperty(req, "OldResource", { value: structuredClone(req.Raw) });
     req.Raw.metadata!.deletionTimestamp = new Date("2026-01-01T00:00:00Z");
     await validator(req);
     expect(req.Approve).toHaveBeenCalledOnce();
     expect(req.Deny).not.toHaveBeenCalled();
+  });
+
+  it("denies a terminating Package update without the previous spec", async () => {
+    const req = makeMockReq(
+      {
+        metadata: {
+          namespace: "application-system",
+          name: "application",
+          deletionTimestamp: new Date("2026-01-01T00:00:00Z"),
+        },
+      },
+      [],
+      [],
+      [],
+      [],
+    );
+
+    await validator(req);
+
+    expect(req.Deny).toHaveBeenCalledWith("Package spec cannot change during deletion.");
   });
 
   it("denies a Package that declares both an SSO client and its reserved probe ID", async () => {
