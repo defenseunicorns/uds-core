@@ -1383,7 +1383,7 @@ describe("Test validation of Package CRs", () => {
     PackageStore.add(
       makeMockReq(
         { metadata: { namespace: "owner-system", name: "owner" } },
-        [{ host: "app", uptime: { checks: { paths: ["/health"] } } }],
+        [{ host: "unrelated", uptime: { checks: { paths: ["/health"] } } }],
         [],
         [{ clientId: "app", enableAuthserviceSelector: { app: "app" } }],
         [],

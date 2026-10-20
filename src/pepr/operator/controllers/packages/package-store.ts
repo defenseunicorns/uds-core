@@ -17,16 +17,13 @@ import {
   Mode,
 } from "../../crd/generated/package-v1alpha1";
 import { getExposureKey } from "../domain-utils";
-import { UDSConfig } from "../config/config";
 import { getUDPGatewayPortKey } from "../envoy-gateway/constants";
-import { getProbeClientIds } from "../uptime/probe-client-utils";
 const log = setupLogger(Component.OPERATOR_PACKAGES);
 
 // Map structure: namespace -> (package name -> package)
 export type PackageNamespaceMap = Map<string, Map<string, UDSPackage>>;
 let packageNamespaceMap: PackageNamespaceMap;
 let ssoIndex: Map<string, Set<string>>;
-let indexedSsoDomains: [string, string];
 let udpGatewayPortIndex: Map<string, Set<string>>;
 
 function hasObjectProperties(value: object | undefined): boolean {
@@ -54,7 +51,6 @@ function hasAdvancedHTTPMatch(expose: Expose): boolean {
 function init(): void {
   packageNamespaceMap = new Map();
   ssoIndex = new Map();
-  indexedSsoDomains = [UDSConfig.domain, UDSConfig.adminDomain];
   udpGatewayPortIndex = new Map();
 }
 
@@ -72,7 +68,6 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
   if (!pkg.metadata?.namespace || !pkg.metadata.name) {
     throw new Error(`Invalid Package definition, missing namespace or name`);
   }
-  refreshSsoIndexIfDomainsChanged();
   const namespace = pkg.metadata.namespace;
   const name = pkg.metadata.name;
 
@@ -116,7 +111,6 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
   if (!pkg.metadata?.namespace || !pkg.metadata.name) {
     throw new Error(`Invalid Package definition, missing namespace or name`);
   }
-  refreshSsoIndexIfDomainsChanged();
 
   const namespace = pkg.metadata.namespace;
   const name = pkg.metadata.name;
@@ -190,20 +184,20 @@ function getPkgName(namespace: string): string | null {
  * @returns {Array<{namespace: string, name: string, pkg: UDSPackage}>} - Array of namespaces with Packages using the specified client ID.
  */
 function findPackagesWithSsoClientId(clientId: string): Set<string> {
-  refreshSsoIndexIfDomainsChanged();
   return ssoIndex.get(clientId) ?? new Set<string>();
 }
 
-function refreshSsoIndexIfDomainsChanged(): void {
-  if (indexedSsoDomains[0] !== UDSConfig.domain || indexedSsoDomains[1] !== UDSConfig.adminDomain) {
-    ssoIndex = new Map();
-    for (const namespaceMap of packageNamespaceMap.values()) {
-      for (const pkg of namespaceMap.values()) {
-        addSsoIndexes(pkg);
-      }
-    }
-    indexedSsoDomains = [UDSConfig.domain, UDSConfig.adminDomain];
-  }
+function getProbeClientIds(pkg: UDSPackage): Set<string> {
+  const hasUptimeChecks = pkg.spec?.network?.expose?.some(
+    expose => expose.uptime?.checks?.paths?.length,
+  );
+  if (!hasUptimeChecks) return new Set();
+
+  return new Set(
+    (pkg.spec?.sso ?? [])
+      .filter(client => client.enableAuthserviceSelector)
+      .map(client => `${client.clientId}-probe`),
+  );
 }
 
 function findPackagesWithUdpGatewayPort(gateway: string | undefined, port: number): Set<string> {

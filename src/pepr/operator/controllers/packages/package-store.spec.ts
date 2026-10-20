@@ -233,7 +233,7 @@ describe("Package Store", () => {
       const oldPkg = createPackageWithSsoClient("test-ns", "test-app", "old-client");
       oldPkg.spec!.sso![0].enableAuthserviceSelector = { app: "app" };
       oldPkg.spec!.network!.expose = [
-        { host: "example", domain: "com", uptime: { checks: { paths: ["/health"] } } },
+        { host: "unrelated", uptime: { checks: { paths: ["/health"] } } },
       ];
       PackageStore.add(oldPkg);
       PackageStore.add(createPackageWithSsoClient("test-ns", "test-app", "new-client"));
@@ -244,11 +244,11 @@ describe("Package Store", () => {
       expect(PackageStore.findPackagesWithSsoClientId("new-client-probe").size).toBe(0);
     });
 
-    it("reserves a generated probe ID and releases it when uptime is disabled", () => {
+    it("reserves an Authservice probe ID and releases it when uptime is disabled", () => {
       const pkg = createPackageWithSsoClient("test-ns", "test-app", "app");
       pkg.spec!.sso![0].enableAuthserviceSelector = { app: "app" };
       pkg.spec!.network!.expose = [
-        { host: "example", domain: "com", uptime: { checks: { paths: ["/health"] } } },
+        { host: "unrelated", uptime: { checks: { paths: ["/health"] } } },
       ];
       PackageStore.add(pkg);
 
@@ -261,49 +261,34 @@ describe("Package Store", () => {
       expect(PackageStore.findPackagesWithSsoClientId("app-probe").size).toBe(0);
     });
 
-    it("refreshes probe claims when the configured domain changes", () => {
-      const oldPkg = createPackageWithSsoClient("old-ns", "old-app", "old-client");
-      oldPkg.spec!.sso![0].enableAuthserviceSelector = { app: "app" };
-      oldPkg.spec!.sso![0].redirectUris = ["https://app.uds.dev/callback"];
-      oldPkg.spec!.network!.expose = [{ host: "app", uptime: { checks: { paths: ["/health"] } } }];
-      const newPkg = createPackageWithSsoClient("new-ns", "new-app", "new-client");
-      newPkg.spec!.sso![0].enableAuthserviceSelector = { app: "app" };
-      newPkg.spec!.sso![0].redirectUris = ["https://app.new.uds.dev/callback"];
-      newPkg.spec!.network!.expose = structuredClone(oldPkg.spec!.network!.expose);
-      PackageStore.add(oldPkg);
-      PackageStore.add(newPkg);
-
-      expect(PackageStore.findPackagesWithSsoClientId("old-client-probe").has("old-ns")).toBe(true);
-      expect(PackageStore.findPackagesWithSsoClientId("new-client-probe").size).toBe(0);
-
-      const originalDomain = UDSConfig.domain;
-      try {
-        UDSConfig.domain = "new.uds.dev";
-        expect(PackageStore.findPackagesWithSsoClientId("old-client-probe").size).toBe(0);
-        expect(PackageStore.findPackagesWithSsoClientId("new-client-probe").has("new-ns")).toBe(
-          true,
-        );
-      } finally {
-        UDSConfig.domain = originalDomain;
-      }
-    });
-
-    it("removes a probe claim across domain changes before the next lookup", () => {
+    it("reserves every Authservice client ID when any uptime check has paths", () => {
       const pkg = createPackageWithSsoClient("test-ns", "test-app", "app");
       pkg.spec!.sso![0].enableAuthserviceSelector = { app: "app" };
-      pkg.spec!.sso![0].redirectUris = ["https://app.uds.dev/callback"];
-      pkg.spec!.network!.expose = [{ host: "app", uptime: { checks: { paths: ["/health"] } } }];
+      pkg.spec!.sso!.push({
+        name: "Other Authservice Client",
+        clientId: "other",
+        redirectUris: ["https://other.uds.dev/callback"],
+        enableAuthserviceSelector: { app: "other" },
+      });
+      pkg.spec!.sso!.push({
+        name: "Plain Client",
+        clientId: "plain",
+        redirectUris: ["https://plain.uds.dev/callback"],
+      });
+      pkg.spec!.network!.expose = [
+        { host: "unrelated", uptime: { checks: { paths: ["/health"] } } },
+      ];
       PackageStore.add(pkg);
 
-      const originalDomain = UDSConfig.domain;
-      try {
-        UDSConfig.domain = "new.uds.dev";
-        PackageStore.remove(pkg);
-        UDSConfig.domain = originalDomain;
-        expect(PackageStore.findPackagesWithSsoClientId("app-probe").size).toBe(0);
-      } finally {
-        UDSConfig.domain = originalDomain;
-      }
+      expect(PackageStore.findPackagesWithSsoClientId("app-probe").has("test-ns")).toBe(true);
+      expect(PackageStore.findPackagesWithSsoClientId("other-probe").has("test-ns")).toBe(true);
+      expect(PackageStore.findPackagesWithSsoClientId("plain-probe").size).toBe(0);
+
+      const updatedPkg = structuredClone(pkg);
+      updatedPkg.spec!.network!.expose![0].uptime!.checks!.paths = [];
+      PackageStore.add(updatedPkg);
+      expect(PackageStore.findPackagesWithSsoClientId("app-probe").size).toBe(0);
+      expect(PackageStore.findPackagesWithSsoClientId("other-probe").size).toBe(0);
     });
   });
 

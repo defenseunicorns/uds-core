@@ -11,9 +11,6 @@ import { updateBlackboxConfig } from "./config";
 import { Expose, Gateway, Protocol, PrometheusProbe, Sso, UDSPackage } from "../../crd";
 import { getFqdn } from "../domain-utils";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
-import { getAuthserviceSso } from "./probe-client-utils";
-
-export { getAuthserviceSso } from "./probe-client-utils";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_UPTIME);
@@ -187,4 +184,29 @@ export async function createProbeKeycloakClient(
     );
   }
   return { clientId, secret };
+}
+
+/**
+ * Returns the matching SSO entry with enableAuthserviceSelector defined whose redirectUris
+ * match the scheme+host of the expose entry's FQDN (path component is ignored).
+ *
+ * @param expose The expose entry to check
+ * @param ssoEntries The SSO entries from the package spec
+ */
+export function getAuthserviceSso(expose: Expose, ssoEntries: Sso[]): Sso | undefined {
+  const fqdnOrigin = `https://${getFqdn(expose)}`;
+
+  return ssoEntries.find(sso => {
+    if (!sso.enableAuthserviceSelector) {
+      return false;
+    }
+
+    return (sso.redirectUris ?? []).some(uri => {
+      try {
+        return new URL(uri).origin === fqdnOrigin;
+      } catch {
+        return false;
+      }
+    });
+  });
 }
