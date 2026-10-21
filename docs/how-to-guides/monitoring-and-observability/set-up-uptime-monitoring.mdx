@@ -149,6 +149,8 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
 
    The operator matches the expose entry to the SSO entry via the redirect URI origin (`https://myapp.uds.dev`) and configures the probe to authenticate transparently through Authservice.
 
+   When a `Package` has at least one path in `uptime.checks.paths`, UDS Core reserves `<clientId>-probe` for every SSO entry with `enableAuthserviceSelector`. Other Packages cannot use those IDs, even when no matching probe client is created.
+
 5. **Deploy your Package**
 
    **(Recommended)** Include the `Package` CR in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
