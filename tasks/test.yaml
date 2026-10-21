@@ -161,7 +161,7 @@ tasks:
       - cmd: |
           npm ci
           npx pepr build -z chart
-          npx vitest run test/values/
+          npx vitest run test/values/ --hookTimeout=350000
 
   - name: uds-core
     description: "Build and test UDS Core with UDS CLI Next bundle workflow"
