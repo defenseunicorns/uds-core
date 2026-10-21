@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "kubernetes-fluent-client": "3.12.3",
-    "pepr": "2.0.3"
+    "pepr": "2.0.4"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",
