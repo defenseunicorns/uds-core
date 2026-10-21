@@ -224,6 +224,12 @@ spec:
             - name: KC_RUN_IN_CONTAINER
               value: "true"
 
+            # Keep cache node names stable across pod restarts for logs and metrics
+            - name: KC_CACHE_EMBEDDED_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+
             # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
             - name: KC_EVENT_METRICS_USER_ENABLED
               value: "true"
