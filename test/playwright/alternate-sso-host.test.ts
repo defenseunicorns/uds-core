@@ -138,12 +138,7 @@ async function loginThroughAlternateHost(browser: Browser): Promise<AlternateOid
   }
 }
 
-test("alternate-host OIDC login creates a protected-app session", async ({ browser }) => {
-  const session = await loginThroughAlternateHost(browser);
-  await session.context.close();
-});
-
-test("primary Podinfo rejects the alternate issuer when its audience is valid", async ({
+test("alternate-host login creates a protected session and primary Podinfo rejects its token", async ({
   browser,
 }) => {
   const session = await loginThroughAlternateHost(browser);
