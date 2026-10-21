@@ -15,7 +15,7 @@ features:
   additional: []
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: quay.io/sebastian_laskawiec/uds_identity_config:942
+configImage: quay.io/sebastian_laskawiec/uds_identity_config:942_2
 
 # Standalone Helm defaults; Zarf deployments override these in templatedValuesFiles.
 domain: "uds.dev"

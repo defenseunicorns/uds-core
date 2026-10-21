@@ -36,7 +36,7 @@ components:
           - "values/upstream-values.yaml"
     images:
       - quay.io/keycloak/keycloak:26.8.1
-      - quay.io/sebastian_laskawiec/uds_identity_config:942
+      - quay.io/sebastian_laskawiec/uds_identity_config:942_2
 
   - name: keycloak
     required: true
@@ -50,7 +50,7 @@ components:
           - "values/registry1-values.yaml"
     images:
       - registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips:26.8.1-fips
-      - quay.io/sebastian_laskawiec/uds_identity_config:942
+      - quay.io/sebastian_laskawiec/uds_identity_config:942_2
 
   - name: keycloak
     required: true
@@ -64,4 +64,4 @@ components:
           - "values/unicorn-values.yaml"
     images:
       - cgr.dev/defenseunicorns.com/keycloak-fips:v26.8.1
-      - quay.io/sebastian_laskawiec/uds_identity_config:942
+      - quay.io/sebastian_laskawiec/uds_identity_config:942_2
