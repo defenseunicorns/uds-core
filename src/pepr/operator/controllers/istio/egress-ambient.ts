@@ -1,16 +1,16 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { GenericClass } from "kubernetes-fluent-client";
 import { K8s } from "pepr";
 import { IstioAuthorizationPolicy, IstioServiceEntry, K8sGateway, RemoteProtocol } from "../../crd";
-import { purgeOrphans } from "../utils";
+import { AmbientPackageMap } from "./types";
+import { deleteResourceIfUnchanged, purgeOrphans } from "../utils";
 import { createEgressWaypointGateway, waitForWaypointPodHealthy } from "./ambient-waypoint";
 import { generateCentralAmbientEgressAuthorizationPolicy } from "./auth-policy";
 import { ambientEgressNamespace, log, sharedEgressPkgId } from "./istio-resources";
 import { generateSharedAmbientServiceEntry } from "./service-entry";
-import { AmbientPackageMap } from "./types";
 
 function addPortsToMap(map: Map<string, Set<number>>, key: string, ports: number[]) {
   const portSet = map.get(key) ?? new Set<number>();
@@ -73,8 +73,7 @@ export async function applyAmbientEgressResources(
     byHostPort: new Map(),
   };
 
-  // Build merged per-host resources from live packages (not the in-memory map) so that
-  // shared ambient egress reconciliation remains correct across watcher restarts/OOM.
+  // Build merged per-host resources from the reconciled package map.
   const merged: Record<
     string,
     { packages: string[]; portProtocols: Array<{ port: number; protocol: RemoteProtocol }> }
@@ -174,7 +173,7 @@ export async function applyAmbientEgressResources(
   }
 
   // Generate and apply the shared waypoint.
-  const waypoint = createEgressWaypointGateway(contributingPkgIds, generation);
+  const waypoint = createEgressWaypointGateway(contributingPkgIds);
   const waypointName = waypoint.metadata?.name ?? "undefined";
   log.debug(waypoint, `Applying Waypoint ${waypointName}`);
   await K8s(K8sGateway).Apply(waypoint, { force: true });
@@ -308,18 +307,18 @@ export async function purgeAmbientEgressResources(
       entry.rules.some(rule => rule.kind === "host"),
     );
 
-    const currentGenGateways = await K8s(K8sGateway)
+    const sharedGateways = await K8s(K8sGateway)
       .InNamespace(ambientEgressNamespace)
       .WithLabel("uds/package", sharedEgressPkgId)
-      .WithLabel("uds/generation", generation)
       .Get();
 
-    const currentGenGatewayCount =
-      (currentGenGateways as { items?: unknown[] } | undefined)?.items?.length ?? 0;
-    if (currentGenGatewayCount === 0 && hasRemoteHostContributors) {
+    const sharedGatewayItems =
+      (sharedGateways as { items?: K8sGateway[] } | undefined)?.items ?? [];
+
+    if (sharedGatewayItems.length === 0 && hasRemoteHostContributors) {
       log.warn(
         { generation },
-        "Skipping purge of ambient egress resources because no current-generation waypoint exists",
+        "Skipping purge of ambient egress resources because no shared waypoint exists",
       );
       return;
     }
@@ -340,7 +339,14 @@ export async function purgeAmbientEgressResources(
       return;
     }
 
-    await purgeOrphans(generation, ambientEgressNamespace, sharedEgressPkgId, K8sGateway, log);
+    // The shared waypoint is intentionally not generation-labeled. Updating that label on every
+    // package reconciliation causes Istio to roll the waypoint Deployment unnecessarily.
+    // Remove the singleton only when no package still contributes ambient host egress.
+    if (!hasRemoteHostContributors) {
+      for (const gateway of sharedGatewayItems) {
+        await deleteResourceIfUnchanged(gateway);
+      }
+    }
     await purgeOrphans(
       generation,
       ambientEgressNamespace,
@@ -357,7 +363,8 @@ export async function purgeAmbientEgressResources(
     );
   } catch (e) {
     const errText = `Failed to purge orphaned ambient egress resources`;
-    log.error(`Failed to purge orphaned ambient egress resources`, e);
-    throw errText;
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    log.error({ err: e }, errText);
+    throw new Error(`${errText}: ${errorMessage}`, { cause: e });
   }
 }
