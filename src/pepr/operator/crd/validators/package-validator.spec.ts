@@ -478,6 +478,7 @@ describe("Test validation of Package CRs", () => {
         [],
         [],
       );
+      Object.defineProperty(mockReq, "OldResource", { value: structuredClone(mockReq.Raw) });
       await validator(mockReq);
       expect(mockReq.Approve).toHaveBeenCalledTimes(1);
       expect(mockReq.Deny).not.toHaveBeenCalled();
@@ -1376,6 +1377,118 @@ describe("Test validation of Package CRs", () => {
     const mockReq = makeMockReq({}, [], [], [{}, {}], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies a declared client ID reserved as another Package's probe unless deleting", async () => {
+    PackageStore.add(
+      makeMockReq(
+        { metadata: { namespace: "owner-system", name: "owner" } },
+        [{ host: "unrelated", uptime: { checks: { paths: ["/health"] } } }],
+        [],
+        [{ clientId: "app", enableAuthserviceSelector: { app: "app" } }],
+        [],
+      ).Raw,
+    );
+    const req = makeMockReq({}, [], [], [{ clientId: "app-probe" }], []);
+
+    await validator(req);
+
+    expect(req.Deny).toHaveBeenCalledWith(
+      'The client ID "app-probe" is already in use by another package.',
+    );
+    vi.mocked(req.Deny).mockClear();
+    Object.defineProperty(req, "OldResource", { value: structuredClone(req.Raw) });
+    req.Raw.metadata!.deletionTimestamp = new Date("2026-01-01T00:00:00Z");
+    await validator(req);
+    expect(req.Approve).toHaveBeenCalledOnce();
+    expect(req.Deny).not.toHaveBeenCalled();
+
+    req.Raw.spec!.sso![0].clientId = "new-claim";
+    await validator(req);
+    expect(req.Deny).toHaveBeenCalledWith("Package spec cannot change during deletion.");
+  });
+
+  it("denies a probe reservation that collides with another Package's declared ID unless deleting", async () => {
+    PackageStore.add(
+      makeMockReq(
+        { metadata: { namespace: "owner-system", name: "owner" } },
+        [],
+        [],
+        [{ clientId: "app-probe" }],
+        [],
+      ).Raw,
+    );
+    const req = makeMockReq(
+      {},
+      [{ host: "app", uptime: { checks: { paths: ["/health"] } } }],
+      [],
+      [{ clientId: "app", enableAuthserviceSelector: { app: "app" } }],
+      [],
+    );
+
+    await validator(req);
+
+    expect(req.Deny).toHaveBeenCalledWith(
+      'The client ID "app-probe" is already in use by another package.',
+    );
+    vi.mocked(req.Deny).mockClear();
+    Object.defineProperty(req, "OldResource", { value: structuredClone(req.Raw) });
+    req.Raw.metadata!.deletionTimestamp = new Date("2026-01-01T00:00:00Z");
+    await validator(req);
+    expect(req.Approve).toHaveBeenCalledOnce();
+    expect(req.Deny).not.toHaveBeenCalled();
+  });
+
+  it("denies a terminating Package update without the previous spec", async () => {
+    const req = makeMockReq(
+      {
+        metadata: {
+          namespace: "application-system",
+          name: "application",
+          deletionTimestamp: new Date("2026-01-01T00:00:00Z"),
+        },
+      },
+      [],
+      [],
+      [],
+      [],
+    );
+
+    await validator(req);
+
+    expect(req.Deny).toHaveBeenCalledWith("Package spec cannot change during deletion.");
+  });
+
+  it("denies a Package that declares both an SSO client and its reserved probe ID", async () => {
+    const req = makeMockReq(
+      {},
+      [{ host: "app", uptime: { checks: { paths: ["/health"] } } }],
+      [],
+      [{ clientId: "app", enableAuthserviceSelector: { app: "app" } }, { clientId: "app-probe" }],
+      [],
+    );
+
+    await validator(req);
+
+    expect(req.Deny).toHaveBeenCalledWith(
+      'The client ID "app-probe" is reserved for the probe client of "app".',
+    );
+  });
+
+  it("allows a standalone SSO client ID ending in -probe", async () => {
+    const req = makeMockReq({}, [], [], [{ clientId: "app-probe" }], []);
+
+    await validator(req);
+
+    expect(req.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows app and app-probe when app does not generate a probe", async () => {
+    const req = makeMockReq({}, [], [], [{ clientId: "app" }, { clientId: "app-probe" }], []);
+
+    await validator(req);
+
+    expect(req.Approve).toHaveBeenCalledTimes(1);
   });
 
   it("denies clients with invalid secret names", async () => {
