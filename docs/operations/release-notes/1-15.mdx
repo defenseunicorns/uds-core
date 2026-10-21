@@ -47,6 +47,19 @@ UDS Core 1.15 restores login and issuer validation through additional Keycloak S
 
 ## Upgrade considerations
 
+### Patch release 1.15.1
+
+> [!IMPORTANT]
+> Upgrade Unicorn and upstream deployments to UDS Core 1.15.1 to address critical and high-severity vulnerabilities in Pepr, UDS Identity Config, and UDS Portal. Iron Bank images remain unchanged.
+
+UDS Core 1.15.1 includes these dependency updates:
+
+| Package             | Previous | Updated                                                                               |
+| ------------------- | -------- | ------------------------------------------------------------------------------------- |
+| Pepr                | 2.0.3    | [2.0.5](https://github.com/defenseunicorns/pepr/releases/tag/v2.0.5)                  |
+| UDS Identity Config | 0.32.2   | [0.32.3](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.32.3) |
+| UDS Portal          | 0.5.2    | [0.5.3](https://github.com/defenseunicorns/uds-portal/releases/tag/v0.5.3)            |
+
 ### Identity Config updates (0.32.2)
 
 UDS Identity Config [0.32.2](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.32.2) restores multi-domain and claim token behavior affected by earlier hostname changes. This release also includes plugin and dependency updates. No manual realm steps are required for existing clusters.
@@ -58,4 +71,4 @@ UDS Identity Config [0.32.2](https://github.com/defenseunicorns/uds-identity-con
 - [Identity and authorization configuration](/reference/configuration/identity-and-authorization/) - configure Keycloak and UDS Identity Config settings
 - [UDS Core 1.15.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#1150-2026-10-13) - full changelog
 - [UDS Identity Config 0.32.2 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0322-2026-10-07) - identity-config changelog
-- [Full diff (1.14.1...1.15.0)](https://github.com/defenseunicorns/uds-core/compare/v1.14.1...v1.15.0) - all changes between versions
+- [Full diff (1.14.1...1.15.1)](https://github.com/defenseunicorns/uds-core/compare/v1.14.1...v1.15.1) - all changes between versions
