@@ -1,6 +1,6 @@
 ---
 title: Audit security posture
-description: Review your cluster's security posture by auditing policy exemptions and inspecting Package CR network rules for overly permissive configurations.
+description: Review your cluster's security posture by auditing policy exemptions, Package CR network rules, and service account audiences.
 sidebar:
   order: 8.005
 ---
@@ -9,7 +9,7 @@ import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll review your cluster's security posture by auditing policy exemptions for scope and justification, and inspecting `Package` CR network rules for overly permissive configurations.
+You'll review your cluster's security posture by auditing policy exemptions, `Package` CR network rules, and service account audiences.
 
 ## Prerequisites
 
@@ -18,10 +18,11 @@ You'll review your cluster's security posture by auditing policy exemptions for 
 
 ## Before you begin
 
-UDS Core provides two layers of auditable security configuration:
+Review these parts of a UDS Core deployment for settings that affect security:
 
 - **Policy exemptions** - `Exemption` CRs that allow specific workloads to bypass UDS policies. Each exempted resource is annotated, creating a built-in audit trail.
 - **`Package` CR network rules** - The `allow` fields in `Package` CRs generate Kubernetes NetworkPolicies and Istio AuthorizationPolicies. Overly broad rules can silently weaken your network segmentation.
+- **`Package` CR service accounts** - Audience mappers on SSO clients with `serviceAccountsEnabled: true` can allow machine access to Authservice-protected applications across namespaces.
 
 > [!IMPORTANT]
 > Your organization should include review of `Package` CRs and `Exemption` CRs as part of the normal deployment process. Catching overly permissive configurations during code review is more effective than auditing after the fact.
@@ -102,7 +103,11 @@ UDS Core provides two layers of auditable security configuration:
    > [!IMPORTANT]
    > The UDS Operator does not warn about or block permissive configurations. It generates whatever NetworkPolicies and AuthorizationPolicies the `Package` CR requests. Audit is the only mechanism to catch overly broad rules.
 
-4. **Verify Pepr controller health**
+4. **Audit service account audiences**
+
+   Review who can create or edit `Package` CRs. For each `Package` with `serviceAccountsEnabled: true`, review its audience mappers and confirm that each target application's owner approves machine access. Keycloak client scopes can add audiences that do not appear in the `Package`. Check the client's effective mappers in Keycloak or the `aud` claim in an issued token. See [Configure service account clients](/how-to-guides/identity-and-authorization/configure-service-accounts/) for token verification steps.
+
+5. **Verify Pepr controller health**
 
    Confirm the policy controller is running and processing resources:
 
@@ -124,6 +129,7 @@ A well-audited cluster shows:
 - Every `Exemption` CR has a `title` and `description` with clear justification
 - No exemptions target removed workloads
 - No `Package` CR `allow` rules use `remoteGenerated: Anywhere` without documented justification
+- Service account audiences have been reviewed with the target application owners
 
 ## Related documentation
 
