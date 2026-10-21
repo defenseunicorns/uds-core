@@ -147,7 +147,7 @@ function getPkgName(namespace: string): string | null {
 }
 
 /**
- * Finds packages that have an SSO client with the specified client ID.
+ * Finds packages that declare or reserve the specified SSO client ID.
  *
  * @param {string} clientId - The client ID to search for.
  * @returns {Array<{namespace: string, name: string, pkg: UDSPackage}>} - Array of namespaces with Packages using the specified client ID.
@@ -156,20 +156,41 @@ function findPackagesWithSsoClientId(clientId: string): Set<string> {
   return ssoIndex.get(clientId) ?? new Set<string>();
 }
 
+function getProbeClientIds(pkg: UDSPackage): Set<string> {
+  const hasUptimeChecks = pkg.spec?.network?.expose?.some(
+    expose => expose.uptime?.checks?.paths?.length,
+  );
+  if (!hasUptimeChecks) return new Set();
+
+  return new Set(
+    (pkg.spec?.sso ?? [])
+      .filter(client => client.enableAuthserviceSelector)
+      .map(client => `${client.clientId}-probe`),
+  );
+}
+
 function findPackagesWithUdpGatewayPort(gateway: string | undefined, port: number): Set<string> {
   return udpGatewayPortIndex.get(getUDPGatewayPortKey(gateway, port)) ?? new Set<string>();
 }
 
-function addIndexes(pkg: UDSPackage): void {
+function addSsoIndexes(pkg: UDSPackage): void {
   const namespace = pkg.metadata!.namespace!;
 
-  for (const client of pkg.spec?.sso ?? []) {
-    if (!ssoIndex.has(client.clientId)) {
-      ssoIndex.set(client.clientId, new Set());
+  for (const clientId of [
+    ...(pkg.spec?.sso ?? []).map(client => client.clientId),
+    ...getProbeClientIds(pkg),
+  ]) {
+    if (!ssoIndex.has(clientId)) {
+      ssoIndex.set(clientId, new Set());
     }
     // Store based on namespace since we only allow a single Package per namespace
-    ssoIndex.get(client.clientId)!.add(namespace);
+    ssoIndex.get(clientId)!.add(namespace);
   }
+}
+
+function addIndexes(pkg: UDSPackage): void {
+  const namespace = pkg.metadata!.namespace!;
+  addSsoIndexes(pkg);
 
   for (const expose of pkg.spec?.network?.expose ?? []) {
     if (expose.protocol !== ExposeProtocol.UDP || expose.port === undefined) {
@@ -187,12 +208,15 @@ function addIndexes(pkg: UDSPackage): void {
 function removeIndexes(pkg: UDSPackage): void {
   const namespace = pkg.metadata!.namespace!;
 
-  for (const client of pkg.spec?.sso ?? []) {
-    const nsSet = ssoIndex.get(client.clientId);
+  for (const clientId of [
+    ...(pkg.spec?.sso ?? []).map(client => client.clientId),
+    ...getProbeClientIds(pkg),
+  ]) {
+    const nsSet = ssoIndex.get(clientId);
     if (!nsSet) continue;
     nsSet.delete(namespace);
     if (nsSet.size === 0) {
-      ssoIndex.delete(client.clientId);
+      ssoIndex.delete(clientId);
     }
   }
 
@@ -247,6 +271,7 @@ export const PackageStore = {
   remove,
   hasKey,
   getPkgName,
+  getProbeClientIds,
   findPackagesWithSsoClientId,
   findPackagesWithUdpGatewayPort,
   getAmbientPackages,
