@@ -10,7 +10,12 @@ import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../cr
 import { ExposeProtocol, Mode, RemoteProtocol } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
 import { getUDPGatewayName, getUDPGatewayNamespace } from "../envoy-gateway/constants";
-import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
+import {
+  findMatchingWaypointTarget,
+  getPodSelector,
+  getWaypointName,
+  getWaypointTargets,
+} from "../istio/waypoint-utils";
 import { getAuthserviceClients, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
@@ -91,8 +96,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     // Only process ingress policies that have a selector
     if (policy.direction === Direction.Ingress && policy.selector) {
       // Find if this policy's selector matches an authservice-protected workload
-      const matchingClient = findMatchingClient(pkg, policy.selector);
-      const waypointName = matchingClient ? getWaypointName(matchingClient.clientId) : undefined;
+      const waypointTarget = findMatchingWaypointTarget(pkg, policy.selector);
+      const waypointName = waypointTarget ? getWaypointName(waypointTarget.id) : undefined;
 
       // If we found a matching client with a waypoint, update the selector
       if (waypointName) {
@@ -114,8 +119,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     const policyPort = targetPort ?? port;
 
     // Find if this service has a matching client with waypoint
-    const matchingClient = findMatchingClient(pkg, selector);
-    const waypointName = matchingClient ? getWaypointName(matchingClient.clientId) : undefined;
+    const waypointTarget = findMatchingWaypointTarget(pkg, selector);
+    const waypointName = waypointTarget ? getWaypointName(waypointTarget.id) : undefined;
 
     // Use waypoint selector only if we have a waypoint and the package is configured for ambient waypoint
     const podSelector = waypointName ? getPodSelector(pkg, selector, waypointName) : selector;
@@ -188,55 +193,53 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     // Generate the policy
     const keycloakGeneratedPolicy = generate(namespace, keycloakPolicy, istioMode as Mode);
     policies.push(keycloakGeneratedPolicy);
+  }
 
-    // Add waypoint network policies for ambient mode
-    if (shouldUseAmbientWaypoint(pkg)) {
-      const waypointName = getWaypointName(sso.clientId);
-      const appSelector = sso.enableAuthserviceSelector;
+  // Add the provider-independent network policies required by ambient
+  // waypoints.
+  const waypointTargets = getWaypointTargets(pkg);
+  if (istioMode === Mode.Ambient && waypointTargets.length > 0) {
+    for (const target of waypointTargets) {
+      const waypointName = getWaypointName(target.id);
+      const waypointSelector = { "istio.io/gateway-name": waypointName };
 
-      // Egress policy: Allow traffic from waypoint to istiod
-      const istiodPolicy = allowEgressIstiod(namespace, sso.clientId, netpolSelector);
-
-      // Add labels to the generated policy
+      const istiodPolicy = allowEgressIstiod(namespace, target.id, waypointSelector);
       istiodPolicy.metadata = {
         ...istiodPolicy.metadata,
         labels: {
           ...istiodPolicy.metadata?.labels,
-          "uds/sso-client": sso.clientId,
+          ...(target.type === "authservice"
+            ? { "uds/sso-client": target.id }
+            : { "uds/waypoint": waypointName }),
         },
       };
       policies.push(istiodPolicy);
 
-      // Egress policy: Allow traffic from waypoint to app pods
       policies.push(
         generate(namespace, {
           direction: Direction.Egress,
-          selector: { "istio.io/gateway-name": waypointName },
-          remoteSelector: appSelector,
+          selector: waypointSelector,
+          remoteSelector: target.selector,
           description: `Allow traffic from ${waypointName} to app`,
         }),
       );
 
-      // Add ingress policy to app pods to allow traffic from waypoint
       policies.push(
         generate(namespace, {
           direction: Direction.Ingress,
-          selector: appSelector,
-          remoteSelector: { "istio.io/gateway-name": waypointName },
+          selector: target.selector,
+          remoteSelector: waypointSelector,
           description: `Allow traffic from ${waypointName} to app pods`,
         }),
       );
 
-      // Health check policy: Allow monitoring access to waypoint
       policies.push(
         generate(namespace, {
           direction: Direction.Ingress,
-          selector: { "istio.io/gateway-name": waypointName },
+          selector: waypointSelector,
           remoteNamespace: "monitoring",
           remoteSelector: { app: "prometheus" },
-          ports: [
-            15020, // Envoy admin port
-          ],
+          ports: [15020],
           description: `Allow health checks from monitoring to ${waypointName}`,
         }),
       );
@@ -250,8 +253,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     const { selector, targetPort, podSelector } = monitor;
 
     // Find if this service has a matching client with waypoint
-    const matchingClient = findMatchingClient(pkg, selector);
-    const waypointName = matchingClient ? getWaypointName(matchingClient.clientId) : undefined;
+    const waypointTarget = findMatchingWaypointTarget(pkg, selector);
+    const waypointName = waypointTarget ? getWaypointName(waypointTarget.id) : undefined;
 
     // Use waypoint selector only if we have a waypoint and the package is configured for ambient waypoint
     const allowSelector = waypointName
