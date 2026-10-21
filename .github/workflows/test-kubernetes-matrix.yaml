@@ -23,7 +23,7 @@ permissions:
   id-token: write
   packages: read
 
-# Keep the complete compatibility matrix at the top of the workflow.
+# Keep the complete compatibility matrix at the top; versions require published uds-k3d images.
 jobs:
   test:
     name: Kubernetes compatibility (${{ matrix.k3s_version }}, ${{ matrix.flavor }})
