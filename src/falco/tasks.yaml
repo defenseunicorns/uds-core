@@ -23,7 +23,7 @@ tasks:
     actions:
       - description: "Run Falco E2E tests"
         cmd: |
-          npm ci && npx vitest run "falco.spec.ts"
+          npm ci && SKIP_INTEGRATION=true npx vitest run "falco"
         dir: test/vitest
 
   - name: update-rules

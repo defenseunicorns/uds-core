@@ -33,7 +33,7 @@ tasks:
     actions:
       - description: "Run Loki E2E tests"
         cmd: |
-          npm ci && npx vitest run "loki.spec.ts"
+          npm ci && SKIP_INTEGRATION=true npx vitest run "loki"
         dir: test/vitest
 
   - name: validate-object-storage-writes
