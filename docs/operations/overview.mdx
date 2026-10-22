@@ -1,6 +1,6 @@
 ---
 title: Operations & Maintenance
-description: Index of Day-2 operations guides for UDS Core, covering upgrade procedures, troubleshooting runbooks, and release notes.
+description: Index of Day-2 operations guides for UDS Core, covering security hardening, shared responsibilities, upgrade procedures, troubleshooting runbooks, and release notes.
 sidebar:
   order: 0.000
 ---
@@ -10,6 +10,11 @@ import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 This section covers Day-2 operations for teams running and owning a UDS Core platform. Use these guides when you need to upgrade, troubleshoot, or maintain a deployed environment.
 
 <CardGrid>
+  <LinkCard
+    title="Security Hardening & Shared Responsibilities"
+    description="Configure and operate the environment baseline for administrative access, alerting, recovery, and maintenance."
+    href="/operations/security-hardening-and-shared-responsibilities/"
+  />
   <LinkCard
     title="Troubleshooting & Runbooks"
     description="Diagnose and resolve common issues on a running platform."
