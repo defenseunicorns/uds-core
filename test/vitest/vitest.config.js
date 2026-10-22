@@ -6,6 +6,7 @@
 import { defineConfig } from "vitest/config";
 
 const skipFleetAdmin = process.env.SKIP_FLEET_ADMIN === "true";
+const skipIntegration = process.env.SKIP_INTEGRATION === "true";
 
 export default defineConfig({
   test: {
@@ -38,6 +39,7 @@ export default defineConfig({
           exclude: [
             "trust-bundle/**",
             "**/network.spec.ts",
+            ...(skipIntegration ? ["**/*integration*"] : []),
             ...(skipFleetAdmin ? ["**/keycloak-fleet-admin.spec.ts"] : []),
           ],
           sequence: { groupOrder: 1 },
