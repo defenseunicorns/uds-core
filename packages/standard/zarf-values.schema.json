@@ -24771,8 +24771,7 @@
                   "type": "object"
                 },
                 "customMetric": {
-                  "properties": {},
-                  "type": "object"
+                  "type": "array"
                 },
                 "enabled": {
                   "type": "boolean"
@@ -25200,8 +25199,7 @@
                 "autoscaling": {
                   "properties": {
                     "customMetric": {
-                      "properties": {},
-                      "type": "object"
+                      "type": "array"
                     },
                     "enabled": {
                       "type": "boolean"
@@ -25314,6 +25312,9 @@
                     },
                     "loadBalancerIP": {
                       "type": "string"
+                    },
+                    "loadBalancerSourceRanges": {
+                      "type": "array"
                     },
                     "ports": {
                       "type": "array"
@@ -25449,7 +25450,8 @@
                 },
                 "size": {
                   "type": "string"
-                }
+                },
+                "volumeAttributesClassName": {}
               },
               "type": "object"
             },
@@ -25602,6 +25604,9 @@
                 },
                 "loadBalancerIP": {
                   "type": "string"
+                },
+                "loadBalancerSourceRanges": {
+                  "type": "array"
                 },
                 "ports": {
                   "items": {
