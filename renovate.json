@@ -232,8 +232,8 @@
       "allowedVersions": "<10"
     },
     {
-      "matchFileNames": ["test/vitest/package.json"],
-      "matchPackageNames": ["vitest"],
+      "matchFileNames": ["package.json", "test/vitest/package.json"],
+      "matchPackageNames": ["vitest", "@vitest/coverage-v8"],
       "allowedVersions": "<5"
     },
     {
