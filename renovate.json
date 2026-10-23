@@ -162,13 +162,10 @@
       "minimumReleaseAge": "5 days"
     },
     {
-      "matchFileNames": [
-        "package.json",
-        "package-lock.json",
-        "tasks/create.yaml"
-      ],
       "matchDepNames": [
         "pepr",
+        "kubernetes-fluent-client",
+        "defenseunicorns/kubernetes-fluent-client",
         "registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller",
         "defenseunicorns/pepr"
       ],
@@ -184,8 +181,7 @@
     {
       "matchPackageNames": [
         "defenseunicorns/uds-common",
-        "mcr.microsoft.com/playwright",
-        "defenseunicorns/kubernetes-fluent-client"
+        "mcr.microsoft.com/playwright"
       ],
       "groupName": "support-deps",
       "commitMessageTopic": "support-deps"
