@@ -77,7 +77,7 @@ tests:
           path: spec.configPatches[1].patch.value.typed_config.inlineCode
           pattern: "<script>"
 
-  - it: should select viewport rows from each banner's footer setting
+  - it: should select body injection or CSS-only marking for each banner
     set:
       classificationBanners:
         - text: UNCLASSIFIED
@@ -86,6 +86,7 @@ tests:
             - app.uds.test
         - text: SECRET
           addFooter: false
+          cssOnly: true
           enabledHosts:
             - app.uds.test
           pathPrefixes:
@@ -100,6 +101,12 @@ tests:
       - matchRegex:
           path: spec.configPatches[1].patch.value.typed_config.inlineCode
           pattern: "addFooter = false"
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: "cssOnly = true"
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: 'if presentation\.cssOnly then\n\s+return html'
       - matchRegex:
           path: spec.configPatches[1].patch.value.typed_config.inlineCode
           pattern: '\["/classified"\] = true'
