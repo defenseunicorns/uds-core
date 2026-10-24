@@ -52,8 +52,8 @@
     "pepr": "2.0.5"
   },
   "devDependencies": {
-    "@commitlint/cli": "21.2.3",
-    "@commitlint/config-conventional": "21.2.3",
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.39.0",
     "@types/ws": "^8.18.1",
