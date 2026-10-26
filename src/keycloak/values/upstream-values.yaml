@@ -1,8 +1,8 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 podSecurityContext:
   fsGroup: 1000
 image:
   repository: quay.io/keycloak/keycloak
-  tag: "26.7.4"
+  tag: "26.8.1"

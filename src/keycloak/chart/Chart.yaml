@@ -1,10 +1,10 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: v2
 name: keycloak
 # renovate: datasource=docker depName=quay.io/keycloak/keycloak versioning=semver
-version: 26.7.4
+version: 26.8.1
 description: Open Source Identity and Access Management For Modern Applications and Services
 keywords:
   - sso
