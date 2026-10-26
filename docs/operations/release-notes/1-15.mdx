@@ -56,7 +56,7 @@ UDS Core 1.15.3 includes these dependency updates:
 
 | Package             | Previous         | Updated                                                                               |
 | ------------------- | ---------------- | ------------------------------------------------------------------------------------- |
-| curl                | 8.22.0           | [8.23.0](https://github.com/curl/curl/releases/tag/curl-8_23_0)                           |
+| curl (upstream and Unicorn) | 8.22.0           | [8.23.0](https://github.com/curl/curl/releases/tag/curl-8_23_0)                           |
 | Grafana             | 13.2.3           | [13.2.4](https://github.com/grafana/grafana/releases/tag/v13.2.4)                         |
 | Istio               | 1.31.1           | [1.31.2](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.2/)                 |
 | Keycloak            | 26.7.4           | [26.8.1](https://github.com/keycloak/keycloak/releases/tag/26.8.1)                       |
@@ -66,6 +66,10 @@ UDS Core 1.15.3 includes these dependency updates:
 
 > [!NOTE]
 > Iron Bank differs from the table above: Grafana stays at 13.2.3, and Pepr updates from 2.0.3 to 2.0.5 rather than 2.0.7.
+
+### Patch release 1.15.2
+
+UDS Core 1.15.2 fixes a cross-namespace Keycloak client-ownership bypass involving generated client IDs for Authservice uptime checks ([#3131](https://github.com/defenseunicorns/uds-core/pull/3131)).
 
 ### Patch release 1.15.1
 
