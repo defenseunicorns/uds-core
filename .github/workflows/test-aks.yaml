@@ -28,6 +28,7 @@ jobs:
       pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
     env:
       SHA: ${{ github.sha }}
+      CORE_PACKAGES: init,core_crds,core_base,core_identity_authorization,core_logging,core_monitoring,core_runtime_security,core_backup_restore${{ matrix.flavor != 'registry1' && ',core_portal' || '' }}
       UDS_REGION: eastus2
       UDS_RESOURCE_GROUP_NAME: ${{ secrets.AZURE_RESOURCE_GROUP }}
       UDS_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
@@ -78,11 +79,16 @@ jobs:
           tofu_version: v1.13.1
           tofu_wrapper: false
 
-      - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
+      - name: Create UDS Core functional layer packages
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml functional-layers --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
-        run: CLI_FEATURES=NextMode=true uds bundle create ./.github/bundles/aks --architecture amd64 --unsigned
+        run: |
+          if [ "${{ matrix.flavor }}" = "registry1" ]; then
+            # Portal has no registry1 flavor; package upstream Portal but exclude it at deploy time.
+            ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml single-layer --with layer=portal --with create_options="--skip-sbom" --set FLAVOR=upstream --no-progress
+          fi
+          CLI_FEATURES=NextMode=true uds bundle create ./.github/bundles/aks --architecture amd64 --unsigned
 
       - name: Create IAC
         run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
@@ -104,6 +110,7 @@ jobs:
             if CLI_FEATURES=NextMode=true uds bundle deploy \
               .github/bundles/aks/uds-bundle-uds-core-aks-nightly-amd64-*.tar.zst \
               --config .github/bundles/aks/config.uds.hcl \
+              --packages "$CORE_PACKAGES" \
               --skip-signature-verification; then
               echo "CORE_ATTEMPTS=$attempt" >> "$GITHUB_ENV"
               exit 0
@@ -114,6 +121,8 @@ jobs:
               if ! CLI_FEATURES=NextMode=true uds bundle remove \
                 .github/bundles/aks/uds-bundle-uds-core-aks-nightly-amd64-*.tar.zst \
                 --config .github/bundles/aks/config.uds.hcl \
+                --packages "$CORE_PACKAGES" \
+                ${{ matrix.flavor == 'registry1' && '--force' || '' }} \
                 --skip-signature-verification; then
                 echo "CORE_ATTEMPTS=fail" >> "$GITHUB_ENV"
                 echo "Partial deployment removal failed; refusing to retry over the existing state."
@@ -231,6 +240,8 @@ jobs:
             if CLI_FEATURES=NextMode=true uds bundle remove \
               .github/bundles/aks/uds-bundle-uds-core-aks-nightly-amd64-*.tar.zst \
               --config .github/bundles/aks/config.uds.hcl \
+              --packages "$CORE_PACKAGES" \
+              ${{ matrix.flavor == 'registry1' && '--force' || '' }} \
               --skip-signature-verification; then
               break
             fi
