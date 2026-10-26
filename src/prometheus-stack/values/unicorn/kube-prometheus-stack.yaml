@@ -23,7 +23,7 @@ prometheus:
     image:
       registry: cgr.dev
       repository: defenseunicorns.com/prometheus-fips
-      tag: v3.15.0
+      tag: v3.15.1
 prometheus-node-exporter:
   image:
     registry: cgr.dev
