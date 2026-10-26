@@ -19,6 +19,7 @@ UDS Packages are Zarf packages that integrate with UDS Core and follow these add
 - **MUST** minimize the scope and number of exemptions, to only what is absolutely required by the application. UDS Packages **MAY** make use of the [UDS `Exemption` custom resource](/how-to-guides/policy-and-compliance/create-policy-exemptions/) for exempting any Pepr policies, but in doing so they **MUST** document rationale for the exemptions. Exemptions **SHOULD** be documented in `docs/justifications.md` of the UDS Package repository.
 - **MUST** declaratively implement any available application hardening guidelines by default.
 - **SHOULD** consider security options during implementation to provide the most secure default possible (i.e. SAML w/SCIM vs OIDC).
+- **SHOULD** restrict external access to administrative and sensitive endpoints using Istio AuthorizationPolicy or equivalent controls.
 
 ## Packaging lifecycle and configuration
 
