@@ -5509,6 +5509,9 @@
                     "scheme": {
                       "type": "string"
                     },
+                    "scrapeClass": {
+                      "type": "string"
+                    },
                     "selfMonitor": {
                       "type": "boolean"
                     },
@@ -5692,6 +5695,9 @@
                     },
                     "sampleLimit": {
                       "type": "number"
+                    },
+                    "scrapeClass": {
+                      "type": "string"
                     },
                     "selector": {
                       "properties": {},
@@ -6675,6 +6681,9 @@
                     "sampleLimit": {
                       "type": "number"
                     },
+                    "scrapeClass": {
+                      "type": "string"
+                    },
                     "selector": {
                       "properties": {
                         "matchLabels": {
@@ -6827,6 +6836,9 @@
                     "sampleLimit": {
                       "type": "number"
                     },
+                    "scrapeClass": {
+                      "type": "string"
+                    },
                     "selector": {
                       "properties": {},
                       "type": "object"
@@ -6974,6 +6986,9 @@
                     "sampleLimit": {
                       "type": "number"
                     },
+                    "scrapeClass": {
+                      "type": "string"
+                    },
                     "selector": {
                       "properties": {},
                       "type": "object"
@@ -7088,6 +7103,9 @@
                       "type": "number"
                     },
                     "scheme": {
+                      "type": "string"
+                    },
+                    "scrapeClass": {
                       "type": "string"
                     },
                     "selector": {
@@ -7216,6 +7234,9 @@
                     },
                     "sampleLimit": {
                       "type": "number"
+                    },
+                    "scrapeClass": {
+                      "type": "string"
                     },
                     "selector": {
                       "properties": {},
@@ -7367,6 +7388,9 @@
                     },
                     "sampleLimit": {
                       "type": "number"
+                    },
+                    "scrapeClass": {
+                      "type": "string"
                     },
                     "selector": {
                       "properties": {},
@@ -7640,6 +7664,9 @@
                     "sampleLimit": {
                       "type": "number"
                     },
+                    "scrapeClass": {
+                      "type": "string"
+                    },
                     "targetLabels": {
                       "type": "array"
                     },
@@ -7750,20 +7777,38 @@
                   "properties": {},
                   "type": "object"
                 },
-                "additionalPodMonitors": {
-                  "type": "array"
-                },
+                "additionalPodMonitors": {},
                 "additionalRulesForClusterRole": {
                   "type": "array"
                 },
-                "additionalServiceMonitors": {
-                  "type": "array"
-                },
+                "additionalServiceMonitors": {},
                 "agentMode": {
                   "type": "boolean"
                 },
                 "annotations": {
                   "properties": {},
+                  "type": "object"
+                },
+                "controlPlaneScrapeClass": {
+                  "properties": {
+                    "authorization": {
+                      "properties": {
+                        "credentialsFile": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
                   "type": "object"
                 },
                 "enabled": {
@@ -8754,6 +8799,9 @@
                     "scheme": {
                       "type": "string"
                     },
+                    "scrapeClass": {
+                      "type": "string"
+                    },
                     "selfMonitor": {
                       "type": "boolean"
                     },
@@ -9537,6 +9585,9 @@
                           },
                           "type": "object"
                         },
+                        "secretType": {
+                          "type": "string"
+                        },
                         "serviceAccount": {
                           "properties": {
                             "annotations": {
@@ -9936,6 +9987,9 @@
                     "sampleLimit": {
                       "type": "number"
                     },
+                    "scrapeClass": {
+                      "type": "string"
+                    },
                     "scrapeTimeout": {
                       "type": "string"
                     },
@@ -10254,6 +10308,9 @@
                       "type": "number"
                     },
                     "scheme": {
+                      "type": "string"
+                    },
+                    "scrapeClass": {
                       "type": "string"
                     },
                     "selfMonitor": {
