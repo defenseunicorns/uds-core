@@ -24,7 +24,7 @@ EOM
 envsubst < helmchart-template.yaml > /var/lib/rancher/rke2/server/manifests/00-helmcharts.yaml
 # We install longhorn from a template to avoid install issues with the HelmController
 # <!-- renovate: datasource=helm depName=longhorn versioning=helm registryUrl=https://charts.longhorn.io -->
-LONGHORN_VERSION=1.12.1
+LONGHORN_VERSION=1.13.0
 HELM_LATEST=$(curl -L --silent --show-error --fail "https://get.helm.sh/helm-latest-version" 2>&1 || true)
 curl https://get.helm.sh/helm-$HELM_LATEST-linux-amd64.tar.gz --output helm.tar.gz
 tar -xvf ./helm.tar.gz && rm -rf ./helm.tar.gz
@@ -50,6 +50,8 @@ info "Setting up RKE2 config file"
 ./yq -i '.cloud-provider-name += "external"' /etc/rancher/rke2/config.yaml
 ./yq -i '.disable-cloud-controller += "true"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "service-account-key-file=/irsa/signer.key.pub"' /etc/rancher/rke2/config.yaml
+# Keep RKE2 service-account tokens verifiable alongside tokens signed by the IRSA key.
+./yq -i '.kube-apiserver-arg += "service-account-key-file=/var/lib/rancher/rke2/server/tls/service.key"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "service-account-signing-key-file=/irsa/signer.key"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "api-audiences=kubernetes.svc.default"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "service-account-issuer=https://${BUCKET_REGIONAL_DOMAIN_NAME}"' /etc/rancher/rke2/config.yaml

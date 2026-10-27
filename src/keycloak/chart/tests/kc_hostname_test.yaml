@@ -1,0 +1,59 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak hostname startup options
+templates:
+  - statefulset.yaml
+  - secret-postgresql.yaml
+  - secret-kc-realm.yaml
+  - uds-package.yaml
+
+tests:
+  - it: should disable strict hostname validation without pinning a hostname
+    set:
+      devMode: false
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--hostname-strict=false"
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_HOSTNAME
+
+  - it: should remove untrusted forwarded headers without pinning a hostname
+    template: uds-package.yaml
+    asserts:
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: Forwarded
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Host
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Proto
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Port
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Prefix
+      - notExists:
+          path: spec.network.expose[*].advancedHTTP.headers.request.set.X-Forwarded-Host
+
+  - it: should preserve in-cluster Keycloak backchannel access
+    template: uds-package.yaml
+    asserts:
+      - contains:
+          path: spec.network.allow
+          content:
+            description: "Keycloak backchannel access"
+            direction: Ingress
+            selector:
+              app.kubernetes.io/name: keycloak
+            remoteNamespace: "*"
+            port: 8080

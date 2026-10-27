@@ -1244,7 +1244,9 @@
                       "name": {
                         "type": "string"
                       },
-                      "value": {}
+                      "value": {
+                        "type": "string"
+                      }
                     },
                     "type": "object"
                   },
@@ -1570,7 +1572,9 @@
                       "name": {
                         "type": "string"
                       },
-                      "value": {}
+                      "value": {
+                        "type": "string"
+                      }
                     },
                     "type": "object"
                   },

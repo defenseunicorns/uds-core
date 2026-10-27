@@ -109,6 +109,11 @@ export interface TLS {
    */
   httpsRedirect?: boolean;
   /**
+   * Optional: If set to true, the proxy will try to validate the certificate, but even if the
+   * validation fails, it will allow the connection through.
+   */
+  insecureSkipVerify?: boolean;
+  /**
    * Optional: Maximum TLS protocol version.
    *
    * Valid Options: TLS_AUTO, TLSV1_0, TLSV1_1, TLSV1_2, TLSV1_3

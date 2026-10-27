@@ -9,6 +9,43 @@
             "backend": {
               "properties": {
                 "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "properties": {
+                                  "matchLabels": {
+                                    "properties": {
+                                      "app.kubernetes.io/component": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/instance": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/name": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "topologyKey": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": [
                     "object",
                     "null"
@@ -325,6 +362,25 @@
                       "properties": {
                         "grpc": {
                           "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -797,6 +853,25 @@
                       },
                       "type": "object"
                     },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "ipFamilies": {
                       "type": "array"
                     },
@@ -1199,6 +1274,25 @@
                       "properties": {
                         "grpc": {
                           "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -1606,6 +1700,25 @@
                       "properties": {
                         "grpc": {
                           "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -2527,6 +2640,25 @@
                       },
                       "type": "object"
                     },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "ipFamilies": {
                       "type": "array"
                     },
@@ -2785,6 +2917,25 @@
                         "type": "string"
                       },
                       "properties": {},
+                      "type": "object"
+                    },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
                       "type": "object"
                     },
                     "ipFamilies": {
@@ -3142,6 +3293,25 @@
                       },
                       "type": "object"
                     },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "ipFamilies": {
                       "type": "array"
                     },
@@ -3292,6 +3462,43 @@
             "gateway": {
               "properties": {
                 "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "properties": {
+                                  "matchLabels": {
+                                    "properties": {
+                                      "app.kubernetes.io/component": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/instance": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/name": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "topologyKey": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": [
                     "object",
                     "null"
@@ -4335,6 +4542,25 @@
                       },
                       "type": "object"
                     },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "ipFamilies": {
                       "type": "array"
                     },
@@ -4835,6 +5061,25 @@
                       "properties": {
                         "grpc": {
                           "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -5667,6 +5912,18 @@
                 },
                 "service": {
                   "properties": {
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "ipFamilies": {
                       "type": "array"
                     },
@@ -7089,6 +7346,25 @@
                       },
                       "type": "object"
                     },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "ipFamilies": {
                       "type": "array"
                     },
@@ -7915,6 +8191,25 @@
                       },
                       "type": "object"
                     },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "ipFamilies": {
                       "type": "array"
                     },
@@ -8380,6 +8675,25 @@
                       },
                       "type": "object"
                     },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "ipFamilies": {
                       "type": "array"
                     },
@@ -8723,6 +9037,25 @@
                       },
                       "type": "object"
                     },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "ipFamilies": {
                       "type": "array"
                     },
@@ -8868,6 +9201,43 @@
             "read": {
               "properties": {
                 "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "properties": {
+                                  "matchLabels": {
+                                    "properties": {
+                                      "app.kubernetes.io/component": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/instance": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/name": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "topologyKey": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": [
                     "object",
                     "null"
@@ -9116,6 +9486,25 @@
                       "properties": {
                         "grpc": {
                           "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -9841,6 +10230,25 @@
                       },
                       "type": "object"
                     },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "ipFamilies": {
                       "type": "array"
                     },
@@ -10538,6 +10946,25 @@
                       },
                       "type": "object"
                     },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "ipFamilies": {
                       "type": "array"
                     },
@@ -10759,6 +11186,25 @@
                       },
                       "type": "object"
                     },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "ipFamilies": {
                       "type": "array"
                     },
@@ -10879,6 +11325,43 @@
             "write": {
               "properties": {
                 "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "properties": {
+                                  "matchLabels": {
+                                    "properties": {
+                                      "app.kubernetes.io/component": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/instance": {
+                                        "type": "string"
+                                      },
+                                      "app.kubernetes.io/name": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "topologyKey": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": [
                     "object",
                     "null"
@@ -11248,6 +11731,25 @@
                       },
                       "type": "object"
                     },
+                    "headlessService": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "ipFamilies": {
                       "type": "array"
                     },
@@ -11429,8 +11931,7 @@
                   "type": "object"
                 },
                 "customMetric": {
-                  "properties": {},
-                  "type": "object"
+                  "type": "array"
                 },
                 "enabled": {
                   "type": "boolean"
@@ -11858,8 +12359,7 @@
                 "autoscaling": {
                   "properties": {
                     "customMetric": {
-                      "properties": {},
-                      "type": "object"
+                      "type": "array"
                     },
                     "enabled": {
                       "type": "boolean"
@@ -11972,6 +12472,9 @@
                     },
                     "loadBalancerIP": {
                       "type": "string"
+                    },
+                    "loadBalancerSourceRanges": {
+                      "type": "array"
                     },
                     "ports": {
                       "type": "array"
@@ -12107,7 +12610,8 @@
                 },
                 "size": {
                   "type": "string"
-                }
+                },
+                "volumeAttributesClassName": {}
               },
               "type": "object"
             },
@@ -12260,6 +12764,9 @@
                 },
                 "loadBalancerIP": {
                   "type": "string"
+                },
+                "loadBalancerSourceRanges": {
+                  "type": "array"
                 },
                 "ports": {
                   "items": {

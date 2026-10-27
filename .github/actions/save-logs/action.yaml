@@ -53,9 +53,9 @@ runs:
         sudo mv test/playwright/.playwright/* /tmp/playwright || true
       shell: bash
 
-    # Loop over all pods and use kubectl logs since we don't have the same direct node access as k3d
+    # K3d and K0s collect pod logs directly from their Docker nodes.
     - name: Cluster Pod Logs
-      if: ${{ inputs.distro != 'k3d' }}
+      if: ${{ inputs.distro != 'k3d' && inputs.distro != 'k0s' }}
       run: |
         echo "::group::Collecting logs for all pods"
         mkdir -p /tmp/pod-logs
@@ -128,7 +128,7 @@ runs:
         echo "::endgroup::"
       shell: bash
 
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: debug-log${{ inputs.suffix }}
         retention-days: 30
