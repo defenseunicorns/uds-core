@@ -14,20 +14,16 @@ import { createEvent, retryWithDelay } from "../utils";
  * Reload a list of pods using controller-based rolling restart when possible,
  * falling back to direct pod eviction when necessary.
  *
- * Updates a controller's pod template with a restartedAt annotation.
+ * For Deployments, StatefulSets, DaemonSets, and ReplicaSets, it will trigger a
+ * rolling restart by apply an update to the controller with a restartedAt annotation.
  *
- * Controllers with OnDelete updates and orphaned ReplicaSets also need their
- * existing pods evicted after their templates are changed. Pods without a
- * supported controller use direct eviction.
- * Failed controller restarts and failed eviction/deletion attempts are reported
- * after all pods have been attempted.
+ * For standalone pods or when controller handling fails, it will use direct pod eviction.
  *
  * @param namespace The namespace containing the pods
  * @param pods List of pods to evict or restart
  * @param message The reason for eviction/restart (for logging)
  * @param log Logger instance for logging
  * @param reason Resource type responsible for eviction/restart (for logging)
- * @param restartAt Timestamp to reuse while retrying the same resource change
  */
 export async function reloadPods(
   namespace: string,
@@ -35,7 +31,6 @@ export async function reloadPods(
   message: string,
   log: Logger,
   reason: string,
-  restartAt?: string,
 ) {
   if (pods.length === 0) {
     log.warn(`No pods provided for eviction in namespace ${namespace}`);
@@ -45,10 +40,8 @@ export async function reloadPods(
   log.info(`Processing ${pods.length} pods for restart/eviction in namespace ${namespace}`);
 
   // Track which controllers we've already handled to avoid duplicate restarts
-  const handledControllers: Record<string, "rolling" | "evict"> = {};
-  const podsToEvict: kind.Pod[] = [];
-  const managedPodsToEvict: kind.Pod[] = [];
-  const failures: Error[] = [];
+  const handledControllers: Record<string, boolean> = {};
+  const standalonePodsToEvict: kind.Pod[] = [];
 
   // First pass - identify controllers and standalone pods
   for (const pod of pods) {
@@ -69,7 +62,14 @@ export async function reloadPods(
 
     if (!controllerRef) {
       // No controller reference, handle as standalone pod
-      podsToEvict.push(pod);
+      standalonePodsToEvict.push(pod);
+      continue;
+    }
+
+    // Build a unique key for this controller to avoid duplicate handling
+    const controllerKey = `${controllerRef.kind}:${controllerRef.name}`;
+    if (handledControllers[controllerKey]) {
+      // We've already processed this controller
       continue;
     }
 
@@ -77,40 +77,14 @@ export async function reloadPods(
       const resolved = await resolveControllerKindAndName(namespace, controllerRef, log);
       if (!resolved) {
         // Unhandled controller type, evict the pod directly
-        podsToEvict.push(pod);
+        standalonePodsToEvict.push(pod);
         continue;
       }
 
-      // Deduplicate by the controller we actually restart.
-      const controllerKey = `${resolved.kindClass.name ?? String(resolved.kindClass)}:${resolved.name}`;
-      if (handledControllers[controllerKey]) {
-        if (handledControllers[controllerKey] === "evict") {
-          managedPodsToEvict.push(pod);
-        }
-        continue;
-      }
-
-      const controller = await restartController(
-        namespace,
-        resolved.kindClass,
-        resolved.name,
-        message,
-        log,
-        reason,
-        restartAt,
-      );
-      const updateStrategy = (controller as { spec?: { updateStrategy?: { type?: string } } }).spec
-        ?.updateStrategy?.type;
-      const needsEviction =
-        resolved.kindClass === kind.ReplicaSet ||
-        ((resolved.kindClass === kind.StatefulSet || resolved.kindClass === kind.DaemonSet) &&
-          updateStrategy === "OnDelete");
+      await restartController(namespace, resolved.kindClass, resolved.name, message, log, reason);
 
       // Mark this controller as handled
-      handledControllers[controllerKey] = needsEviction ? "evict" : "rolling";
-      if (needsEviction) {
-        managedPodsToEvict.push(pod);
-      }
+      handledControllers[controllerKey] = true;
     } catch (error) {
       log.error(
         {
@@ -122,32 +96,12 @@ export async function reloadPods(
         },
         `Failed to handle controller for pod: ${message}`,
       );
-      failures.push(
-        new Error(`Failed to restart controller ${controllerRef.kind}/${controllerRef.name}`, {
-          cause: error,
-        }),
-      );
     }
   }
 
-  // Evict pods that need direct handling, including standalone pods.
-  if (podsToEvict.length > 0) {
-    try {
-      await evictStandalonePods(namespace, podsToEvict, message, log);
-    } catch (error) {
-      failures.push(error instanceof Error ? error : new Error(String(error)));
-    }
-  }
-  if (managedPodsToEvict.length > 0) {
-    try {
-      await evictStandalonePods(namespace, managedPodsToEvict, message, log, false);
-    } catch (error) {
-      failures.push(error instanceof Error ? error : new Error(String(error)));
-    }
-  }
-
-  if (failures.length > 0) {
-    throw new AggregateError(failures, `Failed to reload pods in namespace ${namespace}`);
+  // Now handle any standalone pods with direct eviction
+  if (standalonePodsToEvict.length > 0) {
+    await evictStandalonePods(namespace, standalonePodsToEvict, message, log);
   }
 }
 
@@ -160,7 +114,7 @@ export async function reloadPods(
  * @param log Logger instance for logging
  * @returns The resolved kind class and name, or null for unhandled controller kinds
  */
-export async function resolveControllerKindAndName(
+async function resolveControllerKindAndName(
   namespace: string,
   ref: { kind: string; name: string },
   log: Logger,
@@ -284,7 +238,6 @@ async function cleanupControllerEntry(
  * @param message The reason for the restart (used in event message and logs)
  * @param log Logger instance for logging
  * @param reason The event reason string (used in the Kubernetes event)
- * @param restartAt Timestamp to write to the controller template
  */
 export async function restartController(
   namespace: string,
@@ -293,8 +246,7 @@ export async function restartController(
   message: string,
   log: Logger,
   reason: string,
-  restartAt = new Date().toISOString(),
-) {
+): Promise<void> {
   // Get the controller kind name for logging
   const controllerKindName = controllerKind?.name ?? String(controllerKind);
 
@@ -321,7 +273,7 @@ export async function restartController(
         template: {
           metadata: {
             annotations: {
-              "uds.dev/restartedAt": restartAt,
+              "uds.dev/restartedAt": new Date().toISOString(),
             },
           },
         },
@@ -364,7 +316,6 @@ export async function restartController(
 
   // Log success if we got here (apply was successful)
   log.info(`Successfully restarted ${controllerKindName} ${namespace}/${name}: ${message}`);
-  return controller;
 }
 
 /**
@@ -410,20 +361,17 @@ export async function cleanupOverClaimedControllerFields(
 }
 
 /**
- * Evict pods directly. Existing standalone callers fall back to Delete when eviction fails.
+ * Evict standalone pods directly using the Evict API with fallback to Delete
  */
 export async function evictStandalonePods(
   namespace: string,
   pods: kind.Pod[],
   reason: string,
   log: Logger,
-  fallbackToDelete = true,
 ) {
   if (pods.length === 0) return;
 
-  const failures: Error[] = [];
-
-  log.info(`Directly evicting ${pods.length} pods in namespace ${namespace}`);
+  log.info(`Directly evicting ${pods.length} standalone pods in namespace ${namespace}`);
 
   // Group pods by owner UID for ordered eviction (handling StatefulSets differently)
   const groups: Record<string, kind.Pod[]> = {};
@@ -450,12 +398,6 @@ export async function evictStandalonePods(
         await retryWithDelay(evictPod, log);
         log.info(`Successfully evicted pod ${namespace}/${pod.metadata?.name}`);
       } catch (err) {
-        if (!fallbackToDelete) {
-          failures.push(
-            new Error(`Failed to evict pod ${namespace}/${pod.metadata?.name}`, { cause: err }),
-          );
-          continue;
-        }
         // Fall back to Delete with grace period if Evict fails
         log.warn(
           `Failed to evict pod ${namespace}/${pod.metadata?.name} using Evict API, falling back to Delete: ${err.message}`,
@@ -472,17 +414,8 @@ export async function evictStandalonePods(
           log.error(
             `Failed to delete pod ${namespace}/${pod.metadata?.name}: ${deleteErr.message}`,
           );
-          failures.push(
-            new Error(`Failed to evict or delete pod ${namespace}/${pod.metadata?.name}`, {
-              cause: deleteErr,
-            }),
-          );
         }
       }
     }
-  }
-
-  if (failures.length > 0) {
-    throw new AggregateError(failures, `Failed to evict pods in namespace ${namespace}`);
   }
 }
