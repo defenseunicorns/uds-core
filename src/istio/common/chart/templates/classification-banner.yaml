@@ -114,8 +114,7 @@ spec:
               end
             end
 
-            -- Keep a CSS banner visible when full-document hydration replaces the injected
-            -- body elements. Escape CSS string delimiters and HTML raw-text delimiters.
+            -- Escape CSS string delimiters and HTML raw-text delimiters in CSS-only banners.
             local function cssString(text)
               return (text:gsub("[\\\"<>\n\r\f]", function(character)
                 return string.format("\\%X ", string.byte(character))
@@ -127,13 +126,11 @@ spec:
             -- so the transformed body can contain full-viewport application roots.
             local function viewportLayoutStyle(addFooter, classification, colors, cssOnly)
               local gridRows = "24px minmax(0, 1fr)"
-              local fallbackSelectors = cssOnly and "html::before" or "html:not(:has(body > #classification-banner-top))::before"
-              local footerFallback = ""
+              local footerRule = ""
               if addFooter then
                 gridRows = gridRows .. " 24px"
-                fallbackSelectors = fallbackSelectors .. (cssOnly and ", html::after" or ", html:not(:has(body > #classification-banner-bottom))::after")
-                footerFallback = [[
-              ]] .. (cssOnly and "html::after" or "html:not(:has(body > #classification-banner-bottom))::after") .. [[ {
+                footerRule = [[
+              html::after {
                 bottom: 0 !important;
               }
             ]]
@@ -186,20 +183,21 @@ spec:
                 position: relative;
               }
 
-              /* Hydration can remove the injected wrapper. Keep the remaining body between
-                 the markings and contain fixed application roots within that space. */
-              body:not(:has(> #classification-page-content)) {
-                display: block !important;
-                inset: 24px 0 ]] .. (addFooter and "24px" or "0") .. [[ !important;
-                overflow: auto !important;
-                transform: translateZ(0) !important;
-              }
+            ]]
+              end
+
+              if not cssOnly then
+                return [[
+            <style id="classification-banner-viewport-layout">
+              ]] .. viewportFrame .. [[
+            </style>
             ]]
               end
 
               return [[
             <style id="classification-banner-viewport-layout">
-              ]] .. viewportFrame .. fallbackSelectors .. [[ {
+              ]] .. viewportFrame .. [[
+              ]] .. (addFooter and "html::before, html::after" or "html::before") .. [[ {
                 align-items: center !important;
                 background-color: ]] .. colors.backgroundColor .. [[ !important;
                 box-sizing: border-box !important;
@@ -224,10 +222,10 @@ spec:
                 z-index: 2147483647 !important;
               }
 
-              ]] .. (cssOnly and "html::before" or "html:not(:has(body > #classification-banner-top))::before") .. [[ {
+              html::before {
                 top: 0 !important;
               }
-              ]] .. footerFallback .. [[
+              ]] .. footerRule .. [[
             </style>
             ]]
             end

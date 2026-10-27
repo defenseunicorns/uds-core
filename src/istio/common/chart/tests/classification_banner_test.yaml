@@ -109,4 +109,13 @@ tests:
           pattern: 'if presentation\.cssOnly then\n\s+return html'
       - matchRegex:
           path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: 'if not cssOnly then(?s:.*?)return \[\[(?s:.*?)<style id="classification-banner-viewport-layout">'
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: 'addFooter and "html::before, html::after" or "html::before"'
+      - notMatchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: ':has\('
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
           pattern: '\["/classified"\] = true'
