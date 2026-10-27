@@ -23061,9 +23061,6 @@
                 },
                 "livenessProbe": {
                   "properties": {
-                    "failureThreshold": {
-                      "type": "number"
-                    },
                     "httpGet": {
                       "properties": {
                         "path": {
@@ -23079,15 +23076,6 @@
                       "type": "object"
                     },
                     "initialDelaySeconds": {
-                      "type": "number"
-                    },
-                    "periodSeconds": {
-                      "type": "number"
-                    },
-                    "successThreshold": {
-                      "type": "number"
-                    },
-                    "timeoutSeconds": {
                       "type": "number"
                     }
                   },
@@ -23107,9 +23095,6 @@
                 },
                 "readinessProbe": {
                   "properties": {
-                    "failureThreshold": {
-                      "type": "number"
-                    },
                     "httpGet": {
                       "properties": {
                         "path": {
@@ -23125,15 +23110,6 @@
                       "type": "object"
                     },
                     "initialDelaySeconds": {
-                      "type": "number"
-                    },
-                    "periodSeconds": {
-                      "type": "number"
-                    },
-                    "successThreshold": {
-                      "type": "number"
-                    },
-                    "timeoutSeconds": {
                       "type": "number"
                     }
                   },
@@ -23168,9 +23144,6 @@
                 },
                 "startupProbe": {
                   "properties": {
-                    "failureThreshold": {
-                      "type": "number"
-                    },
                     "httpGet": {
                       "properties": {
                         "path": {
@@ -23186,15 +23159,6 @@
                       "type": "object"
                     },
                     "initialDelaySeconds": {
-                      "type": "number"
-                    },
-                    "periodSeconds": {
-                      "type": "number"
-                    },
-                    "successThreshold": {
-                      "type": "number"
-                    },
-                    "timeoutSeconds": {
                       "type": "number"
                     }
                   },
@@ -23386,9 +23350,6 @@
                 },
                 "livenessProbe": {
                   "properties": {
-                    "failureThreshold": {
-                      "type": "number"
-                    },
                     "httpGet": {
                       "properties": {
                         "path": {
@@ -23404,15 +23365,6 @@
                       "type": "object"
                     },
                     "initialDelaySeconds": {
-                      "type": "number"
-                    },
-                    "periodSeconds": {
-                      "type": "number"
-                    },
-                    "successThreshold": {
-                      "type": "number"
-                    },
-                    "timeoutSeconds": {
                       "type": "number"
                     }
                   },
@@ -23432,9 +23384,6 @@
                 },
                 "readinessProbe": {
                   "properties": {
-                    "failureThreshold": {
-                      "type": "number"
-                    },
                     "httpGet": {
                       "properties": {
                         "path": {
@@ -23450,15 +23399,6 @@
                       "type": "object"
                     },
                     "initialDelaySeconds": {
-                      "type": "number"
-                    },
-                    "periodSeconds": {
-                      "type": "number"
-                    },
-                    "successThreshold": {
-                      "type": "number"
-                    },
-                    "timeoutSeconds": {
                       "type": "number"
                     }
                   },
@@ -23493,9 +23433,6 @@
                 },
                 "startupProbe": {
                   "properties": {
-                    "failureThreshold": {
-                      "type": "number"
-                    },
                     "httpGet": {
                       "properties": {
                         "path": {
@@ -23511,15 +23448,6 @@
                       "type": "object"
                     },
                     "initialDelaySeconds": {
-                      "type": "number"
-                    },
-                    "periodSeconds": {
-                      "type": "number"
-                    },
-                    "successThreshold": {
-                      "type": "number"
-                    },
-                    "timeoutSeconds": {
                       "type": "number"
                     }
                   },
@@ -24646,6 +24574,10 @@
               },
               "type": "object"
             },
+            "affinity": {
+              "properties": {},
+              "type": "object"
+            },
             "classificationBanner": {
               "additionalProperties": false,
               "properties": {
@@ -24665,6 +24597,12 @@
               },
               "type": "object"
             },
+            "extraEnvs": {
+              "items": {
+                "type": "object"
+              },
+              "type": "array"
+            },
             "extraVolumeMounts": {
               "items": {
                 "type": "object"
@@ -24676,6 +24614,13 @@
                 "type": "object"
               },
               "type": "array"
+            },
+            "nodeSelector": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "properties": {},
+              "type": "object"
             },
             "package": {
               "properties": {
@@ -24731,6 +24676,12 @@
                 }
               },
               "type": "object"
+            },
+            "tolerations": {
+              "items": {
+                "type": "object"
+              },
+              "type": "array"
             }
           },
           "type": "object"
