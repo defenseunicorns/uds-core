@@ -40,10 +40,10 @@ components:
           - "values/upstream/kube-prometheus-stack.yaml"
     images:
       - "quay.io/prometheus/node-exporter:v1.12.1-distroless"
-      - "quay.io/prometheus-operator/prometheus-operator:v0.94.2"
+      - "quay.io/prometheus-operator/prometheus-operator:v0.94.1"
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0"
       - "quay.io/prometheus/alertmanager:v0.34.1"
-      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.94.2"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.94.1"
       - "quay.io/prometheus/prometheus:v3.15.1"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9"
 
@@ -80,10 +80,10 @@ components:
           - "values/unicorn/kube-prometheus-stack.yaml"
     images:
       - "cgr.dev/defenseunicorns.com/prometheus-node-exporter-fips:v1.12.1"
-      - "cgr.dev/defenseunicorns.com/prometheus-operator-fips:v0.94.2"
+      - "cgr.dev/defenseunicorns.com/prometheus-operator-fips:v0.94.1"
       - "cgr.dev/defenseunicorns.com/kube-state-metrics-fips:v2.20.0"
       - "cgr.dev/defenseunicorns.com/prometheus-alertmanager-fips:v0.34.1"
-      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:v0.94.2"
+      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:v0.94.1"
       - "cgr.dev/defenseunicorns.com/prometheus-fips:v3.15.1"
       - "cgr.dev/defenseunicorns.com/kube-webhook-certgen-fips:v1.15.10" # Chainguard provides kube-webhook-certgen from their ingress-nginx package, which follows a different versioning scheme than upstream's ingress-nginx/kube-webhook-certgen
 
@@ -100,7 +100,7 @@ components:
           - "values/upstream/blackbox-exporter.yaml"
     images:
       - "quay.io/prometheus/blackbox-exporter:v0.29.1"
-      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.94.2"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.94.1"
 
   - name: prometheus-blackbox-exporter
     required: true
@@ -130,4 +130,4 @@ components:
           - "values/unicorn/blackbox-exporter.yaml"
     images:
       - "cgr.dev/defenseunicorns.com/prometheus-blackbox-exporter-fips:v0.29.1"
-      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:v0.94.2"
+      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:v0.94.1"
