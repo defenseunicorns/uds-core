@@ -6,6 +6,7 @@
 import * as net from "net";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { fetchWithTimeout } from "./helpers/fetch";
 import { closeForward, getForward } from "./helpers/forward";
 import { pollUntilSuccess } from "./helpers/polling";
 
@@ -27,7 +28,7 @@ const queryLogs = async (
   status: string;
   data: { result: Array<{ values: string[][] }> };
 }> => {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     getLokiUrl(
       `/loki/api/v1/query_range?query=${encodeURIComponent(query)}&limit=${limit}`,
       lokiRead,

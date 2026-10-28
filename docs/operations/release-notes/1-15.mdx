@@ -47,6 +47,43 @@ UDS Core 1.15 restores login and issuer validation through additional Keycloak S
 
 ## Upgrade considerations
 
+### Patch release 1.15.3
+
+> [!IMPORTANT]
+> Upgrade to UDS Core 1.15.3 for security updates to Istio, Keycloak, Pepr, Grafana, and Prometheus.
+
+UDS Core 1.15.3 includes these dependency updates:
+
+| Package             | Previous         | Updated                                                                               |
+| ------------------- | ---------------- | ------------------------------------------------------------------------------------- |
+| curl (upstream and Unicorn) | 8.22.0           | [8.23.0](https://github.com/curl/curl/releases/tag/curl-8_23_0)                           |
+| Grafana             | 13.2.3           | [13.2.4](https://github.com/grafana/grafana/releases/tag/v13.2.4)                         |
+| Istio               | 1.31.1           | [1.31.2](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.2/)                 |
+| Keycloak            | 26.7.4           | [26.8.1](https://github.com/keycloak/keycloak/releases/tag/26.8.1)                       |
+| Pepr                | 2.0.5            | [2.0.7](https://github.com/defenseunicorns/pepr/releases/tag/v2.0.7)                      |
+| Prometheus          | 3.15.0           | [3.15.1](https://github.com/prometheus/prometheus/releases/tag/v3.15.1)                   |
+| UDS Identity Config | 0.32.2 / 0.32.3  | [0.32.4](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.32.4)     |
+
+> [!NOTE]
+> Iron Bank differs from the table above: Grafana stays at 13.2.3, and Pepr stays at 2.0.3.
+
+### Patch release 1.15.2
+
+UDS Core 1.15.2 fixes a cross-namespace Keycloak client-ownership bypass involving generated client IDs for Authservice uptime checks ([#3131](https://github.com/defenseunicorns/uds-core/pull/3131)).
+
+### Patch release 1.15.1
+
+> [!IMPORTANT]
+> Upgrade Unicorn and upstream deployments to UDS Core 1.15.1 to address critical and high-severity vulnerabilities in Pepr, UDS Identity Config, and UDS Portal. Iron Bank images remain unchanged.
+
+UDS Core 1.15.1 includes these dependency updates:
+
+| Package             | Previous | Updated                                                                               |
+| ------------------- | -------- | ------------------------------------------------------------------------------------- |
+| Pepr                | 2.0.3    | [2.0.5](https://github.com/defenseunicorns/pepr/releases/tag/v2.0.5)                  |
+| UDS Identity Config | 0.32.2   | [0.32.3](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.32.3) |
+| UDS Portal          | 0.5.2    | [0.5.3](https://github.com/defenseunicorns/uds-portal/releases/tag/v0.5.3)            |
+
 ### Identity Config updates (0.32.2)
 
 UDS Identity Config [0.32.2](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.32.2) restores multi-domain and claim token behavior affected by earlier hostname changes. This release also includes plugin and dependency updates. No manual realm steps are required for existing clusters.
@@ -58,4 +95,5 @@ UDS Identity Config [0.32.2](https://github.com/defenseunicorns/uds-identity-con
 - [Identity and authorization configuration](/reference/configuration/identity-and-authorization/) - configure Keycloak and UDS Identity Config settings
 - [UDS Core 1.15.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#1150-2026-10-13) - full changelog
 - [UDS Identity Config 0.32.2 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0322-2026-10-07) - identity-config changelog
-- [Full diff (1.14.1...1.15.0)](https://github.com/defenseunicorns/uds-core/compare/v1.14.1...v1.15.0) - all changes between versions
+- [UDS Identity Config 0.32.4 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0324-2026-10-21) - plugin dependency updates
+- [Full diff (1.14.1...1.15.3)](https://github.com/defenseunicorns/uds-core/compare/v1.14.1...v1.15.3) - all changes between versions

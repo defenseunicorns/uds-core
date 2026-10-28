@@ -4,9 +4,10 @@
 # K0S_TAG has no default; callers must pass --build-arg K0S_TAG=<version>.
 ARG K0S_TAG
 # Digest-pinned for reproducible builds; managed by Renovate's Docker manager.
-ARG WOLFI_IMAGE="cgr.dev/chainguard/wolfi-base:latest@sha256:1d95114038f76513a9ace6fca107d5582b08c65981f81f61cb56bf7fd2ef216d"
+ARG WOLFI_IMAGE="cgr.dev/chainguard/wolfi-base:latest@sha256:31cfe087eb48bde827a6e0f607a12865f6f37d89093b95b324b9d5714e3cedab"
 
 FROM ${WOLFI_IMAGE} AS wolfi
+RUN apk add --no-cache libcrypto3
 FROM k0sproject/k0s:${K0S_TAG}
 
 # Glob picks up the arch-specific ELF interpreter (ld-linux-x86-64.so.2 or ld-linux-aarch64.so.1).

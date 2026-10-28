@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -760,16 +760,14 @@ describe("reconcileExistingResources", () => {
 describe("test createEgressWaypointGateway", () => {
   it("should create egress waypoint", () => {
     const pkgs = new Set(["test-pkg1", "test-pkg2"]);
-    const generation = 1;
 
-    const waypoint = createEgressWaypointGateway(pkgs, generation);
+    const waypoint = createEgressWaypointGateway(pkgs);
 
     expect(waypoint).toBeDefined();
     expect(waypoint.metadata?.name).toEqual(egressWaypointName);
     expect(waypoint.metadata?.namespace).toEqual(ambientEgressNamespace);
     expect(waypoint.metadata?.labels).toEqual({
       "uds/package": sharedEgressPkgId,
-      "uds/generation": generation.toString(),
       "istio.io/gateway-name": egressWaypointName,
     });
     expect(waypoint.metadata?.annotations).toEqual({

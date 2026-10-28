@@ -676,13 +676,13 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     const egress_gateway_http_curl = [
       "sh",
       "-c",
-      `curl -s -m 10 -w " HTTP_CODE:%{http_code}" http://bing.com`,
+      `curl -sS -m 10 -w " HTTP_CODE:%{http_code}" http://bing.com`,
     ];
 
     const egress_gateway_tls_curl = [
       "sh",
       "-c",
-      `curl -s -m 10 -w " HTTP_CODE:%{http_code}" https://bing.com`,
+      `curl -sS -m 10 -w " HTTP_CODE:%{http_code}" https://bing.com`,
     ];
 
     // Validate successful tls request when using Egress Gateway for egress-gw-1

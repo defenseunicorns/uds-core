@@ -227,10 +227,16 @@ jobs:
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
+        continue-on-error: true
         with:
           suffix: -aks-${{ matrix.flavor }}
           distro: "aks"
           resource_group: ${{ env.AKS_RESOURCE_GROUP }}
+
+      - name: Cleanup UDP test resources
+        if: always()
+        run: uds run -f tasks/test.yaml test-resources:cleanup-udp-expose --no-progress
+        timeout-minutes: 10
 
       - name: Remove UDS Core
         if: always()

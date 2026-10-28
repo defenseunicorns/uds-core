@@ -106,6 +106,7 @@ jobs:
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
+        continue-on-error: true
         with:
           suffix: -${{ matrix.architecture }}
 

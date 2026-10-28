@@ -16,7 +16,7 @@ frr-k8s:
     image:
       repository: quay.io/metallb/frr-k8s
       # renovate: datasource=docker depName=quay.io/metallb/frr-k8s
-      tag: v0.0.26
+      tag: v0.0.27
     frr:
       image:
         repository: quay.io/frrouting/frr
