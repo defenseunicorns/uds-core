@@ -11,7 +11,7 @@
         },
         "cssOnly": {
           "type": "boolean",
-          "description": "Draw the banner with CSS pseudo-elements without inserting elements into the HTML body. The banner overlays application content."
+          "description": "Draw the banner with CSS pseudo-elements without inserting elements into the HTML body."
         },
         "enabledHosts": {
           "type": "array",

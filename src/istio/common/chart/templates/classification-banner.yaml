@@ -121,38 +121,15 @@ spec:
               end))
             end
 
-            -- CSS-only banners leave the body tree intact for applications that hydrate the
-            -- entire document. Reserve viewport space with CSS, and anchor the markings on html
-            -- so the transformed body can contain full-viewport application roots.
-            local function viewportLayoutStyle(addFooter, classification, colors, cssOnly)
+            -- The default banner uses real rows and a scrollable row for page content.
+            local function viewportLayoutStyle(addFooter)
               local gridRows = "24px minmax(0, 1fr)"
-              local footerRule = ""
               if addFooter then
                 gridRows = gridRows .. " 24px"
-                footerRule = [[
-              html::after {
-                bottom: 0 !important;
-              }
-            ]]
               end
 
-              local viewportFrame = ""
-              if cssOnly then
-                local reservedHeight = addFooter and "48px" or "24px"
-                viewportFrame = [[
-              body {
-                box-sizing: border-box !important;
-                height: calc(100vh - ]] .. reservedHeight .. [[) !important;
-                height: calc(100dvh - ]] .. reservedHeight .. [[) !important;
-                margin: 24px 0 0 !important;
-                min-height: 0 !important;
-                overflow: auto !important;
-                transform: translateZ(0) !important;
-                width: 100% !important;
-              }
-            ]]
-              else
-                viewportFrame = [[
+              return [[
+            <style id="classification-banner-viewport-layout">
               html,
               body {
                 height: 100%;
@@ -182,22 +159,34 @@ spec:
                 overflow-y: auto;
                 position: relative;
               }
-
-            ]]
-              end
-
-              if not cssOnly then
-                return [[
-            <style id="classification-banner-viewport-layout">
-              ]] .. viewportFrame .. [[
             </style>
             ]]
-              end
+            end
+
+            -- CSS-only banners leave the body tree intact and anchor markings on html.
+            local function cssOnlyStyle(addFooter, classification, colors)
+              local reservedHeight = addFooter and "48px" or "24px"
+              local selectors = addFooter and "html::before, html::after" or "html::before"
+              local footerRule = addFooter and [[
+              html::after {
+                bottom: 0 !important;
+              }
+            ]] or ""
 
               return [[
             <style id="classification-banner-viewport-layout">
-              ]] .. viewportFrame .. [[
-              ]] .. (addFooter and "html::before, html::after" or "html::before") .. [[ {
+              body {
+                box-sizing: border-box !important;
+                height: calc(100vh - ]] .. reservedHeight .. [[) !important;
+                height: calc(100dvh - ]] .. reservedHeight .. [[) !important;
+                margin: 24px 0 0 !important;
+                min-height: 0 !important;
+                overflow: auto !important;
+                transform: translateZ(0) !important;
+                width: 100% !important;
+              }
+
+              ]] .. selectors .. [[ {
                 align-items: center !important;
                 background-color: ]] .. colors.backgroundColor .. [[ !important;
                 box-sizing: border-box !important;
@@ -289,13 +278,19 @@ spec:
               local classification = banner.classification
               local colors = classColorMap[classificationKey(classification)] or classColorMap["UNKNOWN"]
               local style = "background-color: " .. colors.backgroundColor .. "; color: " .. colors.textColor .. "; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 400; height: 24px; line-height: 24px; border: 1px solid transparent; border-radius: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; width: 100%; min-width: 0; max-width: 100vw; padding: 0 8px; position: relative; text-align: center; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; margin: 0; z-index: 2147483647;"
+              local layoutStyle
+              if banner.cssOnly then
+                layoutStyle = cssOnlyStyle(banner.addFooter, classification, colors)
+              else
+                layoutStyle = viewportLayoutStyle(banner.addFooter)
+              end
 
               return {
                 addFooter = banner.addFooter,
                 cssOnly = banner.cssOnly,
                 footer = "<div id=\"classification-banner-bottom\" style=\"" .. style .. "\">" .. classification .. "</div>",
                 header = "<div id=\"classification-banner-top\" style=\"" .. style .. "\">" .. classification .. "</div>",
-                viewportLayoutStyle = viewportLayoutStyle(banner.addFooter, classification, colors, banner.cssOnly),
+                viewportLayoutStyle = layoutStyle,
               }
             end
 
