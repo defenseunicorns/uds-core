@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -94,6 +94,28 @@ describe("updateStatus", () => {
       metadata: { name: "test", namespace: "default" },
       status,
     });
+  });
+
+  it("should retry a transient status patch failure", async () => {
+    vi.useFakeTimers();
+    PatchStatus.mockRejectedValueOnce(new Error("temporary Kubernetes failure"));
+
+    try {
+      const cr = { kind: "Package", metadata: { name: "test", namespace: "default" } };
+      const status = { phase: Phase.Ready } as PkgStatus;
+      const update = updateStatus(cr as UDSPackage, status);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      await update;
+
+      expect(PatchStatus).toHaveBeenCalledTimes(2);
+      expect(PatchStatus).toHaveBeenLastCalledWith({
+        metadata: { name: "test", namespace: "default" },
+        status,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("should normalize legacy string-list authserviceClients and populate selector from spec.sso", async () => {
@@ -254,6 +276,57 @@ describe("handleFailure", () => {
         retryAttempt: 1,
       },
     });
+  });
+
+  it("should update retry status when event creation fails", async () => {
+    const err = { status: 500, message: "Internal server error" };
+    const cr = {
+      kind: "Package",
+      apiVersion: "v1",
+      metadata: { namespace: "default", name: "test", generation: 1, uid: "1" },
+    };
+    Create.mockRejectedValueOnce(new Error("event creation failed"));
+
+    await expect(handleFailure(err, cr as UDSPackage)).resolves.toBeUndefined();
+
+    expect(PatchStatus).toHaveBeenCalledWith({
+      metadata: { namespace: "default", name: "test" },
+      status: expect.objectContaining({
+        phase: Phase.Retrying,
+        retryAttempt: 1,
+      }),
+    });
+  });
+
+  it("should log when status update and follow-up event creation fail", async () => {
+    const err = { status: 500, message: "Internal server error" };
+    const statusError = new Error("status update failed");
+    const eventError = new Error("follow-up event creation failed");
+    const cr = {
+      kind: "Package",
+      apiVersion: "v1",
+      metadata: { namespace: "default", name: "test", generation: 1, uid: "1" },
+    };
+    Create.mockResolvedValueOnce(undefined).mockRejectedValueOnce(eventError);
+    PatchStatus.mockRejectedValue(statusError);
+
+    vi.useFakeTimers();
+    try {
+      const handling = handleFailure(err, cr as UDSPackage);
+      await vi.advanceTimersByTimeAsync(4000);
+      await expect(handling).resolves.toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(Log.error).toHaveBeenCalledWith(
+      { err: statusError },
+      "Error updating status for default/test failed",
+    );
+    expect(Log.error).toHaveBeenCalledWith(
+      { err: eventError },
+      "Error writing status failure event for default/test",
+    );
   });
 
   it("should fail after 5 retries", async () => {

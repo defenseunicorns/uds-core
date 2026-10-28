@@ -72,7 +72,7 @@ jobs:
         uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with:
           # renovate: datasource=github-tags depName=opentofu/opentofu extractVersion=^v?(?<version>.*)$
-          tofu_version: v1.13.1
+          tofu_version: v1.13.2
           tofu_wrapper: false
 
       - name: Create UDS Core Package
@@ -115,9 +115,15 @@ jobs:
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
+        continue-on-error: true
         with:
           suffix: -eks-${{ matrix.flavor }}
           distro: "eks"
+
+      - name: Cleanup UDP test resources
+        if: always()
+        run: uds run -f tasks/test.yaml test-resources:cleanup-udp-expose --no-progress
+        timeout-minutes: 10
 
       - name: Remove test apps after failed tests
         if: ${{ always() && steps.test_uds_core.outcome == 'failure' }}
@@ -133,6 +139,11 @@ jobs:
         if: always()
         run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
         timeout-minutes: 30
+
+      - name: Cleanup AWS load balancers
+        if: always()
+        run: .github/scripts/cleanup-aws-load-balancers.sh eks "$UDS_CLUSTER_NAME"
+        timeout-minutes: 20
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'

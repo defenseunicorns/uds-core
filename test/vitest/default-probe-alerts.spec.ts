@@ -7,6 +7,7 @@ import * as net from "net";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
 import { pollUntilSuccess } from "./helpers/polling";
+import { fetchWithTimeout } from "./helpers/fetch";
 
 describe("UDS Core Default Alerts", { timeout: 180000, retry: 1 }, () => {
   let prometheusProxy: { server: net.Server; url: string };
@@ -33,7 +34,7 @@ describe("UDS Core Default Alerts", { timeout: 180000, retry: 1 }, () => {
   };
 
   const fetchAlertRules = async (): Promise<PrometheusAlertRule[]> => {
-    const response = await fetch(`${prometheusProxy.url}/api/v1/rules`);
+    const response = await fetchWithTimeout(`${prometheusProxy.url}/api/v1/rules`);
     if (!response.ok) {
       throw new Error(`Prometheus rules API returned ${response.status}`);
     }

@@ -2,11 +2,73 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables:
+  - name: DEFAULT_K0S_VERSION
+    description: "Exact K0s version for distribution testing"
+    default: "v1.36.4+k0s.1"
   - name: DEFAULT_K3S_VERSION
     description: "Expected K3s version in the default airgap uds-k3d package"
     default: "v1.37.1+k3s1"
 
 tasks:
+  - name: k0s-test-cluster
+    description: "Create a single-node K0s test cluster (Linux or macOS with Docker)"
+    actions:
+      - cmd: |
+          KUBECONFIG="$(pwd)/build/k0s/kubeconfig" uds run -f tasks/setup.yaml k0s-test-cluster-setup \
+            --set DEFAULT_K0S_VERSION="$DEFAULT_K0S_VERSION" --no-progress
+
+  - name: k0s-test-cluster-setup
+    actions:
+      - description: "Require KUBECONFIG to target the K0s test cluster"
+        cmd: test "${KUBECONFIG}" = "$(pwd)/build/k0s/kubeconfig"
+      - description: "Copy K0s configuration"
+        cmd: |
+          mkdir -p build/k0s
+          cp .github/test-infra/k0s/dev-stack/config.yaml build/k0s/config.yaml
+      - description: "Start K0s with FIPS CNI compatibility libraries"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          docker build --build-arg "K0S_TAG=${DEFAULT_K0S_VERSION/+k0s./-k0s.}" \
+            --tag uds-k0s-test --file .github/test-infra/k0s/dev-stack/Dockerfile .github/test-infra/k0s/dev-stack
+          docker run -d --name k0s-uds --hostname k0s-uds --privileged \
+            --ulimit nofile=1048576:1048576 \
+            --tmpfs /run -v /var/lib/k0s -v /var/log/pods -v /var/lib/kubelet \
+            -v "$(pwd)/build/k0s/config.yaml:/etc/k0s/k0s.yaml:ro" \
+            -p 127.0.0.1:6443:6443 -p 127.0.0.1:80:80 -p 127.0.0.1:443:443 uds-k0s-test \
+            k0s controller --single --config=/etc/k0s/k0s.yaml \
+            --disable-components=metrics-server --kubelet-root-dir=/var/lib/kubelet
+          test "$(docker exec k0s-uds k0s version)" = "$DEFAULT_K0S_VERSION"
+          # Istio CNI and node-exporter require shared host-mount propagation.
+          docker exec k0s-uds mount --make-rshared /
+      - description: "Get K0s kubeconfig"
+        maxRetries: 30
+        maxTotalSeconds: 180
+        cmd: |
+          set -e
+          umask 077
+          docker exec k0s-uds k0s kubeconfig admin > build/k0s/kubeconfig
+          ./uds zarf tools yq -i '.clusters[].cluster.server = "https://127.0.0.1:6443"' build/k0s/kubeconfig
+      - description: "Wait for K0s node"
+        wait:
+          cluster:
+            kind: nodes
+            name: k0s-uds
+            condition: Ready
+        maxTotalSeconds: 300
+      - description: "Wait for K0s DNS"
+        cmd: ./uds zarf tools kubectl rollout status deployment/coredns -n kube-system --timeout=300s
+      - description: "Deploy the K0s dev stack"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          ./uds zarf package create .github/test-infra/k0s/dev-stack --confirm --skip-sbom --output build/k0s
+          ./uds zarf package deploy build/k0s/zarf-package-uds-k0s-dev-stack-*.tar.zst --confirm
+
   - name: create-k3d-cluster
     inputs:
       k3s_version:
@@ -39,7 +101,7 @@ tasks:
 
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
-        cmd: "./uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.87.0 --confirm"
+        cmd: "./uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.88.0 --confirm"
 
       - description: "Verify K3s server version"
         shell:
@@ -145,7 +207,7 @@ tasks:
       - description: "Start Redis Docker container"
         cmd: |
           # renovate: datasource=docker depName=redis versioning=docker
-          REDIS_VERSION=8.10.2
+          REDIS_VERSION=8.10.3
           docker run -p 6379:6379 --network=k3d-uds --rm --name redis \
             -v $(pwd)/build/redis/users.acl:/usr/local/etc/redis/users.acl:ro \
             -d redis:${REDIS_VERSION} \

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.31.0/tasks/lint.yaml
+  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.32.2/tasks/lint.yaml
 
 tasks:
   - name: fix
@@ -205,6 +205,14 @@ tasks:
           EXPECTED_K3S_MINORS=$(printf '%s\n%s\n' "$MATRIX_MINORS" "$DEFAULT_K3S_MINOR" | sed '/^$/d' | sort -u)
           if [ "$DOCUMENTED_K3S_MINORS" != "$EXPECTED_K3S_MINORS" ]; then
             echo "ERROR: Documented K3s minors do not match the Kubernetes test matrix and default K3s version"
+            exit 1
+          fi
+
+          DEFAULT_K0S_VERSION=$(./uds zarf tools yq -r '.variables[] | select(.name == "DEFAULT_K0S_VERSION") | .default' tasks/setup.yaml)
+          DEFAULT_K0S_MINOR=$(printf '%s\n' "$DEFAULT_K0S_VERSION" | sed -nE 's/^v([0-9]+\.[0-9]+)\.[0-9]+\+k0s\.[0-9]+$/\1/p')
+          DOCUMENTED_K0S_MINOR=$(grep -F '| [K0s]' "$DOC_FILE" | grep -oE '\*\*[0-9]+\.[0-9]+\*\*' | tr -d '*')
+          if [ -z "$DEFAULT_K0S_MINOR" ] || [ "$DOCUMENTED_K0S_MINOR" != "$DEFAULT_K0S_MINOR" ]; then
+            echo "ERROR: Documented K0s minor does not match DEFAULT_K0S_VERSION"
             exit 1
           fi
 
