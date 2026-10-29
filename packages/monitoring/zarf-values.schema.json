@@ -88,7 +88,7 @@
                   "type": "object"
                 },
                 "maxReplicas": {
-                  "type": "number"
+                  "type": "integer"
                 },
                 "metrics": {
                   "items": {
@@ -121,13 +121,21 @@
                   "type": "array"
                 },
                 "minReplicas": {
-                  "type": "number"
+                  "type": "integer"
                 },
                 "targetCPU": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "integer",
+                    "null"
+                  ]
                 },
                 "targetMemory": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "integer",
+                    "null"
+                  ]
                 }
               },
               "type": "object"
@@ -169,7 +177,12 @@
               "properties": {},
               "type": "object"
             },
-            "dnsPolicy": {},
+            "dnsPolicy": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "downloadDashboards": {
               "properties": {
                 "env": {
@@ -247,7 +260,11 @@
               "type": "array"
             },
             "extraContainers": {
-              "type": "string"
+              "type": [
+                "string",
+                "array",
+                "null"
+              ]
             },
             "extraEmptyDirMounts": {
               "type": "array"
@@ -259,6 +276,9 @@
               "type": "array"
             },
             "extraLabels": {
+              "additionalProperties": {
+                "type": "string"
+              },
               "properties": {},
               "type": "object"
             },
@@ -471,7 +491,12 @@
             "hostAliases": {
               "type": "array"
             },
-            "hostUsers": {},
+            "hostUsers": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
             "imageRenderer": {
               "properties": {
                 "affinity": {
@@ -491,16 +516,24 @@
                       "type": "boolean"
                     },
                     "maxReplicas": {
-                      "type": "number"
+                      "type": "integer"
                     },
                     "minReplicas": {
-                      "type": "number"
+                      "type": "integer"
                     },
                     "targetCPU": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "integer",
+                        "null"
+                      ]
                     },
                     "targetMemory": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "integer",
+                        "null"
+                      ]
                     }
                   },
                   "type": "object"
@@ -513,7 +546,12 @@
                   "properties": {},
                   "type": "object"
                 },
-                "dnsPolicy": {},
+                "dnsPolicy": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "enabled": {
                   "type": "boolean"
                 },
@@ -562,7 +600,12 @@
                 "hostAliases": {
                   "type": "array"
                 },
-                "hostUsers": {},
+                "hostUsers": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
                 "networkPolicy": {
                   "properties": {
                     "extraIngressSelectors": {
@@ -582,6 +625,9 @@
                   "type": "object"
                 },
                 "podAnnotations": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
                   "properties": {},
                   "type": "object"
                 },
@@ -591,19 +637,34 @@
                 "priorityClassName": {
                   "type": "string"
                 },
-                "progressDeadlineSeconds": {},
+                "progressDeadlineSeconds": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "readinessProbe": {
+                  "properties": {},
+                  "type": "object"
+                },
                 "renderingCallbackURL": {
                   "type": "string"
                 },
                 "replicas": {
-                  "type": "number"
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
                 },
                 "resources": {
                   "properties": {},
                   "type": "object"
                 },
                 "revisionHistoryLimit": {
-                  "type": "number"
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
                 },
                 "serverURL": {
                   "type": "string"
@@ -617,13 +678,13 @@
                       "type": "boolean"
                     },
                     "port": {
-                      "type": "number"
+                      "type": "integer"
                     },
                     "portName": {
                       "type": "string"
                     },
                     "targetPort": {
-                      "type": "number"
+                      "type": "integer"
                     }
                   },
                   "type": "object"
@@ -637,6 +698,9 @@
                       "type": "boolean"
                     },
                     "labels": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
                       "properties": {},
                       "type": "object"
                     },
@@ -671,6 +735,9 @@
             "ingress": {
               "properties": {
                 "annotations": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
                   "properties": {},
                   "type": "object"
                 },
@@ -687,6 +754,9 @@
                   "type": "array"
                 },
                 "labels": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
                   "properties": {},
                   "type": "object"
                 },
@@ -737,6 +807,9 @@
                 "main": {
                   "properties": {
                     "annotations": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
                       "properties": {},
                       "type": "object"
                     },
@@ -747,6 +820,9 @@
                       "type": "boolean"
                     },
                     "labels": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
                       "properties": {},
                       "type": "object"
                     },
@@ -852,6 +928,9 @@
                   "type": "boolean"
                 },
                 "extraPvcLabels": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
                   "properties": {},
                   "type": "object"
                 },
@@ -877,7 +956,10 @@
                   "type": "object"
                 },
                 "size": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "integer"
+                  ]
                 },
                 "type": {
                   "type": "string"
@@ -895,10 +977,18 @@
               "properties": {},
               "type": "object"
             },
+            "podManagementPolicy": {
+              "type": "string"
+            },
             "podPortName": {
               "type": "string"
             },
-            "progressDeadlineSeconds": {},
+            "progressDeadlineSeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
             "rbac": {
               "properties": {
                 "create": {
@@ -942,14 +1032,20 @@
               "type": "object"
             },
             "replicas": {
-              "type": "number"
+              "type": [
+                "integer",
+                "null"
+              ]
             },
             "resources": {
               "properties": {},
               "type": "object"
             },
             "revisionHistoryLimit": {
-              "type": "number"
+              "type": [
+                "integer",
+                "null"
+              ]
             },
             "route": {
               "properties": {
@@ -959,6 +1055,9 @@
                       "type": "array"
                     },
                     "annotations": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
                       "properties": {},
                       "type": "object"
                     },
@@ -981,6 +1080,9 @@
                       "type": "string"
                     },
                     "labels": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
                       "properties": {},
                       "type": "object"
                     },
@@ -1023,6 +1125,9 @@
             "service": {
               "properties": {
                 "annotations": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
                   "properties": {},
                   "type": "object"
                 },
@@ -1039,6 +1144,9 @@
                   "type": "string"
                 },
                 "labels": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
                   "properties": {},
                   "type": "object"
                 },
@@ -1052,7 +1160,7 @@
                   "type": "array"
                 },
                 "port": {
-                  "type": "number"
+                  "type": "integer"
                 },
                 "portName": {
                   "type": "string"
@@ -1061,7 +1169,7 @@
                   "type": "string"
                 },
                 "targetPort": {
-                  "type": "number"
+                  "type": "integer"
                 },
                 "trafficDistribution": {
                   "type": "string"
@@ -1081,6 +1189,9 @@
                   "type": "boolean"
                 },
                 "labels": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
                   "properties": {},
                   "type": "object"
                 },
@@ -1103,6 +1214,9 @@
                   "type": "boolean"
                 },
                 "labels": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
                   "properties": {},
                   "type": "object"
                 },
@@ -1193,6 +1307,12 @@
                   "type": "boolean"
                 },
                 "maxAllowed": {
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
                   "properties": {
                     "cpu": {
                       "type": "string"
@@ -1204,6 +1324,12 @@
                   "type": "object"
                 },
                 "minAllowed": {
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
                   "properties": {
                     "cpu": {
                       "type": "string"
