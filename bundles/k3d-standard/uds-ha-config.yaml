@@ -15,6 +15,7 @@ variables:
         enabledHosts:
           - "grafana.admin.uds.dev"
       - text: "UNCLASSIFIED"
+        cssOnly: true
         enabledHosts:
           - "portal.uds.dev"
 
