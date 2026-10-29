@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
@@ -10,12 +10,12 @@ initChownData:
   image:
     registry: registry1.dso.mil
     repository: ironbank/redhat/ubi/ubi9-minimal
-    tag: 9.8
+    tag: "9.8"
 
 downloadDashboardsImage:
   registry: registry1.dso.mil
   repository: ironbank/redhat/ubi/ubi9-minimal
-  tag: 9.8
+  tag: "9.8"
 
 sidecar:
   image:
