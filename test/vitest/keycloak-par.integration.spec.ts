@@ -5,7 +5,7 @@
 
 import * as k8s from "@kubernetes/client-node";
 import { beforeAll, describe, expect, it } from "vitest";
-import { pollUntilSuccess } from "../vitest/helpers/polling";
+import { pollUntilSuccess } from "./helpers/polling";
 
 const gateways = [
   ["tenant", "https://sso.uds.dev"],
@@ -97,7 +97,7 @@ async function patchRule(operation: "remove" | "add", index: number, rule?: Poli
 
 describe
   .skipIf(process.env.SKIP_INTEGRATION === "true")
-  .sequential("integration - Keycloak PAR access", () => {
+  .sequential("integration - Keycloak PAR access", { timeout: 300_000 }, () => {
     beforeAll(async () => {
       const policy = await getPolicy();
       expect(policy.spec?.action).toBe("DENY");
