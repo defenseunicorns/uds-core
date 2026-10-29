@@ -250,6 +250,27 @@ keycloak:
 
 The `keycloak.keycloak.features.additional` path is available through native Zarf values and bundle overrides. List values replace the configured list, so include every additional feature you want to enable. Do not use `preview` unless you intentionally want to enable every Keycloak preview feature, including features added in future Keycloak releases.
 
+## Pushed authorization requests
+
+UDS Core blocks requests to Keycloak's Pushed Authorization Requests (PAR) endpoint at the waypoint for all realms by default. Set `allowPushedAuthorizationRequests` to `true` before upgrading if your clients use the PAR endpoint. This removes the waypoint block; it does not enable or disable Keycloak's PAR feature.
+
+| Deployment method  | Configuration path                                                            | Value  |
+| ------------------ | ----------------------------------------------------------------------------- | ------ |
+| Helm               | `allowPushedAuthorizationRequests`                                            | `true` |
+| Native Zarf values | `keycloak.keycloak.allowPushedAuthorizationRequests`                          | `true` |
+| Bundle override    | `overrides.keycloak.keycloak.values[].path: allowPushedAuthorizationRequests` | `true` |
+
+For a bundle deployment, set the override as follows:
+
+```yaml title="uds-bundle.yaml"
+overrides:
+  keycloak:
+    keycloak:
+      values:
+        - path: allowPushedAuthorizationRequests
+          value: true
+```
+
 ## Truststore configuration
 
 The Keycloak truststore contains the CA certificates used to validate X.509 client certificates. It is built at image-build time by the `uds-identity-config` component and is not persisted; it is refreshed automatically on every Keycloak upgrade.
