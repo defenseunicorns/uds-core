@@ -24,7 +24,7 @@ Before configuring classification banners, confirm that you meet these prerequis
 An Istio EnvoyFilter adds the classification banner to HTML responses at the gateway. By default, it inserts banner elements into the page body and places application content in a scrollable row between them.
 
 > [!NOTE]
-> If full-document hydration removes the banner elements, set `cssOnly: true` on that application's `classificationBanners` entry. This mode adds styles to the document head and draws the markings with CSS pseudo-elements without changing the body tree.
+> Validate the banner in a staging environment before adopting it. For custom-built applications, implementing the banner natively within the application is often a more reliable approach.
 
 The `classificationBanners` array configures one or more banners. UDS Core continues to support the previous `classificationBanner` object for backward compatibility, but new configurations should use `classificationBanners`.
 
@@ -105,9 +105,9 @@ For the default mode, confirm that the content scrolls between the banners. For 
 
 ### Problem: Banner not appearing on a host
 
-**Symptom:** A configured host loads normally but no classification banner is displayed.
+**Symptom:** A configured host loads normally, but the banner never appears or disappears after hydration.
 
-**Solution:** Verify the hostname is included in an `enabledHosts` array under `classificationBanners`. The host must match exactly, including any subdomain prefixes. If the banner uses `pathPrefixes`, verify that the URL path begins with one of those values. Check the deployed `EnvoyFilter`:
+**Solution:** Verify the hostname is included in an `enabledHosts` array under `classificationBanners`. The host must match exactly, including any subdomain prefixes. If the banner uses `pathPrefixes`, verify that the URL path begins with one of those values. If the banner appears briefly and then disappears after hydration, set `cssOnly: true` for that entry. If it never appears, check the deployed `EnvoyFilter`:
 
 ```bash
 uds zarf tools kubectl get envoyfilter classification-banner -n istio-system -o yaml
@@ -115,9 +115,9 @@ uds zarf tools kubectl get envoyfilter classification-banner -n istio-system -o 
 
 ### Problem: Banner breaks page layout or doesn't render correctly
 
-**Symptom:** The banner disappears after hydration or overlaps page content.
+**Symptom:** The injected banner disrupts the page layout or overlaps content.
 
-**Solution:** If hydration removes the injected banner elements, set `cssOnly: true` for that application. Check that hydration preserves the injected style in the document head and that the page leaves room for the fixed markings. If the application still cannot accommodate the banner, implement it within the application.
+**Solution:** If the default banner's body elements or scrollable content row disrupt the page, set `cssOnly: true` for that entry. This mode leaves the body tree intact, but its fixed markings can still overlap navigation or controls. Check the page after hydration. If the application cannot accommodate either mode, implement the banner within the application.
 
 ## Related documentation
 
