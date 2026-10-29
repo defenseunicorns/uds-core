@@ -105,7 +105,7 @@ For the default mode, confirm that the content scrolls between the banners. For 
 
 ### Problem: Banner not appearing on a host
 
-**Symptom:** A configured host loads normally, but the banner never appears or disappears after hydration.
+**Symptom:** A configured host loads normally but no classification banner is displayed.
 
 **Solution:** Verify the hostname is included in an `enabledHosts` array under `classificationBanners`. The host must match exactly, including any subdomain prefixes. If the banner uses `pathPrefixes`, verify that the URL path begins with one of those values. If the banner appears briefly and then disappears after hydration, set `cssOnly: true` for that entry. If it never appears, check the deployed `EnvoyFilter`:
 
@@ -115,7 +115,7 @@ uds zarf tools kubectl get envoyfilter classification-banner -n istio-system -o 
 
 ### Problem: Banner breaks page layout or doesn't render correctly
 
-**Symptom:** The injected banner disrupts the page layout or overlaps content.
+**Symptom:** The banner HTML is injected but the page layout is disrupted, invisible or overlaps content.
 
 **Solution:** If the default banner's body elements or scrollable content row disrupt the page, set `cssOnly: true` for that entry. This mode leaves the body tree intact, but its fixed markings can still overlap navigation or controls. Check the page after hydration. If the application cannot accommodate either mode, implement the banner within the application.
 
