@@ -148,6 +148,9 @@
     "pathParameterProtection": {
       "type": "boolean"
     },
+    "allowPushedAuthorizationRequests": {
+      "type": "boolean"
+    },
     "additionalNetworkAllow": {
       "type": "array",
       "items": {

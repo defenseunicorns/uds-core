@@ -121,6 +121,9 @@
             "affinity": {
               "type": "string"
             },
+            "allowPushedAuthorizationRequests": {
+              "type": "boolean"
+            },
             "autoscaling": {
               "properties": {
                 "behavior": {

@@ -81,4 +81,12 @@ spec:
             {{- end }}
             - {{ . }}
             {{- end }}
+    {{- if not .Values.allowPushedAuthorizationRequests }}
+    - to:
+        - operation:
+            ports:
+              - "8080"
+            paths:
+              - "/realms/{*}/protocol/openid-connect/ext/par/{**}"
+    {{- end }}
 {{- end }}
