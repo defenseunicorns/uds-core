@@ -1,0 +1,54 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+suite: Keycloak - Pushed Authorization Requests
+templates:
+  - istio-authpol-admin.yaml
+capabilities:
+  apiVersions:
+    - security.istio.io/v1
+
+tests:
+  - it: should deny PAR for all realms at the waypoint by default
+    asserts:
+      - equal:
+          path: spec.action
+          value: DENY
+      - equal:
+          path: spec.targetRefs
+          value:
+            - kind: Gateway
+              group: gateway.networking.k8s.io
+              name: RELEASE-NAME-keycloa-waypoint
+      - contains:
+          path: spec.rules
+          content:
+            to:
+              - operation:
+                  ports:
+                    - "8080"
+                  paths:
+                    - "/realms/{*}/protocol/openid-connect/ext/par/{**}"
+
+  - it: should omit only the PAR rule when PAR is allowed
+    set:
+      allowPushedAuthorizationRequests: true
+    asserts:
+      - notContains:
+          path: spec.rules
+          content:
+            to:
+              - operation:
+                  ports:
+                    - "8080"
+                  paths:
+                    - "/realms/{*}/protocol/openid-connect/ext/par/{**}"
+      - contains:
+          path: spec.rules
+          content:
+            to:
+              - operation:
+                  ports:
+                    - "8080"
+                  paths:
+                    - "/realms/uds/clients-registrations/*"
