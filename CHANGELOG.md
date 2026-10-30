@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.17.0](https://github.com/defenseunicorns/uds-core/compare/v1.16.0...v1.17.0) (2026-10-30)
+
+
+### Miscellaneous
+
+* convert IaC test bundles to Next ([2109b1d](https://github.com/defenseunicorns/uds-core/commit/2109b1d9f772e7148d86cd00bb441ff0a78e557f))
+* **deps:** update falco to v2.35.1 ([#3148](https://github.com/defenseunicorns/uds-core/issues/3148)) ([26adb11](https://github.com/defenseunicorns/uds-core/commit/26adb112c48129d9c00f4d496b416e09a0f806c2))
+* **deps:** update grafana ([#3083](https://github.com/defenseunicorns/uds-core/issues/3083)) ([0f87b51](https://github.com/defenseunicorns/uds-core/commit/0f87b51d0ec5d96ac4fe03807b4daf7e71492b89))
+* **deps:** update grafana to v13.3.0 ([#3170](https://github.com/defenseunicorns/uds-core/issues/3170)) ([03b9e44](https://github.com/defenseunicorns/uds-core/commit/03b9e4400995a30e43de461b0e41eff4698ecb5f))
+* **deps:** update iac-support-deps ([#3147](https://github.com/defenseunicorns/uds-core/issues/3147)) ([a485473](https://github.com/defenseunicorns/uds-core/commit/a48547323342efcb91df1c9c3af295d860dbdd2a))
+* **deps:** update metrics-server to v0.9.1 ([#3169](https://github.com/defenseunicorns/uds-core/issues/3169)) ([f17f48f](https://github.com/defenseunicorns/uds-core/commit/f17f48f2b93500f33e6b0b087172500d63a940d1))
+* **deps:** update pepr ([#3146](https://github.com/defenseunicorns/uds-core/issues/3146)) ([77203bc](https://github.com/defenseunicorns/uds-core/commit/77203bcc3213b1b3724547cc28aa53b073cebc5d))
+* **deps:** update prometheus-stack ([#3162](https://github.com/defenseunicorns/uds-core/issues/3162)) ([207cdfd](https://github.com/defenseunicorns/uds-core/commit/207cdfd3fd6b6d631089de77218385ae44ec0016))
+* **deps:** update prometheus-stack ([#3168](https://github.com/defenseunicorns/uds-core/issues/3168)) ([c1e09dd](https://github.com/defenseunicorns/uds-core/commit/c1e09dd8a9bc1fa76e9897e0445cb552711c4a47))
+* **deps:** update prometheus-stack to v1.15.12 ([#3166](https://github.com/defenseunicorns/uds-core/issues/3166)) ([dc63e76](https://github.com/defenseunicorns/uds-core/commit/dc63e7627018eb3c99aacfbc007121183864aba8))
+* **deps:** update support-deps ([#3155](https://github.com/defenseunicorns/uds-core/issues/3155)) ([49d6795](https://github.com/defenseunicorns/uds-core/commit/49d679584a0c5ac88f3422a82bb789480a533864))
+* **deps:** update support-deps ([#3165](https://github.com/defenseunicorns/uds-core/issues/3165)) ([92edc17](https://github.com/defenseunicorns/uds-core/commit/92edc17dab60927771ad26c123f9cb8a9e2131fa))
+* **docs:** update release notes for 1.14.3 ([#3178](https://github.com/defenseunicorns/uds-core/issues/3178)) ([0e3ccf0](https://github.com/defenseunicorns/uds-core/commit/0e3ccf049456cbd6b15d26fe8e97dba6eb94c424))
+* **docs:** update release notes for 1.15.4 ([#3179](https://github.com/defenseunicorns/uds-core/issues/3179)) ([2ede168](https://github.com/defenseunicorns/uds-core/commit/2ede168cc3b30bd579c713c00f4a99943b0fff73))
+
 ## [1.16.0](https://github.com/defenseunicorns/uds-core/compare/v1.15.0...v1.16.0) (2026-10-27)
 
 
