@@ -4,7 +4,7 @@
 variables:
   - name: DEFAULT_K0S_VERSION
     description: "Exact K0s version for distribution testing"
-    default: "v1.36.4+k0s.1"
+    default: "v1.37.1+k0s.0"
   - name: DEFAULT_K3S_VERSION
     description: "Expected K3s version in the default airgap uds-k3d package"
     default: "v1.37.1+k3s1"
@@ -101,7 +101,7 @@ tasks:
 
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
-        cmd: "./uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.88.0 --confirm"
+        cmd: "./uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.89.0 --confirm"
 
       - description: "Verify K3s server version"
         shell:
