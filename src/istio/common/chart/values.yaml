@@ -5,6 +5,7 @@ classificationBanners: []
 # Example (enabledHosts supports Helm templating)
 # - text: "UNCLASSIFIED"
 #   addFooter: true
+#   cssOnly: false
 #   enabledHosts:
 #     - keycloak.<adminDomain>
 #     - grafana.admin.uds.dev
