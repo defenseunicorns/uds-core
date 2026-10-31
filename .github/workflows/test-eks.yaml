@@ -28,6 +28,7 @@ jobs:
       pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
     env:
       SHA: ${{ github.sha }}
+      CORE_PACKAGES: init,core_crds,core_base,core_identity_authorization,core_logging,core_monitoring,core_runtime_security,core_backup_restore,core_metrics_server${{ matrix.flavor != 'registry1' && ',core_portal' || '' }}
       UDS_REGION: us-gov-west-1
       UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.GOV_PERMISSIONS_BOUNDARY_ARN }}
       UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
@@ -53,7 +54,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           role-to-assume: ${{ secrets.AWS_GOVCLOUD_ROLE_TO_ASSUME }}
           role-session-name: ${{ github.job || github.event.client_payload.pull_request.head.sha || github.sha }}
@@ -72,14 +73,19 @@ jobs:
         uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with:
           # renovate: datasource=github-tags depName=opentofu/opentofu extractVersion=^v?(?<version>.*)$
-          tofu_version: 1.12.6
+          tofu_version: v1.13.2
           tofu_wrapper: false
 
-      - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
+      - name: Create UDS Core functional layer packages
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml functional-layers --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
-        run: uds create .github/bundles/eks --confirm -a amd64
+        run: |
+          if [ "${{ matrix.flavor }}" = "registry1" ]; then
+            # Portal has no registry1 flavor; package upstream Portal but exclude it at deploy time.
+            ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml single-layer --with layer=portal --with create_options="--skip-sbom" --set FLAVOR=upstream --no-progress
+          fi
+          CLI_FEATURES=NextMode=true uds bundle create ./.github/bundles/eks --architecture amd64 --unsigned
 
       - name: Create Cluster
         run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
@@ -96,12 +102,37 @@ jobs:
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
 
       - name: Deploy Core Bundle
-        env:
-          UDS_CONFIG: .github/bundles/eks/uds-config.yaml
-        run: uds deploy .github/bundles/eks/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
-        timeout-minutes: 40
+        run: |
+          for attempt in 1 2 3; do
+            if CLI_FEATURES=NextMode=true uds bundle deploy \
+              .github/bundles/eks/uds-bundle-uds-core-eks-nightly-amd64-*.tar.zst \
+              --config .github/bundles/eks/config.uds.hcl \
+              --packages "$CORE_PACKAGES" \
+              --skip-signature-verification; then
+              echo "CORE_ATTEMPTS=$attempt" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Deploy failed on attempt $attempt; waiting 30s before removing the partial deployment..."
+              sleep 30
+              if ! CLI_FEATURES=NextMode=true uds bundle remove \
+                .github/bundles/eks/uds-bundle-uds-core-eks-nightly-amd64-*.tar.zst \
+                --config .github/bundles/eks/config.uds.hcl \
+                --packages "$CORE_PACKAGES" \
+                ${{ matrix.flavor == 'registry1' && '--force' || '' }} \
+                --skip-signature-verification; then
+                echo "CORE_ATTEMPTS=fail" >> "$GITHUB_ENV"
+                echo "Partial deployment removal failed; refusing to retry over the existing state."
+                exit 1
+              fi
+            fi
+          done
+          echo "CORE_ATTEMPTS=fail" >> "$GITHUB_ENV"
+          exit 1
+        timeout-minutes: 80
 
       - name: Test UDS Core
+        id: test_uds_core
         run: uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }}
 
       - name: Validate Loki chunks S3 writes
@@ -114,21 +145,50 @@ jobs:
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
+        continue-on-error: true
         with:
           suffix: -eks-${{ matrix.flavor }}
           distro: "eks"
 
+      - name: Cleanup UDP test resources
+        if: always()
+        run: uds run -f tasks/test.yaml test-resources:cleanup-udp-expose --no-progress
+        timeout-minutes: 10
+
+      - name: Remove test apps after failed tests
+        if: ${{ always() && steps.test_uds_core.outcome == 'failure' }}
+        run: uds run -f src/test/tasks.yaml remove --no-progress
+        timeout-minutes: 10
+
       - name: Remove UDS Core
         if: always()
-        run: uds remove .github/bundles/eks/uds-bundle-uds-core-eks-*.tar.zst --confirm
+        run: |
+          set +e
+          for attempt in 1 2 3; do
+            if CLI_FEATURES=NextMode=true uds bundle remove \
+              .github/bundles/eks/uds-bundle-uds-core-eks-nightly-amd64-*.tar.zst \
+              --config .github/bundles/eks/config.uds.hcl \
+              --packages "$CORE_PACKAGES" \
+              ${{ matrix.flavor == 'registry1' && '--force' || '' }} \
+              --skip-signature-verification; then
+              break
+            fi
+            echo "Remove failed on attempt $attempt"
+          if [ "$attempt" -eq 3 ]; then
+            exit 1
+          fi
+          done
         timeout-minutes: 10
-        continue-on-error: true
 
       - name: Teardown EKS cluster
         if: always()
         run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
         timeout-minutes: 30
-        continue-on-error: true
+
+      - name: Cleanup AWS load balancers
+        if: always()
+        run: .github/scripts/cleanup-aws-load-balancers.sh eks "$UDS_CLUSTER_NAME"
+        timeout-minutes: 20
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'

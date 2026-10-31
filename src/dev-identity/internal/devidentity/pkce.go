@@ -46,6 +46,9 @@ func (m *Management) checkPKCEAuth(ctx context.Context, request *http.Request) e
 	if err := m.validatePublishedCorePair(ctx, client); err != nil {
 		return err
 	}
+	if len(request.URL.Query()["redirect_uri"]) != 1 || !validClientRedirect(client, request.URL.Query().Get("redirect_uri")) {
+		return fmt.Errorf("unregistered redirect URI")
+	}
 	if !pkceRequired(client) {
 		return nil
 	}

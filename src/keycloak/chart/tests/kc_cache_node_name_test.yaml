@@ -1,0 +1,41 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - Cache Node Name
+templates:
+  - statefulset.yaml
+  - secret-postgresql.yaml
+  - secret-kc-realm.yaml
+
+tests:
+  - it: should use the pod name as the cache node name by default
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_CACHE_EMBEDDED_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+
+  - it: should use the pod name as the cache node name in HA mode
+    template: statefulset.yaml
+    set:
+      devMode: false
+      autoscaling.enabled: true
+      postgresql:
+        username: test
+        password: test
+        host: postgres
+        database: keycloak
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_CACHE_EMBEDDED_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name

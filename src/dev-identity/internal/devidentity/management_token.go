@@ -68,6 +68,9 @@ func (m *Management) routeToken(writer http.ResponseWriter, request *http.Reques
 		apiError(writer, 400, "invalid_request")
 		return true
 	}
+	if !m.tokenOrigin(writer, request) {
+		return true
+	}
 	// Rebuild the consumed body for ordinary Dex code/refresh/device grants.
 	request.Body = io.NopCloser(bytes.NewReader(raw))
 	master := strings.HasPrefix(request.URL.Path, "/realms/master/")

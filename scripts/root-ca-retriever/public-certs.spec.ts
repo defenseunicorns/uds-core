@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -398,6 +398,49 @@ SECOND_CERT_CONTENT_HERE
       expect(result[0].content).toContain("FIRST_CERT_CONTENT_HERE");
       expect(result[1].name).toBe("Second Certificate Authority");
       expect(result[1].content).toContain("SECOND_CERT_CONTENT_HERE");
+    });
+
+    it("should extract certificates when curl includes fingerprint metadata", () => {
+      const pemContent = `
+COMODO ECC Certification Authority
+==================================
+# Fingerprint (SHA-256): 17:93:92:7A:06:14:54:97:89:AD:CE:2F:8F:34:F7:F0
+-----BEGIN CERTIFICATE-----
+CERT_CONTENT_HERE
+-----END CERTIFICATE-----`.trim();
+
+      const result = extractCertificatesFromPEM(pemContent);
+
+      expect(result).toEqual([
+        {
+          name: "COMODO ECC Certification Authority",
+          content: "-----BEGIN CERTIFICATE-----\nCERT_CONTENT_HERE\n-----END CERTIFICATE-----",
+        },
+      ]);
+    });
+
+    it("should reject a bundle when no certificates can be extracted", () => {
+      expect(() => extractCertificatesFromPEM("unrecognized bundle format")).toThrow(
+        "No public CA certificates found in downloaded bundle",
+      );
+    });
+
+    it("should reject a bundle when only some PEM blocks can be extracted", () => {
+      const pemContent = `
+Recognized Certificate Authority
+================================
+-----BEGIN CERTIFICATE-----
+RECOGNIZED_CERT_CONTENT
+-----END CERTIFICATE-----
+
+Unrecognized upstream format
+-----BEGIN CERTIFICATE-----
+UNRECOGNIZED_CERT_CONTENT
+-----END CERTIFICATE-----`.trim();
+
+      expect(() => extractCertificatesFromPEM(pemContent)).toThrow(
+        "Extracted 1 of 2 public CA certificates",
+      );
     });
   });
 
@@ -982,6 +1025,18 @@ exclude: 123
         /-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g,
       );
       expect(certBlocks).toHaveLength(2);
+    });
+
+    it("should preserve an existing bundle when no trusted certificates remain", async () => {
+      const publicCertDir = path.join(tempDir, "public");
+      const bundlePath = path.join(publicCertDir, "ca-bundle.pem");
+      await fs.promises.mkdir(publicCertDir, { recursive: true });
+      await fs.promises.writeFile(bundlePath, "existing certificates");
+
+      await expect(writePublicCABundle([], tempDir)).rejects.toThrow(
+        "Refusing to write an empty public CA bundle",
+      );
+      await expect(fs.promises.readFile(bundlePath, "utf8")).resolves.toBe("existing certificates");
     });
 
     it("should handle single certificate", async () => {

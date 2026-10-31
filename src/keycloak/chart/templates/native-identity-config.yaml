@@ -29,7 +29,7 @@ stringData:
         {"address": "localhost:5557", "serverName": "localhost", "rootCA": "/tls/ca.crt", "clientCert": "/tls/bridge-client.crt", "clientKey": "/tls/bridge-client.key"},
         {"address": "localhost:6557", "serverName": "localhost", "rootCA": "/tls/ca.crt", "clientCert": "/tls/bridge-client.crt", "clientKey": "/tls/bridge-client.key"}
       ],
-      "fleetAudience": {{ printf "http://keycloak-http.%s.svc.cluster.local/realms/uds" .Release.Namespace | toJson }},
+      "fleetAudience": {{ printf "http://keycloak-http.%s.svc.%s/realms/uds" .Release.Namespace .Values.clusterDomain | toJson }},
       "fleetClientEnabled": {{ include "keycloak.nativeIdentity.fleetEnabled" . }},
       "fleetNamespace": {{ .Values.nativeIdentity.fleetNamespace | toJson }},
       "fleetServiceAccount": {{ .Values.nativeIdentity.fleetServiceAccount | toJson }},

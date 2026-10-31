@@ -1,0 +1,111 @@
+---
+title: UDS Core 1.15
+description: UDS Core 1.15 restores additional Keycloak SSO hostname support, hardens Keycloak ingress, and improves checkpoint and Prometheus upgrade reliability.
+sidebar:
+  order: 3.980
+---
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.15 restores login and issuer validation through additional Keycloak SSO hostnames while hardening Keycloak ingress handling. This release also improves checkpoint startup and Prometheus upgrade reliability, and adds redirect prefix rewriting to the `Package` CR.
+
+### Notable features
+
+- **Additional Keycloak SSO hostnames:** Keycloak now derives its public hostname from trusted request data instead of fixed hostname settings. This restores discovery, login, token issuer validation, and protected application sessions through additional SSO hostnames, resolving the known issue in UDS Core 1.12 through 1.14 ([#3044](https://github.com/defenseunicorns/uds-core/pull/3044)).
+- **Keycloak ingress hardening:** Core-managed Keycloak routes now remove untrusted forwarding headers, set trusted HTTPS forwarding values, add HTTP Strict Transport Security (HSTS) with `includeSubDomains`, and vary responses by origin. The Keycloak affinity cookie now also uses the `Secure` attribute. Grafana declares its exact HTTPS SSO origin while retaining login and logout redirects ([#3000](https://github.com/defenseunicorns/uds-core/pull/3000)).
+- **Checkpoint startup reliability:** The checkpoint development package now reduces K3s node status reporting intervals and isolates Istio CNI configuration from Flannel startup rewrites. These changes prevent startup races that could exceed the deployment readiness timeout ([#3039](https://github.com/defenseunicorns/uds-core/pull/3039)).
+- **Prometheus upgrade reliability:** Prometheus now gives a newly created `config-reloader` container time to install its termination handler before Kubernetes replaces the Pod during rapid StatefulSet revisions. This prevents terminating Pods from blocking the final Prometheus revision during upgrades ([#3077](https://github.com/defenseunicorns/uds-core/pull/3077)).
+- **Redirect prefix rewriting:** Set `spec.network.expose[].advancedHTTP.redirect.prefixRewrite` on a `Package` to replace the matched path prefix in an HTTP redirect. UDS Core adds this field through the Istio 1.31.1 schema update ([#3067](https://github.com/defenseunicorns/uds-core/pull/3067)).
+
+### Dependency updates
+
+| Package                                 | Previous | Updated                                                                                                          |
+| --------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| Alertmanager                            | 0.34.0   | [0.34.1](https://github.com/prometheus/alertmanager/releases/tag/v0.34.1)                                        |
+| Blackbox Exporter                       | 0.28.0   | [0.29.0](https://github.com/prometheus/blackbox_exporter/releases/tag/v0.29.0)                                   |
+| Envoy Gateway                           | v1.9.1   | [v1.9.2](https://github.com/envoyproxy/gateway/releases/tag/v1.9.2)                                              |
+| Envoy Proxy                             | v1.39.1  | [v1.39.4](https://github.com/envoyproxy/envoy/releases/tag/v1.39.4)                                              |
+| Gateway API CRDs                        | v1.6.1   | [v1.6.3](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.6.3)                                     |
+| Grafana                                 | 13.2.1   | [13.2.3](https://github.com/grafana/grafana/releases/tag/v13.2.3)                                                |
+| Grafana Helm chart                      | 13.2.6   | [13.4.0](https://github.com/grafana-community/helm-charts/releases/tag/grafana-13.4.0)                           |
+| Istio                                   | 1.30.3   | [1.31.1](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/)                                        |
+| k8s-sidecar                             | 2.11.2   | [2.14.1](https://github.com/kiwigrid/k8s-sidecar/releases/tag/2.14.1)                                            |
+| Loki Helm chart                         | 18.13.7  | [18.15.1](https://github.com/grafana-community/helm-charts/releases/tag/loki-18.15.1)                            |
+| Pepr                                    | 2.0.0    | [2.0.3](https://github.com/defenseunicorns/pepr/releases/tag/v2.0.3)                                             |
+| Prometheus                              | 3.14.0   | [3.15.0](https://github.com/prometheus/prometheus/releases/tag/v3.15.0)                                          |
+| Prometheus Operator                     | 0.93.1   | [0.94.1](https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.94.1)                        |
+| UDS Identity Config                     | 0.32.0   | [0.32.2](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.32.2)                            |
+| Vector                                  | 0.58.0   | [0.59.0](https://github.com/vectordotdev/vector/releases/tag/v0.59.0)                                            |
+| Vector Helm chart                       | 0.58.0   | [0.59.0](https://github.com/vectordotdev/helm-charts/releases/tag/vector-0.59.0)                                 |
+| Velero                                  | 1.18.2   | [1.18.4](https://github.com/vmware-tanzu/velero/releases/tag/v1.18.4)                                            |
+| Velero plugins                          | 1.14.2   | 1.14.4                                                                                                           |
+| Velero Helm chart                       | 12.1.0   | [12.2.0](https://github.com/vmware-tanzu/helm-charts/releases/tag/velero-12.2.0)                                 |
+| kube-prometheus-stack Helm chart        | 88.5.2   | [92.2.0](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-92.2.0)          |
+| Prometheus Blackbox Exporter Helm chart | 11.17.2  | [11.20.0](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.20.0) |
+| prometheus-operator-crds Helm chart     | 31.0.1   | [32.0.1](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-32.0.1)       |
+
+## Upgrade considerations
+
+### Patch release 1.15.4
+
+> [!IMPORTANT]
+> Upgrade to UDS Core 1.15.4 if your nodes run Linux 7.2.7 or later in the 7.2 series, 6.18.53 or later in the 6.18 series, or another kernel with the signal tracepoint change backported. These kernels reject Falco's BPF probe, stopping runtime monitoring and blocking Core deployments. Falco 0.45.1 fixes this [upstream compatibility issue](https://github.com/falcosecurity/falco/issues/4017).
+
+UDS Core 1.15.4 includes these dependency updates:
+
+| Package          | Previous | Updated                                                                   |
+| ---------------- | -------- | ------------------------------------------------------------------------- |
+| Falco            | 0.45.0   | [0.45.1](https://github.com/falcosecurity/falco/releases/tag/0.45.1)        |
+| Falco Helm chart | 9.2.0    | [9.2.1](https://github.com/falcosecurity/charts/releases/tag/falco-9.2.1)   |
+
+### Patch release 1.15.3
+
+> [!IMPORTANT]
+> Upgrade to UDS Core 1.15.3 for security updates to Istio, Keycloak, Pepr, Grafana, and Prometheus.
+
+UDS Core 1.15.3 includes these dependency updates:
+
+| Package             | Previous         | Updated                                                                               |
+| ------------------- | ---------------- | ------------------------------------------------------------------------------------- |
+| curl (upstream and Unicorn) | 8.22.0           | [8.23.0](https://github.com/curl/curl/releases/tag/curl-8_23_0)                           |
+| Grafana             | 13.2.3           | [13.2.4](https://github.com/grafana/grafana/releases/tag/v13.2.4)                         |
+| Istio               | 1.31.1           | [1.31.2](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.2/)                 |
+| Keycloak            | 26.7.4           | [26.8.1](https://github.com/keycloak/keycloak/releases/tag/26.8.1)                       |
+| Pepr                | 2.0.5            | [2.0.7](https://github.com/defenseunicorns/pepr/releases/tag/v2.0.7)                      |
+| Prometheus          | 3.15.0           | [3.15.1](https://github.com/prometheus/prometheus/releases/tag/v3.15.1)                   |
+| UDS Identity Config | 0.32.2 / 0.32.3  | [0.32.4](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.32.4)     |
+
+> [!NOTE]
+> Iron Bank differs from the table above: Grafana stays at 13.2.3, and Pepr stays at 2.0.3.
+
+### Patch release 1.15.2
+
+UDS Core 1.15.2 fixes a cross-namespace Keycloak client-ownership bypass involving generated client IDs for Authservice uptime checks ([#3131](https://github.com/defenseunicorns/uds-core/pull/3131)).
+
+### Patch release 1.15.1
+
+> [!IMPORTANT]
+> Upgrade Unicorn and upstream deployments to UDS Core 1.15.1 to address critical and high-severity vulnerabilities in Pepr, UDS Identity Config, and UDS Portal. Iron Bank images remain unchanged.
+
+UDS Core 1.15.1 includes these dependency updates:
+
+| Package             | Previous | Updated                                                                               |
+| ------------------- | -------- | ------------------------------------------------------------------------------------- |
+| Pepr                | 2.0.3    | [2.0.5](https://github.com/defenseunicorns/pepr/releases/tag/v2.0.5)                  |
+| UDS Identity Config | 0.32.2   | [0.32.3](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.32.3) |
+| UDS Portal          | 0.5.2    | [0.5.3](https://github.com/defenseunicorns/uds-portal/releases/tag/v0.5.3)            |
+
+### Identity Config updates (0.32.2)
+
+UDS Identity Config [0.32.2](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.32.2) restores multi-domain and claim token behavior affected by earlier hostname changes. This release also includes plugin and dependency updates. No manual realm steps are required for existing clusters.
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) - configure `Package` HTTP routing
+- [Identity and authorization configuration](/reference/configuration/identity-and-authorization/) - configure Keycloak and UDS Identity Config settings
+- [UDS Core 1.15.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#1150-2026-10-13) - full changelog
+- [UDS Identity Config 0.32.2 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0322-2026-10-07) - identity-config changelog
+- [UDS Identity Config 0.32.4 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0324-2026-10-21) - plugin dependency updates
+- [Full diff (1.14.3...1.15.4)](https://github.com/defenseunicorns/uds-core/compare/v1.14.3...v1.15.4) - all changes between versions

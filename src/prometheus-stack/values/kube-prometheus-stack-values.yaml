@@ -33,6 +33,14 @@ prometheus:
     podMetadata:
       labels:
         app: prometheus
+    # Give a newly started reloader time to install its SIGTERM handler before
+    # Kubernetes stops a Prometheus pod during a rapid StatefulSet revision.
+    containers:
+      - name: config-reloader
+        lifecycle:
+          preStop:
+            sleep:
+              seconds: 10
     podMonitorSelectorNilUsesHelmValues: false
     probeSelectorNilUsesHelmValues: false
     resources:
@@ -81,6 +89,10 @@ prometheusOperator:
     tlsMinVersion: VersionTLS12
   admissionWebhooks:
     patch:
+      # Keep Opaque secrets for the ingress-nginx certgen images used by all flavors.
+      # An empty secretType omits the flag added for jkroepke/kube-webhook-certgen 1.11.0.
+      # https://github.com/prometheus-community/helm-charts/pull/7373
+      secretType: ""
       resources:
         limits:
           cpu: 100m
