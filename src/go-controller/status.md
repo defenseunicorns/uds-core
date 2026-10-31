@@ -65,7 +65,7 @@ The current checks produce these results:
 
 | Check | Result |
 | --- | --- |
-| Go race suite | 1,820 tests/subtests pass across 23 tested packages; no failed or skipped test cases. |
+| Go race suite | 1,840 tests/subtests pass across 23 tested packages; no failed or skipped test cases. |
 | Static build and vet | Pass. |
 | Original Pepr unit suite | 1,117 tests pass across 58 files. |
 | Current Package differential fixture | 140 decisions from 136 original source tests match Go, including previous-object checks. |
@@ -80,6 +80,11 @@ without deployment secrets. These source checks do not establish a live
 Go-plus-Keycloak pass.
 
 ## Rollout gates
+
+Startup requires every reconciliation phase; partial coexistence would share
+Package status and finalizers and is unsupported. The reload controller also
+recognizes the first opt-in data publication, so already-running trust consumers
+reload a populated bootstrap ConfigMap.
 
 You must qualify a fresh installation with the original identity provider before
 enabling this branch for routine development. Verify actual SSO, Fleet/probe

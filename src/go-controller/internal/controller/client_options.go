@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/featureflags"
+
 	"k8s.io/client-go/rest"
 )
 
@@ -32,6 +34,9 @@ func (o RunOptions) Validate() error {
 
 func NewControllerWithOptions(ctx context.Context, options RunOptions) (*Controller, error) {
 	if err := options.Validate(); err != nil {
+		return nil, err
+	}
+	if err := featureflags.Load().ValidateOwnership(); err != nil {
 		return nil, err
 	}
 	base, err := rest.InClusterConfig()
