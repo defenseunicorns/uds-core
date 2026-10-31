@@ -14,6 +14,7 @@ import (
 var infrastructure = []string{"kube-system", "kube-public", "kube-node-lease", "default", "zarf", "pepr-system", "uds-policy-exemptions", "istio-system", "uds-system", "authservice", "monitoring", "keycloak", "keycloak-dex-public", "keycloak-dex-admin", "istio-egress-ambient", "istio-egress-gateway", "istio-admin-gateway", "istio-tenant-gateway"}
 
 const fence = "uds-native-dev-bootstrap-fence"
+const gatewayAPIBundleVersion = "v1.6.3"
 
 func preflight(installer string) error {
 	// A development profile must never select another cluster through ambient
@@ -84,8 +85,8 @@ func gatewayPreflight() error {
 			continue
 		}
 		annotations := mapAt(crd, "metadata", "annotations")
-		if annotations["gateway.networking.k8s.io/channel"] != "experimental" || annotations["gateway.networking.k8s.io/bundle-version"] != "v1.6.1" || annotations["meta.helm.sh/release-name"] != "gateway-api-crds" || annotations["meta.helm.sh/release-namespace"] != "default" {
-			return fmt.Errorf("Gateway API %v conflicts with the pinned experimental v1.6.1 chart; cold boot must disable preinstalled Gateway API CRDs", mapAt(crd, "metadata")["name"])
+		if annotations["gateway.networking.k8s.io/channel"] != "experimental" || annotations["gateway.networking.k8s.io/bundle-version"] != gatewayAPIBundleVersion || annotations["meta.helm.sh/release-name"] != "gateway-api-crds" || annotations["meta.helm.sh/release-namespace"] != "default" {
+			return fmt.Errorf("Gateway API %v conflicts with the pinned experimental %s chart; cold boot must disable preinstalled Gateway API CRDs", mapAt(crd, "metadata")["name"], gatewayAPIBundleVersion)
 		}
 	}
 	return nil

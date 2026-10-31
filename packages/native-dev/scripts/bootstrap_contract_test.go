@@ -44,15 +44,46 @@ func TestPreflightDoesNotTreatObservationFailureAsAbsence(t *testing.T) {
 	}
 }
 
-func TestGatewayPreflightRejectsStandardChannelBeforeBootstrapMutation(t *testing.T) {
-	fakeKube(t, func(input interface{}, args ...string) ([]byte, error) {
-		if input != nil {
-			t.Fatal("preflight wrote the cluster")
-		}
-		return []byte(`{"items":[{"metadata":{"name":"gateways.gateway.networking.k8s.io","annotations":{"gateway.networking.k8s.io/channel":"standard","gateway.networking.k8s.io/bundle-version":"v1.6.1"}},"spec":{"group":"gateway.networking.k8s.io"}}]}`), nil
-	})
-	if err := gatewayPreflight(); err == nil || !strings.Contains(err.Error(), "conflicts") {
-		t.Fatalf("conflicting channel accepted: %v", err)
+func TestGatewayPreflightRequiresPinnedChartBeforeBootstrapMutation(t *testing.T) {
+	for _, tc := range []struct {
+		name, key, value string
+		allowed          bool
+	}{
+		{name: "installed pinned chart", allowed: true},
+		{name: "old version", key: "gateway.networking.k8s.io/bundle-version", value: "v1.6.1"},
+		{name: "unqualified version", key: "gateway.networking.k8s.io/bundle-version", value: "v9.0.0"},
+		{name: "standard channel", key: "gateway.networking.k8s.io/channel", value: "standard"},
+		{name: "foreign release", key: "meta.helm.sh/release-name", value: "foreign"},
+		{name: "foreign namespace", key: "meta.helm.sh/release-namespace", value: "foreign"},
+		{name: "missing ownership", key: "meta.helm.sh/release-name", value: ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			annotations := map[string]string{
+				"gateway.networking.k8s.io/channel":        "experimental",
+				"gateway.networking.k8s.io/bundle-version": gatewayAPIBundleVersion,
+				"meta.helm.sh/release-name":                "gateway-api-crds",
+				"meta.helm.sh/release-namespace":           "default",
+			}
+			if tc.key != "" {
+				annotations[tc.key] = tc.value
+			}
+			fakeKube(t, func(input interface{}, args ...string) ([]byte, error) {
+				if input != nil {
+					t.Fatal("preflight wrote the cluster")
+				}
+				return json.Marshal(map[string]interface{}{"items": []interface{}{map[string]interface{}{
+					"metadata": map[string]interface{}{"name": "gateways.gateway.networking.k8s.io", "annotations": annotations},
+					"spec":     map[string]interface{}{"group": "gateway.networking.k8s.io"},
+				}}})
+			})
+			err := gatewayPreflight()
+			if (err == nil) != tc.allowed {
+				t.Fatalf("preflight allowed=%v, error=%v", tc.allowed, err)
+			}
+			if err != nil && !strings.Contains(err.Error(), "conflicts") {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
 	}
 }
 

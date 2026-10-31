@@ -14,6 +14,7 @@ import { controllerImageTag, frozenControllerTag } from './image-tag.mjs';
 import { zarfDockerEnvironment } from './zarf-docker-api.mjs';
 import { verifyIdentitySource } from './identity-source.mjs';
 import { consumeIdentityBuildReceipt } from './identity-receipt.mjs';
+import { connectedIstioImage } from './connected-istio.mjs';
 
 const root=path.resolve(import.meta.dirname,'../..');
 const pkg=import.meta.dirname;
@@ -94,8 +95,10 @@ if(signed.status==='verified')retainSignedRemoteCharts(control,signed.charts);
 if(connected){
  const pilot=control.charts.find(c=>c.name==='istiod');
  const values=path.join(pkg,'values/istiod-connected.yaml');
+ const upstream=yaml.load(fs.readFileSync(path.join(root,'src/istio/values/upstream/istiod.yaml'),'utf8'));
+ const image=connectedIstioImage(upstream,yaml.load(fs.readFileSync(values,'utf8')));
  pilot.valuesFiles.push(values);
- lock.connectedOverrides=[{component:'istio-controlplane',chart:'istiod',sourcePath:'src/istio/values/upstream/istiod.yaml',valuesPath:'packages/native-dev/values/istiod-connected.yaml',sha256:sha(fs.readFileSync(values)),image:'docker.io/istio/proxyv2:1.31.2-distroless',reason:'An empty connected-mode Zarf registry otherwise produces /istio/proxyv2, which the Kubernetes runtime cannot pull'}];
+ lock.connectedOverrides=[{component:'istio-controlplane',chart:'istiod',sourcePath:'src/istio/values/upstream/istiod.yaml',valuesPath:'packages/native-dev/values/istiod-connected.yaml',sha256:sha(fs.readFileSync(values)),image,reason:'An empty connected-mode Zarf registry otherwise produces /istio/proxyv2, which the Kubernetes runtime cannot pull'}];
 }
 const removedNames=['Wait for Pepr Ambient enrollment','Verify Pepr admission readiness'];
 const originalActions=control.actions?.onDeploy?.after||[];
@@ -156,7 +159,7 @@ if(receiptPath){
  frozenController=verifyControllerReuse(receipt,lock);
  lock.controllerImageID=frozenController.imageID;
  lock.controllerImageSourceSHA256=frozenController.sourceSHA256;
- lock.controllerImageReuseReceipt={path:receiptPath,sha256:sha(fs.readFileSync(receiptPath)),reason:'Packaging/helper-only changes retain the qualified immutable controller image'};
+ lock.controllerImageReuseReceipt={path:receiptPath,sha256:sha(fs.readFileSync(receiptPath)),reason:'Reuse the previous exact controller image after matching its source and binary; runtime qualification is recorded separately'};
 }
 if(!renderOnly){
  if(!frozenController)run(docker,['build','--pull=false','--provenance=false','--build-arg',`SOURCE_DATE_EPOCH=${lock.sourceDateEpoch}`,'--build-arg',`DISTROLESS_IMAGE=${inputs.distroless}`,'--build-arg',`SOURCE_SHA256=${sourceSHA}`,'--build-arg',`BINARY_SHA256=${lock.controllerBinarySHA256}`,'-t',lock.controllerImage,binaries],{stdio:'inherit'});
