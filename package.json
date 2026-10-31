@@ -36,6 +36,7 @@
     "js-yaml": "4.3.2",
     "@kubernetes/client-node": "1.4.0",
     "typescript": "5.9.3",
-    "tsx": "4.23.15"
+    "tsx": "4.23.15",
+    "yaml": "2.9.0"
   }
 }

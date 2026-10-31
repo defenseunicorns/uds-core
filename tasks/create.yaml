@@ -239,6 +239,12 @@ tasks:
     description: Build the Core controller image from the pinned Go toolchain
     actions:
       - description: Build and record the Core runtime image
-        cmd: python3 src/go-controller/hack/build-image.py --architecture "${ZARF_ARCHITECTURE}" --output "build/controller/${ZARF_ARCHITECTURE}"
+        cmd: |
+          set -eu
+          architecture="${ZARF_ARCHITECTURE:-${UDS_ARCH:-}}"
+          if [ -z "$architecture" ]; then
+            architecture=$(go env GOHOSTARCH)
+          fi
+          python3 src/go-controller/hack/build-image.py --architecture "$architecture" --output "build/controller/$architecture"
         setVariables:
           - name: NATIVE_CONTROLLER_IMAGE

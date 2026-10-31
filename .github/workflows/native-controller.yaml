@@ -59,7 +59,7 @@ jobs:
           mise exec go@1.27.3 -- go -C src/go-controller vet ./...
 
       - name: Check production vulnerabilities
-        run: mise exec go@1.27.3 -- go -C src/go-controller run golang.org/x/vuln/cmd/govulncheck@v1.9.0 .
+        run: mise exec go@1.27.3 -- go -C src/go-controller run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
       - name: Verify unchanged reference assertions and Go differential contract
         run: |

@@ -61,7 +61,7 @@ tasks:
               continue
             fi
             echo "Linting packages/${pkg}"
-            if ! uds zarf dev lint "packages/${pkg}" --flavor upstream; then
+            if ! uds zarf dev lint "packages/${pkg}" --flavor upstream --set NATIVE_CONTROLLER_IMAGE=docker.io/library/uds-core-controller:lint; then
               echo "ERROR: values lint failed for packages/${pkg}"
               exit 1
             fi
