@@ -12,6 +12,7 @@ import { verifyControllerReuse, verifyLocalController } from './reuse-controller
 import { controllerImageTag, frozenControllerTag } from './image-tag.mjs';
 import { zarfDockerEnvironment } from './zarf-docker-api.mjs';
 import { verifyIdentitySource } from './identity-source.mjs';
+import { consumeIdentityBuildReceipt } from './identity-receipt.mjs';
 
 const root=path.resolve(import.meta.dirname,'../..');
 const pkg=import.meta.dirname;
@@ -40,6 +41,15 @@ for(const [name,directory] of [['HELM_CACHE_HOME','helm-cache'],['HELM_CONFIG_HO
 
 function walk(dir,files=[]){for(const entry of fs.readdirSync(dir,{withFileTypes:true})){if(['node_modules','.git','.build','build','vendor','__pycache__'].includes(entry.name))continue;const name=path.join(dir,entry.name);if(entry.isDirectory())walk(name,files);else files.push(name);}return files;}
 function sourceHashes(){const files={};for(const directory of ['src/go-controller','src/dev-identity','src/pepr','src/istio','src/keycloak','src/authservice','src/prometheus-stack','packages/base','packages/identity-authorization','packages/native-dev'])for(const name of walk(path.join(root,directory)))files[path.relative(root,name)]=sha(fs.readFileSync(name));for(const name of ['docs/dev/development-identity.md']){const filename=path.join(root,name);if(fs.existsSync(filename))files[name]=sha(fs.readFileSync(filename));}return files;}
+const identityReceiptPath=option('--identity-build-receipt');
+if(args.includes('--identity-build-receipt')&&!identityReceiptPath)throw new Error('--identity-build-receipt requires an absolute receipt file');
+if(baseOnly&&identityReceiptPath)throw new Error('The base profile does not include identity; omit --identity-build-receipt');
+let identityBuildReceipt;
+if(identityReceiptPath){
+ const selection=consumeIdentityBuildReceipt({root,go,docker,run,identity:inputs.identity,receiptPath:identityReceiptPath});
+ inputs.identity=selection.identity;
+ identityBuildReceipt=selection.provenance;
+}
 const sourceFiles=sourceHashes();
 const commit=run('git',['rev-parse','HEAD']).trim();
 try{run('git',['merge-base','--is-ancestor',inputs.core.sourceCommit,commit]);}
@@ -47,6 +57,7 @@ catch{throw new Error('Native recipe requires its pinned Core source commit in t
 const sourceSHA=sha(JSON.stringify(Object.entries(sourceFiles).sort(([a],[b])=>a.localeCompare(b))));
 const lock={...inputs,architecture:arch,sourceGitHEAD:commit,sourceSHA256:sourceSHA,sourceFiles,removedImportActions:[],createdAt:null};
 if(!baseOnly)verifyIdentitySource({root,go,run,identity:inputs.identity});
+if(identityBuildReceipt)lock.identityBuildReceipt=identityBuildReceipt;
 lock.componentSourceSHA256=Object.fromEntries([['controller','src/go-controller/'],['identity','src/dev-identity/'],['composition','packages/native-dev/']].map(([name,prefix])=>[name,sha(JSON.stringify(Object.entries(sourceFiles).filter(([filename])=>filename.startsWith(prefix)).sort(([a],[b])=>a.localeCompare(b))))]));
 lock.tenantActivationEnabled=!baseOnly&&!args.includes('--candidate');
 lock.connectedOnly=connected;
@@ -103,6 +114,12 @@ provider.images=[inputs.identity.bridgeImage,inputs.identity.dexImage];
 const nativeValues=path.join(pkg,'values/identity-password-only.yaml');
 provider.charts.find(c=>c.name==='keycloak').valuesFiles ||= [];
 provider.charts.find(c=>c.name==='keycloak').valuesFiles.push(path.relative(path.join(root,'src/keycloak'),nativeValues));
+if(identityBuildReceipt){
+ const imageValues=path.join(out,'identity-images.yaml');
+ fs.writeFileSync(imageValues,yaml.dump({nativeIdentity:{bridgeImage:inputs.identity.bridgeImage,dexImage:inputs.identity.dexImage}}));
+ provider.charts.find(c=>c.name==='keycloak').valuesFiles.push(path.relative(path.join(root,'src/keycloak'),imageValues));
+}
+
 overlay('identity',identity,[provider],path.join(root,'src/keycloak'));
 // Reuse the original non-runtime component declarations without requiring an unused Pepr dist build.
 const pepr=yaml.load(fs.readFileSync(path.join(root,'src/pepr/zarf.yaml'),'utf8'));

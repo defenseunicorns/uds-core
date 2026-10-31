@@ -147,6 +147,7 @@ func (c *Controller) Run(ctx context.Context) error {
 	udsInformer.Uds().V1alpha1().ClusterConfig().Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{AddFunc: func(interface{}) { rebuildExemptions(); admissionCompiler.Enqueue() }, UpdateFunc: func(interface{}, interface{}) { rebuildExemptions(); admissionCompiler.Enqueue() }})
 	rawPackageInformer := dynamicFactory.ForResource(schema.GroupVersionResource{Group: "uds.dev", Version: "v1alpha1", Resource: "packages"}).Informer()
 	parameterInformer := dynamicFactory.ForResource(schema.GroupVersionResource{Group: "policy.uds.dev", Version: "v1alpha1", Resource: "admissionparameters"}).Informer()
+	admissionCompiler.WatchParameters(parameterInformer)
 	validatingPolicies := dynamicFactory.ForResource(schema.GroupVersionResource{Group: "admissionregistration.k8s.io", Version: "v1", Resource: "validatingadmissionpolicies"}).Informer()
 	mutatingPolicies := dynamicFactory.ForResource(schema.GroupVersionResource{Group: "admissionregistration.k8s.io", Version: "v1", Resource: "mutatingadmissionpolicies"}).Informer()
 	validatingBindings := dynamicFactory.ForResource(schema.GroupVersionResource{Group: "admissionregistration.k8s.io", Version: "v1", Resource: "validatingadmissionpolicybindings"}).Informer()

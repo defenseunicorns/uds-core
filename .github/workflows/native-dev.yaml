@@ -10,6 +10,7 @@ on:
       - .github/actions/setup-tools/**
       - mise.toml
       - package*.json
+      - zarf-config.yaml
       - packages/native-dev/**
       - packages/base/**
       - packages/identity-authorization/**
@@ -22,6 +23,23 @@ on:
       - src/prometheus-stack/**
   push:
     branches: [main]
+    paths:
+      - .github/workflows/native-dev.yaml
+      - .github/actions/setup-tools/**
+      - mise.toml
+      - package*.json
+      - zarf-config.yaml
+      - packages/native-dev/**
+      - packages/base/**
+      - packages/identity-authorization/**
+      - src/go-controller/**
+      - src/dev-identity/**
+      - src/pepr/**
+      - src/istio/**
+      - src/keycloak/**
+      - src/authservice/**
+      - src/prometheus-stack/**
+  workflow_dispatch:
 
 permissions:
   contents: read
