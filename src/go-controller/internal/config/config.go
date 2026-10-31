@@ -49,7 +49,7 @@ type Config struct {
 
 var (
 	mu  sync.RWMutex
-	cfg = Config{Domain: "uds.dev", AdminDomain: "admin.uds.dev", KeycloakClientMode: "auto"}
+	cfg = Config{Domain: "uds.dev", AdminDomain: "admin.uds.dev", KeycloakClientMode: "CLIENT_SECRET"}
 )
 
 // Get returns a snapshot of the current cluster config. Safe for concurrent use.

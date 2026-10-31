@@ -47,6 +47,9 @@ func NewController(ctx context.Context) (*Controller, error) {
 func (c *Controller) Run(ctx context.Context) error {
 	// Load feature flags (inverse of Pepr)
 	flags := featureflags.Load()
+	if err := flags.ValidateOwnership(); err != nil {
+		return err
+	}
 	slog.Info("Feature flags loaded",
 		"networkPolicies", flags.NetworkPolicies,
 		"authorizationPolicies", flags.AuthorizationPolicies,

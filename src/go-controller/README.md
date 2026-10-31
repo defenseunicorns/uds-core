@@ -39,21 +39,23 @@ union, JavaScript regex compatibility, revision fencing, recovery and
 certificate rotation. Tenant diagnostic annotations never authorize an
 exemption.
 
-## Ownership modes
+## Full ownership
 
-You can select full native ownership or staged migration. Disable and drain the
-previous writer before assigning a phase to Go.
+The chart selects full native ownership. Stop and drain the Pepr watcher before
+starting Go reconciliation, while retaining Pepr admission until Go admission
+is ready. Go owns the complete `Package` status and finalizer contract; it does
+not support per-phase coexistence with another Package writer or an
+admission-only process.
 
-| Setting | Behavior |
-| --- | --- |
-| `UDS_CONTROLLER_MODE=native` | Go owns all implemented reconciliation phases. |
-| `UDS_OPERATOR_*_ENABLED=false` without native mode | Go owns the corresponding phase instead of Pepr. |
-| Other staged flag values | Go leaves the phase to Pepr. |
+Set `UDS_CONTROLLER_MODE=native` to enable every phase. The legacy environment
+flags are accepted only when all ten `UDS_OPERATOR_*_ENABLED` values are `false`,
+which also assigns every phase to Go. Startup rejects an incomplete effective
+phase set before constructing Kubernetes clients. The phase flags remain useful
+inside focused controller tests; they are not a migration protocol.
 
-The exact per-phase names remain in [feature
-flags](internal/featureflags/flags.go) and [development flags](dev-flags.env).
-The controller consumes the existing Keycloak management API and its configured
-credential mode.
+The exact names remain in [feature flags](internal/featureflags/flags.go) and
+[development flags](dev-flags.env). The controller consumes the existing Keycloak
+management API and its configured credential mode.
 
 ## Build and validate
 
@@ -85,10 +87,12 @@ principal separately from OAuth credentials. The values grant only
 `cluster.local/ns/uds-system/sa/uds-controller`; they do not enable another
 identity provider or change realm authentication requirements.
 
-The original `CLIENT_SECRET` mode uses the existing `uds-operator` client
-secret. `SIGNED_JWT` and `AUTO` assertion modes require their own
-original-Keycloak compatibility proof; a projected token with the correct
-audience does not establish that proof. Keep the controller ambient-enrolled and
+`CLIENT_SECRET` is the default, including when the mode setting is missing or
+invalid. It uses the existing `uds-operator` client secret. Projected assertions
+require explicit `SIGNED_JWT` or `AUTO` selection. The Java qualification run
+confirmed that `AUTO` falls back to the secret, but Java rejects the assertion
+and logs `client_not_found` on token refresh. Keep Java on `CLIENT_SECRET`;
+`SIGNED_JWT` requires provider-specific compatibility proof. Keep the controller ambient-enrolled and
 its chart-generated identity egress permission. Namespace access alone does not
 grant administration. Install the chart in `uds-system` with its fixed
 `uds-controller` ServiceAccount. Serving trust, authenticated recovery and
@@ -112,8 +116,8 @@ src/go-controller/hack/update-codegen.sh
 
 The [controller package](zarf.yaml) contains only this backend and its chart.
 Supply the exact controller image template and matching image values before
-creating it. A dormant backend becoming Ready does not establish native
-admission activation. Qualify the complete webhook registrations, policy/binding
+creating it. Backend readiness before registration does not establish native admission
+activation. Reconciliation already runs in full native ownership mode. Qualify the complete webhook registrations, policy/binding
 union, parameters and fallback canaries before enabling the narrower routing
 mode.
 

@@ -27,7 +27,7 @@ func (k KubeCorePackages) GetCorePackage(ctx context.Context, namespace, name st
 	if k.Client == nil {
 		return nil, fmt.Errorf("Core package reader unavailable")
 	}
-	object, err := k.Client.Resource(schema.GroupVersionResource{Group: "dev", Version: "v1alpha1", Resource: "packages"}).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+	object, err := k.Client.Resource(schema.GroupVersionResource{Group: "uds.dev", Version: "v1alpha1", Resource: "packages"}).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
