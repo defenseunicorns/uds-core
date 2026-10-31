@@ -1,0 +1,52 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: uds-native-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: uds-controller
+spec:
+  jobLabel: app
+  selector:
+    matchLabels:
+      app: uds-controller
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-native-controller-capabilities
+  namespace: {{ .Release.Namespace }}
+spec:
+  groups:
+    - name: uds-native-base-capabilities
+      rules:
+        - record: uds:admission:up
+          labels:
+            uds_layer: base
+            uds_component: admission
+            implementation: go-native
+          expr: |
+            (max(uds_native_admission_ready{implementation="go-native"}) or on() vector(0))
+            * on() (max(uds_native_policies_active{implementation="go-native"}) or on() vector(0))
+            * on() (max(up{job="uds-controller", namespace="{{ .Release.Namespace }}"}) or on() vector(0))
+            * on() (max(deployment:up{deployment="uds-controller", namespace="{{ .Release.Namespace }}"}) or on() vector(0))
+            * on() (max(kube_state_metrics:up) or on() vector(0))
+        - record: uds:reconciliation:up
+          labels:
+            uds_layer: base
+            uds_component: reconciliation
+            implementation: go-native
+          expr: |
+            (max(uds_native_reconciliation_ready{implementation="go-native"}) or on() vector(0))
+            * on() (max(up{job="uds-controller", namespace="{{ .Release.Namespace }}"}) or on() vector(0))
+            * on() (max(deployment:up{deployment="uds-controller", namespace="{{ .Release.Namespace }}"}) or on() vector(0))
+            * on() (max(kube_state_metrics:up) or on() vector(0))
+{{- end }}

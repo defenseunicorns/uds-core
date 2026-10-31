@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "kubernetesAPI": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["qps", "burst"],
+      "properties": {
+        "qps": { "type": "number", "minimum": 1, "maximum": 200 },
+        "burst": { "type": "integer", "minimum": 1, "maximum": 400 }
+      }
+    }
+  }
+}

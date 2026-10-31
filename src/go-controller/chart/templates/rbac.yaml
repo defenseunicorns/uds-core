@@ -1,0 +1,272 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: uds-controller
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: uds-controller
+rules:
+  # Configmaps and Secrets
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - secrets
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+  # Endpoints and events
+  - apiGroups:
+      - ""
+    resources:
+      - endpoints
+      - events
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - watch
+
+  # Namespaces
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - watch
+
+  # Services
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - get
+      - list
+      - patch
+      - watch
+
+  # Pods
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - delete
+      - get
+      - list
+      - patch
+      - watch
+
+  # Pod eviction subresource
+  - apiGroups:
+      - ""
+    resources:
+      - pods/eviction
+    verbs:
+      - create
+
+  # Nodes
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+      - list
+      - watch
+
+  # Discovery API resources
+  - apiGroups:
+      - discovery.k8s.io
+    resources:
+      - endpointslices
+    verbs:
+      - get
+      - list
+      - watch
+
+  # Singleton writing authority and native admission parameter publication
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "create", "update", "patch"]
+  - apiGroups: ["policy.uds.dev"]
+    resources: ["admissionparameters"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  # Observe actual native definitions and binding scopes; this grants no writes.
+  - apiGroups: ["admissionregistration.k8s.io"]
+    resources: ["validatingadmissionpolicies", "mutatingadmissionpolicies", "validatingadmissionpolicybindings", "mutatingadmissionpolicybindings"]
+    verbs: ["get", "list", "watch"]
+
+  # Apps API resources
+  - apiGroups:
+      - apps
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs:
+      - get
+      - list
+      - patch
+      - watch
+
+  # Networking API resources
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - networkpolicies
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - watch
+
+  # Gateway API resources
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - gateways
+      - udproutes
+      - gatewayclasses
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - watch
+
+  # Istio security resources
+  - apiGroups:
+      - security.istio.io
+    resources:
+      - authorizationpolicies
+      - requestauthentications
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - watch
+
+  # Istio networking resources
+  - apiGroups:
+      - networking.istio.io
+    resources:
+      - destinationrules
+      - gateways
+      - serviceentries
+      - sidecars
+      - virtualservices
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - watch
+
+  # Prometheus monitoring resources
+  - apiGroups:
+      - monitoring.coreos.com
+    resources:
+      - podmonitors
+      - servicemonitors
+      - probes
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - watch
+
+  # UDS custom resources
+  - apiGroups:
+      - uds.dev
+    resources:
+      - exemptions
+      - packages
+      - packages/status
+      - clusterconfig
+      - clusterconfig/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+  # CRD management
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - watch
+
+  # Webhook configurations (for patching caBundle)
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - validatingwebhookconfigurations
+      - mutatingwebhookconfigurations
+    resourceNames:
+      - uds-controller-resources
+      - uds-controller-clusterconfig
+      - uds-controller-pods
+    verbs:
+      - get
+      - patch
+      - watch
+
+  # MutatingWebhookConfiguration (for patching caBundle)
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - mutatingwebhookconfigurations
+    resourceNames:
+      - uds-controller-waypoint
+    verbs:
+      - get
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: uds-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: uds-controller
+subjects:
+  - kind: ServiceAccount
+    name: uds-controller
+    namespace: {{ .Release.Namespace }}

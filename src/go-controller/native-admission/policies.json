@@ -1,0 +1,1478 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-pod-profile"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods",
+                "pods/ephemeralcontainers"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "variables.grantDisallowHostNamespaces || (variables.legacyDisallowHostNamespaces && variables.fallbackReady) || ((!has(object.spec.hostNetwork) || !object.spec.hostNetwork) && (!has(object.spec.hostPID) || !object.spec.hostPID) && (!has(object.spec.hostIPC) || !object.spec.hostIPC))",
+            "message": "Sharing the host namespaces is disallowed. The fields spec.hostNetwork, spec.hostIPC, and spec.hostPID must not be set to true."
+          },
+          {
+            "expression": "variables.grantRestrictHostPorts || (variables.legacyRestrictHostPorts && variables.fallbackReady) || (variables.containers.all(c, !has(c.ports) || c.ports.all(p, !has(p.hostPort) || p.hostPort == 0)))",
+            "message": "Host ports are not allowed."
+          },
+          {
+            "expression": "variables.grantDisallowPrivileged || (variables.legacyDisallowPrivileged && variables.fallbackReady) || (variables.containers.all(c, has(c.securityContext) && has(c.securityContext.allowPrivilegeEscalation) && !c.securityContext.allowPrivilegeEscalation && (!has(c.securityContext.privileged) || !c.securityContext.privileged)))",
+            "message": "Privilege escalation is disallowed. Authorized: [allowPrivilegeEscalation = false | privileged = false]"
+          },
+          {
+            "expression": "variables.grantRequireNonRootUser || (variables.legacyRequireNonRootUser && variables.fallbackReady) || variables.codeIdentity || (variables.contexts.all(x, (!has(x.runAsNonRoot) || x.runAsNonRoot) && (!has(x.runAsUser) || x.runAsUser != 0) && (!has(x.supplementalGroups) || !x.supplementalGroups.exists(g, g == 0))))",
+            "message": "Unauthorized container securityContext. Containers must not run as root or have root-level supplemental groups. Authorized: [runAsNonRoot = true | runAsUser > 0 | supplementalGroups must not include 0]"
+          },
+          {
+            "expression": "variables.grantRestrictProcMount || (variables.legacyRestrictProcMount && variables.fallbackReady) || (variables.containers.all(c, !has(c.securityContext) || !has(c.securityContext.procMount) || c.securityContext.procMount == \"Default\"))",
+            "message": "Unauthorized procMount type. Authorized: [undefined | Default]"
+          },
+          {
+            "expression": "variables.grantRestrictSeccomp || (variables.legacyRestrictSeccomp && variables.fallbackReady) || (variables.contexts.all(x, !has(x.seccompProfile) || x.seccompProfile.type in [\"RuntimeDefault\", \"Localhost\"]))",
+            "message": "Unauthorized seccomp profile type. Authorized: [RuntimeDefault | Localhost]"
+          },
+          {
+            "expression": "variables.grantDisallowSELinuxOptions || (variables.legacyDisallowSELinuxOptions && variables.fallbackReady) || (variables.contexts.all(x, !has(x.seLinuxOptions) || ((!has(x.seLinuxOptions.user) || x.seLinuxOptions.user == \"\") && (!has(x.seLinuxOptions.role) || x.seLinuxOptions.role == \"\"))))",
+            "message": "Unauthorized SELinux Options. Authorized: [user: undefined | role: undefined]"
+          },
+          {
+            "expression": "variables.grantRestrictSELinuxType || (variables.legacyRestrictSELinuxType && variables.fallbackReady) || (variables.contexts.all(x, !has(x.seLinuxOptions) || !has(x.seLinuxOptions.type) || x.seLinuxOptions.type in [\"container_t\", \"container_init_t\", \"container_kvm_t\"]))",
+            "message": "Unauthorized SELinux type. Authorized: [container_t | container_init_t | container_kvm_t]"
+          },
+          {
+            "expression": "variables.grantDropAllCapabilities || (variables.legacyDropAllCapabilities && variables.fallbackReady) || (variables.containers.all(c, has(c.securityContext) && has(c.securityContext.capabilities) && has(c.securityContext.capabilities.drop) && c.securityContext.capabilities.drop.exists(v, v == \"ALL\")))",
+            "message": "All container capabilities must be dropped."
+          },
+          {
+            "expression": "variables.grantRestrictCapabilities || (variables.legacyRestrictCapabilities && variables.fallbackReady) || variables.codeIdentity || (variables.containers.all(c, !has(c.securityContext) || !has(c.securityContext.capabilities) || !has(c.securityContext.capabilities.add) || c.securityContext.capabilities.add.all(v, v == \"NET_BIND_SERVICE\")))",
+            "message": "Unauthorized container capabilities in securityContext.capabilities.add. Authorized: [NET_BIND_SERVICE]"
+          },
+          {
+            "expression": "variables.grantRestrictVolumeTypes || (variables.legacyRestrictVolumeTypes && variables.fallbackReady) || (!has(object.spec.volumes) || object.spec.volumes.all(v, has(v.configMap) || has(v.csi) || has(v.downwardAPI) || has(v.emptyDir) || has(v.ephemeral) || has(v.image) || has(v.persistentVolumeClaim) || has(v.projected) || has(v.secret)))",
+            "message": "Volume has a disallowed volume type.",
+            "messageExpression": "'Volume '+variables.badVolumes[0].name+' has a disallowed volume type of '+\"'\"+(has(variables.badVolumes[0].hostPath) ? 'hostPath' : 'unsupported')+\"'.\"+(has(variables.badVolumes[0].hostPath) && variables.containers.exists(c, has(c.volumeMounts) && c.volumeMounts.exists(m, m.name == variables.badVolumes[0].name && (!has(m.readOnly) || !m.readOnly))) ? \" hostPath volume '\"+variables.badVolumes[0].name+\"' must be mounted as readOnly.\" : '')"
+          },
+          {
+            "expression": "variables.grantRestrictHostPathWrite || (variables.legacyRestrictHostPathWrite && variables.fallbackReady) || (!has(object.spec.volumes) || object.spec.volumes.filter(v, has(v.hostPath)).all(v, variables.containers.all(c, !has(c.volumeMounts) || c.volumeMounts.filter(m, m.name == v.name).all(m, has(m.readOnly) && m.readOnly))))",
+            "message": "hostPath volumes must be mounted as readOnly.",
+            "messageExpression": "\"hostPath volume '\"+object.spec.volumes.filter(v, has(v.hostPath) && variables.containers.exists(c, has(c.volumeMounts) && c.volumeMounts.exists(m, m.name == v.name && (!has(m.readOnly) || !m.readOnly))))[0].name+\"' must be mounted as readOnly.\""
+          },
+          {
+            "expression": "variables.grantRestrictIstioSidecarOverrides || (variables.legacyRestrictIstioSidecarOverrides && variables.fallbackReady) || (!has(object.metadata.annotations) || object.metadata.annotations.all(k, !(k in [\"sidecar.istio.io/bootstrapOverride\", \"sidecar.istio.io/discoveryAddress\", \"sidecar.istio.io/proxyImage\", \"proxy.istio.io/config\", \"sidecar.istio.io/userVolume\", \"sidecar.istio.io/userVolumeMount\"])))",
+            "message": "The following istio annotations can modify secure sidecar configuration and are not allowed:",
+            "messageExpression": "\"The following istio annotations can modify secure sidecar configuration and are not allowed: \"+variables.blockedSidecar.join(', ')"
+          },
+          {
+            "expression": "variables.grantRestrictIstioTrafficOverrides || (variables.legacyRestrictIstioTrafficOverrides && variables.fallbackReady) || variables.codeIdentity || ((!has(object.metadata.annotations)||object.metadata.annotations.all(k,!(k in ['traffic.sidecar.istio.io/excludeInboundPorts','traffic.sidecar.istio.io/excludeInterfaces','traffic.sidecar.istio.io/excludeOutboundIPRanges','traffic.sidecar.istio.io/excludeOutboundPorts','traffic.sidecar.istio.io/includeInboundPorts','traffic.sidecar.istio.io/includeOutboundIPRanges','traffic.sidecar.istio.io/includeOutboundPorts','sidecar.istio.io/interceptionMode','traffic.sidecar.istio.io/kubevirtInterfaces','istio.io/redirect-virtual-interfaces']))) && (request.namespace=='istio-system'||!has(object.metadata.annotations)||!('sidecar.istio.io/inject' in object.metadata.annotations)||object.metadata.annotations['sidecar.istio.io/inject'].trim()=='true') && (request.namespace=='istio-system'||!has(object.metadata.labels)||!('sidecar.istio.io/inject' in object.metadata.labels)||object.metadata.labels['sidecar.istio.io/inject'].trim()=='true'))",
+            "message": "The following istio annotations or labels can modify secure traffic interception are not allowed:",
+            "messageExpression": "\"The following istio annotations or labels can modify secure traffic interception are not allowed: \"+variables.blockedTraffic.join(', ')"
+          },
+          {
+            "expression": "variables.grantRestrictIstioAmbientOverrides || (variables.legacyRestrictIstioAmbientOverrides && variables.fallbackReady) || (!has(object.metadata.annotations) || !(\"ambient.istio.io/bypass-inbound-capture\" in object.metadata.annotations))",
+            "message": "The following istio ambient annotations that can modify secure mesh behavior are not allowed: ambient.istio.io/bypass-inbound-capture"
+          },
+          {
+            "expression": "variables.grantRestrictIstioUser || (variables.legacyRestrictIstioUser && variables.fallbackReady) || variables.codeIdentity || (variables.contexts.all(x,(!has(x.runAsUser)||x.runAsUser!=1337)&&(!has(x.runAsGroup)||x.runAsGroup!=1337)&&(!has(x.fsGroup)||x.fsGroup!=1337)&&(!has(x.supplementalGroups)||!x.supplementalGroups.exists(g,g==1337))))",
+            "message": "Application containers must not use UID/GID 1337 (Istio proxy) unless they are trusted Istio components"
+          },
+          {
+            "expression": "!(variables.legacyDisallowHostNamespaces || variables.legacyRestrictHostPorts || variables.legacyDisallowPrivileged || variables.legacyRequireNonRootUser || variables.legacyRestrictProcMount || variables.legacyRestrictSeccomp || variables.legacyDisallowSELinuxOptions || variables.legacyRestrictSELinuxType || variables.legacyDropAllCapabilities || variables.legacyRestrictCapabilities || variables.legacyRestrictVolumeTypes || variables.legacyRestrictHostPathWrite || variables.legacyRestrictIstioSidecarOverrides || variables.legacyRestrictIstioTrafficOverrides || variables.legacyRestrictIstioAmbientOverrides || variables.legacyRestrictIstioUser) || variables.fallbackReady",
+            "message": "Legacy exemption evaluation requires the current complete Go admission callback"
+          },
+          {
+            "expression": "variables.mutationReady == true",
+            "message": "Admission exemption snapshot changed between mutation and validation; retry the request"
+          },
+          {
+            "expression": "params.spec.valid == true",
+            "message": "Admission exemption inputs are invalid; repair the protected snapshot"
+          }
+        ],
+        "variables": [
+          {
+            "name": "containers",
+            "expression": "object.spec.containers + (has(object.spec.initContainers) ? object.spec.initContainers : []) + (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers : [])"
+          },
+          {
+            "name": "contexts",
+            "expression": "variables.containers.filter(c, has(c.securityContext)).map(c, c.securityContext) + (has(object.spec.securityContext) ? [object.spec.securityContext] : [])"
+          },
+          {
+            "name": "blockedSidecar",
+            "expression": "[\"proxy.istio.io/config\", \"sidecar.istio.io/bootstrapOverride\", \"sidecar.istio.io/discoveryAddress\", \"sidecar.istio.io/proxyImage\", \"sidecar.istio.io/userVolume\", \"sidecar.istio.io/userVolumeMount\"].filter(k, has(object.metadata.annotations) && k in object.metadata.annotations)"
+          },
+          {
+            "name": "blockedTraffic",
+            "expression": "[\"istio.io/redirect-virtual-interfaces\", \"sidecar.istio.io/interceptionMode\", \"traffic.sidecar.istio.io/excludeInboundPorts\", \"traffic.sidecar.istio.io/excludeInterfaces\", \"traffic.sidecar.istio.io/excludeOutboundIPRanges\", \"traffic.sidecar.istio.io/excludeOutboundPorts\", \"traffic.sidecar.istio.io/includeInboundPorts\", \"traffic.sidecar.istio.io/includeOutboundIPRanges\", \"traffic.sidecar.istio.io/includeOutboundPorts\", \"traffic.sidecar.istio.io/kubevirtInterfaces\"].filter(k, has(object.metadata.annotations) && k in object.metadata.annotations).map(k, 'annotation '+k)"
+          },
+          {
+            "name": "badVolumes",
+            "expression": "has(object.spec.volumes) ? object.spec.volumes.filter(v, !(has(v.configMap) || has(v.csi) || has(v.downwardAPI) || has(v.emptyDir) || has(v.ephemeral) || has(v.image) || has(v.persistentVolumeClaim) || has(v.projected) || has(v.secret))) : []"
+          },
+          {
+            "name": "resourceName",
+            "expression": "has(object.metadata.name) && object.metadata.name != '' ? object.metadata.name : (has(object.metadata.generateName) ? object.metadata.generateName : '')"
+          },
+          {
+            "name": "resourceNamePresent",
+            "expression": "(has(object.metadata.name) && object.metadata.name != '') || has(object.metadata.generateName)"
+          },
+          {
+            "name": "fallbackReady",
+            "expression": "(has(object.metadata.annotations) && \"policy.uds.dev/native-fallback\" in object.metadata.annotations && object.metadata.annotations[\"policy.uds.dev/native-fallback\"] != '') && object.metadata.annotations[\"policy.uds.dev/native-fallback\"] == params.spec.revision"
+          },
+          {
+            "name": "mutationReady",
+            "expression": "has(object.metadata.annotations) && \"policy.uds.dev/native-mutation-revision\" in object.metadata.annotations && object.metadata.annotations[\"policy.uds.dev/native-mutation-revision\"] == params.spec.revision"
+          },
+          {
+            "name": "grantDisallowHostNamespaces",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"DisallowHostNamespaces\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictHostPorts",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictHostPorts\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantDisallowPrivileged",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"DisallowPrivileged\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRequireNonRootUser",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RequireNonRootUser\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictProcMount",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictProcMount\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictSeccomp",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictSeccomp\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantDisallowSELinuxOptions",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"DisallowSELinuxOptions\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictSELinuxType",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictSELinuxType\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantDropAllCapabilities",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"DropAllCapabilities\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictCapabilities",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictCapabilities\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictVolumeTypes",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictVolumeTypes\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictHostPathWrite",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictHostPathWrite\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictIstioSidecarOverrides",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioSidecarOverrides\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictIstioTrafficOverrides",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioTrafficOverrides\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictIstioAmbientOverrides",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioAmbientOverrides\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictIstioUser",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioUser\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "legacyDisallowHostNamespaces",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"DisallowHostNamespaces\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictHostPorts",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictHostPorts\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyDisallowPrivileged",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"DisallowPrivileged\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRequireNonRootUser",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RequireNonRootUser\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictProcMount",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictProcMount\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictSeccomp",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictSeccomp\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyDisallowSELinuxOptions",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"DisallowSELinuxOptions\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictSELinuxType",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictSELinuxType\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyDropAllCapabilities",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"DropAllCapabilities\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictCapabilities",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictCapabilities\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictVolumeTypes",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictVolumeTypes\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictHostPathWrite",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictHostPathWrite\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictIstioSidecarOverrides",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictIstioSidecarOverrides\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictIstioTrafficOverrides",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictIstioTrafficOverrides\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictIstioAmbientOverrides",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictIstioAmbientOverrides\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictIstioUser",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictIstioUser\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "codeIdentity",
+            "expression": "variables.containers.exists(c,c.name in ['istio-proxy','istio-init'])"
+          }
+        ],
+        "paramKind": {
+          "apiVersion": "policy.uds.dev/v1alpha1",
+          "kind": "AdmissionParameters"
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-pod-profile"
+      },
+      "spec": {
+        "policyName": "uds-native-pod-profile",
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "objectSelector": {},
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf",
+                  "uds-system"
+                ]
+              }
+            ]
+          }
+        },
+        "validationActions": [
+          "Deny"
+        ],
+        "paramRef": {
+          "name": "uds-native-grants",
+          "namespace": "uds-policy-exemptions",
+          "parameterNotFoundAction": "Deny"
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-service-profile"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "services"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "variables.grantRestrictExternalNames || (variables.legacyRestrictExternalNames && variables.fallbackReady) || (!has(object.spec.type) || object.spec.type != \"ExternalName\")",
+            "message": "ExternalName services are not allowed."
+          },
+          {
+            "expression": "variables.grantDisallowNodePortServices || (variables.legacyDisallowNodePortServices && variables.fallbackReady) || (!has(object.spec.type) || object.spec.type != \"NodePort\")",
+            "message": "NodePort services are not allowed."
+          },
+          {
+            "expression": "!(variables.legacyRestrictExternalNames || variables.legacyDisallowNodePortServices) || variables.fallbackReady",
+            "message": "Legacy exemption evaluation requires the current complete Go admission callback"
+          },
+          {
+            "expression": "variables.mutationReady == true",
+            "message": "Admission exemption snapshot changed between mutation and validation; retry the request"
+          },
+          {
+            "expression": "params.spec.valid == true",
+            "message": "Admission exemption inputs are invalid; repair the protected snapshot"
+          }
+        ],
+        "variables": [
+          {
+            "name": "resourceName",
+            "expression": "has(object.metadata.name) && object.metadata.name != '' ? object.metadata.name : (has(object.metadata.generateName) ? object.metadata.generateName : '')"
+          },
+          {
+            "name": "resourceNamePresent",
+            "expression": "(has(object.metadata.name) && object.metadata.name != '') || has(object.metadata.generateName)"
+          },
+          {
+            "name": "fallbackReady",
+            "expression": "(has(object.metadata.annotations) && \"policy.uds.dev/native-fallback\" in object.metadata.annotations && object.metadata.annotations[\"policy.uds.dev/native-fallback\"] != '') && object.metadata.annotations[\"policy.uds.dev/native-fallback\"] == params.spec.revision"
+          },
+          {
+            "name": "mutationReady",
+            "expression": "has(object.metadata.annotations) && \"policy.uds.dev/native-mutation-revision\" in object.metadata.annotations && object.metadata.annotations[\"policy.uds.dev/native-mutation-revision\"] == params.spec.revision"
+          },
+          {
+            "name": "grantRestrictExternalNames",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictExternalNames\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantDisallowNodePortServices",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"DisallowNodePortServices\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "legacyRestrictExternalNames",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictExternalNames\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyDisallowNodePortServices",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"DisallowNodePortServices\" && m.namespace == request.namespace)"
+          }
+        ],
+        "paramKind": {
+          "apiVersion": "policy.uds.dev/v1alpha1",
+          "kind": "AdmissionParameters"
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-service-profile"
+      },
+      "spec": {
+        "policyName": "uds-native-service-profile",
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "objectSelector": {},
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf",
+                  "uds-system"
+                ]
+              }
+            ]
+          }
+        },
+        "validationActions": [
+          "Deny"
+        ],
+        "paramRef": {
+          "name": "uds-native-grants",
+          "namespace": "uds-policy-exemptions",
+          "parameterNotFoundAction": "Deny"
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-probe-profile"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                "monitoring.coreos.com"
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "probes"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "!has(object.spec.module) || !object.spec.module.startsWith('http_200x_sso') || object.spec.module.startsWith('http_200x_sso_'+request.namespace+'_')",
+            "message": "Probe is not authorized to use this Blackbox Exporter module"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-probe-profile"
+      },
+      "spec": {
+        "policyName": "uds-native-probe-profile",
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "objectSelector": {},
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          }
+        },
+        "validationActions": [
+          "Deny"
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-defaults-profile"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "reinvocationPolicy": "IfNeeded",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods",
+                "pods/ephemeralcontainers"
+              ]
+            }
+          ]
+        },
+        "variables": [
+          {
+            "name": "resourceName",
+            "expression": "has(object.metadata.name) && object.metadata.name != '' ? object.metadata.name : (has(object.metadata.generateName) ? object.metadata.generateName : '')"
+          },
+          {
+            "name": "resourceNamePresent",
+            "expression": "(has(object.metadata.name) && object.metadata.name != '') || has(object.metadata.generateName)"
+          },
+          {
+            "name": "fallbackReady",
+            "expression": "(has(object.metadata.annotations) && \"policy.uds.dev/native-fallback\" in object.metadata.annotations && object.metadata.annotations[\"policy.uds.dev/native-fallback\"] != '') && object.metadata.annotations[\"policy.uds.dev/native-fallback\"] == params.spec.revision"
+          },
+          {
+            "name": "mutationReady",
+            "expression": "has(object.metadata.annotations) && \"policy.uds.dev/native-mutation-revision\" in object.metadata.annotations && object.metadata.annotations[\"policy.uds.dev/native-mutation-revision\"] == params.spec.revision"
+          },
+          {
+            "name": "grantDisallowHostNamespaces",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"DisallowHostNamespaces\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictHostPorts",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictHostPorts\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantDisallowPrivileged",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"DisallowPrivileged\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRequireNonRootUser",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RequireNonRootUser\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictProcMount",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictProcMount\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictSeccomp",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictSeccomp\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantDisallowSELinuxOptions",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"DisallowSELinuxOptions\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictSELinuxType",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictSELinuxType\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantDropAllCapabilities",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"DropAllCapabilities\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictCapabilities",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictCapabilities\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictVolumeTypes",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictVolumeTypes\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictHostPathWrite",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictHostPathWrite\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictIstioSidecarOverrides",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioSidecarOverrides\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictIstioTrafficOverrides",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioTrafficOverrides\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictIstioAmbientOverrides",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioAmbientOverrides\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantRestrictIstioUser",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioUser\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "legacyDisallowHostNamespaces",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"DisallowHostNamespaces\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictHostPorts",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictHostPorts\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyDisallowPrivileged",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"DisallowPrivileged\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRequireNonRootUser",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RequireNonRootUser\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictProcMount",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictProcMount\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictSeccomp",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictSeccomp\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyDisallowSELinuxOptions",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"DisallowSELinuxOptions\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictSELinuxType",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictSELinuxType\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyDropAllCapabilities",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"DropAllCapabilities\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictCapabilities",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictCapabilities\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictVolumeTypes",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictVolumeTypes\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictHostPathWrite",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictHostPathWrite\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictIstioSidecarOverrides",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictIstioSidecarOverrides\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictIstioTrafficOverrides",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictIstioTrafficOverrides\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictIstioAmbientOverrides",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictIstioAmbientOverrides\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyRestrictIstioUser",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictIstioUser\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "diagnosticText",
+            "expression": "has(object.metadata.annotations) && \"uds-core.pepr.dev/mutated\" in object.metadata.annotations ? object.metadata.annotations[\"uds-core.pepr.dev/mutated\"] : ''"
+          },
+          {
+            "name": "diagnosticNeedsGo",
+            "expression": "variables.diagnosticText != '' && !variables.diagnosticText.matches(\"^[ \\\\t\\\\r\\\\n]*\\\\[[ \\\\t\\\\r\\\\n]*(\\\"(disallow-privileged|require-non-root-user|drop-all-capabilities)\\\"([ \\\\t\\\\r\\\\n]*,[ \\\\t\\\\r\\\\n]*\\\"(disallow-privileged|require-non-root-user|drop-all-capabilities)\\\")*)?[ \\\\t\\\\r\\\\n]*\\\\][ \\\\t\\\\r\\\\n]*$\")"
+          },
+          {
+            "name": "priorDiagnostic",
+            "expression": "variables.diagnosticText == '' || variables.diagnosticNeedsGo || variables.diagnosticText.trim().matches('^\\\\[[ \\t\\r\\n]*\\\\]$') ? [] : variables.diagnosticText.trim().substring(1,variables.diagnosticText.trim().size()-1).split(',').map(p,p.trim()).map(p,p.substring(1,p.size()-1))"
+          },
+          {
+            "name": "containers",
+            "expression": "object.spec.containers + (has(object.spec.initContainers) ? object.spec.initContainers : []) + (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers : [])"
+          },
+          {
+            "name": "identityLabels",
+            "expression": "has(object.metadata.labels) && ['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels && object.metadata.labels[k]!='')"
+          },
+          {
+            "name": "privilegeDefault",
+            "expression": "variables.containers.exists(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))&&(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)&&(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN')))"
+          }
+        ],
+        "mutations": [
+          {
+            "patchType": "JSONPatch",
+            "jsonPatch": {
+              "expression": "(!has(object.metadata.annotations) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+[JSONPatch{op:'add',path:\"/metadata/annotations/policy.uds.dev~1native-mutation-revision\",value:params.spec.revision}]"
+            }
+          },
+          {
+            "patchType": "JSONPatch",
+            "jsonPatch": {
+              "expression": "(variables.legacyDisallowHostNamespaces || variables.legacyRestrictHostPorts || variables.legacyDisallowPrivileged || variables.legacyRequireNonRootUser || variables.legacyRestrictProcMount || variables.legacyRestrictSeccomp || variables.legacyDisallowSELinuxOptions || variables.legacyRestrictSELinuxType || variables.legacyDropAllCapabilities || variables.legacyRestrictCapabilities || variables.legacyRestrictVolumeTypes || variables.legacyRestrictHostPathWrite || variables.legacyRestrictIstioSidecarOverrides || variables.legacyRestrictIstioTrafficOverrides || variables.legacyRestrictIstioAmbientOverrides || variables.legacyRestrictIstioUser || variables.diagnosticNeedsGo) ? (!has(object.metadata.annotations) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+[JSONPatch{op:'add',path:\"/metadata/annotations/policy.uds.dev~1native-fallback\",value:params.spec.revision}] : ((has(object.metadata.annotations) && \"policy.uds.dev/native-fallback\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/policy.uds.dev~1native-fallback\"}] : [])"
+            }
+          },
+          {
+            "patchType": "JSONPatch",
+            "jsonPatch": {
+              "expression": "(variables.diagnosticNeedsGo || variables.identityLabels) || (variables.priorDiagnostic + ([(variables.grantDisallowPrivileged || variables.legacyDisallowPrivileged) || !variables.privilegeDefault ? '' : 'disallow-privileged',(variables.grantRequireNonRootUser || variables.legacyRequireNonRootUser) || variables.identityLabels ? '' : 'require-non-root-user',(variables.grantDropAllCapabilities || variables.legacyDropAllCapabilities) ? '' : 'drop-all-capabilities'].filter(p,p!='')).filter(p,!(p in variables.priorDiagnostic))).size()==0 ? [] : (!has(object.metadata.annotations) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+[JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1mutated\",value:'['+(variables.priorDiagnostic + ([(variables.grantDisallowPrivileged || variables.legacyDisallowPrivileged) || !variables.privilegeDefault ? '' : 'disallow-privileged',(variables.grantRequireNonRootUser || variables.legacyRequireNonRootUser) || variables.identityLabels ? '' : 'require-non-root-user',(variables.grantDropAllCapabilities || variables.legacyDropAllCapabilities) ? '' : 'drop-all-capabilities'].filter(p,p!='')).filter(p,!(p in variables.priorDiagnostic))).map(p,'\"'+p+'\"').join(',')+']'}]"
+            }
+          },
+          {
+            "patchType": "JSONPatch",
+            "jsonPatch": {
+              "expression": "(variables.grantDisallowPrivileged || variables.legacyDisallowPrivileged || variables.diagnosticNeedsGo || variables.identityLabels) ? [] : ((has(object.spec.containers) ? object.spec.containers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext',value:Object.spec.containers.securityContext{}})+object.spec.containers.filter(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))&&(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)&&(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN'))).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : [])+(has(object.spec.initContainers) ? object.spec.initContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext',value:Object.spec.initContainers.securityContext{}})+object.spec.initContainers.filter(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))&&(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)&&(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN'))).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : [])+(has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext',value:Object.spec.ephemeralContainers.securityContext{}})+object.spec.ephemeralContainers.filter(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))&&(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)&&(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN'))).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : []))"
+            }
+          },
+          {
+            "patchType": "ApplyConfiguration",
+            "applyConfiguration": {
+              "expression": "(variables.grantRequireNonRootUser || variables.legacyRequireNonRootUser || variables.diagnosticNeedsGo || variables.identityLabels) ? Object{} : Object{spec:Object.spec{securityContext:Object.spec.securityContext{runAsNonRoot:has(object.spec.securityContext) && has(object.spec.securityContext.runAsNonRoot) ? object.spec.securityContext.runAsNonRoot : true,runAsUser:has(object.spec.securityContext) && has(object.spec.securityContext.runAsUser) ? object.spec.securityContext.runAsUser : 1000,runAsGroup:has(object.spec.securityContext) && has(object.spec.securityContext.runAsGroup) ? object.spec.securityContext.runAsGroup : 1000}}}"
+            }
+          },
+          {
+            "patchType": "JSONPatch",
+            "jsonPatch": {
+              "expression": "(variables.grantDropAllCapabilities || variables.legacyDropAllCapabilities || variables.diagnosticNeedsGo || variables.identityLabels) ? [] : ((has(object.spec.containers) ? object.spec.containers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext',value:Object.spec.containers.securityContext{}})+object.spec.containers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/capabilities',value:Object.spec.containers.securityContext.capabilities{}})+object.spec.containers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.drop)||c.securityContext.capabilities.drop!=['ALL']).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']}) : [])+(has(object.spec.initContainers) ? object.spec.initContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext',value:Object.spec.initContainers.securityContext{}})+object.spec.initContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/capabilities',value:Object.spec.initContainers.securityContext.capabilities{}})+object.spec.initContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.drop)||c.securityContext.capabilities.drop!=['ALL']).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']}) : [])+(has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext',value:Object.spec.ephemeralContainers.securityContext{}})+object.spec.ephemeralContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/capabilities',value:Object.spec.ephemeralContainers.securityContext.capabilities{}})+object.spec.ephemeralContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.drop)||c.securityContext.capabilities.drop!=['ALL']).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']}) : []))"
+            }
+          },
+          {
+            "patchType": "JSONPatch",
+            "jsonPatch": {
+              "expression": "(!has(object.metadata.annotations) && (variables.grantDisallowHostNamespaces || variables.grantRestrictHostPorts || variables.grantDisallowPrivileged || variables.grantRequireNonRootUser || variables.grantRestrictProcMount || variables.grantRestrictSeccomp || variables.grantDisallowSELinuxOptions || variables.grantRestrictSELinuxType || variables.grantDropAllCapabilities || variables.grantRestrictCapabilities || variables.grantRestrictVolumeTypes || variables.grantRestrictHostPathWrite || variables.grantRestrictIstioSidecarOverrides || variables.grantRestrictIstioTrafficOverrides || variables.grantRestrictIstioAmbientOverrides || variables.grantRestrictIstioUser) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+(variables.grantDisallowHostNamespaces ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowHostNamespaces\",value:'exempted'}] : (!variables.legacyDisallowHostNamespaces && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.DisallowHostNamespaces\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowHostNamespaces\"}] : []))+(variables.grantRestrictHostPorts ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictHostPorts\",value:'exempted'}] : (!variables.legacyRestrictHostPorts && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.RestrictHostPorts\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictHostPorts\"}] : []))+(variables.grantDisallowPrivileged ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowPrivileged\",value:'exempted'}] : (!variables.legacyDisallowPrivileged && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.DisallowPrivileged\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowPrivileged\"}] : []))+(variables.grantRequireNonRootUser ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RequireNonRootUser\",value:'exempted'}] : (!variables.legacyRequireNonRootUser && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.RequireNonRootUser\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RequireNonRootUser\"}] : []))+(variables.grantRestrictProcMount ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictProcMount\",value:'exempted'}] : (!variables.legacyRestrictProcMount && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.RestrictProcMount\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictProcMount\"}] : []))+(variables.grantRestrictSeccomp ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictSeccomp\",value:'exempted'}] : (!variables.legacyRestrictSeccomp && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.RestrictSeccomp\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictSeccomp\"}] : []))+(variables.grantDisallowSELinuxOptions ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowSELinuxOptions\",value:'exempted'}] : (!variables.legacyDisallowSELinuxOptions && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.DisallowSELinuxOptions\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowSELinuxOptions\"}] : []))+(variables.grantRestrictSELinuxType ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictSELinuxType\",value:'exempted'}] : (!variables.legacyRestrictSELinuxType && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.RestrictSELinuxType\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictSELinuxType\"}] : []))+(variables.grantDropAllCapabilities ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DropAllCapabilities\",value:'exempted'}] : (!variables.legacyDropAllCapabilities && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.DropAllCapabilities\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DropAllCapabilities\"}] : []))+(variables.grantRestrictCapabilities ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictCapabilities\",value:'exempted'}] : (!variables.legacyRestrictCapabilities && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.RestrictCapabilities\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictCapabilities\"}] : []))+(variables.grantRestrictVolumeTypes ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictVolumeTypes\",value:'exempted'}] : (!variables.legacyRestrictVolumeTypes && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.RestrictVolumeTypes\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictVolumeTypes\"}] : []))+(variables.grantRestrictHostPathWrite ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictHostPathWrite\",value:'exempted'}] : (!variables.legacyRestrictHostPathWrite && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.RestrictHostPathWrite\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictHostPathWrite\"}] : []))+(variables.grantRestrictIstioSidecarOverrides ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioSidecarOverrides\",value:'exempted'}] : (!variables.legacyRestrictIstioSidecarOverrides && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.RestrictIstioSidecarOverrides\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioSidecarOverrides\"}] : []))+(variables.grantRestrictIstioTrafficOverrides ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioTrafficOverrides\",value:'exempted'}] : (!variables.legacyRestrictIstioTrafficOverrides && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.RestrictIstioTrafficOverrides\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioTrafficOverrides\"}] : []))+(variables.grantRestrictIstioAmbientOverrides ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioAmbientOverrides\",value:'exempted'}] : (!variables.legacyRestrictIstioAmbientOverrides && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.RestrictIstioAmbientOverrides\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioAmbientOverrides\"}] : []))+(variables.grantRestrictIstioUser ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioUser\",value:'exempted'}] : (!variables.legacyRestrictIstioUser && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.RestrictIstioUser\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioUser\"}] : []))"
+            }
+          }
+        ],
+        "paramKind": {
+          "apiVersion": "policy.uds.dev/v1alpha1",
+          "kind": "AdmissionParameters"
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-defaults-profile"
+      },
+      "spec": {
+        "policyName": "uds-native-defaults-profile",
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "objectSelector": {},
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf",
+                  "uds-system"
+                ]
+              }
+            ]
+          }
+        },
+        "paramRef": {
+          "name": "uds-native-grants",
+          "namespace": "uds-policy-exemptions",
+          "parameterNotFoundAction": "Deny"
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-service-markers"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "reinvocationPolicy": "IfNeeded",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "services"
+              ]
+            }
+          ]
+        },
+        "variables": [
+          {
+            "name": "resourceName",
+            "expression": "has(object.metadata.name) && object.metadata.name != '' ? object.metadata.name : (has(object.metadata.generateName) ? object.metadata.generateName : '')"
+          },
+          {
+            "name": "resourceNamePresent",
+            "expression": "(has(object.metadata.name) && object.metadata.name != '') || has(object.metadata.generateName)"
+          },
+          {
+            "name": "fallbackReady",
+            "expression": "(has(object.metadata.annotations) && \"policy.uds.dev/native-fallback\" in object.metadata.annotations && object.metadata.annotations[\"policy.uds.dev/native-fallback\"] != '') && object.metadata.annotations[\"policy.uds.dev/native-fallback\"] == params.spec.revision"
+          },
+          {
+            "name": "mutationReady",
+            "expression": "has(object.metadata.annotations) && \"policy.uds.dev/native-mutation-revision\" in object.metadata.annotations && object.metadata.annotations[\"policy.uds.dev/native-mutation-revision\"] == params.spec.revision"
+          },
+          {
+            "name": "grantRestrictExternalNames",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"RestrictExternalNames\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "grantDisallowNodePortServices",
+            "expression": "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == \"DisallowNodePortServices\" && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
+          },
+          {
+            "name": "legacyRestrictExternalNames",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"RestrictExternalNames\" && m.namespace == request.namespace)"
+          },
+          {
+            "name": "legacyDisallowNodePortServices",
+            "expression": "params.spec.legacyScopes.exists(m, m.policy == \"DisallowNodePortServices\" && m.namespace == request.namespace)"
+          }
+        ],
+        "mutations": [
+          {
+            "patchType": "JSONPatch",
+            "jsonPatch": {
+              "expression": "(!has(object.metadata.annotations) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+[JSONPatch{op:'add',path:\"/metadata/annotations/policy.uds.dev~1native-mutation-revision\",value:params.spec.revision}]"
+            }
+          },
+          {
+            "patchType": "JSONPatch",
+            "jsonPatch": {
+              "expression": "(variables.legacyRestrictExternalNames || variables.legacyDisallowNodePortServices) ? (!has(object.metadata.annotations) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+[JSONPatch{op:'add',path:\"/metadata/annotations/policy.uds.dev~1native-fallback\",value:params.spec.revision}] : ((has(object.metadata.annotations) && \"policy.uds.dev/native-fallback\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/policy.uds.dev~1native-fallback\"}] : [])"
+            }
+          },
+          {
+            "patchType": "JSONPatch",
+            "jsonPatch": {
+              "expression": "(!has(object.metadata.annotations) && (variables.grantRestrictExternalNames || variables.grantDisallowNodePortServices) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+(variables.grantRestrictExternalNames ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictExternalNames\",value:'exempted'}] : (!variables.legacyRestrictExternalNames && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.RestrictExternalNames\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictExternalNames\"}] : []))+(variables.grantDisallowNodePortServices ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowNodePortServices\",value:'exempted'}] : (!variables.legacyDisallowNodePortServices && (has(object.metadata.annotations) && \"uds-core.pepr.dev/uds-core-policies.DisallowNodePortServices\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowNodePortServices\"}] : []))"
+            }
+          }
+        ],
+        "paramKind": {
+          "apiVersion": "policy.uds.dev/v1alpha1",
+          "kind": "AdmissionParameters"
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-service-markers"
+      },
+      "spec": {
+        "policyName": "uds-native-service-markers",
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "objectSelector": {},
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf",
+                  "uds-system"
+                ]
+              }
+            ]
+          }
+        },
+        "paramRef": {
+          "name": "uds-native-grants",
+          "namespace": "uds-policy-exemptions",
+          "parameterNotFoundAction": "Deny"
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-monitor-defaults"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "reinvocationPolicy": "IfNeeded",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                "monitoring.coreos.com"
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "servicemonitors",
+                "podmonitors"
+              ]
+            }
+          ]
+        },
+        "mutations": [
+          {
+            "patchType": "ApplyConfiguration",
+            "applyConfiguration": {
+              "expression": "has(object.spec.fallbackScrapeProtocol) && object.spec.fallbackScrapeProtocol!='' ? Object{} : Object{spec:Object.spec{fallbackScrapeProtocol:'PrometheusText0.0.4'}}"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-monitor-defaults"
+      },
+      "spec": {
+        "policyName": "uds-native-monitor-defaults",
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "objectSelector": {},
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-package-namespace"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                "uds.dev"
+              ],
+              "apiVersions": [
+                "v1alpha1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "packages"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "!(request.namespace in ['kube-system','kube-public','_unknown_','pepr-system'])",
+            "message": "invalid namespace"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-package-namespace"
+      },
+      "spec": {
+        "policyName": "uds-native-package-namespace",
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "objectSelector": {},
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          }
+        },
+        "validationActions": [
+          "Deny"
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-exemption-shape"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                "uds.dev"
+              ],
+              "apiVersions": [
+                "v1alpha1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "exemptions"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "params.spec.allowAllNamespaces || request.namespace=='uds-policy-exemptions'",
+            "message": "Exemptions must be created in the protected uds-policy-exemptions namespace"
+          },
+          {
+            "expression": "!has(object.spec.exemptions)||object.spec.exemptions.all(e,e.policies.all(p,(e.matcher.kind=='service')==(p in ['RestrictExternalNames','DisallowNodePortServices'])))",
+            "message": "Exemption matcher kind is incompatible with its policy"
+          }
+        ],
+        "paramKind": {
+          "apiVersion": "policy.uds.dev/v1alpha1",
+          "kind": "AdmissionParameters"
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-exemption-shape"
+      },
+      "spec": {
+        "policyName": "uds-native-exemption-shape",
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "objectSelector": {},
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          }
+        },
+        "validationActions": [
+          "Deny"
+        ],
+        "paramRef": {
+          "name": "uds-native-grants",
+          "namespace": "uds-policy-exemptions",
+          "parameterNotFoundAction": "Deny"
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-controller-pod-recovery"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods",
+                "pods/ephemeralcontainers"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "(!has(object.spec.hostNetwork) || !object.spec.hostNetwork) && (!has(object.spec.hostPID) || !object.spec.hostPID) && (!has(object.spec.hostIPC) || !object.spec.hostIPC)",
+            "message": "Sharing the host namespaces is disallowed. The fields spec.hostNetwork, spec.hostIPC, and spec.hostPID must not be set to true."
+          },
+          {
+            "expression": "variables.containers.all(c, !has(c.ports) || c.ports.all(p, !has(p.hostPort) || p.hostPort == 0))",
+            "message": "Host ports are not allowed."
+          },
+          {
+            "expression": "variables.containers.all(c, has(c.securityContext) && has(c.securityContext.allowPrivilegeEscalation) && !c.securityContext.allowPrivilegeEscalation && (!has(c.securityContext.privileged) || !c.securityContext.privileged))",
+            "message": "Privilege escalation is disallowed. Authorized: [allowPrivilegeEscalation = false | privileged = false]"
+          },
+          {
+            "expression": "variables.contexts.all(x, (!has(x.runAsNonRoot) || x.runAsNonRoot) && (!has(x.runAsUser) || x.runAsUser != 0) && (!has(x.supplementalGroups) || !x.supplementalGroups.exists(g, g == 0)))",
+            "message": "Unauthorized container securityContext. Containers must not run as root or have root-level supplemental groups. Authorized: [runAsNonRoot = true | runAsUser > 0 | supplementalGroups must not include 0]"
+          },
+          {
+            "expression": "variables.containers.all(c, !has(c.securityContext) || !has(c.securityContext.procMount) || c.securityContext.procMount == \"Default\")",
+            "message": "Unauthorized procMount type. Authorized: [undefined | Default]"
+          },
+          {
+            "expression": "variables.contexts.all(x, !has(x.seccompProfile) || x.seccompProfile.type in [\"RuntimeDefault\", \"Localhost\"])",
+            "message": "Unauthorized seccomp profile type. Authorized: [RuntimeDefault | Localhost]"
+          },
+          {
+            "expression": "variables.contexts.all(x, !has(x.seLinuxOptions) || ((!has(x.seLinuxOptions.user) || x.seLinuxOptions.user == \"\") && (!has(x.seLinuxOptions.role) || x.seLinuxOptions.role == \"\")))",
+            "message": "Unauthorized SELinux Options. Authorized: [user: undefined | role: undefined]"
+          },
+          {
+            "expression": "variables.contexts.all(x, !has(x.seLinuxOptions) || !has(x.seLinuxOptions.type) || x.seLinuxOptions.type in [\"container_t\", \"container_init_t\", \"container_kvm_t\"])",
+            "message": "Unauthorized SELinux type. Authorized: [container_t | container_init_t | container_kvm_t]"
+          },
+          {
+            "expression": "variables.containers.all(c, has(c.securityContext) && has(c.securityContext.capabilities) && has(c.securityContext.capabilities.drop) && c.securityContext.capabilities.drop.exists(v, v == \"ALL\"))",
+            "message": "All container capabilities must be dropped."
+          },
+          {
+            "expression": "variables.containers.all(c, !has(c.securityContext) || !has(c.securityContext.capabilities) || !has(c.securityContext.capabilities.add) || c.securityContext.capabilities.add.all(v, v == \"NET_BIND_SERVICE\"))",
+            "message": "Unauthorized container capabilities in securityContext.capabilities.add. Authorized: [NET_BIND_SERVICE]"
+          },
+          {
+            "expression": "!has(object.spec.volumes) || object.spec.volumes.all(v, has(v.configMap) || has(v.csi) || has(v.downwardAPI) || has(v.emptyDir) || has(v.ephemeral) || has(v.image) || has(v.persistentVolumeClaim) || has(v.projected) || has(v.secret))",
+            "message": "Volume has a disallowed volume type.",
+            "messageExpression": "'Volume '+variables.badVolumes[0].name+' has a disallowed volume type of '+\"'\"+(has(variables.badVolumes[0].hostPath) ? 'hostPath' : 'unsupported')+\"'.\"+(has(variables.badVolumes[0].hostPath) && variables.containers.exists(c, has(c.volumeMounts) && c.volumeMounts.exists(m, m.name == variables.badVolumes[0].name && (!has(m.readOnly) || !m.readOnly))) ? \" hostPath volume '\"+variables.badVolumes[0].name+\"' must be mounted as readOnly.\" : '')"
+          },
+          {
+            "expression": "!has(object.spec.volumes) || object.spec.volumes.filter(v, has(v.hostPath)).all(v, variables.containers.all(c, !has(c.volumeMounts) || c.volumeMounts.filter(m, m.name == v.name).all(m, has(m.readOnly) && m.readOnly)))",
+            "message": "hostPath volumes must be mounted as readOnly.",
+            "messageExpression": "\"hostPath volume '\"+object.spec.volumes.filter(v, has(v.hostPath) && variables.containers.exists(c, has(c.volumeMounts) && c.volumeMounts.exists(m, m.name == v.name && (!has(m.readOnly) || !m.readOnly))))[0].name+\"' must be mounted as readOnly.\""
+          },
+          {
+            "expression": "!has(object.metadata.annotations) || object.metadata.annotations.all(k, !(k in [\"sidecar.istio.io/bootstrapOverride\", \"sidecar.istio.io/discoveryAddress\", \"sidecar.istio.io/proxyImage\", \"proxy.istio.io/config\", \"sidecar.istio.io/userVolume\", \"sidecar.istio.io/userVolumeMount\"]))",
+            "message": "The following istio annotations can modify secure sidecar configuration and are not allowed:",
+            "messageExpression": "\"The following istio annotations can modify secure sidecar configuration and are not allowed: \"+variables.blockedSidecar.join(', ')"
+          },
+          {
+            "expression": "(!has(object.metadata.annotations) || object.metadata.annotations.all(k, !(k in [\"traffic.sidecar.istio.io/excludeInboundPorts\", \"traffic.sidecar.istio.io/excludeInterfaces\", \"traffic.sidecar.istio.io/excludeOutboundIPRanges\", \"traffic.sidecar.istio.io/excludeOutboundPorts\", \"traffic.sidecar.istio.io/includeInboundPorts\", \"traffic.sidecar.istio.io/includeOutboundIPRanges\", \"traffic.sidecar.istio.io/includeOutboundPorts\", \"sidecar.istio.io/interceptionMode\", \"traffic.sidecar.istio.io/kubevirtInterfaces\", \"istio.io/redirect-virtual-interfaces\"]))) && (!has(object.metadata.annotations) || !(\"sidecar.istio.io/inject\" in object.metadata.annotations) || object.metadata.annotations[\"sidecar.istio.io/inject\"] == \"true\") && (!has(object.metadata.labels) || !(\"sidecar.istio.io/inject\" in object.metadata.labels) || (object.metadata.labels[\"sidecar.istio.io/inject\"] == \"true\" || (object.spec.containers.size() == 1 && object.spec.containers.all(c, c.name == 'istio-proxy' && c.image == 'docker.io/istio/proxyv2:1.30.3-distroless' && has(c.args) && c.args.size() > 0 && c.args[0] == 'proxy' && !has(c.command)))))",
+            "message": "The following istio annotations or labels can modify secure traffic interception are not allowed:",
+            "messageExpression": "\"The following istio annotations or labels can modify secure traffic interception are not allowed: \"+variables.blockedTraffic.join(', ')"
+          },
+          {
+            "expression": "!has(object.metadata.annotations) || !(\"ambient.istio.io/bypass-inbound-capture\" in object.metadata.annotations)",
+            "message": "The following istio ambient annotations that can modify secure mesh behavior are not allowed: ambient.istio.io/bypass-inbound-capture"
+          },
+          {
+            "expression": "variables.contexts.all(x,(!has(x.runAsUser)||x.runAsUser!=1337)&&(!has(x.runAsGroup)||x.runAsGroup!=1337)&&(!has(x.fsGroup)||x.fsGroup!=1337)&&(!has(x.supplementalGroups)||!x.supplementalGroups.exists(g,g==1337)))",
+            "message": "Application containers must not use UID/GID 1337 (Istio proxy). This development profile supports ambient mesh."
+          }
+        ],
+        "variables": [
+          {
+            "name": "containers",
+            "expression": "object.spec.containers + (has(object.spec.initContainers) ? object.spec.initContainers : []) + (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers : [])"
+          },
+          {
+            "name": "contexts",
+            "expression": "variables.containers.filter(c, has(c.securityContext)).map(c, c.securityContext) + (has(object.spec.securityContext) ? [object.spec.securityContext] : [])"
+          },
+          {
+            "name": "blockedSidecar",
+            "expression": "[\"proxy.istio.io/config\", \"sidecar.istio.io/bootstrapOverride\", \"sidecar.istio.io/discoveryAddress\", \"sidecar.istio.io/proxyImage\", \"sidecar.istio.io/userVolume\", \"sidecar.istio.io/userVolumeMount\"].filter(k, has(object.metadata.annotations) && k in object.metadata.annotations)"
+          },
+          {
+            "name": "blockedTraffic",
+            "expression": "[\"istio.io/redirect-virtual-interfaces\", \"sidecar.istio.io/interceptionMode\", \"traffic.sidecar.istio.io/excludeInboundPorts\", \"traffic.sidecar.istio.io/excludeInterfaces\", \"traffic.sidecar.istio.io/excludeOutboundIPRanges\", \"traffic.sidecar.istio.io/excludeOutboundPorts\", \"traffic.sidecar.istio.io/includeInboundPorts\", \"traffic.sidecar.istio.io/includeOutboundIPRanges\", \"traffic.sidecar.istio.io/includeOutboundPorts\", \"traffic.sidecar.istio.io/kubevirtInterfaces\"].filter(k, has(object.metadata.annotations) && k in object.metadata.annotations).map(k, 'annotation '+k)"
+          },
+          {
+            "name": "badVolumes",
+            "expression": "has(object.spec.volumes) ? object.spec.volumes.filter(v, !(has(v.configMap) || has(v.csi) || has(v.downwardAPI) || has(v.emptyDir) || has(v.ephemeral) || has(v.image) || has(v.persistentVolumeClaim) || has(v.projected) || has(v.secret))) : []"
+          }
+        ],
+        "matchConditions": [
+          {
+            "name": "authenticated-controller-recovery",
+            "expression": "request.namespace=='uds-system' && request.resource.group=='' && request.resource.resource=='pods' && (!has(request.subResource)||request.subResource=='') && (has(request.userInfo) && ((has(request.userInfo.username) && request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) && request.userInfo.groups.exists(g,g=='system:masters')))) && has(object.spec.serviceAccountName) && object.spec.serviceAccountName=='uds-controller' && ((has(object.metadata.name) && object.metadata.name.startsWith('uds-controller-')) || (has(object.metadata.generateName) && object.metadata.generateName.startsWith('uds-controller-'))) && has(object.metadata.ownerReferences) && object.metadata.ownerReferences.exists(r,r.apiVersion=='apps/v1' && r.kind=='ReplicaSet' && r.name.startsWith('uds-controller-') && has(r.controller) && r.controller) && object.spec.containers.size()==1 && object.spec.containers[0].name=='controller' && (!has(object.metadata.labels)||!['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels && object.metadata.labels[k]!='')) && (!has(object.spec.initContainers)||object.spec.initContainers.size()==0) && (!has(object.spec.ephemeralContainers)||object.spec.ephemeralContainers.size()==0)"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-controller-pod-recovery"
+      },
+      "spec": {
+        "policyName": "uds-native-controller-pod-recovery",
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "objectSelector": {},
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          }
+        },
+        "validationActions": [
+          "Deny"
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-controller-service-recovery"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "services"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "!has(object.spec.type) || object.spec.type != \"ExternalName\"",
+            "message": "ExternalName services are not allowed."
+          },
+          {
+            "expression": "!has(object.spec.type) || object.spec.type != \"NodePort\"",
+            "message": "NodePort services are not allowed."
+          }
+        ],
+        "matchConditions": [
+          {
+            "name": "authenticated-controller-recovery",
+            "expression": "request.namespace=='uds-system' && request.resource.group=='' && request.resource.resource=='services' && (!has(request.subResource)||request.subResource=='') && (has(request.userInfo) && ((has(request.userInfo.username) && request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) && request.userInfo.groups.exists(g,g=='system:masters')))) && object.metadata.name=='uds-controller' && has(object.spec.type) && object.spec.type=='ClusterIP' && object.spec.ports.size()==1 && object.spec.ports[0].port==443 && object.spec.ports[0].targetPort==9443"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-controller-service-recovery"
+      },
+      "spec": {
+        "policyName": "uds-native-controller-service-recovery",
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "objectSelector": {},
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          }
+        },
+        "validationActions": [
+          "Deny"
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-controller-pod-defaults-recovery"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "reinvocationPolicy": "IfNeeded",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods"
+              ]
+            }
+          ]
+        },
+        "matchConditions": [
+          {
+            "name": "authenticated-controller-recovery",
+            "expression": "request.namespace=='uds-system' && request.resource.group=='' && request.resource.resource=='pods' && (!has(request.subResource)||request.subResource=='') && (has(request.userInfo) && ((has(request.userInfo.username) && request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) && request.userInfo.groups.exists(g,g=='system:masters')))) && has(object.spec.serviceAccountName) && object.spec.serviceAccountName=='uds-controller' && ((has(object.metadata.name) && object.metadata.name.startsWith('uds-controller-')) || (has(object.metadata.generateName) && object.metadata.generateName.startsWith('uds-controller-'))) && has(object.metadata.ownerReferences) && object.metadata.ownerReferences.exists(r,r.apiVersion=='apps/v1' && r.kind=='ReplicaSet' && r.name.startsWith('uds-controller-') && has(r.controller) && r.controller) && object.spec.containers.size()==1 && object.spec.containers[0].name=='controller' && (!has(object.metadata.labels)||!['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels && object.metadata.labels[k]!='')) && (!has(object.spec.initContainers)||object.spec.initContainers.size()==0) && (!has(object.spec.ephemeralContainers)||object.spec.ephemeralContainers.size()==0)"
+          }
+        ],
+        "variables": [
+          {
+            "name": "diagnosticText",
+            "expression": "has(object.metadata.annotations) && \"uds-core.pepr.dev/mutated\" in object.metadata.annotations ? object.metadata.annotations[\"uds-core.pepr.dev/mutated\"] : ''"
+          },
+          {
+            "name": "diagnosticNeedsGo",
+            "expression": "variables.diagnosticText != '' && !variables.diagnosticText.matches(\"^[ \\\\t\\\\r\\\\n]*\\\\[[ \\\\t\\\\r\\\\n]*(\\\"(disallow-privileged|require-non-root-user|drop-all-capabilities)\\\"([ \\\\t\\\\r\\\\n]*,[ \\\\t\\\\r\\\\n]*\\\"(disallow-privileged|require-non-root-user|drop-all-capabilities)\\\")*)?[ \\\\t\\\\r\\\\n]*\\\\][ \\\\t\\\\r\\\\n]*$\")"
+          },
+          {
+            "name": "priorDiagnostic",
+            "expression": "variables.diagnosticText == '' || variables.diagnosticNeedsGo || variables.diagnosticText.trim().matches('^\\\\[[ \\t\\r\\n]*\\\\]$') ? [] : variables.diagnosticText.trim().substring(1,variables.diagnosticText.trim().size()-1).split(',').map(p,p.trim()).map(p,p.substring(1,p.size()-1))"
+          },
+          {
+            "name": "containers",
+            "expression": "object.spec.containers + (has(object.spec.initContainers) ? object.spec.initContainers : []) + (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers : [])"
+          },
+          {
+            "name": "identityLabels",
+            "expression": "false"
+          },
+          {
+            "name": "privilegeDefault",
+            "expression": "variables.containers.exists(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))&&(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)&&(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN')))"
+          }
+        ],
+        "mutations": [
+          {
+            "patchType": "JSONPatch",
+            "jsonPatch": {
+              "expression": "(variables.diagnosticNeedsGo || variables.identityLabels) || (variables.priorDiagnostic + ([(false) || !variables.privilegeDefault ? '' : 'disallow-privileged',(false) || variables.identityLabels ? '' : 'require-non-root-user',(false) ? '' : 'drop-all-capabilities'].filter(p,p!='')).filter(p,!(p in variables.priorDiagnostic))).size()==0 ? [] : (!has(object.metadata.annotations) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+[JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1mutated\",value:'['+(variables.priorDiagnostic + ([(false) || !variables.privilegeDefault ? '' : 'disallow-privileged',(false) || variables.identityLabels ? '' : 'require-non-root-user',(false) ? '' : 'drop-all-capabilities'].filter(p,p!='')).filter(p,!(p in variables.priorDiagnostic))).map(p,'\"'+p+'\"').join(',')+']'}]"
+            }
+          },
+          {
+            "patchType": "JSONPatch",
+            "jsonPatch": {
+              "expression": "(false || false || variables.identityLabels) ? [] : ((has(object.spec.containers) ? object.spec.containers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext',value:Object.spec.containers.securityContext{}})+object.spec.containers.filter(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))&&(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)&&(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN'))).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : [])+(has(object.spec.initContainers) ? object.spec.initContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext',value:Object.spec.initContainers.securityContext{}})+object.spec.initContainers.filter(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))&&(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)&&(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN'))).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : [])+(has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext',value:Object.spec.ephemeralContainers.securityContext{}})+object.spec.ephemeralContainers.filter(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))&&(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)&&(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN'))).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : []))"
+            }
+          },
+          {
+            "patchType": "ApplyConfiguration",
+            "applyConfiguration": {
+              "expression": "(false || false || variables.identityLabels) ? Object{} : Object{spec:Object.spec{securityContext:Object.spec.securityContext{runAsNonRoot:has(object.spec.securityContext) && has(object.spec.securityContext.runAsNonRoot) ? object.spec.securityContext.runAsNonRoot : true,runAsUser:has(object.spec.securityContext) && has(object.spec.securityContext.runAsUser) ? object.spec.securityContext.runAsUser : 1000,runAsGroup:has(object.spec.securityContext) && has(object.spec.securityContext.runAsGroup) ? object.spec.securityContext.runAsGroup : 1000}}}"
+            }
+          },
+          {
+            "patchType": "JSONPatch",
+            "jsonPatch": {
+              "expression": "(false || false || variables.identityLabels) ? [] : ((has(object.spec.containers) ? object.spec.containers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext',value:Object.spec.containers.securityContext{}})+object.spec.containers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/capabilities',value:Object.spec.containers.securityContext.capabilities{}})+object.spec.containers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.drop)||c.securityContext.capabilities.drop!=['ALL']).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']}) : [])+(has(object.spec.initContainers) ? object.spec.initContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext',value:Object.spec.initContainers.securityContext{}})+object.spec.initContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/capabilities',value:Object.spec.initContainers.securityContext.capabilities{}})+object.spec.initContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.drop)||c.securityContext.capabilities.drop!=['ALL']).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']}) : [])+(has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext',value:Object.spec.ephemeralContainers.securityContext{}})+object.spec.ephemeralContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/capabilities',value:Object.spec.ephemeralContainers.securityContext.capabilities{}})+object.spec.ephemeralContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.drop)||c.securityContext.capabilities.drop!=['ALL']).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']}) : []))"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-controller-pod-defaults-recovery"
+      },
+      "spec": {
+        "policyName": "uds-native-controller-pod-defaults-recovery",
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "objectSelector": {},
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

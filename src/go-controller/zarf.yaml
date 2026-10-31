@@ -1,0 +1,37 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-controller
+  version: 0.1.0-native-dev
+  description: Native Go backend bootstrap; requires explicitly qualified native admission activation
+components:
+  - name: uds-controller
+    required: true
+    charts:
+      - name: uds-controller
+        releaseName: uds-controller
+        namespace: uds-system
+        version: 0.1.0
+        localPath: chart
+        valuesFiles:
+          - packaging-values.yaml
+        values:
+          - sourcePath: .uds-controller.uds-controller
+            targetPath: .
+    images:
+      - "###ZARF_PKG_TMPL_NATIVE_CONTROLLER_IMAGE###"
+    actions:
+      onDeploy:
+        before:
+          - description: Require functioning Istio before ambient controller startup
+            maxTotalSeconds: 300
+            cmd: |
+              set -eu
+              ./zarf tools kubectl -n istio-system rollout status deployment/istiod --timeout=120s
+              ./zarf tools kubectl -n istio-system rollout status daemonset/istio-cni-node --timeout=120s
+              ./zarf tools kubectl -n istio-system rollout status daemonset/ztunnel --timeout=120s
+        after:
+          - description: Require backend readiness before registration
+            maxTotalSeconds: 120
+            cmd: ./zarf tools kubectl -n uds-system rollout status deployment/uds-controller --timeout=120s

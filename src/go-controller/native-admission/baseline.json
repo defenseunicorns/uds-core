@@ -1,0 +1,352 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "ark-native-pod-profile"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods",
+                "pods/ephemeralcontainers"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "(!has(object.spec.hostNetwork) || !object.spec.hostNetwork) && (!has(object.spec.hostPID) || !object.spec.hostPID) && (!has(object.spec.hostIPC) || !object.spec.hostIPC)",
+            "message": "Sharing the host namespaces is disallowed. The fields spec.hostNetwork, spec.hostIPC, and spec.hostPID must not be set to true."
+          },
+          {
+            "expression": "variables.containers.all(c, !has(c.ports) || c.ports.all(p, !has(p.hostPort) || p.hostPort == 0))",
+            "message": "Host ports are not allowed."
+          },
+          {
+            "expression": "variables.containers.all(c, has(c.securityContext) && has(c.securityContext.allowPrivilegeEscalation) && !c.securityContext.allowPrivilegeEscalation && (!has(c.securityContext.privileged) || !c.securityContext.privileged))",
+            "message": "Privilege escalation is disallowed. Authorized: [allowPrivilegeEscalation = false | privileged = false]"
+          },
+          {
+            "expression": "variables.contexts.all(x, (!has(x.runAsNonRoot) || x.runAsNonRoot) && (!has(x.runAsUser) || x.runAsUser != 0) && (!has(x.supplementalGroups) || !x.supplementalGroups.exists(g, g == 0)))",
+            "message": "Unauthorized container securityContext. Containers must not run as root or have root-level supplemental groups. Authorized: [runAsNonRoot = true | runAsUser > 0 | supplementalGroups must not include 0]"
+          },
+          {
+            "expression": "variables.containers.all(c, !has(c.securityContext) || !has(c.securityContext.procMount) || c.securityContext.procMount == \"Default\")",
+            "message": "Unauthorized procMount type. Authorized: [undefined | Default]"
+          },
+          {
+            "expression": "variables.contexts.all(x, !has(x.seccompProfile) || x.seccompProfile.type in [\"RuntimeDefault\", \"Localhost\"])",
+            "message": "Unauthorized seccomp profile type. Authorized: [RuntimeDefault | Localhost]"
+          },
+          {
+            "expression": "variables.contexts.all(x, !has(x.seLinuxOptions) || ((!has(x.seLinuxOptions.user) || x.seLinuxOptions.user == \"\") && (!has(x.seLinuxOptions.role) || x.seLinuxOptions.role == \"\")))",
+            "message": "Unauthorized SELinux Options. Authorized: [user: undefined | role: undefined]"
+          },
+          {
+            "expression": "variables.contexts.all(x, !has(x.seLinuxOptions) || !has(x.seLinuxOptions.type) || x.seLinuxOptions.type in [\"container_t\", \"container_init_t\", \"container_kvm_t\"])",
+            "message": "Unauthorized SELinux type. Authorized: [container_t | container_init_t | container_kvm_t]"
+          },
+          {
+            "expression": "variables.containers.all(c, has(c.securityContext) && has(c.securityContext.capabilities) && has(c.securityContext.capabilities.drop) && c.securityContext.capabilities.drop.exists(v, v == \"ALL\"))",
+            "message": "All container capabilities must be dropped."
+          },
+          {
+            "expression": "variables.containers.all(c, !has(c.securityContext) || !has(c.securityContext.capabilities) || !has(c.securityContext.capabilities.add) || c.securityContext.capabilities.add.all(v, v == \"NET_BIND_SERVICE\"))",
+            "message": "Unauthorized container capabilities in securityContext.capabilities.add. Authorized: [NET_BIND_SERVICE]"
+          },
+          {
+            "expression": "!has(object.spec.volumes) || object.spec.volumes.all(v, has(v.configMap) || has(v.csi) || has(v.downwardAPI) || has(v.emptyDir) || has(v.ephemeral) || has(v.image) || has(v.persistentVolumeClaim) || has(v.projected) || has(v.secret))",
+            "message": "Volume has a disallowed volume type.",
+            "messageExpression": "'Volume '+variables.badVolumes[0].name+' has a disallowed volume type of '+\"'\"+(has(variables.badVolumes[0].hostPath) ? 'hostPath' : 'unsupported')+\"'.\"+(has(variables.badVolumes[0].hostPath) && variables.containers.exists(c, has(c.volumeMounts) && c.volumeMounts.exists(m, m.name == variables.badVolumes[0].name && (!has(m.readOnly) || !m.readOnly))) ? \" hostPath volume '\"+variables.badVolumes[0].name+\"' must be mounted as readOnly.\" : '')"
+          },
+          {
+            "expression": "!has(object.spec.volumes) || object.spec.volumes.filter(v, has(v.hostPath)).all(v, variables.containers.all(c, !has(c.volumeMounts) || c.volumeMounts.filter(m, m.name == v.name).all(m, has(m.readOnly) && m.readOnly)))",
+            "message": "hostPath volumes must be mounted as readOnly.",
+            "messageExpression": "\"hostPath volume '\"+object.spec.volumes.filter(v, has(v.hostPath) && variables.containers.exists(c, has(c.volumeMounts) && c.volumeMounts.exists(m, m.name == v.name && (!has(m.readOnly) || !m.readOnly))))[0].name+\"' must be mounted as readOnly.\""
+          },
+          {
+            "expression": "!has(object.metadata.annotations) || object.metadata.annotations.all(k, !(k in [\"sidecar.istio.io/bootstrapOverride\", \"sidecar.istio.io/discoveryAddress\", \"sidecar.istio.io/proxyImage\", \"proxy.istio.io/config\", \"sidecar.istio.io/userVolume\", \"sidecar.istio.io/userVolumeMount\"]))",
+            "message": "The following istio annotations can modify secure sidecar configuration and are not allowed:",
+            "messageExpression": "\"The following istio annotations can modify secure sidecar configuration and are not allowed: \"+variables.blockedSidecar.join(', ')"
+          },
+          {
+            "expression": "(!has(object.metadata.annotations) || object.metadata.annotations.all(k, !(k in [\"traffic.sidecar.istio.io/excludeInboundPorts\", \"traffic.sidecar.istio.io/excludeInterfaces\", \"traffic.sidecar.istio.io/excludeOutboundIPRanges\", \"traffic.sidecar.istio.io/excludeOutboundPorts\", \"traffic.sidecar.istio.io/includeInboundPorts\", \"traffic.sidecar.istio.io/includeOutboundIPRanges\", \"traffic.sidecar.istio.io/includeOutboundPorts\", \"sidecar.istio.io/interceptionMode\", \"traffic.sidecar.istio.io/kubevirtInterfaces\", \"istio.io/redirect-virtual-interfaces\"]))) && (!has(object.metadata.annotations) || !(\"sidecar.istio.io/inject\" in object.metadata.annotations) || object.metadata.annotations[\"sidecar.istio.io/inject\"] == \"true\") && (!has(object.metadata.labels) || !(\"sidecar.istio.io/inject\" in object.metadata.labels) || (object.metadata.labels[\"sidecar.istio.io/inject\"] == \"true\" || (object.spec.containers.size() == 1 && object.spec.containers.all(c, c.name == 'istio-proxy' && c.image == 'docker.io/istio/proxyv2:1.30.3-distroless' && has(c.args) && c.args.size() > 0 && c.args[0] == 'proxy' && !has(c.command)))))",
+            "message": "The following istio annotations or labels can modify secure traffic interception are not allowed:",
+            "messageExpression": "\"The following istio annotations or labels can modify secure traffic interception are not allowed: \"+variables.blockedTraffic.join(', ')"
+          },
+          {
+            "expression": "!has(object.metadata.annotations) || !(\"ambient.istio.io/bypass-inbound-capture\" in object.metadata.annotations)",
+            "message": "The following istio ambient annotations that can modify secure mesh behavior are not allowed: ambient.istio.io/bypass-inbound-capture"
+          },
+          {
+            "expression": "(object.spec.containers.size() == 1 && object.spec.containers.all(c, c.name == 'istio-proxy' && c.image == 'docker.io/istio/proxyv2:1.30.3-distroless' && has(c.args) && c.args.size() > 0 && c.args[0] == 'proxy' && !has(c.command))) || (variables.contexts.all(x, (!has(x.runAsUser) || x.runAsUser != 1337) && (!has(x.runAsGroup) || x.runAsGroup != 1337) && (!has(x.fsGroup) || x.fsGroup != 1337) && (!has(x.supplementalGroups) || !x.supplementalGroups.exists(g, g == 1337))))",
+            "message": "Application containers must not use UID/GID 1337 (Istio proxy). This development profile supports ambient mesh."
+          },
+          {
+            "message": "Effective non-root identity is required",
+            "expression": "variables.containers.all(c, (has(c.securityContext) && has(c.securityContext.runAsNonRoot) ? c.securityContext.runAsNonRoot : (has(object.spec.securityContext) && has(object.spec.securityContext.runAsNonRoot) && object.spec.securityContext.runAsNonRoot)) && (has(c.securityContext) && has(c.securityContext.runAsUser) ? c.securityContext.runAsUser > 0 : (has(object.spec.securityContext) && has(object.spec.securityContext.runAsUser) && object.spec.securityContext.runAsUser > 0)))"
+          }
+        ],
+        "variables": [
+          {
+            "name": "containers",
+            "expression": "object.spec.containers + (has(object.spec.initContainers) ? object.spec.initContainers : []) + (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers : [])"
+          },
+          {
+            "name": "contexts",
+            "expression": "variables.containers.filter(c, has(c.securityContext)).map(c, c.securityContext) + (has(object.spec.securityContext) ? [object.spec.securityContext] : [])"
+          },
+          {
+            "name": "blockedSidecar",
+            "expression": "[\"proxy.istio.io/config\", \"sidecar.istio.io/bootstrapOverride\", \"sidecar.istio.io/discoveryAddress\", \"sidecar.istio.io/proxyImage\", \"sidecar.istio.io/userVolume\", \"sidecar.istio.io/userVolumeMount\"].filter(k, has(object.metadata.annotations) && k in object.metadata.annotations)"
+          },
+          {
+            "name": "blockedTraffic",
+            "expression": "[\"istio.io/redirect-virtual-interfaces\", \"sidecar.istio.io/interceptionMode\", \"traffic.sidecar.istio.io/excludeInboundPorts\", \"traffic.sidecar.istio.io/excludeInterfaces\", \"traffic.sidecar.istio.io/excludeOutboundIPRanges\", \"traffic.sidecar.istio.io/excludeOutboundPorts\", \"traffic.sidecar.istio.io/includeInboundPorts\", \"traffic.sidecar.istio.io/includeOutboundIPRanges\", \"traffic.sidecar.istio.io/includeOutboundPorts\", \"traffic.sidecar.istio.io/kubevirtInterfaces\"].filter(k, has(object.metadata.annotations) && k in object.metadata.annotations).map(k, 'annotation '+k)"
+          },
+          {
+            "name": "badVolumes",
+            "expression": "has(object.spec.volumes) ? object.spec.volumes.filter(v, !(has(v.configMap) || has(v.csi) || has(v.downwardAPI) || has(v.emptyDir) || has(v.ephemeral) || has(v.image) || has(v.persistentVolumeClaim) || has(v.projected) || has(v.secret))) : []"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "ark-native-pod-profile"
+      },
+      "spec": {
+        "policyName": "ark-native-pod-profile",
+        "validationActions": [
+          "Deny"
+        ],
+        "matchResources": {
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "In",
+                "values": [
+                  "native-inactive"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "ark-native-service-profile"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "services"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "!has(object.spec.type) || object.spec.type != \"ExternalName\"",
+            "message": "ExternalName services are not allowed."
+          },
+          {
+            "expression": "!has(object.spec.type) || object.spec.type != \"NodePort\"",
+            "message": "NodePort services are not allowed."
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "ark-native-service-profile"
+      },
+      "spec": {
+        "policyName": "ark-native-service-profile",
+        "validationActions": [
+          "Deny"
+        ],
+        "matchResources": {
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "In",
+                "values": [
+                  "native-inactive"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicy",
+      "metadata": {
+        "name": "ark-native-defaults-profile"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "reinvocationPolicy": "IfNeeded",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods",
+                "pods/ephemeralcontainers"
+              ]
+            }
+          ]
+        },
+        "mutations": [
+          {
+            "patchType": "ApplyConfiguration",
+            "applyConfiguration": {
+              "expression": "has(object.spec.securityContext) && has(object.spec.securityContext.runAsNonRoot) && has(object.spec.securityContext.runAsUser) && has(object.spec.securityContext.runAsGroup) ? Object{} : (Object{spec: Object.spec{securityContext: Object.spec.securityContext{runAsNonRoot: has(object.spec.securityContext) && has(object.spec.securityContext.runAsNonRoot) ? object.spec.securityContext.runAsNonRoot : true, runAsUser: has(object.spec.securityContext) && has(object.spec.securityContext.runAsUser) ? object.spec.securityContext.runAsUser : 1000, runAsGroup: has(object.spec.securityContext) && has(object.spec.securityContext.runAsGroup) ? object.spec.securityContext.runAsGroup : 1000}}})"
+            }
+          },
+          {
+            "patchType": "JSONPatch",
+            "jsonPatch": {
+              "expression": "(has(object.spec.containers) ? object.spec.containers.filter(c, !has(c.securityContext)).map(c, JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext',value:has(c.securityContext) ? c.securityContext : Object.spec.containers.securityContext{}})+object.spec.containers.filter(c, !has(c.securityContext) || !has(c.securityContext.capabilities)).map(c, JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/capabilities',value:has(c.securityContext) && has(c.securityContext.capabilities) ? c.securityContext.capabilities : Object.spec.containers.securityContext.capabilities{}})+object.spec.containers.filter(c, !has(c.securityContext) || !has(c.securityContext.capabilities) || !has(c.securityContext.capabilities.drop) || c.securityContext.capabilities.drop.size() != 1 || c.securityContext.capabilities.drop[0] != 'ALL').map(c, JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']})+object.spec.containers.filter(c, (!has(c.securityContext) || !has(c.securityContext.allowPrivilegeEscalation)) && (!has(c.securityContext) || !has(c.securityContext.privileged) || !c.securityContext.privileged) && (!has(c.securityContext) || !has(c.securityContext.capabilities) || !has(c.securityContext.capabilities.add) || !c.securityContext.capabilities.add.exists(v, v == 'CAP_SYS_ADMIN'))).map(c, JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : [])+(has(object.spec.initContainers) ? object.spec.initContainers.filter(c, !has(c.securityContext)).map(c, JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext',value:has(c.securityContext) ? c.securityContext : Object.spec.initContainers.securityContext{}})+object.spec.initContainers.filter(c, !has(c.securityContext) || !has(c.securityContext.capabilities)).map(c, JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/capabilities',value:has(c.securityContext) && has(c.securityContext.capabilities) ? c.securityContext.capabilities : Object.spec.initContainers.securityContext.capabilities{}})+object.spec.initContainers.filter(c, !has(c.securityContext) || !has(c.securityContext.capabilities) || !has(c.securityContext.capabilities.drop) || c.securityContext.capabilities.drop.size() != 1 || c.securityContext.capabilities.drop[0] != 'ALL').map(c, JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']})+object.spec.initContainers.filter(c, (!has(c.securityContext) || !has(c.securityContext.allowPrivilegeEscalation)) && (!has(c.securityContext) || !has(c.securityContext.privileged) || !c.securityContext.privileged) && (!has(c.securityContext) || !has(c.securityContext.capabilities) || !has(c.securityContext.capabilities.add) || !c.securityContext.capabilities.add.exists(v, v == 'CAP_SYS_ADMIN'))).map(c, JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : [])+(has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers.filter(c, !has(c.securityContext)).map(c, JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext',value:has(c.securityContext) ? c.securityContext : Object.spec.ephemeralContainers.securityContext{}})+object.spec.ephemeralContainers.filter(c, !has(c.securityContext) || !has(c.securityContext.capabilities)).map(c, JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/capabilities',value:has(c.securityContext) && has(c.securityContext.capabilities) ? c.securityContext.capabilities : Object.spec.ephemeralContainers.securityContext.capabilities{}})+object.spec.ephemeralContainers.filter(c, !has(c.securityContext) || !has(c.securityContext.capabilities) || !has(c.securityContext.capabilities.drop) || c.securityContext.capabilities.drop.size() != 1 || c.securityContext.capabilities.drop[0] != 'ALL').map(c, JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']})+object.spec.ephemeralContainers.filter(c, (!has(c.securityContext) || !has(c.securityContext.allowPrivilegeEscalation)) && (!has(c.securityContext) || !has(c.securityContext.privileged) || !c.securityContext.privileged) && (!has(c.securityContext) || !has(c.securityContext.capabilities) || !has(c.securityContext.capabilities.add) || !c.securityContext.capabilities.add.exists(v, v == 'CAP_SYS_ADMIN'))).map(c, JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : [])"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "ark-native-defaults-profile"
+      },
+      "spec": {
+        "policyName": "ark-native-defaults-profile",
+        "matchResources": {
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "In",
+                "values": [
+                  "native-inactive"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "ark-native-probe-profile"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                "monitoring.coreos.com"
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "probes"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "!has(object.spec.module) || !object.spec.module.startsWith('http_200x_sso') || object.spec.module.startsWith('http_200x_sso_'+request.namespace+'_')",
+            "message": "Probe is not authorized to use this Blackbox Exporter module"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "ark-native-probe-profile"
+      },
+      "spec": {
+        "policyName": "ark-native-probe-profile",
+        "validationActions": [
+          "Deny"
+        ],
+        "matchResources": {
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "In",
+                "values": [
+                  "native-inactive"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

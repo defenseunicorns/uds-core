@@ -1,0 +1,98 @@
+{
+  "apiVersion": "apiextensions.k8s.io/v1",
+  "kind": "CustomResourceDefinition",
+  "metadata": {
+    "name": "admissionparameters.policy.uds.dev"
+  },
+  "spec": {
+    "group": "policy.uds.dev",
+    "names": {
+      "plural": "admissionparameters",
+      "singular": "admissionparameters",
+      "kind": "AdmissionParameters"
+    },
+    "scope": "Namespaced",
+    "versions": [
+      {
+        "name": "v1alpha1",
+        "served": true,
+        "storage": true,
+        "schema": {
+          "openAPIV3Schema": {
+            "type": "object",
+            "required": [
+              "spec"
+            ],
+            "properties": {
+              "spec": {
+                "type": "object",
+                "required": [
+                  "nativeMatchers",
+                  "legacyScopes",
+                  "revision",
+                  "valid",
+                  "allowAllNamespaces"
+                ],
+                "properties": {
+                  "nativeMatchers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "policy",
+                        "namespace",
+                        "pattern",
+                        "owner"
+                      ],
+                      "properties": {
+                        "policy": {
+                          "type": "string"
+                        },
+                        "namespace": {
+                          "type": "string"
+                        },
+                        "pattern": {
+                          "type": "string"
+                        },
+                        "owner": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "legacyScopes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "policy",
+                        "namespace"
+                      ],
+                      "properties": {
+                        "policy": {
+                          "type": "string"
+                        },
+                        "namespace": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "revision": {
+                    "type": "string"
+                  },
+                  "valid": {
+                    "type": "boolean"
+                  },
+                  "allowAllNamespaces": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

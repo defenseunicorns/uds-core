@@ -1,0 +1,503 @@
+{
+  "sourceRevision": "c15677633cffa17e99656a7d7ccd1f98d7cb6e4d",
+  "cases": [
+    {
+      "name": "Test validation of Exemption CRs > allows default namespace",
+      "kind": "Exemption",
+      "object": {
+        "metadata": {
+          "namespace": "uds-policy-exemptions",
+          "name": "exemption"
+        },
+        "spec": {
+          "exemptions": [
+            {
+              "policies": [
+                "DisallowPrivileged"
+              ],
+              "matcher": {
+                "name": "^falco-pod.*",
+                "namespace": "falco",
+                "kind": "pod"
+              }
+            }
+          ]
+        }
+      },
+      "allowAll": false,
+      "message": "",
+      "allowed": true
+    },
+    {
+      "name": "Test validation of Exemption CRs > denies non default namespace if allow all === false",
+      "kind": "Exemption",
+      "object": {
+        "metadata": {
+          "namespace": "falco",
+          "name": "exemption"
+        },
+        "spec": {
+          "exemptions": [
+            {
+              "policies": [
+                "DisallowPrivileged"
+              ],
+              "matcher": {
+                "name": "^falco-pod.*",
+                "namespace": "falco",
+                "kind": "pod"
+              }
+            }
+          ]
+        }
+      },
+      "allowAll": false,
+      "message": "Invalid namespace \"falco\" for UDSExemption exemption: must be \"uds-policy-exemptions\"",
+      "allowed": false
+    },
+    {
+      "name": "Test validation of Exemption CRs > allows all namespaces",
+      "kind": "Exemption",
+      "object": {
+        "metadata": {
+          "namespace": "falco",
+          "name": "exemption"
+        },
+        "spec": {
+          "exemptions": [
+            {
+              "policies": [
+                "DisallowPrivileged"
+              ],
+              "matcher": {
+                "name": "^falco-pod.*",
+                "namespace": "falco",
+                "kind": "pod"
+              }
+            }
+          ]
+        }
+      },
+      "allowAll": true,
+      "message": "",
+      "allowed": true
+    },
+    {
+      "name": "Test validation of Exemption CRs > denies matcher regex patterns with leading and trailing slashes",
+      "kind": "Exemption",
+      "object": {
+        "metadata": {
+          "namespace": "uds-policy-exemptions",
+          "name": "exemption"
+        },
+        "spec": {
+          "exemptions": [
+            {
+              "policies": [
+                "DisallowPrivileged"
+              ],
+              "matcher": {
+                "name": "/^falco-pod*/",
+                "namespace": "falco",
+                "kind": "pod"
+              }
+            }
+          ]
+        }
+      },
+      "allowAll": true,
+      "message": "Invalid matcher name \"/^falco-pod*/\": please remove the leading and trailing slashes",
+      "allowed": false
+    },
+    {
+      "name": "Test validation of Exemption CRs > validates regex patterns in matchers",
+      "kind": "Exemption",
+      "object": {
+        "metadata": {
+          "namespace": "uds-policy-exemptions",
+          "name": "exemption"
+        },
+        "spec": {
+          "exemptions": [
+            {
+              "policies": [
+                "DisallowPrivileged"
+              ],
+              "matcher": {
+                "name": ")^falco-pod*",
+                "namespace": "falco",
+                "kind": "pod"
+              }
+            }
+          ]
+        }
+      },
+      "allowAll": true,
+      "message": "Invalid regular expression pattern )^falco-pod*: SyntaxError: Invalid regular expression: /)^falco-pod*/: Unmatched ')'",
+      "allowed": false
+    },
+    {
+      "name": "Test validation of Exemption CRs > allows correct kind for policies",
+      "kind": "Exemption",
+      "object": {
+        "metadata": {
+          "namespace": "uds-policy-exemptions",
+          "name": "exemption"
+        },
+        "spec": {
+          "exemptions": [
+            {
+              "policies": [
+                "DisallowPrivileged"
+              ],
+              "matcher": {
+                "name": "^falco-pod.*",
+                "namespace": "falco",
+                "kind": "pod"
+              }
+            }
+          ]
+        }
+      },
+      "allowAll": true,
+      "message": "",
+      "allowed": true
+    },
+    {
+      "name": "Test validation of Exemption CRs > denies wrong kind for policies",
+      "kind": "Exemption",
+      "object": {
+        "metadata": {
+          "namespace": "uds-policy-exemptions",
+          "name": "exemption"
+        },
+        "spec": {
+          "exemptions": [
+            {
+              "policies": [
+                "DisallowPrivileged"
+              ],
+              "matcher": {
+                "name": "^falco-pod.*",
+                "namespace": "falco",
+                "kind": "service"
+              }
+            }
+          ]
+        }
+      },
+      "allowAll": true,
+      "message": "Invalid kind \"service\" for matcher \"^falco-pod.*\" with policy \"DisallowPrivileged\": \"DisallowPrivileged\" can only be exempted for kind \"pod\"",
+      "allowed": false
+    },
+    {
+      "name": "ClusterConfigValidator > should validate a valid ClusterConfig",
+      "kind": "ClusterConfig",
+      "object": {
+        "metadata": {
+          "name": "uds-cluster-config"
+        },
+        "spec": {
+          "caBundle": {
+            "certs": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURURENDQWpTZ0F3SUJBZ0lJZDNjR0p5YXBzWHd3RFFZSktvWklodmNOQVFFTEJRQXdSREVMTUFrR0ExVUUKQmhNQ1ZWTXhGREFTQmdOVkJBb01DMEZtWm1seWJWUnlkWE4wTVI4d0hRWURWUVFEREJaQlptWnBjbTFVY25WegpkQ0JEYjIxdFpYSmphV0ZzTUI0WERURXdNREV5T1RFME1EWXdObG9YRFRNd01USXpNVEUwTURZd05sb3dSREVMCk1Ba0dBMVVFQmhNQ1ZWTXhGREFTQmdOVkJBb01DMEZtWm1seWJWUnlkWE4wTVI4d0hRWURWUVFEREJaQlptWnAKY20xVWNuVnpkQ0JEYjIxdFpYSmphV0ZzTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQwpBUUVBOWh0UFp3Y3JvUlgxQmlMTEh3R3k0M05GQmtSSkxMdEpKUlRXenNPM3F5eFB4a0V5bEZmNkVxZGJEdUtQCkh4NkdHYWVxdFMyNVh3Mkt3cStGTlhreUxic2NZamZ5c1Z0S1Bjck5jVi9wUXI2VTZNamUrU0pJWk1ibHE4WXIKYmEwRjhQclZDOCthNWZCUXBJczdSNlVqVzNwNitETS91TytabCtNZ3dkWW9pYytVKzdsRjdlTkFGeEhVZFBBTApNZUlySm1xYlRGZXVyQ0ErdWtWNkJmTzltMmtWcm4xT0lHUEVOWFk2QndMSk4vM0hSKzdvOFhZZGN4WHlsNlMxCnlIcDUyVUtxSzM5Yy9zNG1UNk5tZ1RXdlJMcFVIaHd3TW1XZDVqeVRYbEJPZXVNNjFHN01HdnY1MGpldUpDcXIKVndNaUtBMUpkWCszS05wMXY0N2ozQTU1TVFJREFRQUJvMEl3UURBZEJnTlZIUTRFRmdRVW5aUEdVNHRleXE4LwpueDRQNVptVnZDVDJsSTh3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFPQmdOVkhROEJBZjhFQkFNQ0FRWXdEUVlKCktvWklodmNOQVFFTEJRQURnZ0VCQUZpczlBUU96Y0FOL3dyOTFMb1dYeW05ZTJpWldFblN0QjAzVFg4bmZVWUcKWFVQR2hpNCtjN0ltZlUrVHFiYkVLcHFySVpjVXNkNk0wNnVKRmRockpOVHhGcTdZcEZ6VWYxR083UmdCc1pOagp2Yno0WVlDYW5ySE9RbkRpcVgwR0pYMG5vZjV2N0xNZUpOcmpTMVVhQURzMXREdloxMTB3L1lFVGlmTENCaXZ0Clo4U095VU95WEdzVmlRSzhZdnhPOHJVenFySnYwd3FpVU9QMk8rZ3VSTUxiWmppcE0xWkk4VzBiTTQwTmpEOWcKTjUzVHltMStOSDRObjNKMml4dWZjdjFTTlVGRkFwWXZITEthYzBraHNVbEhSVWUwNzJvMEVjbE5tc3hadDlZQwpubHBPWmJXVXJodmZLYkFXOGI4QW5nYzZGMlMxQkxVaklaa0tsVHVYZk84PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0t",
+            "includeDoDCerts": false,
+            "includePublicCerts": false
+          },
+          "expose": {
+            "domain": "mock-domain",
+            "adminDomain": "mock-admin-domain"
+          },
+          "networking": {
+            "kubeApiCIDR": "mock-cidr",
+            "kubeNodeCIDRs": [
+              "mock-node-cidrs"
+            ]
+          },
+          "policy": {
+            "allowAllNsExemptions": true
+          }
+        }
+      },
+      "allowed": true,
+      "message": ""
+    },
+    {
+      "name": "ClusterConfigValidator > throws error for invalid base64 caBundle.certs",
+      "kind": "ClusterConfig",
+      "object": {
+        "metadata": {
+          "name": "uds-cluster-config"
+        },
+        "spec": {
+          "caBundle": {
+            "certs": "invalid-base64",
+            "includeDoDCerts": false,
+            "includePublicCerts": false
+          },
+          "expose": {
+            "domain": "mock-domain",
+            "adminDomain": "mock-admin-domain"
+          },
+          "networking": {
+            "kubeApiCIDR": "mock-cidr",
+            "kubeNodeCIDRs": [
+              "mock-node-cidrs"
+            ]
+          },
+          "policy": {
+            "allowAllNsExemptions": true
+          }
+        }
+      },
+      "allowed": false,
+      "message": "Validation failed: ClusterConfig: caBundle.certs must be base64 encoded; found invalid value"
+    },
+    {
+      "name": "ClusterConfigValidator > throws error for base64 encoded but invalid certificate",
+      "kind": "ClusterConfig",
+      "object": {
+        "metadata": {
+          "name": "uds-cluster-config"
+        },
+        "spec": {
+          "caBundle": {
+            "certs": "aW52YWxpZC1jZXJ0aWZpY2F0ZS1kYXRh",
+            "includeDoDCerts": false,
+            "includePublicCerts": false
+          },
+          "expose": {
+            "domain": "mock-domain",
+            "adminDomain": "mock-admin-domain"
+          },
+          "networking": {
+            "kubeApiCIDR": "mock-cidr",
+            "kubeNodeCIDRs": [
+              "mock-node-cidrs"
+            ]
+          },
+          "policy": {
+            "allowAllNsExemptions": true
+          }
+        }
+      },
+      "allowed": false,
+      "message": "Validation failed: ClusterConfig: No valid certificates found in bundle"
+    },
+    {
+      "name": "ClusterConfigValidator > throws error for malformed certificate in bundle",
+      "kind": "ClusterConfig",
+      "object": {
+        "metadata": {
+          "name": "uds-cluster-config"
+        },
+        "spec": {
+          "caBundle": {
+            "certs": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCmludmFsaWQtY2VydC1kYXRhCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=",
+            "includeDoDCerts": false,
+            "includePublicCerts": false
+          },
+          "expose": {
+            "domain": "mock-domain",
+            "adminDomain": "mock-admin-domain"
+          },
+          "networking": {
+            "kubeApiCIDR": "mock-cidr",
+            "kubeNodeCIDRs": [
+              "mock-node-cidrs"
+            ]
+          },
+          "policy": {
+            "allowAllNsExemptions": true
+          }
+        }
+      },
+      "allowed": false,
+      "message": "Validation failed: ClusterConfig: Invalid certificate at index 0: error:04800064:PEM routines::bad base64 decode"
+    },
+    {
+      "name": "ClusterConfigValidator > does not throw error if caBundle.certs is set to ###ZARF_VAR_CA_BUNDLE_CERTS###",
+      "kind": "ClusterConfig",
+      "object": {
+        "metadata": {
+          "name": "uds-cluster-config"
+        },
+        "spec": {
+          "caBundle": {
+            "certs": "###ZARF_VAR_CA_BUNDLE_CERTS###",
+            "includeDoDCerts": false,
+            "includePublicCerts": false
+          },
+          "expose": {
+            "domain": "mock-domain",
+            "adminDomain": "mock-admin-domain"
+          },
+          "networking": {
+            "kubeApiCIDR": "mock-cidr",
+            "kubeNodeCIDRs": [
+              "mock-node-cidrs"
+            ]
+          },
+          "policy": {
+            "allowAllNsExemptions": true
+          }
+        }
+      },
+      "allowed": true,
+      "message": ""
+    },
+    {
+      "name": "ClusterConfigValidator > validates multiple certificates in bundle",
+      "kind": "ClusterConfig",
+      "object": {
+        "metadata": {
+          "name": "uds-cluster-config"
+        },
+        "spec": {
+          "caBundle": {
+            "certs": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURURENDQWpTZ0F3SUJBZ0lJZDNjR0p5YXBzWHd3RFFZSktvWklodmNOQVFFTEJRQXdSREVMTUFrR0ExVUUKQmhNQ1ZWTXhGREFTQmdOVkJBb01DMEZtWm1seWJWUnlkWE4wTVI4d0hRWURWUVFEREJaQlptWnBjbTFVY25WegpkQ0JEYjIxdFpYSmphV0ZzTUI0WERURXdNREV5T1RFME1EWXdObG9YRFRNd01USXpNVEUwTURZd05sb3dSREVMCk1Ba0dBMVVFQmhNQ1ZWTXhGREFTQmdOVkJBb01DMEZtWm1seWJWUnlkWE4wTVI4d0hRWURWUVFEREJaQlptWnAKY20xVWNuVnpkQ0JEYjIxdFpYSmphV0ZzTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQwpBUUVBOWh0UFp3Y3JvUlgxQmlMTEh3R3k0M05GQmtSSkxMdEpKUlRXenNPM3F5eFB4a0V5bEZmNkVxZGJEdUtQCkh4NkdHYWVxdFMyNVh3Mkt3cStGTlhreUxic2NZamZ5c1Z0S1Bjck5jVi9wUXI2VTZNamUrU0pJWk1ibHE4WXIKYmEwRjhQclZDOCthNWZCUXBJczdSNlVqVzNwNitETS91TytabCtNZ3dkWW9pYytVKzdsRjdlTkFGeEhVZFBBTApNZUlySm1xYlRGZXVyQ0ErdWtWNkJmTzltMmtWcm4xT0lHUEVOWFk2QndMSk4vM0hSKzdvOFhZZGN4WHlsNlMxCnlIcDUyVUtxSzM5Yy9zNG1UNk5tZ1RXdlJMcFVIaHd3TW1XZDVqeVRYbEJPZXVNNjFHN01HdnY1MGpldUpDcXIKVndNaUtBMUpkWCszS05wMXY0N2ozQTU1TVFJREFRQUJvMEl3UURBZEJnTlZIUTRFRmdRVW5aUEdVNHRleXE4LwpueDRQNVptVnZDVDJsSTh3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFPQmdOVkhROEJBZjhFQkFNQ0FRWXdEUVlKCktvWklodmNOQVFFTEJRQURnZ0VCQUZpczlBUU96Y0FOL3dyOTFMb1dYeW05ZTJpWldFblN0QjAzVFg4bmZVWUcKWFVQR2hpNCtjN0ltZlUrVHFiYkVLcHFySVpjVXNkNk0wNnVKRmRockpOVHhGcTdZcEZ6VWYxR083UmdCc1pOagp2Yno0WVlDYW5ySE9RbkRpcVgwR0pYMG5vZjV2N0xNZUpOcmpTMVVhQURzMXREdloxMTB3L1lFVGlmTENCaXZ0Clo4U095VU95WEdzVmlRSzhZdnhPOHJVenFySnYwd3FpVU9QMk8rZ3VSTUxiWmppcE0xWkk4VzBiTTQwTmpEOWcKTjUzVHltMStOSDRObjNKMml4dWZjdjFTTlVGRkFwWXZITEthYzBraHNVbEhSVWUwNzJvMEVjbE5tc3hadDlZQwpubHBPWmJXVXJodmZLYkFXOGI4QW5nYzZGMlMxQkxVaklaa0tsVHVYZk84PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tQkVHSU4gQ0VSVElGSUNBVEUtLS0tLQpNSUlEVERDQ0FqU2dBd0lCQWdJSWQzY0dKeWFwc1h3d0RRWUpLb1pJaHZjTkFRRUxCUUF3UkRFTE1Ba0dBMVVFCkJoTUNWVk14RkRBU0JnTlZCQW9NQzBGbVptbHliVlJ5ZFhOME1SOHdIUVlEVlFRRERCWkJabVpwY20xVWNuVnoKZENCRGIyMXRaWEpqYVdGc01CNFhEVEV3TURFeU9URTBNRFl3TmxvWERUTXdNVEl6TVRFME1EWXdObG93UkRFTApNQWtHQTFVRUJoTUNWVk14RkRBU0JnTlZCQW9NQzBGbVptbHliVlJ5ZFhOME1SOHdIUVlEVlFRRERCWkJabVpwCmNtMVVjblZ6ZENCRGIyMXRaWEpqYVdGc01JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0MKQVFFQTlodFBad2Nyb1JYMUJpTExId0d5NDNORkJrUkpMTHRKSlJUV3pzTzNxeXhQeGtFeWxGZjZFcWRiRHVLUApIeDZHR2FlcXRTMjVYdzJLd3ErRk5Ya3lMYnNjWWpmeXNWdEtQY3JOY1YvcFFyNlU2TWplK1NKSVpNYmxxOFlyCmJhMEY4UHJWQzgrYTVmQlFwSXM3UjZValczcDYrRE0vdU8rWmwrTWd3ZFlvaWMrVSs3bEY3ZU5BRnhIVWRQQUwKTWVJckptcWJURmV1ckNBK3VrVjZCZk85bTJrVnJuMU9JR1BFTlhZNkJ3TEpOLzNIUis3bzhYWWRjeFh5bDZTMQp5SHA1MlVLcUszOWMvczRtVDZObWdUV3ZSTHBVSGh3d01tV2Q1anlUWGxCT2V1TTYxRzdNR3Z2NTBqZXVKQ3FyClZ3TWlLQTFKZFgrM0tOcDF2NDdqM0E1NU1RSURBUUFCbzBJd1FEQWRCZ05WSFE0RUZnUVVuWlBHVTR0ZXlxOC8Kbng0UDVabVZ2Q1QybEk4d0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBT0JnTlZIUThCQWY4RUJBTUNBUVl3RFFZSgpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFGaXM5QVFPemNBTi93cjkxTG9XWHltOWUyaVpXRW5TdEIwM1RYOG5mVVlHClhVUEdoaTQrYzdJbWZVK1RxYmJFS3BxcklaY1VzZDZNMDZ1SkZkaHJKTlR4RnE3WXBGelVmMUdPN1JnQnNaTmoKdmJ6NFlZQ2FuckhPUW5EaXFYMEdKWDBub2Y1djdMTWVKTnJqUzFVYUFEczF0RHZaMTEwdy9ZRVRpZkxDQml2dApaOFNPeVVPeVhHc1ZpUUs4WXZ4TzhyVXpxckp2MHdxaVVPUDJPK2d1Uk1MYlpqaXBNMVpJOFcwYk00ME5qRDlnCk41M1R5bTErTkg0Tm4zSjJpeHVmY3YxU05VRkZBcFl2SExLYWMwa2hzVWxIUlVlMDcybzBFY2xObXN4WnQ5WUMKbmxwT1piV1VyaHZmS2JBVzhiOEFuZ2M2RjJTMUJMVWpJWmtLbFR1WGZPOD0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQ==",
+            "includeDoDCerts": false,
+            "includePublicCerts": false
+          },
+          "expose": {
+            "domain": "mock-domain",
+            "adminDomain": "mock-admin-domain"
+          },
+          "networking": {
+            "kubeApiCIDR": "mock-cidr",
+            "kubeNodeCIDRs": [
+              "mock-node-cidrs"
+            ]
+          },
+          "policy": {
+            "allowAllNsExemptions": true
+          }
+        }
+      },
+      "allowed": true,
+      "message": ""
+    },
+    {
+      "name": "ClusterConfigValidator > allows empty caBundle.certs",
+      "kind": "ClusterConfig",
+      "object": {
+        "metadata": {
+          "name": "uds-cluster-config"
+        },
+        "spec": {
+          "caBundle": {
+            "includeDoDCerts": false,
+            "includePublicCerts": false
+          },
+          "expose": {
+            "domain": "mock-domain",
+            "adminDomain": "mock-admin-domain"
+          },
+          "networking": {
+            "kubeApiCIDR": "mock-cidr",
+            "kubeNodeCIDRs": [
+              "mock-node-cidrs"
+            ]
+          },
+          "policy": {
+            "allowAllNsExemptions": true
+          }
+        }
+      },
+      "allowed": true,
+      "message": ""
+    },
+    {
+      "name": "ClusterConfig Update validation > validate a valid ClusterConfig",
+      "kind": "ClusterConfig",
+      "object": {
+        "metadata": {
+          "name": "uds-cluster-config"
+        },
+        "spec": {
+          "caBundle": {
+            "certs": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURURENDQWpTZ0F3SUJBZ0lJZDNjR0p5YXBzWHd3RFFZSktvWklodmNOQVFFTEJRQXdSREVMTUFrR0ExVUUKQmhNQ1ZWTXhGREFTQmdOVkJBb01DMEZtWm1seWJWUnlkWE4wTVI4d0hRWURWUVFEREJaQlptWnBjbTFVY25WegpkQ0JEYjIxdFpYSmphV0ZzTUI0WERURXdNREV5T1RFME1EWXdObG9YRFRNd01USXpNVEUwTURZd05sb3dSREVMCk1Ba0dBMVVFQmhNQ1ZWTXhGREFTQmdOVkJBb01DMEZtWm1seWJWUnlkWE4wTVI4d0hRWURWUVFEREJaQlptWnAKY20xVWNuVnpkQ0JEYjIxdFpYSmphV0ZzTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQwpBUUVBOWh0UFp3Y3JvUlgxQmlMTEh3R3k0M05GQmtSSkxMdEpKUlRXenNPM3F5eFB4a0V5bEZmNkVxZGJEdUtQCkh4NkdHYWVxdFMyNVh3Mkt3cStGTlhreUxic2NZamZ5c1Z0S1Bjck5jVi9wUXI2VTZNamUrU0pJWk1ibHE4WXIKYmEwRjhQclZDOCthNWZCUXBJczdSNlVqVzNwNitETS91TytabCtNZ3dkWW9pYytVKzdsRjdlTkFGeEhVZFBBTApNZUlySm1xYlRGZXVyQ0ErdWtWNkJmTzltMmtWcm4xT0lHUEVOWFk2QndMSk4vM0hSKzdvOFhZZGN4WHlsNlMxCnlIcDUyVUtxSzM5Yy9zNG1UNk5tZ1RXdlJMcFVIaHd3TW1XZDVqeVRYbEJPZXVNNjFHN01HdnY1MGpldUpDcXIKVndNaUtBMUpkWCszS05wMXY0N2ozQTU1TVFJREFRQUJvMEl3UURBZEJnTlZIUTRFRmdRVW5aUEdVNHRleXE4LwpueDRQNVptVnZDVDJsSTh3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFPQmdOVkhROEJBZjhFQkFNQ0FRWXdEUVlKCktvWklodmNOQVFFTEJRQURnZ0VCQUZpczlBUU96Y0FOL3dyOTFMb1dYeW05ZTJpWldFblN0QjAzVFg4bmZVWUcKWFVQR2hpNCtjN0ltZlUrVHFiYkVLcHFySVpjVXNkNk0wNnVKRmRockpOVHhGcTdZcEZ6VWYxR083UmdCc1pOagp2Yno0WVlDYW5ySE9RbkRpcVgwR0pYMG5vZjV2N0xNZUpOcmpTMVVhQURzMXREdloxMTB3L1lFVGlmTENCaXZ0Clo4U095VU95WEdzVmlRSzhZdnhPOHJVenFySnYwd3FpVU9QMk8rZ3VSTUxiWmppcE0xWkk4VzBiTTQwTmpEOWcKTjUzVHltMStOSDRObjNKMml4dWZjdjFTTlVGRkFwWXZITEthYzBraHNVbEhSVWUwNzJvMEVjbE5tc3hadDlZQwpubHBPWmJXVXJodmZLYkFXOGI4QW5nYzZGMlMxQkxVaklaa0tsVHVYZk84PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0t",
+            "includeDoDCerts": false,
+            "includePublicCerts": false
+          },
+          "expose": {
+            "domain": "mock-domain",
+            "adminDomain": "mock-admin-domain"
+          },
+          "networking": {
+            "kubeApiCIDR": "mock-cidr",
+            "kubeNodeCIDRs": [
+              "mock-node-cidrs"
+            ]
+          },
+          "policy": {
+            "allowAllNsExemptions": true
+          }
+        }
+      },
+      "message": "",
+      "allowed": true
+    },
+    {
+      "name": "ClusterConfig Update validation > denies request on invalid ClusterConfig caBundle.certs",
+      "kind": "ClusterConfig",
+      "object": {
+        "metadata": {
+          "name": "uds-cluster-config"
+        },
+        "spec": {
+          "caBundle": {
+            "certs": "invalid-base64",
+            "includeDoDCerts": false,
+            "includePublicCerts": false
+          },
+          "expose": {
+            "domain": "mock-domain",
+            "adminDomain": "mock-admin-domain"
+          },
+          "networking": {
+            "kubeApiCIDR": "mock-cidr",
+            "kubeNodeCIDRs": [
+              "mock-node-cidrs"
+            ]
+          },
+          "policy": {
+            "allowAllNsExemptions": true
+          }
+        }
+      },
+      "message": "Validation failed: ClusterConfig: caBundle.certs must be base64 encoded; found invalid value",
+      "allowed": false
+    },
+    {
+      "name": "ClusterConfig Update validation > denies request on malformed certificate in bundle",
+      "kind": "ClusterConfig",
+      "object": {
+        "metadata": {
+          "name": "uds-cluster-config"
+        },
+        "spec": {
+          "caBundle": {
+            "certs": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCmludmFsaWQtY2VydC1kYXRhCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=",
+            "includeDoDCerts": false,
+            "includePublicCerts": false
+          },
+          "expose": {
+            "domain": "mock-domain",
+            "adminDomain": "mock-admin-domain"
+          },
+          "networking": {
+            "kubeApiCIDR": "mock-cidr",
+            "kubeNodeCIDRs": [
+              "mock-node-cidrs"
+            ]
+          },
+          "policy": {
+            "allowAllNsExemptions": true
+          }
+        }
+      },
+      "message": "Validation failed: ClusterConfig: Invalid certificate at index 0: error:04800064:PEM routines::bad base64 decode",
+      "allowed": false
+    }
+  ]
+}

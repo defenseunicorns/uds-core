@@ -1,0 +1,33 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+image:
+  repository: ghcr.io/defenseunicorns/uds-core/controller
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+# One bounded request budget shared by typed, dynamic and UDS clients.
+kubernetesAPI:
+  qps: 20
+  burst: 40
+
+# Cold bootstrap may start the backend before registering its callbacks.
+# Native activation requires registered complete Go callbacks.
+admission:
+  register: true
+
+# Native policies require Kubernetes 1.37 or newer and the complete Go webhook.
+# The compiler owns the protected grant union after the first empty bootstrap.
+nativeAdmission:
+  enabled: true
+  # Enable only after all native policies/bindings and actual fallback canaries
+  # are qualified. Object routing can request Go; it cannot grant exemptions.
+  narrowCallbacks: false
+
+resources:
+  requests:
+    memory: "64Mi"
+    cpu: "50m"
+  limits:
+    memory: "128Mi"
+    cpu: "100m"

@@ -1,0 +1,18 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- include "uds.admission.servingData" . -}}
+{{- if not .Values._udsControllerServingData.existing }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: uds-controller-serving-certificate
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ index .Values._udsControllerServingData "tls.crt" | quote }}
+  tls.key: {{ index .Values._udsControllerServingData "tls.key" | quote }}
+  ca.crt: {{ index .Values._udsControllerServingData "ca.crt" | quote }}
+{{- end }}

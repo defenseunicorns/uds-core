@@ -1,0 +1,371 @@
+{
+  "sourceRevision": "c15677633cffa17e99656a7d7ccd1f98d7cb6e4d",
+  "cases": [
+    {
+      "kind": "Pod",
+      "object": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      },
+      "expected": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "istio.io/use-waypoint": "demo-waypoint"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      }
+    },
+    {
+      "kind": "Pod",
+      "object": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "app.kubernetes.io/component": "ambient-waypoint"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      },
+      "expected": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "app.kubernetes.io/component": "ambient-waypoint",
+            "istio.io/use-waypoint": "demo-waypoint"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      }
+    },
+    {
+      "kind": "Pod",
+      "object": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "app.kubernetes.io/component": "ambient-waypoint",
+            "gateway.networking.k8s.io/gateway-name": "ordinary"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      },
+      "expected": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "app.kubernetes.io/component": "ambient-waypoint",
+            "gateway.networking.k8s.io/gateway-name": "ordinary",
+            "istio.io/use-waypoint": "demo-waypoint"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      }
+    },
+    {
+      "kind": "Pod",
+      "object": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "gateway.networking.k8s.io/gateway-name": "demo-waypoint"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      },
+      "expected": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "gateway.networking.k8s.io/gateway-name": "demo-waypoint",
+            "istio.io/use-waypoint": "demo-waypoint"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      }
+    },
+    {
+      "kind": "Pod",
+      "object": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "app.kubernetes.io/component": "ambient-waypoint",
+            "gateway.networking.k8s.io/gateway-name": "demo-waypoint"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      },
+      "expected": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "app.kubernetes.io/component": "ambient-waypoint",
+            "gateway.networking.k8s.io/gateway-name": "demo-waypoint"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      }
+    },
+    {
+      "kind": "Service",
+      "object": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      },
+      "expected": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "istio.io/use-waypoint": "demo-waypoint",
+            "istio.io/ingress-use-waypoint": "true"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      }
+    },
+    {
+      "kind": "Service",
+      "object": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "app.kubernetes.io/component": "ambient-waypoint"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      },
+      "expected": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "app.kubernetes.io/component": "ambient-waypoint",
+            "istio.io/use-waypoint": "demo-waypoint",
+            "istio.io/ingress-use-waypoint": "true"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      }
+    },
+    {
+      "kind": "Service",
+      "object": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "app.kubernetes.io/component": "ambient-waypoint",
+            "gateway.networking.k8s.io/gateway-name": "ordinary"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      },
+      "expected": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "app.kubernetes.io/component": "ambient-waypoint",
+            "gateway.networking.k8s.io/gateway-name": "ordinary",
+            "istio.io/use-waypoint": "demo-waypoint",
+            "istio.io/ingress-use-waypoint": "true"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      }
+    },
+    {
+      "kind": "Service",
+      "object": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "gateway.networking.k8s.io/gateway-name": "demo-waypoint"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      },
+      "expected": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "gateway.networking.k8s.io/gateway-name": "demo-waypoint",
+            "istio.io/use-waypoint": "demo-waypoint",
+            "istio.io/ingress-use-waypoint": "true"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      }
+    },
+    {
+      "kind": "Service",
+      "object": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "app.kubernetes.io/component": "ambient-waypoint",
+            "gateway.networking.k8s.io/gateway-name": "demo-waypoint"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      },
+      "expected": {
+        "metadata": {
+          "name": "workload",
+          "namespace": "apps",
+          "labels": {
+            "app": "demo",
+            "unrelated": "preserve",
+            "app.kubernetes.io/component": "ambient-waypoint",
+            "gateway.networking.k8s.io/gateway-name": "demo-waypoint"
+          }
+        },
+        "spec": {
+          "selector": {
+            "app": "demo"
+          }
+        }
+      }
+    }
+  ]
+}

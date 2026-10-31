@@ -1,0 +1,69 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Ambient enrollment authenticates the controller's identity to the identity API.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}
+  labels:
+    istio.io/dataplane-mode: ambient
+---
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: uds-controller-webhook
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: uds-controller
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    "9443":
+      mode: PERMISSIVE
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: uds-controller
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    serviceMesh:
+      mode: ambient
+    allow:
+      - direction: Ingress
+        selector:
+          app: uds-controller
+        remoteNamespace: monitoring
+        remoteSelector:
+          app: prometheus
+        port: 9090
+        description: Prometheus native capability metrics through authenticated mesh transport
+      - direction: Egress
+        selector:
+          app: uds-controller
+        remoteGenerated: KubeAPI
+        description: Kubernetes API for controller reconciliation
+      - direction: Egress
+        selector:
+          app: uds-controller
+        remoteNamespace: keycloak
+        remoteSelector:
+          app.kubernetes.io/name: keycloak
+        port: 8080
+        description: Identity management API
+      - direction: Ingress
+        selector:
+          app: uds-controller
+        remoteGenerated: KubeAPI
+        port: 9443
+        description: Kubernetes API admission requests
+      - direction: Ingress
+        selector:
+          app: uds-controller
+        remoteGenerated: KubeNodes
+        port: 9443
+        description: Kubernetes control plane webhook source addresses

@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { getOperatorImplementation } from "./helpers/operator";
 import * as net from "net";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
@@ -150,11 +151,15 @@ describe("Loki Tests", () => {
   });
 
   test("Validate pod logs from vector are present in Loki", async () => {
+    const implementation = getOperatorImplementation();
+    // Preserve the log-collection assertion across the explicit operator
+    // profiles. Native logs retain their actual namespace, app and job labels.
+    const operatorLogSelector =
+      implementation === "native"
+        ? '{namespace="uds-system", app="uds-controller", job="uds-system/uds-controller", collector="vector"}'
+        : '{namespace="pepr-system", app="pepr-uds-core", job="pepr-system/pepr-uds-core", collector="vector"}';
     const data = await pollUntilSuccess(
-      () =>
-        queryLogs(
-          '{namespace="pepr-system", app="pepr-uds-core", job="pepr-system/pepr-uds-core", collector="vector"}',
-        ),
+      () => queryLogs(operatorLogSelector),
       result => result.status === "success" && result.data.result.length > 0,
       "Vector pod logs to be available in Loki",
       60000,

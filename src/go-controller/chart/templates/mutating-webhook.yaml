@@ -1,0 +1,79 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.admission.register }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: uds-controller-waypoint
+  labels:
+    app: uds-controller
+webhooks:
+  - name: pods.waypoint.uds.dev
+    matchConditions:
+      - name: authenticated-controller-recovery
+        expression: {{ include "uds.admission.bootstrapCallback" . | quote }}
+    admissionReviewVersions:
+      - v1
+    sideEffects: None
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    namespaceSelector:
+      matchExpressions:
+        - key: istio.io/dataplane-mode
+          operator: In
+          values:
+            - ambient
+    clientConfig:
+      service:
+        name: uds-controller
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-pod-waypoint
+        port: 443
+      caBundle: {{ include "uds.admission.caBundle" . | quote }}
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        resources:
+          - pods
+        operations:
+          - CREATE
+          - UPDATE
+        scope: Namespaced
+  - name: services.waypoint.uds.dev
+    matchConditions:
+      - name: authenticated-controller-recovery
+        expression: {{ include "uds.admission.bootstrapCallback" . | quote }}
+    admissionReviewVersions:
+      - v1
+    sideEffects: None
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    namespaceSelector:
+      matchExpressions:
+        - key: istio.io/dataplane-mode
+          operator: In
+          values:
+            - ambient
+    clientConfig:
+      service:
+        name: uds-controller
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-service-waypoint
+        port: 443
+      caBundle: {{ include "uds.admission.caBundle" . | quote }}
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        resources:
+          - services
+        operations:
+          - CREATE
+          - UPDATE
+        scope: Namespaced
+
+{{- end }}
