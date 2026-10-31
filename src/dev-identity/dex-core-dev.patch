@@ -1,5 +1,19 @@
+diff --git a/Dockerfile.core-dev b/Dockerfile.core-dev
+new file mode 100644
+index 00000000..75dc2f48
+--- /dev/null
++++ b/Dockerfile.core-dev
+@@ -0,0 +1,8 @@
++# Copyright 2026 The Dex Authors
++# SPDX-License-Identifier: Apache-2.0
++
++FROM gcr.io/distroless/static-debian13@sha256:e2e927ec666bae08560abb3c55d0659eceabb657f56b6782ab500a9fc7f555e3
++COPY --chmod=0755 dex-dev /usr/local/bin/dex-dev
++COPY web /srv/dex/web
++USER 65532:65532
++ENTRYPOINT ["/usr/local/bin/dex-dev"]
 diff --git a/cmd/dex/config.go b/cmd/dex/config.go
-index 8861dde..349367f 100644
+index 8861ddef..349367f9 100644
 --- a/cmd/dex/config.go
 +++ b/cmd/dex/config.go
 @@ -34,7 +34,8 @@ type Config struct {
@@ -13,7 +27,7 @@ index 8861dde..349367f 100644
  	// Signer configuration controls signing of JWT tokens issued by Dex.
  	Signer Signer `json:"signer"`
 diff --git a/cmd/dex/serve.go b/cmd/dex/serve.go
-index 54d150a..0b6ae93 100644
+index 54d150af..0b6ae93e 100644
 --- a/cmd/dex/serve.go
 +++ b/cmd/dex/serve.go
 @@ -356,6 +356,7 @@ func runServe(options serveOptions) error {
@@ -35,7 +49,7 @@ index 54d150a..0b6ae93 100644
  }
  
 diff --git a/connector/authproxy/authproxy.go b/connector/authproxy/authproxy.go
-index 3fe451b..7f9b37a 100644
+index 3fe451b2..7f9b37a7 100644
 --- a/connector/authproxy/authproxy.go
 +++ b/connector/authproxy/authproxy.go
 @@ -4,10 +4,12 @@
@@ -166,278 +180,9 @@ index 3fe451b..7f9b37a 100644
 +		ConnectorData:     connectorData,
  	}, nil
  }
-diff --git a/server/handlers.go b/server/handlers.go
-index 62f1650..78f28fc 100644
---- a/server/handlers.go
-+++ b/server/handlers.go
-@@ -879,6 +879,8 @@ func (s *Server) handleToken(w http.ResponseWriter, r *http.Request) {
- 		return
- 	}
- 	switch grantType {
-+	case "client_credentials":
-+		s.withClientFromStorage(w, r, s.handleDevelopmentClientCredentials)
- 	case grantTypeDeviceCode:
- 		s.handleDeviceToken(w, r)
- 	case grantTypeAuthorizationCode:
-@@ -928,6 +930,11 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
- 		return
- 	}
- 
-+	if s.developmentIdentity != nil && client.Public && !validDevelopmentPKCEToken(r.PostForm, authCode.PKCE) {
-+		s.tokenErrHelper(w, errInvalidGrant, "Public native client requires S256 code verifier.", http.StatusBadRequest)
-+		return
-+	}
-+
- 	// RFC 7636 (PKCE)
- 	codeChallengeFromStorage := authCode.PKCE.CodeChallenge
- 	providedCodeVerifier := r.PostFormValue("code_verifier")
-@@ -959,6 +966,11 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
- 		return
- 	}
- 
-+	if err := s.authorizeDevelopmentUser(ctx, client.ID, authCode.Claims.UserID, authCode.ConnectorID, authCode.Scopes); err != nil {
-+		s.tokenErrHelper(w, errInvalidGrant, "Original grant generation revoked.", http.StatusBadRequest)
-+		return
-+	}
-+
- 	tokenResponse, err := s.exchangeAuthCode(ctx, w, authCode, client)
- 	if err != nil {
- 		s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
-@@ -971,14 +983,12 @@ func (s *Server) exchangeAuthCode(ctx context.Context, w http.ResponseWriter, au
- 	accessToken, _, err := s.newAccessToken(ctx, client.ID, authCode.Claims, authCode.Scopes, authCode.Nonce, authCode.ConnectorID)
- 	if err != nil {
- 		s.logger.ErrorContext(ctx, "failed to create new access token", "err", err)
--		s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
- 		return nil, err
- 	}
- 
- 	idToken, expiry, err := s.newIDToken(ctx, client.ID, authCode.Claims, authCode.Scopes, authCode.Nonce, accessToken, authCode.ID, authCode.ConnectorID)
- 	if err != nil {
- 		s.logger.ErrorContext(ctx, "failed to create ID token", "err", err)
--		s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
- 		return nil, err
- 	}
- 
-diff --git a/server/oauth2.go b/server/oauth2.go
-index 5821f0f..2c59ca0 100644
---- a/server/oauth2.go
-+++ b/server/oauth2.go
-@@ -266,6 +266,15 @@ type federatedIDClaims struct {
- }
- 
- func (s *Server) newAccessToken(ctx context.Context, clientID string, claims storage.Claims, scopes []string, nonce, connID string) (accessToken string, expiry time.Time, err error) {
-+	if s.developmentIdentity != nil {
-+		client, err := s.storage.GetClient(ctx, clientID)
-+		if err != nil {
-+			return "", time.Time{}, err
-+		}
-+		if client.Public {
-+			scopes = developmentPublicAccessScopes(scopes)
-+		}
-+	}
- 	return s.newIDToken(ctx, clientID, claims, scopes, nonce, storage.NewID(), "", connID)
- }
- 
-@@ -313,6 +322,9 @@ func genSubject(userID string, connID string) (string, error) {
- }
- 
- func (s *Server) newIDToken(ctx context.Context, clientID string, claims storage.Claims, scopes []string, nonce, accessToken, code, connID string) (idToken string, expiry time.Time, err error) {
-+	if err := s.authorizeDevelopmentUser(ctx, clientID, claims.UserID, connID, scopes); err != nil {
-+		return "", time.Time{}, err
-+	}
- 	issuedAt := s.now()
- 	expiry = issuedAt.Add(s.idTokensValidFor)
- 
-@@ -455,6 +467,10 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
- 		return &redirectedAuthErr{state, redirectURI, typ, fmt.Sprintf(format, a...)}
- 	}
- 
-+	if s.developmentIdentity != nil && client.Public && !validDevelopmentPKCEAuthorization(q) {
-+		return nil, newRedirectedErr(errInvalidRequest, "Public native client requires S256 authorization-code PKCE")
-+	}
-+
- 	if connectorID != "" {
- 		connectors, err := s.storage.ListConnectors(ctx)
- 		if err != nil {
-@@ -473,8 +489,7 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
- 	}
- 
- 	if codeChallengeMethod != codeChallengeMethodS256 && codeChallengeMethod != codeChallengeMethodPlain {
--		description := fmt.Sprintf("Unsupported PKCE challenge method (%q).", codeChallengeMethod)
--		return nil, newRedirectedErr(errInvalidRequest, description)
-+		return nil, newRedirectedErr(errInvalidRequest, "Unsupported PKCE challenge method (%q).", codeChallengeMethod)
- 	}
- 
- 	var (
-@@ -488,6 +503,12 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
- 			hasOpenIDScope = true
- 		case scopeOfflineAccess, scopeEmail, scopeProfile, scopeGroups, scopeFederatedID:
- 		default:
-+			if s.developmentIdentity != nil && strings.HasPrefix(scope, developmentGenerationPrefix) {
-+				if _, err := developmentGrantGeneration(scopes); err != nil {
-+					return nil, newRedirectedErr(errInvalidScope, "Invalid grant generation")
-+				}
-+				continue
-+			}
- 			peerID, ok := parseCrossClientScope(scope)
- 			if !ok {
- 				unrecognized = append(unrecognized, scope)
-@@ -557,8 +578,7 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
- 	}
- 	if rt.token {
- 		if redirectURI == redirectURIOOB {
--			err := fmt.Sprintf("Cannot use response type 'token' with redirect_uri '%s'.", redirectURIOOB)
--			return nil, newRedirectedErr(errInvalidRequest, err)
-+			return nil, newRedirectedErr(errInvalidRequest, "Cannot use response type 'token' with redirect_uri '%s'.", redirectURIOOB)
- 		}
- 	}
- 
-diff --git a/server/refreshhandlers.go b/server/refreshhandlers.go
-index b47bd52..4891b63 100644
---- a/server/refreshhandlers.go
-+++ b/server/refreshhandlers.go
-@@ -414,12 +414,28 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, clie
- 		return
- 	}
- 
-+	// Check the original stored grant before caller-requested scope narrowing
-+	// or rotation. A replacement client cannot adopt an older UID grant.
-+	if err := s.authorizeDevelopmentUser(r.Context(), client.ID, rCtx.storageToken.Claims.UserID, rCtx.storageToken.ConnectorID, rCtx.storageToken.Scopes); err != nil {
-+		s.tokenErrHelper(w, errInvalidGrant, "Original grant generation revoked.", http.StatusBadRequest)
-+		return
-+	}
-+
- 	rCtx.scopes, rerr = s.getRefreshScopes(r, rCtx.storageToken)
- 	if rerr != nil {
- 		s.refreshTokenErrHelper(w, rerr)
- 		return
- 	}
- 
-+	if s.developmentIdentity != nil {
-+		var err error
-+		rCtx.scopes, err = retainDevelopmentGrantGeneration(rCtx.storageToken.Scopes, rCtx.scopes)
-+		if err != nil {
-+			s.tokenErrHelper(w, errInvalidGrant, "Original grant generation revoked.", http.StatusBadRequest)
-+			return
-+		}
-+	}
-+
- 	newToken, ident, rerr := s.updateRefreshToken(r.Context(), rCtx)
- 	if rerr != nil {
- 		s.refreshTokenErrHelper(w, rerr)
-diff --git a/server/server.go b/server/server.go
-index e923e3e..88008b8 100644
---- a/server/server.go
-+++ b/server/server.go
-@@ -106,6 +106,10 @@ type Config struct {
- 	// If set, the server will use this connector to handle password grants
- 	PasswordConnector string
- 
-+	// DevelopmentIdentity enables Core's opt-in, mTLS-backed service-account
-+	// grant. OIDC claims and signatures remain owned by Dex.
-+	DevelopmentIdentity *DevelopmentIdentityConfig
-+
- 	GCFrequency time.Duration // Defaults to 5 minutes
- 
- 	// If specified, the server will use this function for determining time.
-@@ -187,7 +191,8 @@ type Server struct {
- 	alwaysShowLogin bool
- 
- 	// Used for password grant
--	passwordConnector string
-+	passwordConnector   string
-+	developmentIdentity *developmentIdentity
- 
- 	supportedResponseTypes map[string]bool
- 
-@@ -253,6 +258,9 @@ func newServer(ctx context.Context, c Config) (*Server, error) {
- 	if c.PasswordConnector != "" {
- 		allSupportedGrants[grantTypePassword] = true
- 	}
-+	if c.DevelopmentIdentity != nil {
-+		allSupportedGrants["client_credentials"] = true
-+	}
- 
- 	var supportedGrants []string
- 	if len(c.AllowedGrantTypes) > 0 {
-@@ -312,6 +320,12 @@ func newServer(ctx context.Context, c Config) (*Server, error) {
- 		logger:                 c.Logger,
- 		signer:                 c.Signer,
- 	}
-+	if c.DevelopmentIdentity != nil {
-+		s.developmentIdentity, err = newDevelopmentIdentity(*c.DevelopmentIdentity)
-+		if err != nil {
-+			return nil, fmt.Errorf("development identity authority: %w", err)
-+		}
-+	}
- 
- 	// Retrieves connector objects in backend storage. This list includes the static connectors
- 	// defined in the ConfigMap and dynamic connectors retrieved from the storage.
-diff --git a/storage/kubernetes/storage.go b/storage/kubernetes/storage.go
-index 028ced7..ce47c28 100644
---- a/storage/kubernetes/storage.go
-+++ b/storage/kubernetes/storage.go
-@@ -2,6 +2,7 @@ package kubernetes
- 
- import (
- 	"context"
-+	"encoding/json"
- 	"errors"
- 	"fmt"
- 	"log/slog"
-@@ -388,7 +389,34 @@ func (cli *client) GetConnector(ctx context.Context, id string) (storage.Connect
- }
- 
- func (cli *client) ListClients(ctx context.Context) ([]storage.Client, error) {
--	return nil, errors.New("not implemented")
-+	endpoint, err := cli.urlFor(cli.apiVersion, cli.namespace, resourceClient, "")
-+	if err != nil {
-+		return nil, err
-+	}
-+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-+	if err != nil {
-+		return nil, err
-+	}
-+	response, err := cli.client.Do(request)
-+	if err != nil {
-+		return nil, err
-+	}
-+	defer closeResp(response)
-+	if err := checkHTTPErr(response, http.StatusOK); err != nil {
-+		return nil, err
-+	}
-+	var listed ClientList
-+	if err := json.NewDecoder(response.Body).Decode(&listed); err != nil {
-+		return nil, err
-+	}
-+	clients := make([]storage.Client, 0, len(listed.Clients))
-+	for _, client := range listed.Clients {
-+		if err := ctx.Err(); err != nil {
-+			return nil, err
-+		}
-+		clients = append(clients, toStorageClient(client))
-+	}
-+	return clients, nil
- }
- 
- func (cli *client) ListRefreshTokens(ctx context.Context) ([]storage.RefreshToken, error) {
-diff --git a/Dockerfile.core-dev b/Dockerfile.core-dev
-new file mode 100644
-index 0000000..75dc2f4
---- /dev/null
-+++ b/Dockerfile.core-dev
-@@ -0,0 +1,8 @@
-+# Copyright 2026 The Dex Authors
-+# SPDX-License-Identifier: Apache-2.0
-+
-+FROM gcr.io/distroless/static-debian13@sha256:e2e927ec666bae08560abb3c55d0659eceabb657f56b6782ab500a9fc7f555e3
-+COPY --chmod=0755 dex-dev /usr/local/bin/dex-dev
-+COPY web /srv/dex/web
-+USER 65532:65532
-+ENTRYPOINT ["/usr/local/bin/dex-dev"]
 diff --git a/connector/authproxy/core_identity_test.go b/connector/authproxy/core_identity_test.go
 new file mode 100644
-index 0000000..3922578
+index 00000000..3922578b
 --- /dev/null
 +++ b/connector/authproxy/core_identity_test.go
 @@ -0,0 +1,41 @@
@@ -484,7 +229,7 @@ index 0000000..3922578
 +}
 diff --git a/connector/authproxy/refresh.go b/connector/authproxy/refresh.go
 new file mode 100644
-index 0000000..20a2209
+index 00000000..20a2209e
 --- /dev/null
 +++ b/connector/authproxy/refresh.go
 @@ -0,0 +1,99 @@
@@ -587,9 +332,243 @@ index 0000000..20a2209
 +	identity.Groups = user.Groups
 +	return identity, nil
 +}
+diff --git a/go.mod b/go.mod
+index ee55dd4e..a24f341c 100644
+--- a/go.mod
++++ b/go.mod
+@@ -1,6 +1,6 @@
+ module github.com/dexidp/dex
+ 
+-go 1.25.0
++go 1.27.3
+ 
+ require (
+ 	cloud.google.com/go/compute/metadata v0.9.0
+@@ -13,7 +13,7 @@ require (
+ 	github.com/dexidp/dex/api/v2 v2.4.0
+ 	github.com/fsnotify/fsnotify v1.9.0
+ 	github.com/ghodss/yaml v1.0.0
+-	github.com/go-jose/go-jose/v4 v4.1.3
++	github.com/go-jose/go-jose/v4 v4.1.4
+ 	github.com/go-ldap/ldap/v3 v3.4.12
+ 	github.com/go-sql-driver/mysql v1.9.3
+ 	github.com/google/uuid v1.6.0
+@@ -28,23 +28,23 @@ require (
+ 	github.com/openbao/openbao/api/v2 v2.5.1
+ 	github.com/pkg/errors v0.9.1
+ 	github.com/prometheus/client_golang v1.23.2
+-	github.com/russellhaering/goxmldsig v1.5.0
++	github.com/russellhaering/goxmldsig v1.6.0
+ 	github.com/spf13/cobra v1.10.2
+ 	github.com/stretchr/testify v1.11.1
+ 	go.etcd.io/etcd/client/pkg/v3 v3.6.8
+ 	go.etcd.io/etcd/client/v3 v3.6.8
+-	golang.org/x/crypto v0.48.0
++	golang.org/x/crypto v0.57.0
+ 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
+-	golang.org/x/net v0.50.0
+-	golang.org/x/oauth2 v0.35.0
++	golang.org/x/net v0.60.0
++	golang.org/x/oauth2 v0.36.0
+ 	google.golang.org/api v0.267.0
+-	google.golang.org/grpc v1.79.1
++	google.golang.org/grpc v1.83.2
+ 	google.golang.org/protobuf v1.36.11
+ )
+ 
+ require (
+ 	ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9 // indirect
+-	cloud.google.com/go/auth v0.18.1 // indirect
++	cloud.google.com/go/auth v0.18.2 // indirect
+ 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
+ 	dario.cat/mergo v1.0.1 // indirect
+ 	filippo.io/edwards25519 v1.1.1 // indirect
+@@ -105,21 +105,21 @@ require (
+ 	go.etcd.io/etcd/api/v3 v3.6.8 // indirect
+ 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
+ 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0 // indirect
+-	go.opentelemetry.io/otel v1.39.0 // indirect
+-	go.opentelemetry.io/otel/metric v1.39.0 // indirect
+-	go.opentelemetry.io/otel/trace v1.39.0 // indirect
++	go.opentelemetry.io/otel v1.44.0 // indirect
++	go.opentelemetry.io/otel/metric v1.44.0 // indirect
++	go.opentelemetry.io/otel/trace v1.44.0 // indirect
+ 	go.uber.org/multierr v1.11.0 // indirect
+ 	go.uber.org/zap v1.27.0 // indirect
+ 	go.yaml.in/yaml/v2 v2.4.2 // indirect
+-	golang.org/x/mod v0.32.0 // indirect
+-	golang.org/x/sync v0.19.0 // indirect
+-	golang.org/x/sys v0.41.0 // indirect
+-	golang.org/x/text v0.34.0 // indirect
++	golang.org/x/mod v0.41.0 // indirect
++	golang.org/x/sync v0.23.0 // indirect
++	golang.org/x/sys v0.48.0 // indirect
++	golang.org/x/text v0.42.0 // indirect
+ 	golang.org/x/time v0.14.0 // indirect
+-	golang.org/x/tools v0.41.0 // indirect
++	golang.org/x/tools v0.49.0 // indirect
+ 	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
+-	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 // indirect
+-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57 // indirect
++	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
++	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
+ 	gopkg.in/yaml.v2 v2.4.0 // indirect
+ 	gopkg.in/yaml.v3 v3.0.1 // indirect
+ )
+diff --git a/go.sum b/go.sum
+index ac41652e..642d2d12 100644
+--- a/go.sum
++++ b/go.sum
+@@ -1,7 +1,7 @@
+ ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9 h1:E0wvcUXTkgyN4wy4LGtNzMNGMytJN8afmIWXJVMi4cc=
+ ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9/go.mod h1:Oe1xWPuu5q9LzyrWfbZmEZxFYeu4BHTyzfjeW2aZp/w=
+-cloud.google.com/go/auth v0.18.1 h1:IwTEx92GFUo2pJ6Qea0EU3zYvKnTAeRCODxfA/G5UWs=
+-cloud.google.com/go/auth v0.18.1/go.mod h1:GfTYoS9G3CWpRA3Va9doKN9mjPGRS+v41jmZAhBzbrA=
++cloud.google.com/go/auth v0.18.2 h1:+Nbt5Ev0xEqxlNjd6c+yYUeosQ5TtEUaNcN/3FozlaM=
++cloud.google.com/go/auth v0.18.2/go.mod h1:xD+oY7gcahcu7G2SG2DsBerfFxgPAJz17zz2joOFF3M=
+ cloud.google.com/go/auth/oauth2adapt v0.2.8 h1:keo8NaayQZ6wimpNSmW5OPc283g65QNIiLpZnkHRbnc=
+ cloud.google.com/go/auth/oauth2adapt v0.2.8/go.mod h1:XQ9y31RkqZCcwJWNSx2Xvric3RrU88hAYYbjDWYDL+c=
+ cloud.google.com/go/compute/metadata v0.9.0 h1:pDUj4QMoPejqq20dK0Pg2N4yG9zIkYGdBtwLoEkH9Zs=
+@@ -67,8 +67,8 @@ github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
+ github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
+ github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667 h1:BP4M0CvQ4S3TGls2FvczZtj5Re/2ZzkV9VwqPHH/3Bo=
+ github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667/go.mod h1:hEBeB/ic+5LoWskz+yKT7vGhhPYkProFKoKdwZRWMe0=
+-github.com/go-jose/go-jose/v4 v4.1.3 h1:CVLmWDhDVRa6Mi/IgCgaopNosCaHz7zrMeF9MlZRkrs=
+-github.com/go-jose/go-jose/v4 v4.1.3/go.mod h1:x4oUasVrzR7071A4TnHLGSPpNOm2a21K9Kf04k1rs08=
++github.com/go-jose/go-jose/v4 v4.1.4 h1:moDMcTHmvE6Groj34emNPLs/qtYXRVcd6S7NHbHz3kA=
++github.com/go-jose/go-jose/v4 v4.1.4/go.mod h1:x4oUasVrzR7071A4TnHLGSPpNOm2a21K9Kf04k1rs08=
+ github.com/go-ldap/ldap/v3 v3.4.12 h1:1b81mv7MagXZ7+1r7cLTWmyuTqVqdwbtJSjC0DAp9s4=
+ github.com/go-ldap/ldap/v3 v3.4.12/go.mod h1:+SPAGcTtOfmGsCb3h1RFiq4xpp4N636G75OEace8lNo=
+ github.com/go-logr/logr v1.2.2/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=
+@@ -205,8 +205,8 @@ github.com/prometheus/procfs v0.16.1 h1:hZ15bTNuirocR6u0JZ6BAHHmwS1p8B4P6MRqxtzM
+ github.com/prometheus/procfs v0.16.1/go.mod h1:teAbpZRB1iIAJYREa1LsoWUXykVXA1KlTmWl8x/U+Is=
+ github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
+ github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
+-github.com/russellhaering/goxmldsig v1.5.0 h1:AU2UkkYIUOTyZRbe08XMThaOCelArgvNfYapcmSjBNw=
+-github.com/russellhaering/goxmldsig v1.5.0/go.mod h1:x98CjQNFJcWfMxeOrMnMKg70lvDP6tE0nTaeUnjXDmk=
++github.com/russellhaering/goxmldsig v1.6.0 h1:8fdWXEPh2k/NZNQBPFNoVfS3JmzS4ZprY/sAOpKQLks=
++github.com/russellhaering/goxmldsig v1.6.0/go.mod h1:TrnaquDcYxWXfJrOjeMBTX4mLBeYAqaHEyUeWPxZlBM=
+ github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
+ github.com/ryanuber/go-glob v1.0.0 h1:iQh3xXAumdQ+4Ufa5b25cRpC5TYKlno6hsv6Cb3pkBk=
+ github.com/ryanuber/go-glob v1.0.0/go.mod h1:807d1WSdnB0XRJzKNil9Om6lcp/3a0v4qIHxIXzX/Yc=
+@@ -246,16 +246,16 @@ go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.6
+ go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.61.0/go.mod h1:snMWehoOh2wsEwnvvwtDyFCxVeDAODenXHtn5vzrKjo=
+ go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0 h1:F7Jx+6hwnZ41NSFTO5q4LYDtJRXBf2PD0rNBkeB/lus=
+ go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0/go.mod h1:UHB22Z8QsdRDrnAtX4PntOl36ajSxcdUMt1sF7Y6E7Q=
+-go.opentelemetry.io/otel v1.39.0 h1:8yPrr/S0ND9QEfTfdP9V+SiwT4E0G7Y5MO7p85nis48=
+-go.opentelemetry.io/otel v1.39.0/go.mod h1:kLlFTywNWrFyEdH0oj2xK0bFYZtHRYUdv1NklR/tgc8=
+-go.opentelemetry.io/otel/metric v1.39.0 h1:d1UzonvEZriVfpNKEVmHXbdf909uGTOQjA0HF0Ls5Q0=
+-go.opentelemetry.io/otel/metric v1.39.0/go.mod h1:jrZSWL33sD7bBxg1xjrqyDjnuzTUB0x1nBERXd7Ftcs=
+-go.opentelemetry.io/otel/sdk v1.39.0 h1:nMLYcjVsvdui1B/4FRkwjzoRVsMK8uL/cj0OyhKzt18=
+-go.opentelemetry.io/otel/sdk v1.39.0/go.mod h1:vDojkC4/jsTJsE+kh+LXYQlbL8CgrEcwmt1ENZszdJE=
+-go.opentelemetry.io/otel/sdk/metric v1.39.0 h1:cXMVVFVgsIf2YL6QkRF4Urbr/aMInf+2WKg+sEJTtB8=
+-go.opentelemetry.io/otel/sdk/metric v1.39.0/go.mod h1:xq9HEVH7qeX69/JnwEfp6fVq5wosJsY1mt4lLfYdVew=
+-go.opentelemetry.io/otel/trace v1.39.0 h1:2d2vfpEDmCJ5zVYz7ijaJdOF59xLomrvj7bjt6/qCJI=
+-go.opentelemetry.io/otel/trace v1.39.0/go.mod h1:88w4/PnZSazkGzz/w84VHpQafiU4EtqqlVdxWy+rNOA=
++go.opentelemetry.io/otel v1.44.0 h1:JjwHmHpA4iZ3wBxluu2fbbE7j4kqlE8jXyAyPXH7HqU=
++go.opentelemetry.io/otel v1.44.0/go.mod h1:BMgjTHL9WPRlRjL2oZCBTL4whCGtXch2H4BhOPIAyYc=
++go.opentelemetry.io/otel/metric v1.44.0 h1:1w0gILTcHdr3YI+ixLyjemwrVnsMURbTZFrSYCdDdmc=
++go.opentelemetry.io/otel/metric v1.44.0/go.mod h1:8O7hanEPBNgEMmybD3s2VBKcgWOCsA6tzHBPODAiquo=
++go.opentelemetry.io/otel/sdk v1.44.0 h1:nHYwb9lK+fJPU/dnT6s7W7Z8itMWyqrnVfbheVYrZ58=
++go.opentelemetry.io/otel/sdk v1.44.0/go.mod h1:Osuydd3Se74nqjAKxid74N5eC+jfEqfTegHRnq58oK0=
++go.opentelemetry.io/otel/sdk/metric v1.44.0 h1:3LlKgI+VjbVsjNRFZJZAJ30WjXC5VkNRks6si09iEfI=
++go.opentelemetry.io/otel/sdk/metric v1.44.0/go.mod h1:5B5pMARnXxKhltooO4xUuCBorl65a4EpnTalObqOigA=
++go.opentelemetry.io/otel/trace v1.44.0 h1:jxF5CsGYCe74MCRx2X4g7WsY/VBKRqqpNvXlX/6gtIk=
++go.opentelemetry.io/otel/trace v1.44.0/go.mod h1:oLl1jrMQAVo6v3GAggN+1VH9VIz9iUSvW53sW1Q8PIE=
+ go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
+ go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
+ go.uber.org/multierr v1.11.0 h1:blXXJkSxSSfBVBlC76pxqeO+LN3aDfLQo+309xJstO0=
+@@ -268,44 +268,44 @@ go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
+ golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+ golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
+ golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
+-golang.org/x/crypto v0.48.0 h1:/VRzVqiRSggnhY7gNRxPauEQ5Drw9haKdM0jqfcCFts=
+-golang.org/x/crypto v0.48.0/go.mod h1:r0kV5h3qnFPlQnBSrULhlsRfryS2pmewsg+XfMgkVos=
++golang.org/x/crypto v0.57.0 h1:3ZVCjf8Ggz7zneR/EHRVx68Ctf+2pmIMP2UFhh9cC6M=
++golang.org/x/crypto v0.57.0/go.mod h1:Fdz0i5U6CoizGwLda9DttjSk6qlZo25zYNtR+ycvuZA=
+ golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741 h1:fGZugkZk2UgYBxtpKmvub51Yno1LJDeEsRp2xGD+0gY=
+ golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741/go.mod h1:cyybsKvd6eL0RnXn6p/Grxp8F5bW7iYuBgsNCOHpMYE=
+ golang.org/x/mod v0.2.0/go.mod h1:s0Qsj1ACt9ePp/hMypM3fl4fZqREWJwdYDEqhRiZZUA=
+ golang.org/x/mod v0.3.0/go.mod h1:s0Qsj1ACt9ePp/hMypM3fl4fZqREWJwdYDEqhRiZZUA=
+-golang.org/x/mod v0.32.0 h1:9F4d3PHLljb6x//jOyokMv3eX+YDeepZSEo3mFJy93c=
+-golang.org/x/mod v0.32.0/go.mod h1:SgipZ/3h2Ci89DlEtEXWUk/HteuRin+HHhN+WbNhguU=
++golang.org/x/mod v0.41.0 h1:qJmnOUb4YB+FsEuM3HcWucdZASCPGhsX6uljO6pog0c=
++golang.org/x/mod v0.41.0/go.mod h1:Ek9pY8RKWXwsWvd3rQiHYtMqkjSUV+s1Rj7j4H5Ur6o=
+ golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
+ golang.org/x/net v0.0.0-20190620200207-3b0461eec859/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+ golang.org/x/net v0.0.0-20200226121028-0de0cce0169b/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+ golang.org/x/net v0.0.0-20201021035429-f5854403a974/go.mod h1:sp8m0HH+o8qH0wwXwYZr8TS3Oi6o0r6Gce1SSxlDquU=
+-golang.org/x/net v0.50.0 h1:ucWh9eiCGyDR3vtzso0WMQinm2Dnt8cFMuQa9K33J60=
+-golang.org/x/net v0.50.0/go.mod h1:UgoSli3F/pBgdJBHCTc+tp3gmrU4XswgGRgtnwWTfyM=
+-golang.org/x/oauth2 v0.35.0 h1:Mv2mzuHuZuY2+bkyWXIHMfhNdJAdwW3FuWeCPYN5GVQ=
+-golang.org/x/oauth2 v0.35.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
++golang.org/x/net v0.60.0 h1:79p50tfZlm0J9YfoDsSi639qSXNGVwEzOPLCxM2FsYU=
++golang.org/x/net v0.60.0/go.mod h1:2DA/G1UfVbCpQPeWTmMPGY7Cs2PkBkwu743bVX5PIVg=
++golang.org/x/oauth2 v0.36.0 h1:peZ/1z27fi9hUOFCAZaHyrpWG5lwe0RJEEEeH0ThlIs=
++golang.org/x/oauth2 v0.36.0/go.mod h1:YDBUJMTkDnJS+A4BP4eZBjCqtokkg1hODuPjwiGPO7Q=
+ golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+ golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+ golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+-golang.org/x/sync v0.19.0 h1:vV+1eWNmZ5geRlYjzm2adRgW2/mcpevXNg50YZtPCE4=
+-golang.org/x/sync v0.19.0/go.mod h1:9KTHXmSnoGruLpwFjVSX0lNNA75CykiMECbovNTZqGI=
++golang.org/x/sync v0.23.0 h1:KameEIfc1IkluZyXWLn39Wd4tURc6GbCiISGiZm2bQk=
++golang.org/x/sync v0.23.0/go.mod h1:sUUOizhqBxiL6pEWpqNLUiaJn1ShEbZ6BBqskPbjZm0=
+ golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
+ golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+ golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+-golang.org/x/sys v0.41.0 h1:Ivj+2Cp/ylzLiEU89QhWblYnOE9zerudt9Ftecq2C6k=
+-golang.org/x/sys v0.41.0/go.mod h1:OgkHotnGiDImocRcuBABYBEXf8A9a87e/uXjp9XT3ks=
++golang.org/x/sys v0.48.0 h1:bbX/i/6MgT9BVLM9RT1thmxL04yeTAhbEz4SyadbXoo=
++golang.org/x/sys v0.48.0/go.mod h1:hNLxWAXmnKAxqDtdwIYC4bM9oQPEecfsnNMuSxOs3og=
+ golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+ golang.org/x/text v0.3.3/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
+-golang.org/x/text v0.34.0 h1:oL/Qq0Kdaqxa1KbNeMKwQq0reLCCaFtqu2eNuSeNHbk=
+-golang.org/x/text v0.34.0/go.mod h1:homfLqTYRFyVYemLBFl5GgL/DWEiH5wcsQ5gSh1yziA=
++golang.org/x/text v0.42.0 h1:JbOZXgfeCPU9gacVtYliJqOhD+zhrEqK4LfdpmlUZqI=
++golang.org/x/text v0.42.0/go.mod h1:ojzP1Z+2QtioaF8DTtO8K5q7JWVVYwZKenzujK0Zd0E=
+ golang.org/x/time v0.14.0 h1:MRx4UaLrDotUKUdCIqzPC48t1Y9hANFKIRpNx+Te8PI=
+ golang.org/x/time v0.14.0/go.mod h1:eL/Oa2bBBK0TkX57Fyni+NgnyQQN4LitPmob2Hjnqw4=
+ golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
+ golang.org/x/tools v0.0.0-20191119224855-298f0cb1881e/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
+ golang.org/x/tools v0.0.0-20200619180055-7c47624df98f/go.mod h1:EkVYQZoAsY45+roYkvgYkIh4xh/qjgUK9TdY2XT94GE=
+ golang.org/x/tools v0.0.0-20210106214847-113979e3529a/go.mod h1:emZCQorbCU4vsT4fOWvOPXz4eW1wZW4PmDk9uLelYpA=
+-golang.org/x/tools v0.41.0 h1:a9b8iMweWG+S0OBnlU36rzLp20z1Rp10w+IY2czHTQc=
+-golang.org/x/tools v0.41.0/go.mod h1:XSY6eDqxVNiYgezAVqqCeihT4j1U2CCsqvH3WhQpnlg=
++golang.org/x/tools v0.49.0 h1:3NI7VXzL9+1WZD52Dx2ttoPwD5DWrFGpl9mFZDlmisI=
++golang.org/x/tools v0.49.0/go.mod h1:SJNXV9DBKT0UbdttsQjbfJlAE/q+y36++zo3uL3N0Oo=
+ golang.org/x/tools/go/expect v0.1.0-deprecated h1:jY2C5HGYR5lqex3gEniOQL0r7Dq5+VGVgY1nudX5lXY=
+ golang.org/x/tools/go/expect v0.1.0-deprecated/go.mod h1:eihoPOH+FgIqa3FpoTwguz/bVUSGBlGQU67vpBeOrBY=
+ golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated h1:1h2MnaIAIXISqTFKdENegdpAgUXz6NrPEsbIeWaBRvM=
+@@ -314,18 +314,18 @@ golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8T
+ golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+ golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+ golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+-gonum.org/v1/gonum v0.16.0 h1:5+ul4Swaf3ESvrOnidPp4GZbzf0mxVQpDCYUQE7OJfk=
+-gonum.org/v1/gonum v0.16.0/go.mod h1:fef3am4MQ93R2HHpKnLk4/Tbh/s0+wqD5nfa6Pnwy4E=
++gonum.org/v1/gonum v0.17.0 h1:VbpOemQlsSMrYmn7T2OUvQ4dqxQXU+ouZFQsZOx50z4=
++gonum.org/v1/gonum v0.17.0/go.mod h1:El3tOrEuMpv2UdMrbNlKEh9vd86bmQ6vqIcDwxEOc1E=
+ google.golang.org/api v0.267.0 h1:w+vfWPMPYeRs8qH1aYYsFX68jMls5acWl/jocfLomwE=
+ google.golang.org/api v0.267.0/go.mod h1:Jzc0+ZfLnyvXma3UtaTl023TdhZu6OMBP9tJ+0EmFD0=
+ google.golang.org/genproto v0.0.0-20260128011058-8636f8732409 h1:VQZ/yAbAtjkHgH80teYd2em3xtIkkHd7ZhqfH2N9CsM=
+ google.golang.org/genproto v0.0.0-20260128011058-8636f8732409/go.mod h1:rxKD3IEILWEu3P44seeNOAwZN4SaoKaQ/2eTg4mM6EM=
+-google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 h1:merA0rdPeUV3YIIfHHcH4qBkiQAc1nfCKSI7lB4cV2M=
+-google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409/go.mod h1:fl8J1IvUjCilwZzQowmw2b7HQB2eAuYBabMXzWurF+I=
+-google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57 h1:mWPCjDEyshlQYzBpMNHaEof6UX1PmHcaUODUywQ0uac=
+-google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57/go.mod h1:j9x/tPzZkyxcgEFkiKEEGxfvyumM01BEtsW8xzOahRQ=
+-google.golang.org/grpc v1.79.1 h1:zGhSi45ODB9/p3VAawt9a+O/MULLl9dpizzNNpq7flY=
+-google.golang.org/grpc v1.79.1/go.mod h1:KmT0Kjez+0dde/v2j9vzwoAScgEPx/Bw1CYChhHLrHQ=
++google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa h1:Kjn0N0tCrDgiAFW+lGO4JZ3ck44CehvJQMAwj9QF0G8=
++google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa/go.mod h1:q4lMZS6kskjT5HvCPrnnypcDPVJqT/f4nfxmkE7gryY=
++google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa h1:mZHHdPZl0dbGHCflZgAq/Q468DWVFcU2whhB2KAo8fk=
++google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa/go.mod h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8=
++google.golang.org/grpc v1.83.2 h1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU=
++google.golang.org/grpc v1.83.2/go.mod h1:YPI1hK3kDked6iHvgX3tR0y+nX/qpMFKhPgFsokw1S8=
+ google.golang.org/protobuf v1.36.11 h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=
+ google.golang.org/protobuf v1.36.11/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
+ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 diff --git a/server/development_generation.go b/server/development_generation.go
 new file mode 100644
-index 0000000..8a67f7c
+index 00000000..8a67f7cb
 --- /dev/null
 +++ b/server/development_generation.go
 @@ -0,0 +1,47 @@
@@ -642,7 +621,7 @@ index 0000000..8a67f7c
 +}
 diff --git a/server/development_generation_test.go b/server/development_generation_test.go
 new file mode 100644
-index 0000000..9c0404b
+index 00000000..9c0404b8
 --- /dev/null
 +++ b/server/development_generation_test.go
 @@ -0,0 +1,102 @@
@@ -750,7 +729,7 @@ index 0000000..9c0404b
 +}
 diff --git a/server/development_identity.go b/server/development_identity.go
 new file mode 100644
-index 0000000..3ae0bdd
+index 00000000..3ae0bddc
 --- /dev/null
 +++ b/server/development_identity.go
 @@ -0,0 +1,141 @@
@@ -897,7 +876,7 @@ index 0000000..3ae0bdd
 +}
 diff --git a/server/development_identity_test.go b/server/development_identity_test.go
 new file mode 100644
-index 0000000..3011e56
+index 00000000..3011e56f
 --- /dev/null
 +++ b/server/development_identity_test.go
 @@ -0,0 +1,143 @@
@@ -1046,7 +1025,7 @@ index 0000000..3011e56
 +}
 diff --git a/server/development_pkce.go b/server/development_pkce.go
 new file mode 100644
-index 0000000..21dc484
+index 00000000..21dc4840
 --- /dev/null
 +++ b/server/development_pkce.go
 @@ -0,0 +1,36 @@
@@ -1088,7 +1067,7 @@ index 0000000..21dc484
 +}
 diff --git a/server/development_pkce_test.go b/server/development_pkce_test.go
 new file mode 100644
-index 0000000..3ca5768
+index 00000000..3ca57681
 --- /dev/null
 +++ b/server/development_pkce_test.go
 @@ -0,0 +1,127 @@
@@ -1219,9 +1198,216 @@ index 0000000..3ca5768
 +	_, _, err = s.newIDToken(t.Context(), "cli", claims, scopes, "nonce", "", "", "uds")
 +	require.Error(t, err)
 +}
+diff --git a/server/handlers.go b/server/handlers.go
+index 62f1650c..78f28fce 100644
+--- a/server/handlers.go
++++ b/server/handlers.go
+@@ -879,6 +879,8 @@ func (s *Server) handleToken(w http.ResponseWriter, r *http.Request) {
+ 		return
+ 	}
+ 	switch grantType {
++	case "client_credentials":
++		s.withClientFromStorage(w, r, s.handleDevelopmentClientCredentials)
+ 	case grantTypeDeviceCode:
+ 		s.handleDeviceToken(w, r)
+ 	case grantTypeAuthorizationCode:
+@@ -928,6 +930,11 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
+ 		return
+ 	}
+ 
++	if s.developmentIdentity != nil && client.Public && !validDevelopmentPKCEToken(r.PostForm, authCode.PKCE) {
++		s.tokenErrHelper(w, errInvalidGrant, "Public native client requires S256 code verifier.", http.StatusBadRequest)
++		return
++	}
++
+ 	// RFC 7636 (PKCE)
+ 	codeChallengeFromStorage := authCode.PKCE.CodeChallenge
+ 	providedCodeVerifier := r.PostFormValue("code_verifier")
+@@ -959,6 +966,11 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
+ 		return
+ 	}
+ 
++	if err := s.authorizeDevelopmentUser(ctx, client.ID, authCode.Claims.UserID, authCode.ConnectorID, authCode.Scopes); err != nil {
++		s.tokenErrHelper(w, errInvalidGrant, "Original grant generation revoked.", http.StatusBadRequest)
++		return
++	}
++
+ 	tokenResponse, err := s.exchangeAuthCode(ctx, w, authCode, client)
+ 	if err != nil {
+ 		s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+@@ -971,14 +983,12 @@ func (s *Server) exchangeAuthCode(ctx context.Context, w http.ResponseWriter, au
+ 	accessToken, _, err := s.newAccessToken(ctx, client.ID, authCode.Claims, authCode.Scopes, authCode.Nonce, authCode.ConnectorID)
+ 	if err != nil {
+ 		s.logger.ErrorContext(ctx, "failed to create new access token", "err", err)
+-		s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+ 		return nil, err
+ 	}
+ 
+ 	idToken, expiry, err := s.newIDToken(ctx, client.ID, authCode.Claims, authCode.Scopes, authCode.Nonce, accessToken, authCode.ID, authCode.ConnectorID)
+ 	if err != nil {
+ 		s.logger.ErrorContext(ctx, "failed to create ID token", "err", err)
+-		s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+ 		return nil, err
+ 	}
+ 
+diff --git a/server/oauth2.go b/server/oauth2.go
+index 5821f0ff..2c59ca08 100644
+--- a/server/oauth2.go
++++ b/server/oauth2.go
+@@ -266,6 +266,15 @@ type federatedIDClaims struct {
+ }
+ 
+ func (s *Server) newAccessToken(ctx context.Context, clientID string, claims storage.Claims, scopes []string, nonce, connID string) (accessToken string, expiry time.Time, err error) {
++	if s.developmentIdentity != nil {
++		client, err := s.storage.GetClient(ctx, clientID)
++		if err != nil {
++			return "", time.Time{}, err
++		}
++		if client.Public {
++			scopes = developmentPublicAccessScopes(scopes)
++		}
++	}
+ 	return s.newIDToken(ctx, clientID, claims, scopes, nonce, storage.NewID(), "", connID)
+ }
+ 
+@@ -313,6 +322,9 @@ func genSubject(userID string, connID string) (string, error) {
+ }
+ 
+ func (s *Server) newIDToken(ctx context.Context, clientID string, claims storage.Claims, scopes []string, nonce, accessToken, code, connID string) (idToken string, expiry time.Time, err error) {
++	if err := s.authorizeDevelopmentUser(ctx, clientID, claims.UserID, connID, scopes); err != nil {
++		return "", time.Time{}, err
++	}
+ 	issuedAt := s.now()
+ 	expiry = issuedAt.Add(s.idTokensValidFor)
+ 
+@@ -455,6 +467,10 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
+ 		return &redirectedAuthErr{state, redirectURI, typ, fmt.Sprintf(format, a...)}
+ 	}
+ 
++	if s.developmentIdentity != nil && client.Public && !validDevelopmentPKCEAuthorization(q) {
++		return nil, newRedirectedErr(errInvalidRequest, "Public native client requires S256 authorization-code PKCE")
++	}
++
+ 	if connectorID != "" {
+ 		connectors, err := s.storage.ListConnectors(ctx)
+ 		if err != nil {
+@@ -473,8 +489,7 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
+ 	}
+ 
+ 	if codeChallengeMethod != codeChallengeMethodS256 && codeChallengeMethod != codeChallengeMethodPlain {
+-		description := fmt.Sprintf("Unsupported PKCE challenge method (%q).", codeChallengeMethod)
+-		return nil, newRedirectedErr(errInvalidRequest, description)
++		return nil, newRedirectedErr(errInvalidRequest, "Unsupported PKCE challenge method (%q).", codeChallengeMethod)
+ 	}
+ 
+ 	var (
+@@ -488,6 +503,12 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
+ 			hasOpenIDScope = true
+ 		case scopeOfflineAccess, scopeEmail, scopeProfile, scopeGroups, scopeFederatedID:
+ 		default:
++			if s.developmentIdentity != nil && strings.HasPrefix(scope, developmentGenerationPrefix) {
++				if _, err := developmentGrantGeneration(scopes); err != nil {
++					return nil, newRedirectedErr(errInvalidScope, "Invalid grant generation")
++				}
++				continue
++			}
+ 			peerID, ok := parseCrossClientScope(scope)
+ 			if !ok {
+ 				unrecognized = append(unrecognized, scope)
+@@ -557,8 +578,7 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
+ 	}
+ 	if rt.token {
+ 		if redirectURI == redirectURIOOB {
+-			err := fmt.Sprintf("Cannot use response type 'token' with redirect_uri '%s'.", redirectURIOOB)
+-			return nil, newRedirectedErr(errInvalidRequest, err)
++			return nil, newRedirectedErr(errInvalidRequest, "Cannot use response type 'token' with redirect_uri '%s'.", redirectURIOOB)
+ 		}
+ 	}
+ 
+diff --git a/server/refreshhandlers.go b/server/refreshhandlers.go
+index b47bd52c..4891b630 100644
+--- a/server/refreshhandlers.go
++++ b/server/refreshhandlers.go
+@@ -414,12 +414,28 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, clie
+ 		return
+ 	}
+ 
++	// Check the original stored grant before caller-requested scope narrowing
++	// or rotation. A replacement client cannot adopt an older UID grant.
++	if err := s.authorizeDevelopmentUser(r.Context(), client.ID, rCtx.storageToken.Claims.UserID, rCtx.storageToken.ConnectorID, rCtx.storageToken.Scopes); err != nil {
++		s.tokenErrHelper(w, errInvalidGrant, "Original grant generation revoked.", http.StatusBadRequest)
++		return
++	}
++
+ 	rCtx.scopes, rerr = s.getRefreshScopes(r, rCtx.storageToken)
+ 	if rerr != nil {
+ 		s.refreshTokenErrHelper(w, rerr)
+ 		return
+ 	}
+ 
++	if s.developmentIdentity != nil {
++		var err error
++		rCtx.scopes, err = retainDevelopmentGrantGeneration(rCtx.storageToken.Scopes, rCtx.scopes)
++		if err != nil {
++			s.tokenErrHelper(w, errInvalidGrant, "Original grant generation revoked.", http.StatusBadRequest)
++			return
++		}
++	}
++
+ 	newToken, ident, rerr := s.updateRefreshToken(r.Context(), rCtx)
+ 	if rerr != nil {
+ 		s.refreshTokenErrHelper(w, rerr)
+diff --git a/server/server.go b/server/server.go
+index e923e3e0..88008b86 100644
+--- a/server/server.go
++++ b/server/server.go
+@@ -106,6 +106,10 @@ type Config struct {
+ 	// If set, the server will use this connector to handle password grants
+ 	PasswordConnector string
+ 
++	// DevelopmentIdentity enables Core's opt-in, mTLS-backed service-account
++	// grant. OIDC claims and signatures remain owned by Dex.
++	DevelopmentIdentity *DevelopmentIdentityConfig
++
+ 	GCFrequency time.Duration // Defaults to 5 minutes
+ 
+ 	// If specified, the server will use this function for determining time.
+@@ -187,7 +191,8 @@ type Server struct {
+ 	alwaysShowLogin bool
+ 
+ 	// Used for password grant
+-	passwordConnector string
++	passwordConnector   string
++	developmentIdentity *developmentIdentity
+ 
+ 	supportedResponseTypes map[string]bool
+ 
+@@ -253,6 +258,9 @@ func newServer(ctx context.Context, c Config) (*Server, error) {
+ 	if c.PasswordConnector != "" {
+ 		allSupportedGrants[grantTypePassword] = true
+ 	}
++	if c.DevelopmentIdentity != nil {
++		allSupportedGrants["client_credentials"] = true
++	}
+ 
+ 	var supportedGrants []string
+ 	if len(c.AllowedGrantTypes) > 0 {
+@@ -312,6 +320,12 @@ func newServer(ctx context.Context, c Config) (*Server, error) {
+ 		logger:                 c.Logger,
+ 		signer:                 c.Signer,
+ 	}
++	if c.DevelopmentIdentity != nil {
++		s.developmentIdentity, err = newDevelopmentIdentity(*c.DevelopmentIdentity)
++		if err != nil {
++			return nil, fmt.Errorf("development identity authority: %w", err)
++		}
++	}
+ 
+ 	// Retrieves connector objects in backend storage. This list includes the static connectors
+ 	// defined in the ConfigMap and dynamic connectors retrieved from the storage.
 diff --git a/storage/kubernetes/core_client_list_test.go b/storage/kubernetes/core_client_list_test.go
 new file mode 100644
-index 0000000..2baec6c
+index 00000000..2baec6c5
 --- /dev/null
 +++ b/storage/kubernetes/core_client_list_test.go
 @@ -0,0 +1,58 @@
@@ -1283,3 +1469,51 @@ index 0000000..2baec6c
 +		t.Fatal("cancelled storage list succeeded")
 +	}
 +}
+diff --git a/storage/kubernetes/storage.go b/storage/kubernetes/storage.go
+index 028ced7e..ce47c283 100644
+--- a/storage/kubernetes/storage.go
++++ b/storage/kubernetes/storage.go
+@@ -2,6 +2,7 @@ package kubernetes
+ 
+ import (
+ 	"context"
++	"encoding/json"
+ 	"errors"
+ 	"fmt"
+ 	"log/slog"
+@@ -388,7 +389,34 @@ func (cli *client) GetConnector(ctx context.Context, id string) (storage.Connect
+ }
+ 
+ func (cli *client) ListClients(ctx context.Context) ([]storage.Client, error) {
+-	return nil, errors.New("not implemented")
++	endpoint, err := cli.urlFor(cli.apiVersion, cli.namespace, resourceClient, "")
++	if err != nil {
++		return nil, err
++	}
++	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
++	if err != nil {
++		return nil, err
++	}
++	response, err := cli.client.Do(request)
++	if err != nil {
++		return nil, err
++	}
++	defer closeResp(response)
++	if err := checkHTTPErr(response, http.StatusOK); err != nil {
++		return nil, err
++	}
++	var listed ClientList
++	if err := json.NewDecoder(response.Body).Decode(&listed); err != nil {
++		return nil, err
++	}
++	clients := make([]storage.Client, 0, len(listed.Clients))
++	for _, client := range listed.Clients {
++		if err := ctx.Err(); err != nil {
++			return nil, err
++		}
++		clients = append(clients, toStorageClient(client))
++	}
++	return clients, nil
+ }
+ 
+ func (cli *client) ListRefreshTokens(ctx context.Context) ([]storage.RefreshToken, error) {

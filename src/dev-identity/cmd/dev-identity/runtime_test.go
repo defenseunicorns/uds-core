@@ -18,7 +18,7 @@ func TestRouterRejectsUnknownBrowserOriginsAndPreservesBackchannel(t *testing.T)
 	defer upstream.Close()
 	target, _ := url.Parse(upstream.URL)
 	router := &hostRouter{public: devidentity.NewBridge(nil, target, http.DefaultTransport, "sso.example.test", "/realms/uds"), admin: devidentity.NewBridge(nil, target, http.DefaultTransport, "keycloak.admin.example.test", "/realms/uds")}
-	paths := []string{"/", "/login", "/realms/uds/account", "/realms/uds/auth", "/realms/uds/protocol/openid-connect/auth", "/realms/uds/.well-known/openid-configuration", "/realms/uds/callback/uds", "/admin/master/console/"}
+	paths := []string{"/", "/login", "/realms/uds/account", "/realms/uds/auth", "/realms/uds/protocol/openid-connect/auth", "/realms/uds/.well-known/openid-configuration", "/realms/uds/callback/uds", "/admin/master/console/", "/realms/uds/protocol/openid-connect/3p-cookies/step1.html"}
 	for _, path := range paths {
 		request := httptest.NewRequest("GET", "https://sso-alt.example.test"+path, nil)
 		request.Header.Set("X-Forwarded-Host", "sso.example.test")

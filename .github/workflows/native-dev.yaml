@@ -11,6 +11,7 @@ on:
       - mise.toml
       - package*.json
       - zarf-config.yaml
+      - tasks/lint.yaml
       - packages/native-dev/**
       - packages/base/**
       - packages/identity-authorization/**
@@ -29,6 +30,7 @@ on:
       - mise.toml
       - package*.json
       - zarf-config.yaml
+      - tasks/lint.yaml
       - packages/native-dev/**
       - packages/base/**
       - packages/identity-authorization/**
@@ -63,18 +65,75 @@ jobs:
       - name: Set up repository tools
         uses: ./.github/actions/setup-tools
       - name: Install the package build toolchain
-        run: mise install go@1.27.1
+        run: mise install go@1.27.3
       - name: Install locked JavaScript dependencies
         run: npm ci --ignore-scripts
       - name: Check composition and immutable input guards
-        run: mise exec go@1.27.1 -- node --test packages/native-dev/*.test.mjs
+        run: mise exec go@1.27.3 -- node --test packages/native-dev/*.test.mjs
       - name: Check bootstrap behavior with the real embedded CLI
         working-directory: src/go-controller
         run: |
           export UDS_NATIVE_BOOTSTRAP_CLI="$(command -v uds)"
-          mise exec go@1.27.1 -- go test -race ../../packages/native-dev/scripts/*.go
+          mise exec go@1.27.3 -- go test -race ../../packages/native-dev/scripts/*.go
       - name: Compile and validate the complete native rendering
         run: |
-          mise exec go@1.27.1 -- node packages/native-dev/prepare.mjs \
+          mise exec go@1.27.3 -- node packages/native-dev/prepare.mjs \
             --render-only --connected \
-            --go "$(mise where go@1.27.1)/bin/go" --uds "$(command -v uds)"
+            --go "$(mise where go@1.27.3)/bin/go" --uds "$(command -v uds)"
+      - name: Generate and lint the prepared native values schema
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          import yaml from 'js-yaml';
+
+          const build = 'packages/native-dev/.build';
+          const assembly = `${build}/assembly`;
+          const lock = JSON.parse(fs.readFileSync(`${build}/build-lock.json`, 'utf8'));
+          const setIndex = lock.zarfCreateArguments.indexOf('--set');
+          if (setIndex < 0 || !lock.zarfCreateArguments[setIndex + 1]) {
+            throw new Error('Prepared controller image templates are missing');
+          }
+          const flags = [
+            '--flavor', 'upstream', '--set', lock.zarfCreateArguments[setIndex + 1],
+            '--cache', `${build}/zarf-cache`, '--tmpdir', `${build}/zarf-tmp`, '--no-color',
+          ];
+          const schema = execFileSync('uds', [
+            'zarf', 'dev', 'generate-schema', assembly, ...flags, '--delete-not-found',
+          ], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] });
+          const generatedSchema = JSON.parse(schema);
+          generatedSchema.additionalProperties = false;
+          fs.writeFileSync(`${assembly}/zarf-values.schema.json`, JSON.stringify(generatedSchema, null, 2));
+          const definitionPath = `${assembly}/zarf.yaml`;
+          const definition = yaml.load(fs.readFileSync(definitionPath, 'utf8'));
+          definition.values.schema = 'zarf-values.schema.json';
+          fs.writeFileSync(definitionPath, yaml.dump(definition, { noRefs: true, lineWidth: 120 }));
+          execFileSync('uds', ['zarf', 'dev', 'lint', assembly, ...flags], { stdio: 'inherit' });
+          const renderArgs = [
+            'zarf', 'dev', 'inspect', 'manifests', assembly, '--flavor', 'upstream',
+            '--create-set', lock.zarfCreateArguments[setIndex + 1], '--kube-version', '1.37.1',
+            '--deploy-set-variables',
+            'DOMAIN=uds.dev,ADMIN_DOMAIN=admin.uds.dev,CA_BUNDLE_CERTS=,UDS_LOG_LEVEL=info,' +
+              'CNI_CONF_DIR=/var/lib/rancher/k3s/agent/etc/cni/net.d,CNI_BIN_DIR=/var/lib/rancher/k3s/data/cni',
+            '--cache', `${build}/zarf-cache`, '--tmpdir', `${build}/zarf-tmp`, '--no-color',
+          ];
+          const rendered = execFileSync('uds', renderArgs, {
+            encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, stdio: ['ignore', 'pipe', 'inherit'],
+          });
+          fs.writeFileSync(`${build}/values-validated-manifests.yaml`, rendered);
+          const invalidValues = `${assembly}/invalid-values.yaml`;
+          fs.writeFileSync(invalidValues, 'global:\n  domain: false\n');
+          try {
+            let rejected = false;
+            try {
+              execFileSync('uds', [...renderArgs, '--values', invalidValues], { encoding: 'utf8' });
+            } catch (error) {
+              const diagnostics = String(error.stderr);
+              if (!diagnostics.includes('global.domain: Invalid type')) throw error;
+              rejected = true;
+            }
+            if (!rejected) throw new Error('Prepared values schema accepted an invalid domain type');
+          } finally {
+            fs.rmSync(invalidValues);
+          }
+          NODE

@@ -81,6 +81,12 @@ jobs:
           subprocess.run(['git', '-C', str(target), 'apply', str(patch)], check=True)
           PY
           mise exec "go@$IDENTITY_GO_VERSION" -- go -C "$RUNNER_TEMP/dev-identity-dex" test -race ./server ./cmd/dex ./connector/authproxy
+      - name: Check shipped executable vulnerability reachability
+        run: |
+          mkdir -p "$RUNNER_TEMP/identity-security-tools"
+          GOBIN="$RUNNER_TEMP/identity-security-tools" mise exec "go@$IDENTITY_GO_VERSION" -- go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+          mise exec "go@$IDENTITY_GO_VERSION" -- "$RUNNER_TEMP/identity-security-tools/govulncheck" -C src/dev-identity ./cmd/dev-identity ./cmd/identity-probe
+          mise exec "go@$IDENTITY_GO_VERSION" -- "$RUNNER_TEMP/identity-security-tools/govulncheck" -C "$RUNNER_TEMP/dev-identity-dex" ./cmd/dex
       - name: Check Keycloak charts and package values
         run: |
           npm ci --ignore-scripts
