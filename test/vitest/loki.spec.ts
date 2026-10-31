@@ -150,11 +150,18 @@ describe("Loki Tests", () => {
   });
 
   test("Validate pod logs from vector are present in Loki", async () => {
+    const implementation = process.env.UDS_CORE_OPERATOR ?? "pepr";
+    if (!["pepr", "native"].includes(implementation)) {
+      throw new Error(`Unknown UDS Core operator implementation: ${implementation}`);
+    }
+    // Preserve the log-collection assertion across the explicit operator
+    // profiles. Native logs retain their actual namespace, app and job labels.
+    const operatorLogSelector =
+      implementation === "native"
+        ? '{namespace="uds-system", app="uds-controller", job="uds-system/uds-controller", collector="vector"}'
+        : '{namespace="pepr-system", app="pepr-uds-core", job="pepr-system/pepr-uds-core", collector="vector"}';
     const data = await pollUntilSuccess(
-      () =>
-        queryLogs(
-          '{namespace="pepr-system", app="pepr-uds-core", job="pepr-system/pepr-uds-core", collector="vector"}',
-        ),
+      () => queryLogs(operatorLogSelector),
       result => result.status === "success" && result.data.result.length > 0,
       "Vector pod logs to be available in Loki",
       60000,
