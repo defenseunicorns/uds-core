@@ -93,7 +93,7 @@ If you run on EKS, you can use the AWS Time Sync Service (`169.254.169.123`) wit
 
 The UDS Operator dynamically provisions `NetworkPolicy` resources to secure traffic between components. Your CNI must enforce network policies.
 
-If you are using **[Cilium](https://cilium.io/)**, CIDR-based network policies require an additional [feature flag](https://docs.cilium.io/en/stable/security/policy/language/#selecting-nodes-with-cidr-ipblock) for node addressability.
+If you are using **[Cilium](https://cilium.io/)**, CIDR-based network policies require an additional [feature flag](https://docs.cilium.io/en/stable/security/policy/layer3/#selecting-pods-or-nodes-with-cidr-ipblock) set to `nodes` for node addressability.
 
 ## Istio requirements
 

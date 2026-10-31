@@ -5,6 +5,24 @@ SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commer
 password fixture. Never accept required production auth settings it cannot
 enforce, even when unused Keycloak values remain in the surrounding chart. */}}
 {{- define "keycloak.nativeIdentity.authenticationGuard" -}}
+{{- if ne .Values.realm "uds" -}}
+{{- fail "Native development identity supports only realm=uds" -}}
+{{- end -}}
+{{- if ne (printf "%v" (.Values.realmInitEnv.SSO_SESSION_MAX_PER_USER | default "0")) "0" -}}
+{{- fail "Native development identity cannot enforce SSO_SESSION_MAX_PER_USER; use 0" -}}
+{{- end -}}
+{{- if not (has (printf "%v" (.Values.realmInitEnv.ACCOUNT_INACTIVITY_DAYS | default "0")) (list "0" "")) -}}
+{{- fail "Native development identity cannot enforce ACCOUNT_INACTIVITY_DAYS" -}}
+{{- end -}}
+{{- if ne (int .Values.realmConfig.maxInFlightLoginsPerUser) 300 -}}
+{{- fail "Native development identity does not implement Java login throttling; do not customize realmConfig.maxInFlightLoginsPerUser" -}}
+{{- end -}}
+{{- $knownSettings := list "GOOGLE_IDP_ENABLED" "EMAIL_VERIFICATION_ENABLED" "TERMS_AND_CONDITIONS_ENABLED" "FLEET_CLIENT_ENABLED" "SSO_SESSION_MAX_PER_USER" "ACCOUNT_INACTIVITY_DAYS" "SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS" "SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES" "PASSWORD_POLICY" "DISPLAY_NAME" -}}
+{{- range $name, $value := .Values.realmInitEnv -}}
+{{- if not (has $name $knownSettings) -}}
+{{- fail (printf "Native development identity cannot enforce realmInitEnv.%s" $name) -}}
+{{- end -}}
+{{- end -}}
 {{- if and .Values.nativeIdentity.coreAudiencePairsEnabled (eq .Values.nativeIdentity.controllerNamespace "pepr-system") (eq .Values.nativeIdentity.controllerServiceAccount "pepr-uds-core") -}}
 {{- fail "paired CLI audiences require a verified provenance producer; the original Pepr provider does not supply it" -}}
 {{- end -}}

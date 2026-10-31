@@ -9,13 +9,25 @@ The standalone development identity profile replaces the local Keycloak process 
 
 The development provider persists through owned Kubernetes Secrets and Dex custom resources. It does not mount Java Keycloak's data, theme, configuration, or provider volumes. Selecting native identity suppresses those PVCs and the Java volume-permission migration exemption. The original Keycloak provider retains its existing PVC behavior, including data and theme persistence in development mode.
 
+The development sign-in page provides the supported username and password flow.
+
+![Empty development identity sign-in form with username and password fields](images/native-identity-login.png)
+
 ## Select the authentication contract
 
 Apply [the password-only values](../../src/dev-identity/values.password-only.yaml) to the Keycloak chart. Set `insecureAdminPasswordGeneration.enabled: true` for a headless disposable install, or supply the existing `keycloak-admin-password` Secret with `username` and `password` keys. The management service checks that Secret on every authenticated administrative operation and invalidates issued management tokens after credential rotation.
 
 This profile requires `devMode: true`, one bridge replica, and explicit disabled values for OTP, X509 login, social login, WebAuthn, and X509 MFA. The chart rejects required email-verification or terms flows, custom realm password policies, and custom realm token-mapper or client-scope configuration. The runtime rejects unknown authentication requirements, unsupported client authentication methods, SAML clients, required user actions, and token mappers it cannot enforce. Supported audience mappers supply configured access-token audiences for uptime service accounts. Cross-client ID-token pairing requires an additional verified operator provenance producer and remains disabled in the standalone Pepr profile.
 
+The development provider does not implement Java Keycloak's login-attempt throttling, per-user session limits, account inactivity expiration, or account lockout policies. The chart rejects nonzero `SSO_SESSION_MAX_PER_USER`, enabled `ACCOUNT_INACTIVITY_DAYS`, customized `realmConfig.maxInFlightLoginsPerUser`, and unrecognized `realmInitEnv` settings. The inherited Java default of 300 in-flight logins has no effect on this provider. Use the standard Java provider when you require these controls.
+
+This provider supports only the `uds` realm and the two configured public and admin issuer origins. The chart rejects another realm. If you add a gateway for a third SSO hostname, the bridge rejects its discovery, authorization, and browser login requests with HTTP 421. It does not create an issuer from a request header. Core's alternate-SSO-host scenario requires the Java provider. Internal operator and Fleet management, token, and certificate requests remain available through the service backchannel.
+
 The profile preserves the public issuer `https://sso.<domain>/realms/uds` and the admin issuer `https://keycloak.<adminDomain>/realms/uds`. Each issuer has independent Dex storage and signing keys. Browser sessions belong to their issuing host. Managed interactive clients receive real Dex `profile`, `email`, and `groups` defaults, including when Core Authservice requests only `openid`. An explicit supported `defaultClientScopes` list replaces those profile defaults; an empty list preserves that choice. The bridge leaves state, nonce, Proof Key for Code Exchange (PKCE), and redirect bindings unchanged. It rejects custom or role scopes that this profile cannot enforce. The Go bridge retains Core's current login labels, account path, and `KEYCLOAK_SESSION` cookie contract for the browser fixtures. Its pages include real `head` and `body` elements so the stock gateway classification filter can inject the configured frame. Sign-in ends on a same-origin document before starting the OIDC navigation. This keeps `form-action 'self'` enforced without applying the form's restriction to the registered application's callback. The bridge rejects external, protocol-relative, and malformed return targets before rendering that navigation.
+
+The bridge rejects unregistered redirect URIs before displaying the login form. It returns Keycloak-compatible endpoint URLs in discovery and checks each browser token request against the client's current `webOrigins`. Clearing the client's origins revokes that browser access. Discovery and token preflight responses vary by origin; a successful preflight does not authorize the subsequent token request.
+
+The development administration page manages users and clients through the supported API. It does not provide Java Keycloak's console assets, third-party-cookie iframe, or browser session-status iframe. Tests that require those Java resources and dynamically added issuer hosts do not qualify this provider. Keep them enabled for the standard provider and qualify the development provider's documented login, group, revocation, and persistence behavior separately.
 
 ## Public clients and pairing boundary
 

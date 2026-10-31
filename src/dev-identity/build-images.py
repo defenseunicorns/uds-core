@@ -53,7 +53,8 @@ def bridge_inputs(go, env):
     for package in objects(run([go, 'list', '-deps', '-json', './cmd/dev-identity'], cwd=MODULE, env=env)):
         directory = Path(package['Dir'])
         if directory.is_relative_to(MODULE):
-            for field in ['GoFiles', 'EmbedFiles']:
+            for field in ['GoFiles', 'CgoFiles', 'CFiles', 'CXXFiles', 'MFiles', 'HFiles',
+                          'FFiles', 'SFiles', 'SwigFiles', 'SwigCXXFiles', 'SysoFiles', 'EmbedFiles']:
                 files.update(directory / name for name in package.get(field, []))
     return {str(path.relative_to(MODULE)): digest(path) for path in sorted(files)}
 

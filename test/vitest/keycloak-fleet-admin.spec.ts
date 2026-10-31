@@ -8,6 +8,7 @@ import { K8s, kind } from "pepr";
 import * as net from "net";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
+import { fetchWithTimeout } from "./helpers/fetch";
 import { execInPod, waitForPodReady } from "./helpers/k8s";
 import { getAdminToken } from "./helpers/keycloak";
 import { pollUntilSuccess } from "./helpers/polling";
@@ -289,7 +290,7 @@ async function deleteClientByClientId(clientId: string): Promise<void> {
   }
 
   const adminToken = await getAdminToken(keycloakProxy.url);
-  const lookup = await fetch(
+  const lookup = await fetchWithTimeout(
     `${keycloakProxy.url}/admin/realms/${encodeURIComponent(KEYCLOAK_REALM)}/clients?clientId=${encodeURIComponent(clientId)}`,
     { headers: { Authorization: `Bearer ${adminToken}` } },
   );
@@ -304,7 +305,7 @@ async function deleteClientByClientId(clientId: string): Promise<void> {
     return;
   }
 
-  await fetch(
+  await fetchWithTimeout(
     `${keycloakProxy.url}/admin/realms/${encodeURIComponent(KEYCLOAK_REALM)}/clients/${encodeURIComponent(client.id)}`,
     {
       method: "DELETE",

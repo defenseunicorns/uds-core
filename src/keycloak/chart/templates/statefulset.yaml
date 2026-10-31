@@ -153,6 +153,7 @@ spec:
             - "--spi-theme-cache-templates=false"
             {{- else }}
             - "start"
+            - "--hostname-strict=false"
             {{- end }}
             # This will only import the realm if it does not exist
             - "--import-realm"
@@ -214,18 +215,6 @@ spec:
               value: "{{ $domain }}"
             - name: UDS_ADMIN_DOMAIN
               value: "{{ $adminDomain }}"
-            - name: UDS_CLUSTER_DOMAIN
-              value: "{{ .Values.clusterDomain }}"
-
-            # Keep native Keycloak hostname settings together in the pod environment.
-            - name: KC_HOSTNAME
-              value: "https://sso.{{ $domain }}"
-            - name: KC_HOSTNAME_ADMIN
-              value: "https://keycloak.{{ $adminDomain }}"
-            - name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC
-              value: "true"
-            - name: KC_HOSTNAME_STRICT
-              value: "false"
 
             # Enable health and metrics endpoints
             - name: KC_HEALTH_ENABLED
@@ -236,6 +225,12 @@ spec:
             # Ensure Keycloak is configured for running in container
             - name: KC_RUN_IN_CONTAINER
               value: "true"
+
+            # Keep cache node names stable across pod restarts for logs and metrics
+            - name: KC_CACHE_EMBEDDED_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
 
             # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
             - name: KC_EVENT_METRICS_USER_ENABLED

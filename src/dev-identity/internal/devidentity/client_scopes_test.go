@@ -56,7 +56,7 @@ func TestManagedInteractiveDefaultsPreserveRealClaimsAndSessionRefresh(t *testin
 
 func TestManagedDefaultScopesPreserveStateNonceAndPKCE(t *testing.T) {
 	m, _, _, _ := managementFixture(t)
-	client := ClientRecord{Realm: "uds", Data: map[string]any{"id": "portal", "clientId": "portal", "publicClient": false, "secret": "real-secret"}}
+	client := ClientRecord{Realm: "uds", Data: map[string]any{"id": "portal", "clientId": "portal", "publicClient": false, "secret": "real-secret", "redirectUris": []string{"https://portal.example.test/auth"}}}
 	if err := m.Clients.Save(t.Context(), client); err != nil {
 		t.Fatal(err)
 	}

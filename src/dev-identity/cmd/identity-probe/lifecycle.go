@@ -59,6 +59,9 @@ func lifecycle(file string) error {
 	if err := p.setup(); err != nil {
 		return err
 	}
+	if err := p.browserContract(); err != nil {
+		return err
+	}
 	public, publicTokens, err := p.authorizeScopes(cfg.PublicOrigin, "openid")
 	if err != nil {
 		return err
@@ -165,7 +168,7 @@ func (p *lifecycleProbe) setup() error {
 	p.username = "native-e2e-user-" + suffix
 	p.password = uuid.NewString() + "Aa!"
 	p.email = p.username + "@example.test"
-	if _, err := p.api("POST", "clients", map[string]any{"clientId": p.clientID, "enabled": true, "publicClient": false, "standardFlowEnabled": true, "redirectUris": []string{"https://native-callback.invalid/callback"}, "attributes": map[string]string{"uds.core.groups": `{"anyOf":["/UDS Core/Admin"]}`}}); err != nil {
+	if _, err := p.api("POST", "clients", map[string]any{"clientId": p.clientID, "enabled": true, "publicClient": false, "standardFlowEnabled": true, "redirectUris": []string{"https://native-callback.invalid/callback"}, "webOrigins": []string{"https://native-callback.invalid"}, "attributes": map[string]string{"uds.core.groups": `{"anyOf":["/UDS Core/Admin"]}`}}); err != nil {
 		return err
 	}
 	clients, err := p.api("GET", "clients?clientId="+url.QueryEscape(p.clientID), nil)

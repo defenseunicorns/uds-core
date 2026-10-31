@@ -12,12 +12,14 @@ spec:
     - name: Grafana
       clientId: uds-core-admin-grafana
       fullScopeAllowed: false
+      {{- $domain := tpl .Values.domain . }}
+      {{- $admin := tpl .Values.adminDomain . }}
+      {{- if or (not $admin) (eq $admin "###ZARF_VAR_ADMIN_DOMAIN###") }}
+        {{- $admin = printf "admin.%s" $domain }}
+      {{- end }}
+      webOrigins:
+        - "https://grafana.{{ $admin }}"
       redirectUris:
-        {{- $domain := tpl .Values.domain . }}
-        {{- $admin := tpl .Values.adminDomain . }}
-        {{- if or (not $admin) (eq $admin "###ZARF_VAR_ADMIN_DOMAIN###") }}
-          {{- $admin = printf "admin.%s" $domain }}
-        {{- end }}
         - "https://grafana.{{ $admin }}/login/generic_oauth"
         - "https://grafana.{{ $admin }}/login"
       {{- if .Values.sso.groups }}
