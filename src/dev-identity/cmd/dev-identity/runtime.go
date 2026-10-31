@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -43,7 +44,18 @@ func (h *hostRouter) ServeHTTP(writer http.ResponseWriter, request *http.Request
 		h.admin.ServeHTTP(writer, request)
 		return
 	}
+	if request.Host != h.public.PublicHost && browserIdentityPath(request.URL.Path, h.public.IssuerPath) {
+		http.Error(writer, "This development provider supports only its configured public and admin origins", http.StatusMisdirectedRequest)
+		return
+	}
 	h.public.ServeHTTP(writer, request)
+}
+
+func browserIdentityPath(path, issuer string) bool {
+	if path == "/" || path == "/login" || (strings.HasPrefix(path, "/admin/") && !strings.HasPrefix(path, "/admin/realms/")) {
+		return true
+	}
+	return path == issuer+"/.well-known/openid-configuration" || path == issuer+"/auth" || path == issuer+"/protocol/openid-connect/auth" || path == issuer+"/account" || strings.HasPrefix(path, issuer+"/callback/")
 }
 
 func makeBridge(directory devidentity.Directory, cfg configuration, upstream, host string) (*devidentity.Bridge, error) {

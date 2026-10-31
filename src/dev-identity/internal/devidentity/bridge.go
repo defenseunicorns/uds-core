@@ -33,6 +33,7 @@ func NewBridge(directory Directory, upstream *url.URL, transport http.RoundTripp
 	proxy := httputil.NewSingleHostReverseProxy(upstream)
 	bridge := &Bridge{Directory: directory, Sessions: NewSessions(), PublicHost: publicHost, IssuerPath: issuerPath, Proxy: proxy}
 	proxy.Transport = transport
+	proxy.ModifyResponse = bridge.protocolResponse
 	original := proxy.Director
 	proxy.Director = func(request *http.Request) {
 		original(request)
@@ -72,6 +73,9 @@ func (b *Bridge) user(request *http.Request) (User, bool) {
 }
 
 func (b *Bridge) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if b.publicProtocolHeaders(writer, request) {
+		return
+	}
 	if b.Admin != nil && b.Admin.ServeHTTP(writer, request) {
 		return
 	}

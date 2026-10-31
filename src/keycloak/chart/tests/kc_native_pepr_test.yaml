@@ -54,3 +54,20 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: paired CLI audiences require a verified provenance producer; the original Pepr provider does not supply it
+  - it: rejects unsupported custom realms before deployment
+    template: native-identity-statefulset.yaml
+    set:
+      nativeIdentity.enabled: true
+      realm: custom
+    asserts:
+      - failedTemplate:
+          errorMessage: Native development identity supports only realm=uds
+  - it: uses the configured Kubernetes DNS domain for Fleet assertions
+    template: native-identity-config.yaml
+    set:
+      nativeIdentity.enabled: true
+      clusterDomain: example.internal
+    asserts:
+      - matchRegex:
+          path: stringData["bridge.json"]
+          pattern: '"fleetAudience": "http://keycloak-http.NAMESPACE.svc.example.internal/realms/uds"'
