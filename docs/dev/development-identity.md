@@ -9,6 +9,10 @@ The standalone development identity profile replaces the local Keycloak process 
 
 The development provider persists through owned Kubernetes Secrets and Dex custom resources. It does not mount Java Keycloak's data, theme, configuration, or provider volumes. Selecting native identity suppresses those PVCs and the Java volume-permission migration exemption. The original Keycloak provider retains its existing PVC behavior, including data and theme persistence in development mode.
 
+The development sign-in page provides the supported username and password flow.
+
+![Empty development identity sign-in form with username and password fields](images/native-identity-login.png)
+
 ## Select the authentication contract
 
 Apply [the password-only values](../../src/dev-identity/values.password-only.yaml) to the Keycloak chart. Set `insecureAdminPasswordGeneration.enabled: true` for a headless disposable install, or supply the existing `keycloak-admin-password` Secret with `username` and `password` keys. The management service checks that Secret on every authenticated administrative operation and invalidates issued management tokens after credential rotation.
