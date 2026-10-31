@@ -18,6 +18,7 @@ func TestPinnedPackageValidatorParity(t *testing.T) {
 		SourceRevision string `json:"sourceRevision"`
 		Cases          []struct {
 			Name     string          `json:"name"`
+			Old      json.RawMessage `json:"old"`
 			Object   json.RawMessage `json:"object"`
 			Existing json.RawMessage `json:"existing"`
 			Config   struct {
@@ -32,7 +33,7 @@ func TestPinnedPackageValidatorParity(t *testing.T) {
 	if err := json.Unmarshal(raw, &fixture); err != nil {
 		t.Fatal(err)
 	}
-	if fixture.SourceRevision != "c15677633cffa17e99656a7d7ccd1f98d7cb6e4d" || len(fixture.Cases) != 131 {
+	if fixture.SourceRevision != "129d6e4a1928ce2b10ba6c5c8b5a0e7350f4053c" || len(fixture.Cases) != 140 {
 		t.Fatalf("incomplete or unpinned reference: %s, %d cases", fixture.SourceRevision, len(fixture.Cases))
 	}
 	for _, test := range fixture.Cases {
@@ -48,7 +49,8 @@ func TestPinnedPackageValidatorParity(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			message := ValidatePackage(object, existing, Config{Domain: test.Config.Domain, AdminDomain: test.Config.AdminDomain, AllowPublicClients: test.Config.AllowPublicClients})
+			old, _ := Decode(test.Old)
+			message := ValidatePackage(object, old, existing, Config{Domain: test.Config.Domain, AdminDomain: test.Config.AdminDomain, AllowPublicClients: test.Config.AllowPublicClients})
 			if (message == "") != *test.Allowed || message != test.Message {
 				t.Errorf("decision mismatch: Go %q; reference allowed=%t, %q", message, *test.Allowed, test.Message)
 			}

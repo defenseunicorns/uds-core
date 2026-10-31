@@ -1,6 +1,10 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+{{- if ne .Release.Namespace "uds-system" }}
+{{- fail "The native controller must be installed in uds-system; admission recovery and serving identities use this namespace." }}
+{{- end }}
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:

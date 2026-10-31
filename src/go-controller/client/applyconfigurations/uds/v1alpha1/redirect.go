@@ -12,12 +12,13 @@ import (
 // RedirectApplyConfiguration represents a declarative configuration of the Redirect type for use
 // with apply.
 type RedirectApplyConfiguration struct {
-	Authority    *string                 `json:"authority,omitempty"`
-	DerivePort   *udsv1alpha1.DerivePort `json:"derivePort,omitempty"`
-	Port         *int64                  `json:"port,omitempty"`
-	RedirectCode *int64                  `json:"redirectCode,omitempty"`
-	Scheme       *string                 `json:"scheme,omitempty"`
-	URI          *string                 `json:"uri,omitempty"`
+	Authority     *string                 `json:"authority,omitempty"`
+	DerivePort    *udsv1alpha1.DerivePort `json:"derivePort,omitempty"`
+	Port          *int64                  `json:"port,omitempty"`
+	PrefixRewrite *string                 `json:"prefixRewrite,omitempty"`
+	RedirectCode  *int64                  `json:"redirectCode,omitempty"`
+	Scheme        *string                 `json:"scheme,omitempty"`
+	URI           *string                 `json:"uri,omitempty"`
 }
 
 // RedirectApplyConfiguration constructs a declarative configuration of the Redirect type for use with
@@ -47,6 +48,14 @@ func (b *RedirectApplyConfiguration) WithDerivePort(value udsv1alpha1.DerivePort
 // If called multiple times, the Port field is set to the value of the last call.
 func (b *RedirectApplyConfiguration) WithPort(value int64) *RedirectApplyConfiguration {
 	b.Port = &value
+	return b
+}
+
+// WithPrefixRewrite sets the PrefixRewrite field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the PrefixRewrite field is set to the value of the last call.
+func (b *RedirectApplyConfiguration) WithPrefixRewrite(value string) *RedirectApplyConfiguration {
+	b.PrefixRewrite = &value
 	return b
 }
 
