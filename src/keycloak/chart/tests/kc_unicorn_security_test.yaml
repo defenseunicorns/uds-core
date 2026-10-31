@@ -28,3 +28,79 @@ tests:
       - equal:
           path: spec.template.spec.initContainers[1].securityContext.runAsUser
           value: 65532
+
+  - it: migrates every existing Unicorn volume to the runtime identity on upgrade
+    set:
+      persistence:
+        conf:
+          enabled: true
+        providers:
+          enabled: true
+    release:
+      upgrade: true
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[2].name
+          value: fix-volume-permissions
+      - matchRegex:
+          path: spec.template.spec.initContainers[2].command[2]
+          pattern: chown -R 65532:65532 /opt/keycloak/data
+      - matchRegex:
+          path: spec.template.spec.initContainers[2].command[2]
+          pattern: chown -R 65532:65532 /opt/keycloak/themes
+      - matchRegex:
+          path: spec.template.spec.initContainers[2].command[2]
+          pattern: chown -R 65532:65532 /opt/keycloak/conf
+      - matchRegex:
+          path: spec.template.spec.initContainers[2].command[2]
+          pattern: chown -R 65532:65532 /opt/keycloak/providers
+      - equal:
+          path: spec.template.spec.initContainers[2].securityContext
+          value:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN]
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsUser
+          value: 65532
+
+  - it: does not run the ownership migration for a fresh Unicorn installation
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers
+          content:
+            name: fix-volume-permissions
+          any: true
+
+  - it: preserves the registry1 upgrade identity for every persistent volume
+    values:
+      - ../../values/registry1-values.yaml
+    release:
+      upgrade: true
+    set:
+      persistence:
+        data:
+          enabled: true
+        themes:
+          enabled: true
+        conf:
+          enabled: true
+        providers:
+          enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[2].command[2]
+          pattern: chown -R 1000:1000 /opt/keycloak/data
+      - matchRegex:
+          path: spec.template.spec.initContainers[2].command[2]
+          pattern: chown -R 1000:1000 /opt/keycloak/themes
+      - matchRegex:
+          path: spec.template.spec.initContainers[2].command[2]
+          pattern: chown -R 1000:1000 /opt/keycloak/conf
+      - matchRegex:
+          path: spec.template.spec.initContainers[2].command[2]
+          pattern: chown -R 1000:1000 /opt/keycloak/providers
