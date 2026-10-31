@@ -60,6 +60,12 @@ func (m *Management) tokenOrigin(writer http.ResponseWriter, request *http.Reque
 	if origin == "" {
 		return true
 	}
+	// Same-origin pages do not need a cross-origin grant. Keep ordinary token
+	// errors readable on the two configured issuers, including unknown clients.
+	if origin == "https://"+request.Host && (request.Host == m.PublicHost || request.Host == m.AdminHost) {
+		allowOrigin(writer, origin)
+		return true
+	}
 	id := request.Form.Get("client_id")
 	if username, _, ok := request.BasicAuth(); ok {
 		id = username

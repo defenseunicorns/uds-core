@@ -106,3 +106,26 @@ func TestDiscoveryAliasesAndCORSKeepConfiguredIssuer(t *testing.T) {
 		t.Fatal("preflight omitted origin cache variation", response.Code, response.Header())
 	}
 }
+
+func TestSameOriginTokenErrorsRemainReadableWithoutGrantingCrossOriginAccess(t *testing.T) {
+	m, _, _, _ := managementFixture(t)
+	target, _ := url.Parse("https://unused.invalid")
+	for _, host := range []string{m.PublicHost, m.AdminHost} {
+		bridge := NewBridge(m.Directory, target, http.DefaultTransport, host, m.IssuerPath)
+		bridge.Admin = m
+		for _, origin := range []string{"https://" + host, "https://unapproved.example"} {
+			request := httptest.NewRequest(http.MethodPost, "https://"+host+m.IssuerPath+"/protocol/openid-connect/token", strings.NewReader("grant_type=authorization_code&client_id=account-console&code=invalid"))
+			request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			request.Header.Set("Origin", origin)
+			response := httptest.NewRecorder()
+			bridge.ServeHTTP(response, request)
+			if origin == "https://"+host {
+				if response.Code != 400 || response.Header().Get("Access-Control-Allow-Origin") != origin {
+					t.Fatal("same-origin token error became unreadable", response.Code, response.Header())
+				}
+			} else if response.Code != 403 || response.Header().Get("Access-Control-Allow-Origin") != "" {
+				t.Fatal("unapproved origin received a readable token response", response.Code, response.Header())
+			}
+		}
+	}
+}
