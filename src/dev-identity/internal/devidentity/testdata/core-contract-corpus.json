@@ -1,0 +1,1171 @@
+[
+  {
+    "name": "minimal",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract"
+    },
+    "specSHA256": "47254e1ce666c1f72aabab188cbd7f27bca0fe4a81057a27e70c3f75520611ff"
+  },
+  {
+    "name": "field-enableAuthserviceSelector",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "enableAuthserviceSelector": {
+        "app": "contract"
+      },
+      "clientId": "contract",
+      "name": "Contract"
+    },
+    "specSHA256": "80383a374ff43b4f378a7ba5aeb0e5eccbdaa3cf5d708aca4a53844b8dcc1154"
+  },
+  {
+    "name": "field-secretConfig",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "secretConfig": {
+        "name": "credentials",
+        "labels": {
+          "a": "b"
+        },
+        "annotations": {
+          "x": "y"
+        },
+        "template": {
+          "a": "clientField(secret)"
+        }
+      },
+      "clientId": "contract",
+      "name": "Contract"
+    },
+    "specSHA256": "7045973504c6c87494f5072687a1fd3a50a7375e12aff7519506a2b66d9c1a8f"
+  },
+  {
+    "name": "field-secret",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "secret": "declared"
+    },
+    "spec": {
+      "clientId": "contract",
+      "secret": "declared",
+      "name": "Contract"
+    },
+    "specSHA256": "f9aa89136a9eb6a0bc4109dbb4f3c343a4e96a537987a51c60567ea8f3f09d8f"
+  },
+  {
+    "name": "field-secretName",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "secretName": "legacy",
+      "name": "Contract"
+    },
+    "specSHA256": "97070f125b3d87625f9377377aca17d5a668a17a6510ea37e78c848aad6614f3"
+  },
+  {
+    "name": "field-secretLabels",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "secretLabels": {
+        "a": "b"
+      },
+      "name": "Contract"
+    },
+    "specSHA256": "2952221fdad6d237a8c9697555e5d4747cf62730d4911024a10ac56b999044a9"
+  },
+  {
+    "name": "field-secretAnnotations",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "secretAnnotations": {
+        "a": "b"
+      },
+      "name": "Contract"
+    },
+    "specSHA256": "92f6fa833fdcb4b44de5065a1b687882ef1e974a64eaed328cb13c6bbbf1046a"
+  },
+  {
+    "name": "field-secretTemplate",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "secretTemplate": {
+        "a": "b"
+      },
+      "name": "Contract"
+    },
+    "specSHA256": "9cef366665a076e54143f28c75a4845b4442a655f701e62f051f38d2a520f810"
+  },
+  {
+    "name": "field-description",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "description": "About",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "description": "About"
+    },
+    "specSHA256": "a00bbf074a0ca32e83fdf02f631fafae2208175dcbd05dd2ed147bf432bf078c"
+  },
+  {
+    "name": "field-baseUrl",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "baseUrl": "/",
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "baseUrl": "/"
+    },
+    "specSHA256": "db956cd7fbb63db59ff768f3fe0869b5f34af143a995760dfbdad8eff9255f45"
+  },
+  {
+    "name": "field-adminUrl",
+    "projection": {
+      "adminUrl": "https://admin.test/",
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "adminUrl": "https://admin.test/"
+    },
+    "specSHA256": "067e2ba029f268ab610b65e3aa89ada7612c1fd0a50d27756ae5591d8352ca89"
+  },
+  {
+    "name": "field-protocol",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "specSHA256": "25de3d6458dc402ff72b928a4b3ca802d37a8313ac000c1d635f72ea76b22198"
+  },
+  {
+    "name": "field-attributes",
+    "projection": {
+      "attributes": {
+        "alpha": "beta",
+        "logout.confirmation.enabled": "false",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "attributes": {
+        "alpha": "beta",
+        "logout.confirmation.enabled": "false"
+      }
+    },
+    "specSHA256": "ebcc36418101220242f4dbef9891ef322b1e15bbc57623db3095e12e38209301"
+  },
+  {
+    "name": "field-protocolMappers",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "config": {
+            "id.token.claim": "true",
+            "included.client.audience": "server"
+          },
+          "consentRequired": false,
+          "name": "aud",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper"
+        }
+      ]
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "protocolMappers": [
+        {
+          "name": "aud",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "id.token.claim": "true",
+            "included.client.audience": "server"
+          }
+        }
+      ]
+    },
+    "specSHA256": "111c6d1ef4017aea26ab21bc498403fc1d29c4d762e5773c339d45be21fbb125"
+  },
+  {
+    "name": "field-rootUrl",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "rootUrl": "https://root.test/"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "rootUrl": "https://root.test/"
+    },
+    "specSHA256": "e5ac6107d9ac5eef99e4d5ffdec2c0e566dfcbbd3859d43783d8d7f81e9a999c"
+  },
+  {
+    "name": "field-redirectUris",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "https://contract.test/callback"
+      ]
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "redirectUris": [
+        "https://contract.test/callback"
+      ]
+    },
+    "specSHA256": "185646dd46e3b087cde2cd9b64e4aea55e782257b55cb6ddd1a6f791fbfcb538"
+  },
+  {
+    "name": "field-webOrigins",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "webOrigins": [
+        "https://contract.test"
+      ]
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "webOrigins": [
+        "https://contract.test"
+      ]
+    },
+    "specSHA256": "5ba24a1d0922c628183f8c91d39ffadb57639df6f2c4866caf9e45c7b99d6413"
+  },
+  {
+    "name": "field-enabled",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "enabled": false,
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "enabled": false
+    },
+    "specSHA256": "0a4fce52d519286aed22c064a888b1dd4d8e177e2321dd0bda81540e344387de"
+  },
+  {
+    "name": "field-alwaysDisplayInConsole",
+    "projection": {
+      "alwaysDisplayInConsole": false,
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "alwaysDisplayInConsole": false
+    },
+    "specSHA256": "4b873f5f97c7492e174b7a9e0c5d48767b07ea6152806631fa9da21234301dbb"
+  },
+  {
+    "name": "field-fullScopeAllowed",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "fullScopeAllowed": false,
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "fullScopeAllowed": false
+    },
+    "specSHA256": "9c2d5ad10ae90995619d8120441442a0713ab85689bc349506ae05965d72806a"
+  },
+  {
+    "name": "field-standardFlowEnabled",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "standardFlowEnabled": false
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "standardFlowEnabled": false
+    },
+    "specSHA256": "4b99fd0f43ff20bd5ffbf06ed61510b2b3faa212bb94aa1a1c4a2b6d960c808c"
+  },
+  {
+    "name": "field-serviceAccountsEnabled",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "serviceAccountsEnabled": false
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "serviceAccountsEnabled": false
+    },
+    "specSHA256": "8d6c4d281703308e2928bf6abf1f379aec13a7c8181e30d52e6e0def4db487a5"
+  },
+  {
+    "name": "field-publicClient",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "publicClient": false
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "publicClient": false
+    },
+    "specSHA256": "ed6e72d9747407934fd567522b361f6531503e75be87175ce5b8cc0829b7a414"
+  },
+  {
+    "name": "field-clientAuthenticatorType",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientAuthenticatorType": "client-secret",
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "clientAuthenticatorType": "client-secret"
+    },
+    "specSHA256": "150e7d63accdd367d23d3805e509997e9ab4140558d62acbfbc01933b7b5db8d"
+  },
+  {
+    "name": "field-defaultClientScopes",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "defaultClientScopes": [
+        "openid",
+        "groups"
+      ],
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "defaultClientScopes": [
+        "openid",
+        "groups"
+      ]
+    },
+    "specSHA256": "ef29a16676539c7a278c6100cebcf4a2a9b4415be19e4f133a3cf49f0873b523"
+  },
+  {
+    "name": "field-groups",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": "{\"anyOf\":[\"/UDS Core/Admin\"]}"
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "groups": {
+        "anyOf": [
+          "/UDS Core/Admin"
+        ]
+      }
+    },
+    "specSHA256": "4f019a42197767a74685e2ea2152070322e58f98940e70f113fba36ce7cc5e15"
+  },
+  {
+    "name": "redirectUris-nil",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract"
+    },
+    "specSHA256": "47254e1ce666c1f72aabab188cbd7f27bca0fe4a81057a27e70c3f75520611ff"
+  },
+  {
+    "name": "redirectUris-empty",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "redirectUris": []
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "redirectUris": []
+    },
+    "specSHA256": "eede5489210cf53406082417d3dbcb19038c5550f435edda93e1324fbd249a36"
+  },
+  {
+    "name": "webOrigins-nil",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract"
+    },
+    "specSHA256": "47254e1ce666c1f72aabab188cbd7f27bca0fe4a81057a27e70c3f75520611ff"
+  },
+  {
+    "name": "webOrigins-empty",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "webOrigins": []
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "webOrigins": []
+    },
+    "specSHA256": "ac98f67846a2dacf3ebb9adc6805fddacb4a9651db0a9bf667bbc1c672bc799f"
+  },
+  {
+    "name": "protocolMappers-nil",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract"
+    },
+    "specSHA256": "47254e1ce666c1f72aabab188cbd7f27bca0fe4a81057a27e70c3f75520611ff"
+  },
+  {
+    "name": "protocolMappers-empty",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "protocolMappers": []
+    },
+    "specSHA256": "aebda3f342e3c066457c90d199bf2b0de371bfbdf22227f1be0e3fc1b83ec3b5"
+  },
+  {
+    "name": "defaultClientScopes-nil",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract"
+    },
+    "specSHA256": "47254e1ce666c1f72aabab188cbd7f27bca0fe4a81057a27e70c3f75520611ff"
+  },
+  {
+    "name": "defaultClientScopes-empty",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "defaultClientScopes": [],
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "defaultClientScopes": []
+    },
+    "specSHA256": "11feb1066ec392494304fb45af2cc573421ec749adbe6a85a667b365acb9bc1e"
+  },
+  {
+    "name": "attributes-nil",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract"
+    },
+    "specSHA256": "47254e1ce666c1f72aabab188cbd7f27bca0fe4a81057a27e70c3f75520611ff"
+  },
+  {
+    "name": "attributes-empty",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "attributes": {}
+    },
+    "specSHA256": "b560e3aa7a50aef9fa45a2daba1d92a2fa179c065a18a4fda4653e662b21de95"
+  },
+  {
+    "name": "enableAuthserviceSelector-nil",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract"
+    },
+    "specSHA256": "47254e1ce666c1f72aabab188cbd7f27bca0fe4a81057a27e70c3f75520611ff"
+  },
+  {
+    "name": "enableAuthserviceSelector-empty",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "enableAuthserviceSelector": {},
+      "clientId": "contract",
+      "name": "Contract"
+    },
+    "specSHA256": "e0cb0d41df3479433fe4898c56d95125e1cefde0d5f424ddcc37cf2f2991edbf"
+  },
+  {
+    "name": "secretLabels-nil",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract"
+    },
+    "specSHA256": "47254e1ce666c1f72aabab188cbd7f27bca0fe4a81057a27e70c3f75520611ff"
+  },
+  {
+    "name": "secretLabels-empty",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "secretLabels": {},
+      "name": "Contract"
+    },
+    "specSHA256": "59522f2f0e17fa10d843d7bf6740ba02fab48052f855623ec907d915f380e6ad"
+  },
+  {
+    "name": "secretAnnotations-nil",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract"
+    },
+    "specSHA256": "47254e1ce666c1f72aabab188cbd7f27bca0fe4a81057a27e70c3f75520611ff"
+  },
+  {
+    "name": "secretAnnotations-empty",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "secretAnnotations": {},
+      "name": "Contract"
+    },
+    "specSHA256": "21c39e1f40633ed5020750a76a48b9e107dfaaa5db81018b458eee72c17d55c5"
+  },
+  {
+    "name": "secretTemplate-nil",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract"
+    },
+    "specSHA256": "47254e1ce666c1f72aabab188cbd7f27bca0fe4a81057a27e70c3f75520611ff"
+  },
+  {
+    "name": "secretTemplate-empty",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "secretTemplate": {},
+      "name": "Contract"
+    },
+    "specSHA256": "766108c8326a4cf0f2a8882414674aa810b53d23d3607d912b77744df7401886"
+  },
+  {
+    "name": "enabled-true",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "enabled": true,
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "enabled": true
+    },
+    "specSHA256": "50c6b2242ef1b083b1e1dc6737acadd41c3f9a601d91adc01b7c8003a5072cfc"
+  },
+  {
+    "name": "alwaysDisplayInConsole-true",
+    "projection": {
+      "alwaysDisplayInConsole": true,
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "alwaysDisplayInConsole": true
+    },
+    "specSHA256": "4aa1665b290c1edc111ed48f01045244a15ec4d33fb8c1f97c8a77f1dbf491cd"
+  },
+  {
+    "name": "fullScopeAllowed-true",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "fullScopeAllowed": true,
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "fullScopeAllowed": true
+    },
+    "specSHA256": "b60960220d384239edd2463c29850de99f5c9f03bc81a0a6785703252df7139c"
+  },
+  {
+    "name": "standardFlowEnabled-true",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "standardFlowEnabled": true
+    },
+    "specSHA256": "55e40dfab0d06277e997f6666aa4ed6bbb6565eda8da19fc5401f6fab2a7632b"
+  },
+  {
+    "name": "serviceAccountsEnabled-true",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "serviceAccountsEnabled": true
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "serviceAccountsEnabled": true
+    },
+    "specSHA256": "973b17dd0ade602ace0be5cdb0f29f6f4587f5741d03d15c8e8f173b9d406e40"
+  },
+  {
+    "name": "publicClient-true",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "publicClient": true
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "publicClient": true
+    },
+    "specSHA256": "f9eef99cb7e166e93bc98d10b12c9eb3059a8bef12e3fc95d5e66a84a4592f46"
+  },
+  {
+    "name": "all-fields",
+    "projection": {
+      "adminUrl": "https://admin.test/",
+      "alwaysDisplayInConsole": false,
+      "attributes": {
+        "alpha": "beta",
+        "logout.confirmation.enabled": "false",
+        "uds.core.groups": "{\"anyOf\":[\"/UDS Core/Admin\"]}"
+      },
+      "baseUrl": "/",
+      "clientAuthenticatorType": "client-secret",
+      "clientId": "contract",
+      "defaultClientScopes": [
+        "openid",
+        "groups"
+      ],
+      "description": "About",
+      "enabled": false,
+      "fullScopeAllowed": false,
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "config": {
+            "id.token.claim": "true",
+            "included.client.audience": "server"
+          },
+          "consentRequired": false,
+          "name": "aud",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper"
+        }
+      ],
+      "publicClient": false,
+      "redirectUris": [
+        "https://contract.test/callback"
+      ],
+      "rootUrl": "https://root.test/",
+      "secret": "declared",
+      "serviceAccountsEnabled": false,
+      "standardFlowEnabled": false,
+      "webOrigins": [
+        "https://contract.test"
+      ]
+    },
+    "spec": {
+      "enableAuthserviceSelector": {
+        "app": "contract"
+      },
+      "secretConfig": {
+        "name": "credentials",
+        "labels": {
+          "a": "b"
+        },
+        "annotations": {
+          "x": "y"
+        },
+        "template": {
+          "a": "clientField(secret)"
+        }
+      },
+      "clientId": "contract",
+      "secret": "declared",
+      "secretName": "legacy",
+      "secretLabels": {
+        "a": "b"
+      },
+      "secretAnnotations": {
+        "a": "b"
+      },
+      "secretTemplate": {
+        "a": "b"
+      },
+      "name": "Contract",
+      "description": "About",
+      "baseUrl": "/",
+      "adminUrl": "https://admin.test/",
+      "protocol": "openid-connect",
+      "attributes": {
+        "alpha": "beta",
+        "logout.confirmation.enabled": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "aud",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "id.token.claim": "true",
+            "included.client.audience": "server"
+          }
+        }
+      ],
+      "rootUrl": "https://root.test/",
+      "redirectUris": [
+        "https://contract.test/callback"
+      ],
+      "webOrigins": [
+        "https://contract.test"
+      ],
+      "enabled": false,
+      "alwaysDisplayInConsole": false,
+      "fullScopeAllowed": false,
+      "standardFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "defaultClientScopes": [
+        "openid",
+        "groups"
+      ],
+      "groups": {
+        "anyOf": [
+          "/UDS Core/Admin"
+        ]
+      }
+    },
+    "specSHA256": "cdf5c03f5cd0ea16f2a93db139826604feb2744ea2099fd4ed547a772d0362c3"
+  },
+  {
+    "name": "empty-groups",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "groups": {
+        "anyOf": []
+      }
+    },
+    "specSHA256": "1b466e41158f86f66363e7aafe69c4b4842fcb1eaa522f293f1e3b346c068490"
+  },
+  {
+    "name": "empty-string-secret",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect"
+    },
+    "spec": {
+      "clientId": "contract",
+      "secret": "",
+      "name": "Contract"
+    },
+    "specSHA256": "24e57cfd80906246830f3f591230c9a3c8732962c48f3ae5091c5e1b0ac99b58"
+  },
+  {
+    "name": "mapper-nil-config",
+    "projection": {
+      "attributes": {
+        "logout.confirmation.enabled": "true",
+        "uds.core.groups": ""
+      },
+      "clientId": "contract",
+      "name": "Contract",
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "consentRequired": false,
+          "name": "default",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper"
+        }
+      ]
+    },
+    "spec": {
+      "clientId": "contract",
+      "name": "Contract",
+      "protocolMappers": [
+        {
+          "name": "default",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper"
+        }
+      ]
+    },
+    "specSHA256": "5e45f8467d7a86d52ec7d183b5f51a9cceca3f29bcefba2b00c046520ae0fa5b"
+  }
+]

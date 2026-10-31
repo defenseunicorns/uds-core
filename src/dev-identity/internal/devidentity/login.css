@@ -1,0 +1,201 @@
+/* Copyright 2026 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
+/* The gray/blue palette and form treatment follow the Flowbite-based UDS UI. */
+:root {
+  color-scheme: dark;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: #f9fafb;
+  background: #030712;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+.auth-shell {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.brand-mark {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -1.2px;
+}
+.brand-name {
+  color: #9ca3af;
+  font-size: 20px;
+  font-weight: 400;
+}
+.environment-badge {
+  align-self: center;
+  padding: 4px 8px;
+  border: 1px solid #92400e;
+  border-radius: 6px;
+  background: #451a03;
+  color: #fcd34d;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 32px;
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+}
+h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.6px;
+}
+.description {
+  color: #9ca3af;
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-top: 28px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+input {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 13px;
+  color: #f9fafb;
+  background: #1f2937;
+  border: 1px solid #6b7280;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.4;
+}
+input:focus-visible,
+.button:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 3px;
+}
+input:focus {
+  border-color: #60a5fa;
+}
+.button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  width: 100%;
+  padding: 11px 18px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-decoration: none;
+  cursor: pointer;
+}
+.button:hover {
+  background: #1d4ed8;
+}
+.button-secondary {
+  background: #1f2937;
+  border-color: #6b7280;
+}
+.button-secondary:hover {
+  background: #374151;
+}
+.alert {
+  margin-top: 24px;
+  padding: 12px 14px;
+  color: #fecaca;
+  background: #450a0a;
+  border: 1px solid #f87171;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.status-card {
+  text-align: center;
+}
+.status-card .button {
+  margin-top: 28px;
+}
+.status-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #1e3a5f;
+  color: #93c5fd;
+  font-size: 24px;
+}
+.footer {
+  margin-top: 28px;
+  color: #9ca3af;
+  font-size: 12px;
+  line-height: 1.5;
+}
+@media (max-width: 480px) {
+  .auth-shell {
+    padding: 32px 16px;
+  }
+  .auth-card {
+    padding: 28px 24px;
+  }
+  h1 {
+    font-size: 24px;
+  }
+}
+@media (forced-colors: active) {
+  .button,
+  input,
+  .auth-card,
+  .alert {
+    border-color: CanvasText;
+  }
+}

@@ -18,6 +18,21 @@ UDS Core manages four areas of Keycloak configuration through the `uds-identity-
 
 Non-persistent components (themes, truststore, plugins) are automatically updated when the Keycloak package is upgraded. Realm configuration is persisted in Keycloak's database and does **not** automatically update on upgrade; see [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) for manual steps.
 
+## Development identity provider
+
+The `nativeIdentity` Helm values select an optional password-only Go and Dex provider while retaining the existing Pepr operator and admission runtime. The default `nativeIdentity.enabled: false` keeps Keycloak. This provider does not enforce Keycloak authentication plugins, MFA, X509, social login, or SAML; the chart rejects required unsupported flows.
+
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `nativeIdentity.enabled` | boolean | `false` | Select the development provider; requires `devMode: true`. |
+| `nativeIdentity.authenticationProfile` | string | `password-only` | Select the supported credential contract. |
+| `nativeIdentity.bridgeImage`, `nativeIdentity.dexImage` | string | Local derivative tags | Select independently built and qualified images. |
+| `nativeIdentity.tlsSecret` | string | `uds-native-identity-tls` | Supply private serving and client certificates for both issuers. |
+| `nativeIdentity.controllerNamespace`, `nativeIdentity.controllerServiceAccount` | string | `pepr-system`, `pepr-uds-core` | Authorize the original Pepr account for scoped management. |
+| `nativeIdentity.coreAudiencePairsEnabled` | boolean | `false` | Require an additional verified provenance producer before cross-client CLI pairing. The original Pepr profile rejects enablement. |
+
+Reference the [development identity guide](https://github.com/defenseunicorns/uds-core/blob/main/docs/dev/development-identity.md) for complete inputs, image builds, state persistence, and qualification limits. Fleet uses the existing `realmInitEnv.FLEET_CLIENT_ENABLED` opt-in; namespace recreation requires restoring its scoped identity Role and RoleBinding. Historical combined-provider test results do not qualify this standalone split.
+
 ## Realm initialization variables
 
 Variables under the `realmInitEnv` Helm chart path configure the `uds` Keycloak realm during its initial import. These values are **not** applied at runtime. To change them on a running cluster, you must destroy and recreate the Keycloak deployment to trigger a fresh realm import. See [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) for version-specific steps.

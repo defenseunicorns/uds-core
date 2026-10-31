@@ -1,0 +1,58 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.nativeIdentity.enabled }}
+{{- $publicHost := printf "sso.%s" .Values.domain }}
+{{- $adminHost := printf "keycloak.%s" (.Values.adminDomain | default (printf "admin.%s" .Values.domain)) }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: uds-native-identity-config
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+stringData:
+  bridge.json: |
+    {
+      "namespace": {{ .Release.Namespace | toJson }},
+      "publicHost": {{ $publicHost | toJson }},
+      "adminHost": {{ $adminHost | toJson }},
+      "issuerPath": "/realms/uds",
+      "passwordOnly": true,
+      "coreAudiencePairsEnabled": {{ .Values.nativeIdentity.coreAudiencePairsEnabled | toJson }},
+      "dexUpstream": "https://localhost:5556",
+      "adminDexUpstream": "https://localhost:6556",
+      "dexRootCA": "/tls/ca.crt",
+      "servingCert": "/tls/identity.crt",
+      "servingKey": "/tls/identity.key",
+      "refreshClientCA": "/tls/ca.crt",
+      "dexAPIs": [
+        {"address": "localhost:5557", "serverName": "localhost", "rootCA": "/tls/ca.crt", "clientCert": "/tls/bridge-client.crt", "clientKey": "/tls/bridge-client.key"},
+        {"address": "localhost:6557", "serverName": "localhost", "rootCA": "/tls/ca.crt", "clientCert": "/tls/bridge-client.crt", "clientKey": "/tls/bridge-client.key"}
+      ],
+      "fleetAudience": {{ printf "http://keycloak-http.%s.svc.%s/realms/uds" .Release.Namespace .Values.clusterDomain | toJson }},
+      "fleetClientEnabled": {{ include "keycloak.nativeIdentity.fleetEnabled" . }},
+      "fleetNamespace": {{ .Values.nativeIdentity.fleetNamespace | toJson }},
+      "fleetServiceAccount": {{ .Values.nativeIdentity.fleetServiceAccount | toJson }},
+      "operatorNamespace": {{ .Values.nativeIdentity.controllerNamespace | toJson }},
+      "operatorServiceAccount": {{ .Values.nativeIdentity.controllerServiceAccount | toJson }},
+      "users": {{ .Values.nativeIdentity.bootstrapUsers | toJson }},
+      "clients": {{ .Values.nativeIdentity.bootstrapClients | toJson }}
+    }
+  {{- range $issuer := list "public" "admin" }}
+  dex-{{ $issuer }}.json: |
+    {
+      "issuer": {{ printf "https://%s/realms/uds" (ternary $publicHost $adminHost (eq $issuer "public")) | toJson }},
+      "storage": {"type": "kubernetes", "config": {"inCluster": true, "crdHandling": "check"}},
+      "web": {"https": "127.0.0.1:{{ ternary "5556" "6556" (eq $issuer "public") }}", "tlsCert": "/tls/dex.crt", "tlsKey": "/tls/dex.key"},
+      "grpc": {"addr": "127.0.0.1:{{ ternary "5557" "6557" (eq $issuer "public") }}", "tlsCert": "/tls/dex.crt", "tlsKey": "/tls/dex.key", "tlsClientCA": "/tls/ca.crt"},
+      "telemetry": {"http": "127.0.0.1:{{ ternary "5558" "6558" (eq $issuer "public") }}"},
+      "frontend": {"dir": "/srv/dex/web"},
+      "oauth2": {"skipApprovalScreen": true},
+      "expiry": {"idTokens": "5m", "authRequests": "10m", "refreshTokens": {"absoluteLifetime": "8h", "validIfNotUsedFor": "30m", "disableRotation": false}},
+      "connectors": [{"type": "authproxy", "id": "uds", "name": "UDS development identity", "config": {"emailVerifiedHeader": "X-Remote-Email-Verified", "sessionVersionHeader": "X-Remote-Session-Version", "groupHeaderEncoding": "json", "refresh": {
+        "endpoint": "https://localhost:9443/internal/identity", "rootCA": "/tls/ca.crt", "clientCert": "/tls/dex-client.crt", "clientKey": "/tls/dex-client.key"
+      }}}],
+      "developmentIdentity": {"endpoint": "https://localhost:9443/internal/service-identity", "userAuthorizationEndpoint": "https://localhost:9443/internal/user-authorization", "rootCA": "/tls/ca.crt", "clientCert": "/tls/dex-client.crt", "clientKey": "/tls/dex-client.key"}
+    }
+  {{- end }}
+{{- end }}

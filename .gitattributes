@@ -1,0 +1,2 @@
+# Preserve pinned upstream patch bytes during whitespace checks.
+src/dev-identity/dex-core-dev.patch -whitespace

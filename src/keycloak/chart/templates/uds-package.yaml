@@ -21,6 +21,15 @@ spec:
     serviceMesh:
       mode: ambient
     allow:
+      {{- if .Values.nativeIdentity.enabled }}
+      - description: "Native controller identity management"
+        direction: Ingress
+        selector:
+          app.kubernetes.io/name: keycloak
+        remoteNamespace: {{ .Values.nativeIdentity.controllerNamespace }}
+        remoteServiceAccount: {{ .Values.nativeIdentity.controllerServiceAccount }}
+        port: 8080
+      {{- end }}
       - description: "Waypoint health"
         direction: Ingress
         selector:

@@ -1,0 +1,32 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.nativeIdentity.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: uds-native-controller-bound-identity
+  namespace: {{ .Values.nativeIdentity.controllerNamespace }}
+rules:
+  - apiGroups: [""]
+    resources: [serviceaccounts]
+    resourceNames: [{{ .Values.nativeIdentity.controllerServiceAccount | quote }}]
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: uds-native-controller-bound-identity
+  namespace: {{ .Values.nativeIdentity.controllerNamespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: uds-native-controller-bound-identity
+subjects:
+  - kind: ServiceAccount
+    name: uds-native-identity
+    namespace: {{ .Release.Namespace }}
+{{- end }}

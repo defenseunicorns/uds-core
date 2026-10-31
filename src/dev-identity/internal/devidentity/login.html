@@ -1,0 +1,128 @@
+<!-- Copyright 2026 Defense Unicorns -->
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial -->
+{{define "head"}}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark" />
+<title>{{.}} · Development</title>
+<link rel="stylesheet" href="/assets/uds-identity.css" />
+{{end}} {{define "brand"}}
+<div class="brand" aria-label="UDS Core development">
+  <span class="brand-mark">UDS</span><span class="brand-name">Core</span>
+  <span class="environment-badge">Development</span>
+</div>
+{{end}} {{define "footer"}}
+<footer class="footer">Unified Defense Stack</footer>
+{{end}} {{define "login"}}
+<!doctype html>
+<html lang="en">
+  <head>
+    {{template "head" "UDS sign in"}}
+  </head>
+  <body>
+    <main class="auth-shell">
+      {{template "brand"}}
+      <section class="auth-card" aria-labelledby="sign-in-title">
+        <header>
+          <h1 id="sign-in-title">Sign in to UDS</h1>
+          <p class="description">Enter your credentials to continue.</p>
+        </header>
+        {{if .Error}}
+        <div class="alert" role="alert" id="login-error">{{.Error}}</div>
+        {{end}}
+        <form method="post" action="/login" class="auth-form">
+          <div class="field">
+            <label for="username">Username or email</label
+            ><input
+              id="username"
+              name="username"
+              value="{{.Username}}"
+              autocomplete="username"
+              autocapitalize="none"
+              spellcheck="false"
+              required
+              aria-describedby="{{if .Error}}login-error{{end}}"
+            />
+          </div>
+          <div class="field">
+            <label for="password">Password</label
+            ><input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+              aria-describedby="{{if .Error}}login-error{{end}}"
+            />
+          </div>
+          <input type="hidden" name="csrf" value="{{.CSRF}}" />
+          <input type="hidden" name="return" value="{{.Return}}" />
+          <button class="button" type="submit">
+            Sign In <span aria-hidden="true">&rarr;</span>
+          </button>
+        </form>
+      </section>
+      {{template "footer"}}
+    </main>
+  </body>
+</html>
+{{end}} {{define "signed-in"}}
+<!doctype html>
+<html lang="en">
+  <head>
+    {{template "head" "UDS sign in"}}
+    <meta http-equiv="refresh" content="0;url={{.}}" />
+  </head>
+  <body>
+    <main class="auth-shell">
+      {{template "brand"}}
+      <section class="auth-card status-card">
+        <div class="status-icon" aria-hidden="true">&#10003;</div>
+        <h1>Signed in</h1>
+        <p class="description">Returning to your application.</p>
+        <a class="button" id="continue" href="{{.}}"
+          >Continue <span aria-hidden="true">&rarr;</span></a
+        >
+      </section>
+      {{template "footer"}}
+    </main>
+  </body>
+</html>
+{{end}} {{define "account"}}
+<!doctype html>
+<html lang="en">
+  <head>
+    {{template "head" "UDS account"}}
+  </head>
+  <body>
+    <main class="auth-shell">
+      {{template "brand"}}
+      <section class="auth-card status-card">
+        <div class="status-icon" aria-hidden="true">&#10003;</div>
+        <h1>UDS account</h1>
+        <p class="description">Authenticated</p>
+        <a class="button button-secondary" href="{{.}}/protocol/openid-connect/logout">Sign out</a>
+      </section>
+      {{template "footer"}}
+    </main>
+  </body>
+</html>
+{{end}} {{define "signed-out"}}
+<!doctype html>
+<html lang="en">
+  <head>
+    {{template "head" "UDS sign out"}}
+  </head>
+  <body>
+    <main class="auth-shell">
+      {{template "brand"}}
+      <section class="auth-card status-card">
+        <h1>Signed out</h1>
+        <p class="description">You are logged out</p>
+        <a class="button" href="{{.}}/account">Sign in <span aria-hidden="true">&rarr;</span></a>
+      </section>
+      {{template "footer"}}
+    </main>
+  </body>
+</html>
+{{end}}

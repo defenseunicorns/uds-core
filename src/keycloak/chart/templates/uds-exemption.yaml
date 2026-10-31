@@ -1,7 +1,7 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- if and .Release.IsUpgrade .Values.migrations.upgradePermissions (or .Values.devMode .Values.persistence.data.enabled .Values.persistence.themes.enabled .Values.persistence.conf.enabled .Values.persistence.providers.enabled) }}
+{{- if and (not .Values.nativeIdentity.enabled) .Release.IsUpgrade .Values.migrations.upgradePermissions (or .Values.devMode .Values.persistence.data.enabled .Values.persistence.themes.enabled .Values.persistence.conf.enabled .Values.persistence.providers.enabled) }}
 apiVersion: uds.dev/v1alpha1
 kind: Exemption
 metadata:

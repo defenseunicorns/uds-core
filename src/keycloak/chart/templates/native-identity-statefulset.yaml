@@ -1,0 +1,125 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.nativeIdentity.enabled }}
+{{- include "keycloak.nativeIdentity.authenticationGuard" . }}
+{{- if not .Values.devMode }}
+{{- fail "nativeIdentity.enabled requires devMode=true" }}
+{{- end }}
+{{- if .Values.autoscaling.enabled }}
+{{- fail "Native development identity requires one bridge replica and does not support autoscaling" }}
+{{- end }}
+{{- if eq .Values.nativeIdentity.publicStorageNamespace .Values.nativeIdentity.adminStorageNamespace }}
+{{- fail "Native identity issuers require separate persistent storage namespaces" }}
+{{- end }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "keycloak.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "keycloak.labels" . | nindent 4 }}
+    {{- with .Values.statefulsetLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: 1
+  serviceName: {{ include "keycloak.fullname" . }}-headless
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      {{- include "keycloak.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "keycloak.selectorLabels" . | nindent 8 }}
+        app: keycloak
+        istio.io/use-waypoint: {{ include "keycloak.fullname" . }}-waypoint
+        istio.io/ingress-use-waypoint: "true"
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        native-identity-config-hash: {{ include (print $.Template.BasePath "/native-identity-config.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: uds-native-identity
+      automountServiceAccountToken: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: identity
+          image: {{ .Values.nativeIdentity.bridgeImage | quote }}
+          imagePullPolicy: {{ .Values.nativeIdentity.imagePullPolicy }}
+          args: ["/config/bridge.json"]
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: metrics
+              containerPort: 9000
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            {{- toYaml .Values.nativeIdentity.bridgeResources | nindent 12 }}
+          startupProbe:
+            httpGet:
+              port: metrics
+              path: /health/started
+            periodSeconds: 2
+            failureThreshold: 90
+          readinessProbe:
+            httpGet:
+              port: metrics
+              path: /health/ready
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              port: metrics
+              path: /health/live
+            periodSeconds: 10
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: tls
+              mountPath: /tls
+              readOnly: true
+        {{- range $issuer := list "public" "admin" }}
+        - name: dex-{{ $issuer }}
+          image: {{ $.Values.nativeIdentity.dexImage | quote }}
+          imagePullPolicy: {{ $.Values.nativeIdentity.imagePullPolicy }}
+          args: ["serve", "/config/dex-{{ $issuer }}.json"]
+          env:
+            - name: KUBERNETES_POD_NAMESPACE
+              value: {{ ternary $.Values.nativeIdentity.publicStorageNamespace $.Values.nativeIdentity.adminStorageNamespace (eq $issuer "public") | quote }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            {{- toYaml $.Values.nativeIdentity.dexResources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: tls
+              mountPath: /tls
+              readOnly: true
+        {{- end }}
+      volumes:
+        - name: config
+          secret:
+            secretName: uds-native-identity-config
+        - name: tls
+          secret:
+            secretName: {{ .Values.nativeIdentity.tlsSecret }}
+{{- end }}

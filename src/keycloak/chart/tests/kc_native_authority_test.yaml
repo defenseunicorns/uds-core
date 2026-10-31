@@ -1,0 +1,33 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+suite: Native identity authoritative Package reads
+templates:
+  - native-identity-rbac.yaml
+tests:
+  - it: keeps the original provider free of native authority grants
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: grants only targeted Package reads alongside existing TokenReview authority
+    set:
+      nativeIdentity.enabled: true
+    asserts:
+      - equal:
+          path: kind
+          value: ClusterRole
+        documentIndex: 3
+      - equal:
+          path: rules[0]
+          value:
+            apiGroups: [authentication.k8s.io]
+            resources: [tokenreviews]
+            verbs: [create]
+        documentIndex: 3
+      - equal:
+          path: rules[1]
+          value:
+            apiGroups: [uds.dev]
+            resources: [packages]
+            verbs: [get]
+        documentIndex: 3
