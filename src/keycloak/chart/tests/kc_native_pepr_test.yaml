@@ -71,3 +71,35 @@ tests:
       - matchRegex:
           path: stringData["bridge.json"]
           pattern: '"fleetAudience": "http://keycloak-http.NAMESPACE.svc.example.internal/realms/uds"'
+  - it: rejects a session limit it cannot enforce
+    template: native-identity-statefulset.yaml
+    set:
+      nativeIdentity.enabled: true
+      realmInitEnv.SSO_SESSION_MAX_PER_USER: "2"
+    asserts:
+      - failedTemplate:
+          errorMessage: Native development identity cannot enforce SSO_SESSION_MAX_PER_USER; use 0
+  - it: rejects account inactivity expiration it cannot enforce
+    template: native-identity-statefulset.yaml
+    set:
+      nativeIdentity.enabled: true
+      realmInitEnv.ACCOUNT_INACTIVITY_DAYS: "35"
+    asserts:
+      - failedTemplate:
+          errorMessage: Native development identity cannot enforce ACCOUNT_INACTIVITY_DAYS
+  - it: rejects an unknown realm security setting
+    template: native-identity-statefulset.yaml
+    set:
+      nativeIdentity.enabled: true
+      realmInitEnv.MAX_TEMPORARY_LOCKOUTS: "1"
+    asserts:
+      - failedTemplate:
+          errorMessage: Native development identity cannot enforce realmInitEnv.MAX_TEMPORARY_LOCKOUTS
+  - it: rejects a customized Java login throttle
+    template: native-identity-statefulset.yaml
+    set:
+      nativeIdentity.enabled: true
+      realmConfig.maxInFlightLoginsPerUser: 10
+    asserts:
+      - failedTemplate:
+          errorMessage: Native development identity does not implement Java login throttling; do not customize realmConfig.maxInFlightLoginsPerUser
