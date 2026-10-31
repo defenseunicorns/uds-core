@@ -112,6 +112,27 @@ fence. The earlier host-network attempt remains a failed attempt: an actual API
 dry-run confirmed that its retained fence denied tenant authoring. These runs
 do not repeat the historical memory, density or latency comparisons below.
 
+The final combined artifact runs all 26 unchanged API test files: 153 tests
+pass, three fail and two retain their original conditional skips. The failures
+require a third issuer origin, Java console assets or a `master` realm frontend.
+Both configured issuers pass their HTTP Strict Transport Security (HSTS) header
+checks. All supported network, admission and Falco cases pass in this complete
+run. The full browser suite runs 31 cases:
+30 pass on the first attempt, and the third-issuer login case fails both its
+initial attempt and configured retry. The browser run skips no cases. Strict-TLS
+lifecycle, actual Pod-replacement persistence and both unchanged HTTPS trust
+assertions also pass on the final combined runtime.
+
+An earlier combined full API attempt recorded 143 passes, 13 failures and two
+original conditional skips. That run overlapped task-owned Falco sensors on the
+same host kernel and recorded an event backlog and test-node memory pressure.
+After retiring the other task clusters and restarting only the owned Falco and
+Sidekick Pods, focused checks on the final artifact pass the previously failing
+network, public-client admission and Falco cases. The complete rerun confirms
+those passes with the original product resources, API budgets, rules, assertions,
+retries and deadlines. The development provider supports the `uds` realm and
+its two configured issuer origins.
+
 ## Historical measurements
 
 The [historical qualification record](native-core-historical-qualification.md)
