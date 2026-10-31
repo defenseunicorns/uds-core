@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commer
 
 # Controller and admission migration status
 
-This branch contains Go reconciliation and native admission against Core 1.14,
+This branch contains Go reconciliation and native admission against Core 1.16,
 with the existing Keycloak API as its identity boundary. The standalone Dex
 runtime and combined development deployment recipe have separate reviews. No
 code in this module imports or builds Dex.
@@ -32,18 +32,46 @@ combined native/Dex profile and remain integration evidence, not an independent
 Go-plus-Keycloak live pass.
 
 Core's original Keycloak chart, bundle identity schemas and existing tests are
-byte-identical to the pinned base on this branch. The exact identity
+byte-identical to upstream `129d6e4a1928ce2b10ba6c5c8b5a0e7350f4053c`. The exact identity
 administration override lives in `values.keycloak.yaml` and selects only the Go
 controller's principal through an existing chart value.
 
-## Split-source result
+## Historical split-source result
 
-The independent module passes 1,788 Go race-tested cases across 23 tested
+The original independent module passed 1,788 Go race-tested cases across 23 tested
 packages, with zero failures or skipped test cases. The standalone controller
-build and vet pass. Both complete and narrowed admission renders pass the
-existing contract checker. All 113 pristine Keycloak chart assertions pass.
-Original provider/test files remain byte-identical. These are new split-source
-results, separate from prior integrated live runs.
+build and vet passed. Both complete and narrowed admission renders passed the
+existing contract checker. All 113 original Keycloak chart assertions passed.
+These results describe the earlier Core 1.14 source split, separate from prior
+integrated live runs.
+
+## Current source checks, October 31
+
+The update incorporates upstream `129d6e4a1928ce2b10ba6c5c8b5a0e7350f4053c`.
+Go now preserves `redirect.prefixRewrite`, rejects `Package` spec changes during
+deletion, and reserves generated probe client IDs. Egress cleanup guards the
+inspected UID and resource version. The elected compiler repairs missing or
+modified admission parameters without requiring another admitted source change.
+The chart requires `uds-system` so its
+serving and recovery identities match the runtime.
+
+The current checks produce these results:
+
+| Check | Result |
+| --- | --- |
+| Go race suite | 1,804 tests/subtests pass across 23 tested packages; no failed or skipped test cases. |
+| Static build and vet | Pass. |
+| Original Pepr unit suite | 1,117 tests pass across 58 files. |
+| Current Package differential fixture | 140 decisions from 136 original source tests match Go, including previous-object checks. |
+| Keycloak chart | 120 tests pass. |
+| Native controller chart | Both namespace-boundary tests pass. |
+| Broad and narrowed admission renders | Both contract checks pass. |
+| API/client regeneration | All 76 files remain identical on a second pass. |
+
+The [native controller workflow](../../.github/workflows/native-controller.yaml)
+repeats the module, current Package differential, generation and chart checks
+without deployment secrets. These source checks do not establish a live
+Go-plus-Keycloak pass.
 
 ## Rollout gates
 

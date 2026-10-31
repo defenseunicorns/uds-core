@@ -11,8 +11,9 @@ defaulting. It keeps the existing Keycloak identity provider. You can review and
 build this module without the separate Dex provider or the combined
 development-package recipe.
 
-The implementation extends the March Dash Days prototype against Core 1.14. It
-does not replace Pepr's TypeScript authoring API or KFC for other consumers.
+The implementation extends the March Dash Days prototype and now follows the
+Core 1.16 API and admission changes. It does not replace Pepr's TypeScript
+authoring API or KFC for other consumers.
 Production activation and provider-specific live qualification remain separate
 decisions.
 
@@ -67,6 +68,10 @@ GOWORK=off go test -race ./...
 GOWORK=off go vet ./...
 ```
 
+The [native controller workflow](../../.github/workflows/native-controller.yaml)
+runs race tests, vet, current Pepr Package differential checks, API/client
+regeneration and chart contracts without deployment secrets.
+
 The [static image recipe](Dockerfile) uses a pinned non-root distroless base.
 Build outputs belong in `build/`, not the source tree. Record actual source,
 tool and binary digests before comparing resource measurements.
@@ -85,9 +90,9 @@ secret. `SIGNED_JWT` and `AUTO` assertion modes require their own
 original-Keycloak compatibility proof; a projected token with the correct
 audience does not establish that proof. Keep the controller ambient-enrolled and
 its chart-generated identity egress permission. Namespace access alone does not
-grant administration. If you select another namespace or service-account name,
-update the exact principal and independently validate its route and credential
-contract.
+grant administration. Install the chart in `uds-system` with its fixed
+`uds-controller` ServiceAccount. Serving trust, authenticated recovery and
+topology repair use that exact identity; the chart rejects another namespace.
 
 ## Generate API clients
 

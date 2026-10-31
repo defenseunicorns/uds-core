@@ -43,7 +43,8 @@ func migrateSSO(client Object) Object {
 	return client
 }
 
-func validateSSO(namespace string, clients, existing []Object, allowPublic bool) string {
+func validateSSO(namespace string, spec Object, existing []Object, allowPublic, deleting bool) string {
+	clients := spec.List("sso")
 	ids := map[string]bool{}
 	for _, original := range clients {
 		client := migrateSSO(original)
@@ -53,7 +54,7 @@ func validateSSO(namespace string, clients, existing []Object, allowPublic bool)
 			return prefix + "is not unique within this package"
 		}
 		ids[id] = true
-		if ssoOwnedElsewhere(id, namespace, existing) {
+		if !deleting && ssoOwnedElsewhere(id, namespace, existing) {
 			return prefix + "is already in use by another package."
 		}
 		if secret.Truthy("name") && utils.SanitizeResourceName(secret.String("name")) != secret.String("name") {
@@ -91,13 +92,45 @@ func validateSSO(namespace string, clients, existing []Object, allowPublic bool)
 			}
 		}
 	}
+	if !deleting {
+		for _, id := range probeClientIDs(spec) {
+			if ids[id] {
+				return fmt.Sprintf("The client ID %q is reserved for the probe client of %q.", id, strings.TrimSuffix(id, "-probe"))
+			}
+			if ssoOwnedElsewhere(id, namespace, existing) {
+				return fmt.Sprintf("The client ID %q is already in use by another package.", id)
+			}
+		}
+	}
 	return ""
+}
+
+func probeClientIDs(spec Object) []string {
+	hasChecks := false
+	for _, expose := range spec.Object("network").List("expose") {
+		hasChecks = hasChecks || len(expose.Object("uptime").Object("checks").Strings("paths")) > 0
+	}
+	if !hasChecks {
+		return nil
+	}
+	var ids []string
+	for _, client := range spec.List("sso") {
+		if client.Truthy("enableAuthserviceSelector") {
+			ids = append(ids, client.String("clientId")+"-probe")
+		}
+	}
+	return ids
 }
 
 func ssoOwnedElsewhere(id, namespace string, packages []Object) bool {
 	for _, pkg := range packages {
 		if pkg.Object("metadata").String("namespace") == namespace {
 			continue
+		}
+		for _, reserved := range probeClientIDs(pkg.Object("spec")) {
+			if reserved == id {
+				return true
+			}
 		}
 		for _, client := range pkg.Object("spec").List("sso") {
 			if client.String("clientId") == id {

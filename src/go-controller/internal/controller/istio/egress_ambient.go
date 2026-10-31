@@ -6,12 +6,10 @@ package istio
 import (
 	"context"
 	"fmt"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"log/slog"
 	"sort"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"k8s.io/client-go/dynamic"
@@ -162,11 +160,8 @@ func reconcileAmbientEgress(ctx context.Context, client dynamic.Interface, trigg
 		if err := purgeAmbientEgressOrphans(ctx, client, nil, nil); err != nil {
 			return err
 		}
-		// Also delete the waypoint if it exists.
-		if err := client.Resource(gatewayGVR).Namespace(ambientEgressNS).Delete(ctx, "egress-waypoint", metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-			return err
-		}
-		return nil
+		// Select only the shared waypoint and preserve the inspected object version.
+		return purgeByNames(ctx, client, gatewayGVR, ambientEgressNS, "uds/package=shared-ambient-egress-resource", nil)
 	}
 
 	// Collect all contributing package IDs for waypoint annotations.

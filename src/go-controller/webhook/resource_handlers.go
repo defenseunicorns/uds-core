@@ -58,7 +58,8 @@ func ValidateResources(packageInformer cache.SharedIndexInformer) http.HandlerFu
 				}
 				existing = append(existing, decoded)
 			}
-			message = resources.ValidatePackage(object, existing, resources.Config{Domain: cfg.Domain, AdminDomain: cfg.AdminDomain, AllowPublicClients: cfg.AllowPublicClients})
+			old, _ := resources.Decode(req.OldObject.Raw)
+			message = resources.ValidatePackage(object, old, existing, resources.Config{Domain: cfg.Domain, AdminDomain: cfg.AdminDomain, AllowPublicClients: cfg.AllowPublicClients})
 		case "Exemption":
 			message = resources.ValidateExemption(object, cfg.AllowAllNSExemptions)
 		case "ClusterConfig":

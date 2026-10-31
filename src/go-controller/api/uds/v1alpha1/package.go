@@ -118,12 +118,13 @@ type StringMatch struct {
 }
 
 type Redirect struct {
-	Authority    *string     `json:"authority,omitempty"`
-	DerivePort   *DerivePort `json:"derivePort,omitempty"`
-	Port         *int64      `json:"port,omitempty"`
-	RedirectCode *int64      `json:"redirectCode,omitempty"`
-	Scheme       *string     `json:"scheme,omitempty"`
-	URI          *string     `json:"uri,omitempty"`
+	Authority     *string     `json:"authority,omitempty"`
+	DerivePort    *DerivePort `json:"derivePort,omitempty"`
+	Port          *int64      `json:"port,omitempty"`
+	PrefixRewrite *string     `json:"prefixRewrite,omitempty"`
+	RedirectCode  *int64      `json:"redirectCode,omitempty"`
+	Scheme        *string     `json:"scheme,omitempty"`
+	URI           *string     `json:"uri,omitempty"`
 }
 
 type Retries struct {

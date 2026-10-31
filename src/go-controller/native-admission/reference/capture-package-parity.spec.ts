@@ -53,6 +53,7 @@ vi.mock("../../../pepr/operator/crd/validators/package-validator", async importO
       const entry: {
         name: string | undefined;
         object: unknown;
+        old: unknown;
         existing: unknown[];
         config: typeof UDSConfig;
         allowed?: boolean;
@@ -60,6 +61,7 @@ vi.mock("../../../pepr/operator/crd/validators/package-validator", async importO
       } = {
         name: expect.getState().currentTestName,
         object: structuredClone(req.Raw),
+        old: structuredClone(req.OldResource),
         existing: [...capture.packages.values()].map(value => structuredClone(value)),
         config: structuredClone(UDSConfig),
       };
@@ -85,6 +87,8 @@ vi.mock("../../../pepr/operator/crd/validators/package-validator", async importO
         return await original.validator(req);
       } finally {
         capture.cases.push(entry);
+        denyMock.mockImplementation(deny ?? (() => undefined));
+        approveMock.mockImplementation(approve ?? (() => undefined));
       }
     },
   };
@@ -96,7 +100,7 @@ afterAll(() => {
     "src/go-controller/internal/admission/resources/testdata/package-parity.json",
     JSON.stringify(
       {
-        sourceRevision: "c15677633cffa17e99656a7d7ccd1f98d7cb6e4d",
+        sourceRevision: "129d6e4a1928ce2b10ba6c5c8b5a0e7350f4053c",
         cases: capture.cases,
       },
       null,

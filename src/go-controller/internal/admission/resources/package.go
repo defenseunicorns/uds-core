@@ -4,7 +4,9 @@
 package resources
 
 import (
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/utils"
@@ -17,7 +19,13 @@ type Config struct {
 
 // ValidatePackage mirrors the pinned Core validator against an immutable cache
 // snapshot. The controller waits for its package informer before serving it.
-func ValidatePackage(pkg Object, existing []Object, config Config) string {
+func ValidatePackage(pkg, old Object, existing []Object, config Config) string {
+	if pkg.Object("metadata").Truthy("deletionTimestamp") {
+		var currentSpec, oldSpec any
+		if old == nil || json.Unmarshal(pkg["spec"], &currentSpec) != nil || json.Unmarshal(old["spec"], &oldSpec) != nil || !reflect.DeepEqual(currentSpec, oldSpec) {
+			return "Package spec cannot change during deletion."
+		}
+	}
 	metadata, spec := pkg.Object("metadata"), pkg.Object("spec")
 	namespace := defaultString(metadata.String("namespace"), "_unknown_")
 	name := defaultString(metadata.String("name"), "_unknown_")
@@ -42,7 +50,7 @@ func ValidatePackage(pkg Object, existing []Object, config Config) string {
 	if message := validateAllow(name, mode, network.List("allow")); message != "" {
 		return message
 	}
-	if message := validateSSO(namespace, spec.List("sso"), existing, config.AllowPublicClients); message != "" {
+	if message := validateSSO(namespace, spec, existing, config.AllowPublicClients, metadata.Truthy("deletionTimestamp")); message != "" {
 		return message
 	}
 	return validateMonitors(name, spec.List("monitor"))

@@ -1,0 +1,20 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+suite: Native controller namespace boundary
+templates:
+  - deployment.yaml
+release:
+  namespace: uds-system
+tests:
+  - it: should use the protected recovery namespace
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: uds-system
+  - it: should reject unsupported namespace customization
+    release:
+      namespace: other-system
+    asserts:
+      - failedTemplate:
+          errorMessage: The native controller must be installed in uds-system; admission recovery and serving identities use this namespace.
