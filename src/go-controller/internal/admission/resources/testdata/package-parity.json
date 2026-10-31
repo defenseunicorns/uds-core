@@ -1,5 +1,5 @@
 {
-  "sourceRevision": "c15677633cffa17e99656a7d7ccd1f98d7cb6e4d",
+  "sourceRevision": "129d6e4a1928ce2b10ba6c5c8b5a0e7350f4053c",
   "cases": [
     {
       "name": "Test validation of Package CRs > approves serviceAccount in Ambient mode with remoteHost",
@@ -1183,6 +1183,28 @@
     {
       "name": "Test validation of Package CRs > cross-namespace expose collision > allows a terminating package to complete an update despite a cross-namespace collision",
       "object": {
+        "metadata": {
+          "namespace": "ns-b",
+          "name": "app-b",
+          "deletionTimestamp": "2026-01-01T00:00:00.000Z"
+        },
+        "spec": {
+          "network": {
+            "expose": [
+              {
+                "host": "app"
+              }
+            ],
+            "allow": [],
+            "serviceMesh": {
+              "mode": "sidecar"
+            }
+          },
+          "sso": [],
+          "monitor": []
+        }
+      },
+      "old": {
         "metadata": {
           "namespace": "ns-b",
           "name": "app-b",
@@ -4390,6 +4412,760 @@
       },
       "allowed": false,
       "message": "The client ID \"uds-package-application\" is not unique within this package"
+    },
+    {
+      "name": "Test validation of Package CRs > denies a declared client ID reserved as another Package's probe unless deleting",
+      "object": {
+        "metadata": {
+          "namespace": "application-system",
+          "name": "application"
+        },
+        "spec": {
+          "network": {
+            "expose": [],
+            "allow": [],
+            "serviceMesh": {
+              "mode": "sidecar"
+            }
+          },
+          "sso": [
+            {
+              "name": "Application Login",
+              "clientId": "app-probe",
+              "redirectUris": [
+                "https://app.uds.dev/redirect"
+              ]
+            }
+          ],
+          "monitor": []
+        }
+      },
+      "existing": [
+        {
+          "metadata": {
+            "namespace": "owner-system",
+            "name": "owner"
+          },
+          "spec": {
+            "network": {
+              "expose": [
+                {
+                  "host": "unrelated",
+                  "uptime": {
+                    "checks": {
+                      "paths": [
+                        "/health"
+                      ]
+                    }
+                  }
+                }
+              ],
+              "allow": [],
+              "serviceMesh": {
+                "mode": "sidecar"
+              }
+            },
+            "sso": [
+              {
+                "name": "Application Login",
+                "clientId": "app",
+                "redirectUris": [
+                  "https://app.uds.dev/redirect"
+                ],
+                "enableAuthserviceSelector": {
+                  "app": "app"
+                }
+              }
+            ],
+            "monitor": []
+          }
+        }
+      ],
+      "config": {
+        "domain": "uds.dev",
+        "adminDomain": "admin.uds.dev",
+        "caBundle": {
+          "certs": "",
+          "includeDoDCerts": false,
+          "includePublicCerts": false,
+          "dodCerts": "",
+          "publicCerts": ""
+        },
+        "authserviceRedisUri": "",
+        "keycloakClientMode": "AUTO",
+        "allowAllNSExemptions": false,
+        "kubeApiCIDR": "",
+        "kubeNodeCIDRs": [],
+        "isIdentityDeployed": false,
+        "allowPublicClients": false
+      },
+      "allowed": false,
+      "message": "The client ID \"app-probe\" is already in use by another package."
+    },
+    {
+      "name": "Test validation of Package CRs > denies a declared client ID reserved as another Package's probe unless deleting",
+      "object": {
+        "metadata": {
+          "namespace": "application-system",
+          "name": "application",
+          "deletionTimestamp": "2026-01-01T00:00:00.000Z"
+        },
+        "spec": {
+          "network": {
+            "expose": [],
+            "allow": [],
+            "serviceMesh": {
+              "mode": "sidecar"
+            }
+          },
+          "sso": [
+            {
+              "name": "Application Login",
+              "clientId": "app-probe",
+              "redirectUris": [
+                "https://app.uds.dev/redirect"
+              ]
+            }
+          ],
+          "monitor": []
+        }
+      },
+      "old": {
+        "metadata": {
+          "namespace": "application-system",
+          "name": "application"
+        },
+        "spec": {
+          "network": {
+            "expose": [],
+            "allow": [],
+            "serviceMesh": {
+              "mode": "sidecar"
+            }
+          },
+          "sso": [
+            {
+              "name": "Application Login",
+              "clientId": "app-probe",
+              "redirectUris": [
+                "https://app.uds.dev/redirect"
+              ]
+            }
+          ],
+          "monitor": []
+        }
+      },
+      "existing": [
+        {
+          "metadata": {
+            "namespace": "owner-system",
+            "name": "owner"
+          },
+          "spec": {
+            "network": {
+              "expose": [
+                {
+                  "host": "unrelated",
+                  "uptime": {
+                    "checks": {
+                      "paths": [
+                        "/health"
+                      ]
+                    }
+                  }
+                }
+              ],
+              "allow": [],
+              "serviceMesh": {
+                "mode": "sidecar"
+              }
+            },
+            "sso": [
+              {
+                "name": "Application Login",
+                "clientId": "app",
+                "redirectUris": [
+                  "https://app.uds.dev/redirect"
+                ],
+                "enableAuthserviceSelector": {
+                  "app": "app"
+                }
+              }
+            ],
+            "monitor": []
+          }
+        }
+      ],
+      "config": {
+        "domain": "uds.dev",
+        "adminDomain": "admin.uds.dev",
+        "caBundle": {
+          "certs": "",
+          "includeDoDCerts": false,
+          "includePublicCerts": false,
+          "dodCerts": "",
+          "publicCerts": ""
+        },
+        "authserviceRedisUri": "",
+        "keycloakClientMode": "AUTO",
+        "allowAllNSExemptions": false,
+        "kubeApiCIDR": "",
+        "kubeNodeCIDRs": [],
+        "isIdentityDeployed": false,
+        "allowPublicClients": false
+      },
+      "allowed": true,
+      "message": ""
+    },
+    {
+      "name": "Test validation of Package CRs > denies a declared client ID reserved as another Package's probe unless deleting",
+      "object": {
+        "metadata": {
+          "namespace": "application-system",
+          "name": "application",
+          "deletionTimestamp": "2026-01-01T00:00:00.000Z"
+        },
+        "spec": {
+          "network": {
+            "expose": [],
+            "allow": [],
+            "serviceMesh": {
+              "mode": "sidecar"
+            }
+          },
+          "sso": [
+            {
+              "name": "Application Login",
+              "clientId": "new-claim",
+              "redirectUris": [
+                "https://app.uds.dev/redirect"
+              ]
+            }
+          ],
+          "monitor": []
+        }
+      },
+      "old": {
+        "metadata": {
+          "namespace": "application-system",
+          "name": "application"
+        },
+        "spec": {
+          "network": {
+            "expose": [],
+            "allow": [],
+            "serviceMesh": {
+              "mode": "sidecar"
+            }
+          },
+          "sso": [
+            {
+              "name": "Application Login",
+              "clientId": "app-probe",
+              "redirectUris": [
+                "https://app.uds.dev/redirect"
+              ]
+            }
+          ],
+          "monitor": []
+        }
+      },
+      "existing": [
+        {
+          "metadata": {
+            "namespace": "owner-system",
+            "name": "owner"
+          },
+          "spec": {
+            "network": {
+              "expose": [
+                {
+                  "host": "unrelated",
+                  "uptime": {
+                    "checks": {
+                      "paths": [
+                        "/health"
+                      ]
+                    }
+                  }
+                }
+              ],
+              "allow": [],
+              "serviceMesh": {
+                "mode": "sidecar"
+              }
+            },
+            "sso": [
+              {
+                "name": "Application Login",
+                "clientId": "app",
+                "redirectUris": [
+                  "https://app.uds.dev/redirect"
+                ],
+                "enableAuthserviceSelector": {
+                  "app": "app"
+                }
+              }
+            ],
+            "monitor": []
+          }
+        }
+      ],
+      "config": {
+        "domain": "uds.dev",
+        "adminDomain": "admin.uds.dev",
+        "caBundle": {
+          "certs": "",
+          "includeDoDCerts": false,
+          "includePublicCerts": false,
+          "dodCerts": "",
+          "publicCerts": ""
+        },
+        "authserviceRedisUri": "",
+        "keycloakClientMode": "AUTO",
+        "allowAllNSExemptions": false,
+        "kubeApiCIDR": "",
+        "kubeNodeCIDRs": [],
+        "isIdentityDeployed": false,
+        "allowPublicClients": false
+      },
+      "allowed": false,
+      "message": "Package spec cannot change during deletion."
+    },
+    {
+      "name": "Test validation of Package CRs > denies a probe reservation that collides with another Package's declared ID unless deleting",
+      "object": {
+        "metadata": {
+          "namespace": "application-system",
+          "name": "application"
+        },
+        "spec": {
+          "network": {
+            "expose": [
+              {
+                "host": "app",
+                "uptime": {
+                  "checks": {
+                    "paths": [
+                      "/health"
+                    ]
+                  }
+                }
+              }
+            ],
+            "allow": [],
+            "serviceMesh": {
+              "mode": "sidecar"
+            }
+          },
+          "sso": [
+            {
+              "name": "Application Login",
+              "clientId": "app",
+              "redirectUris": [
+                "https://app.uds.dev/redirect"
+              ],
+              "enableAuthserviceSelector": {
+                "app": "app"
+              }
+            }
+          ],
+          "monitor": []
+        }
+      },
+      "existing": [
+        {
+          "metadata": {
+            "namespace": "owner-system",
+            "name": "owner"
+          },
+          "spec": {
+            "network": {
+              "expose": [],
+              "allow": [],
+              "serviceMesh": {
+                "mode": "sidecar"
+              }
+            },
+            "sso": [
+              {
+                "name": "Application Login",
+                "clientId": "app-probe",
+                "redirectUris": [
+                  "https://app.uds.dev/redirect"
+                ]
+              }
+            ],
+            "monitor": []
+          }
+        }
+      ],
+      "config": {
+        "domain": "uds.dev",
+        "adminDomain": "admin.uds.dev",
+        "caBundle": {
+          "certs": "",
+          "includeDoDCerts": false,
+          "includePublicCerts": false,
+          "dodCerts": "",
+          "publicCerts": ""
+        },
+        "authserviceRedisUri": "",
+        "keycloakClientMode": "AUTO",
+        "allowAllNSExemptions": false,
+        "kubeApiCIDR": "",
+        "kubeNodeCIDRs": [],
+        "isIdentityDeployed": false,
+        "allowPublicClients": false
+      },
+      "allowed": false,
+      "message": "The client ID \"app-probe\" is already in use by another package."
+    },
+    {
+      "name": "Test validation of Package CRs > denies a probe reservation that collides with another Package's declared ID unless deleting",
+      "object": {
+        "metadata": {
+          "namespace": "application-system",
+          "name": "application",
+          "deletionTimestamp": "2026-01-01T00:00:00.000Z"
+        },
+        "spec": {
+          "network": {
+            "expose": [
+              {
+                "host": "app",
+                "uptime": {
+                  "checks": {
+                    "paths": [
+                      "/health"
+                    ]
+                  }
+                }
+              }
+            ],
+            "allow": [],
+            "serviceMesh": {
+              "mode": "sidecar"
+            }
+          },
+          "sso": [
+            {
+              "name": "Application Login",
+              "clientId": "app",
+              "redirectUris": [
+                "https://app.uds.dev/redirect"
+              ],
+              "enableAuthserviceSelector": {
+                "app": "app"
+              }
+            }
+          ],
+          "monitor": []
+        }
+      },
+      "old": {
+        "metadata": {
+          "namespace": "application-system",
+          "name": "application"
+        },
+        "spec": {
+          "network": {
+            "expose": [
+              {
+                "host": "app",
+                "uptime": {
+                  "checks": {
+                    "paths": [
+                      "/health"
+                    ]
+                  }
+                }
+              }
+            ],
+            "allow": [],
+            "serviceMesh": {
+              "mode": "sidecar"
+            }
+          },
+          "sso": [
+            {
+              "name": "Application Login",
+              "clientId": "app",
+              "redirectUris": [
+                "https://app.uds.dev/redirect"
+              ],
+              "enableAuthserviceSelector": {
+                "app": "app"
+              }
+            }
+          ],
+          "monitor": []
+        }
+      },
+      "existing": [
+        {
+          "metadata": {
+            "namespace": "owner-system",
+            "name": "owner"
+          },
+          "spec": {
+            "network": {
+              "expose": [],
+              "allow": [],
+              "serviceMesh": {
+                "mode": "sidecar"
+              }
+            },
+            "sso": [
+              {
+                "name": "Application Login",
+                "clientId": "app-probe",
+                "redirectUris": [
+                  "https://app.uds.dev/redirect"
+                ]
+              }
+            ],
+            "monitor": []
+          }
+        }
+      ],
+      "config": {
+        "domain": "uds.dev",
+        "adminDomain": "admin.uds.dev",
+        "caBundle": {
+          "certs": "",
+          "includeDoDCerts": false,
+          "includePublicCerts": false,
+          "dodCerts": "",
+          "publicCerts": ""
+        },
+        "authserviceRedisUri": "",
+        "keycloakClientMode": "AUTO",
+        "allowAllNSExemptions": false,
+        "kubeApiCIDR": "",
+        "kubeNodeCIDRs": [],
+        "isIdentityDeployed": false,
+        "allowPublicClients": false
+      },
+      "allowed": true,
+      "message": ""
+    },
+    {
+      "name": "Test validation of Package CRs > denies a terminating Package update without the previous spec",
+      "object": {
+        "metadata": {
+          "namespace": "application-system",
+          "name": "application",
+          "deletionTimestamp": "2026-01-01T00:00:00.000Z"
+        },
+        "spec": {
+          "network": {
+            "expose": [],
+            "allow": [],
+            "serviceMesh": {
+              "mode": "sidecar"
+            }
+          },
+          "sso": [],
+          "monitor": []
+        }
+      },
+      "existing": [],
+      "config": {
+        "domain": "uds.dev",
+        "adminDomain": "admin.uds.dev",
+        "caBundle": {
+          "certs": "",
+          "includeDoDCerts": false,
+          "includePublicCerts": false,
+          "dodCerts": "",
+          "publicCerts": ""
+        },
+        "authserviceRedisUri": "",
+        "keycloakClientMode": "AUTO",
+        "allowAllNSExemptions": false,
+        "kubeApiCIDR": "",
+        "kubeNodeCIDRs": [],
+        "isIdentityDeployed": false,
+        "allowPublicClients": false
+      },
+      "allowed": false,
+      "message": "Package spec cannot change during deletion."
+    },
+    {
+      "name": "Test validation of Package CRs > denies a Package that declares both an SSO client and its reserved probe ID",
+      "object": {
+        "metadata": {
+          "namespace": "application-system",
+          "name": "application"
+        },
+        "spec": {
+          "network": {
+            "expose": [
+              {
+                "host": "app",
+                "uptime": {
+                  "checks": {
+                    "paths": [
+                      "/health"
+                    ]
+                  }
+                }
+              }
+            ],
+            "allow": [],
+            "serviceMesh": {
+              "mode": "sidecar"
+            }
+          },
+          "sso": [
+            {
+              "name": "Application Login",
+              "clientId": "app",
+              "redirectUris": [
+                "https://app.uds.dev/redirect"
+              ],
+              "enableAuthserviceSelector": {
+                "app": "app"
+              }
+            },
+            {
+              "name": "Application Login",
+              "clientId": "app-probe",
+              "redirectUris": [
+                "https://app.uds.dev/redirect"
+              ]
+            }
+          ],
+          "monitor": []
+        }
+      },
+      "existing": [],
+      "config": {
+        "domain": "uds.dev",
+        "adminDomain": "admin.uds.dev",
+        "caBundle": {
+          "certs": "",
+          "includeDoDCerts": false,
+          "includePublicCerts": false,
+          "dodCerts": "",
+          "publicCerts": ""
+        },
+        "authserviceRedisUri": "",
+        "keycloakClientMode": "AUTO",
+        "allowAllNSExemptions": false,
+        "kubeApiCIDR": "",
+        "kubeNodeCIDRs": [],
+        "isIdentityDeployed": false,
+        "allowPublicClients": false
+      },
+      "allowed": false,
+      "message": "The client ID \"app-probe\" is reserved for the probe client of \"app\"."
+    },
+    {
+      "name": "Test validation of Package CRs > allows a standalone SSO client ID ending in -probe",
+      "object": {
+        "metadata": {
+          "namespace": "application-system",
+          "name": "application"
+        },
+        "spec": {
+          "network": {
+            "expose": [],
+            "allow": [],
+            "serviceMesh": {
+              "mode": "sidecar"
+            }
+          },
+          "sso": [
+            {
+              "name": "Application Login",
+              "clientId": "app-probe",
+              "redirectUris": [
+                "https://app.uds.dev/redirect"
+              ]
+            }
+          ],
+          "monitor": []
+        }
+      },
+      "existing": [],
+      "config": {
+        "domain": "uds.dev",
+        "adminDomain": "admin.uds.dev",
+        "caBundle": {
+          "certs": "",
+          "includeDoDCerts": false,
+          "includePublicCerts": false,
+          "dodCerts": "",
+          "publicCerts": ""
+        },
+        "authserviceRedisUri": "",
+        "keycloakClientMode": "AUTO",
+        "allowAllNSExemptions": false,
+        "kubeApiCIDR": "",
+        "kubeNodeCIDRs": [],
+        "isIdentityDeployed": false,
+        "allowPublicClients": false
+      },
+      "allowed": true,
+      "message": ""
+    },
+    {
+      "name": "Test validation of Package CRs > allows app and app-probe when app does not generate a probe",
+      "object": {
+        "metadata": {
+          "namespace": "application-system",
+          "name": "application"
+        },
+        "spec": {
+          "network": {
+            "expose": [],
+            "allow": [],
+            "serviceMesh": {
+              "mode": "sidecar"
+            }
+          },
+          "sso": [
+            {
+              "name": "Application Login",
+              "clientId": "app",
+              "redirectUris": [
+                "https://app.uds.dev/redirect"
+              ]
+            },
+            {
+              "name": "Application Login",
+              "clientId": "app-probe",
+              "redirectUris": [
+                "https://app.uds.dev/redirect"
+              ]
+            }
+          ],
+          "monitor": []
+        }
+      },
+      "existing": [],
+      "config": {
+        "domain": "uds.dev",
+        "adminDomain": "admin.uds.dev",
+        "caBundle": {
+          "certs": "",
+          "includeDoDCerts": false,
+          "includePublicCerts": false,
+          "dodCerts": "",
+          "publicCerts": ""
+        },
+        "authserviceRedisUri": "",
+        "keycloakClientMode": "AUTO",
+        "allowAllNSExemptions": false,
+        "kubeApiCIDR": "",
+        "kubeNodeCIDRs": [],
+        "isIdentityDeployed": false,
+        "allowPublicClients": false
+      },
+      "allowed": true,
+      "message": ""
     },
     {
       "name": "Test validation of Package CRs > denies clients with invalid secret names",

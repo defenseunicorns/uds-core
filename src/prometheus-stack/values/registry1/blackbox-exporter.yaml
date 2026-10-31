@@ -5,10 +5,10 @@
 image:
   registry: registry1.dso.mil
   repository: ironbank/opensource/prometheus/blackbox_exporter
-  tag: v0.28.0
+  tag: v0.29.1
 
 configReloader:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
-    tag: v0.93.1
+    tag: v0.94.2

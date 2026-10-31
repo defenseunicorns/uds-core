@@ -5,18 +5,18 @@ sidebar:
   order: 4.003
 ---
 
-UDS Packages must meet a set of standards to ensure they are secure, maintainable, and compatible with UDS Core. This page defines those standards using [RFC-2119](https://datatracker.ietf.org/doc/html/rfc2119) terminology: **MUST** indicates a mandatory requirement, **SHOULD** a strong recommendation, and **MAY** an optional practice.
+This page defines engineering standards for secure, maintainable UDS Packages that integrate with UDS Core. It uses [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) terminology: **MUST** indicates a mandatory requirement, **SHOULD** a strong recommendation, and **MAY** an optional practice. These terms have the same meaning regardless of who maintains the package.
+
+UDS Packages are Zarf packages that integrate with UDS Core and follow these additional standards. Deploying successfully on UDS Core does not by itself demonstrate that a package meets these standards.
 
 > [!NOTE]
-> Use this page as a pre-publish checklist for **UDS Packages**. UDS Packages are Zarf Packages that are integrated with the UDS Core platform and follow additional standards to ensure consistency - not everything Zarf can do can be in a UDS Package.
+> Packages maintained by Defense Unicorns or accepted for distribution through Defense Unicorns-managed ecosystem services **MUST** meet these standards. Independent maintainers **SHOULD** follow the same standards; operators of other environments define their own acceptance requirements.
 >
-> For step-by-step guidance on building a package that meets these requirements, see [Create a UDS Package](/how-to-guides/packaging-applications/create-uds-package/).
->
-> These requirements are mandatory for Defense Unicorns engineers. For external maintainers, they are strongly recommended to promote consistency, quality, and security across the UDS ecosystem.
+> Use this page as a pre-publish checklist. For step-by-step guidance on building a package that meets these requirements, see [Create a UDS Package](/how-to-guides/packaging-applications/create-uds-package/).
 
 ## Security, policy, and hardening
 
-- **MUST** minimize the scope and number of exemptions, to only what is absolutely required by the application. UDS Packages **MAY** make use of the [UDS `Exemption` custom resource](/how-to-guides/policy-and-compliance/create-policy-exemptions/) for exempting any Pepr policies, but in doing so they **MUST** document rationale for the exemptions. Exemptions should be documented in `docs/justifications.md` of the UDS Package repository.
+- **MUST** minimize the scope and number of exemptions, to only what is absolutely required by the application. UDS Packages **MAY** make use of the [UDS `Exemption` custom resource](/how-to-guides/policy-and-compliance/create-policy-exemptions/) for exempting any Pepr policies, but in doing so they **MUST** document rationale for the exemptions. Exemptions **SHOULD** be documented in `docs/justifications.md` of the UDS Package repository.
 - **MUST** declaratively implement any available application hardening guidelines by default.
 - **SHOULD** consider security options during implementation to provide the most secure default possible (i.e. SAML w/SCIM vs OIDC).
 
@@ -24,25 +24,26 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 
 - **MUST** be declaratively defined as a [Zarf package](https://docs.zarf.dev/ref/create/).
 - **MUST** integrate declaratively (i.e. no clickops) with the UDS Operator.
-- **MUST** be capable of operating within the airgap (internet-disconnected).
+- **MUST** support operation within the airgap and test installation, startup, and core user workflows without internet access.
 - **MUST** not use local commands outside of `coreutils` or `./zarf` self references within `zarf actions`.
-- **MUST** use Helm charts for rendering Kubernetes resources. When available and suitable for UDS packaging, an upstream chart **MUST** be used. When using an upstream chart, UDS-specific configurations **SHOULD** be encapsulated in a separate `config` Helm chart.
+- **MUST** use [Helm charts](https://docs.zarf.dev/ref/components/#helm-charts) for rendering Kubernetes resources. When available and suitable for UDS packaging, an upstream chart **MUST** be used. When using an upstream chart, UDS-specific configurations **SHOULD** be encapsulated in a separate `config` Helm chart.
   > This keeps the package structure clean and maintainable by separating concerns into inspectable units. Using upstream charts also makes it easier to incorporate upstream changes over time.
 - **MUST** (except if the application provides no application metrics) implement monitors for each application metrics endpoint using its built-in chart monitors, `monitor` key, or manual monitors in the config chart. [Monitor Resource](/how-to-guides/monitoring-and-observability/capture-application-metrics/)
 - **MUST** include package documentation in a root-level `docs` folder (for configuration and dependencies) and include it in the Zarf package under the [`documentation` key](https://docs.zarf.dev/schema/v1alpha1-package/#ZarfPackage).
-- **MUST** include application metadata for UDS Registry publishing. See [Package Metadata](/concepts/configuration-and-packaging/package-metadata/).
+- **MUST** review [Package Metadata](/concepts/configuration-and-packaging/package-metadata/) and decide which recommended annotations to include for the package and the UDS products that consume it.
 - **SHOULD** follow the [Package Values](/concepts/configuration-and-packaging/package-values/) guidance for exposing package configuration.
-  > [Zarf Values](https://docs.zarf.dev/ref/examples/values-templating/) is currently an **Alpha** feature and may change as it matures (see [zarf-dev/zarf#3946](https://github.com/zarf-dev/zarf/issues/3946)). Use values for package configuration. Retain existing [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/) when needed for backwards compatibility, and combine them with explicit values through `templatedValuesFiles`.
+  > [Zarf Values](https://docs.zarf.dev/ref/examples/values-templating/) is currently an **Beta** feature and may change as it matures (see [zarf-dev/zarf#3946](https://github.com/zarf-dev/zarf/issues/3946)). Use values for package configuration. Retain existing [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/) only when needed for backwards compatibility, and combine them with explicit values through `templatedValuesFiles`.
 - **SHOULD** limit the use of [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/) and prioritize configuring packages via [Zarf Values](https://docs.zarf.dev/ref/examples/values-templating/).
   > Use values for package configuration whenever possible. Keep raw `###ZARF_VAR_*###` tokens in ordinary `valuesFiles`; use `.Variables.*` in `templatedValuesFiles` only when existing variables must remain compatible or the package must apply precedence or compute a fallback.
-- **SHOULD** implement or allow for multiple flavors (ideally with common definitions in a common directory).
-  > This allows for different images or configurations to be delivered consistently to customers.
+- **SHOULD** consider or allow for multiple flavors (ideally with common Zarf definitions in a `./common/zarf.yaml`).
+  > Flavors in Zarf allow for varying _binary content_ to be delivered in a package and can be used to deliver different base images a customer may want to select from based on security preferences or for handling license requirements where there are separate binaries for enterprise or community versions (without needing wholly separate package definitions for each).  Flavors SHOULD NOT be used for differences in configuration alone - those configuration options SHOULD be exposed through Zarf Values instead.
 
 ## Networking and service mesh
 
 - **MUST** define network policies under the `allow` key as required in the [UDS `Package` Custom Resource](/reference/operator-and-crds/packages-v1alpha1-cr/). These policies **MUST** adhere to the principle of least privilege, permitting only strictly necessary traffic.
 - **MUST** define any external interfaces under the `expose` key in the [UDS `Package` Custom Resource](/reference/operator-and-crds/packages-v1alpha1-cr/).
 - **MUST** not rely on exposed interfaces (e.g., `.uds.dev`) being accessible from the deployment environment (bastion or pipeline).
+- **MUST** configure applications that communicate with external services, including backend services like databases, to trust the [UDS Core `uds-trust-bundle`](/how-to-guides/networking/manage-trust-bundles/).
 - **MUST** deploy and operate successfully with Istio enabled.
 - **SHOULD** use Istio Ambient unless specific technical constraints require otherwise.
 - **MAY** use Istio Sidecars, when Istio Ambient is not technically feasible. Must document the specific technical constraints in `docs/justifications.md` if using Sidecars.
@@ -51,7 +52,7 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 
 ## Identity and access management
 
-- **MUST** use and create a Keycloak client through the `sso` key for any UDS Package providing an end-user login. [SSO Resource](/how-to-guides/packaging-applications/create-uds-package/)
+- **MUST** protect end-user access through UDS Core single sign-on (SSO), using the `sso` key to configure a Keycloak client. Use the application's [native OIDC or SAML integration](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/), or [Authservice](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) where appropriate. An application-local login alone does not satisfy this requirement.
 - **SHOULD** name the Keycloak client `<App> Login` (i.e. `Mattermost Login`) to provide login UX consistency.
 - **SHOULD** clearly mark the Keycloak client id with the group and app name `uds-<group>-<application>` (i.e. `uds-swf-mattermost`) to provide consistency in the Keycloak UI.
 - **MAY** end any generated Keycloak client secrets with `sso` to easily locate them when querying the cluster.
@@ -59,25 +60,28 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 
 ## Testing
 
+Validate package behavior before release:
+
 - **MUST** implement Journey testing, covering the basic user flows and features of the application. (see [Testing Guidelines](/how-to-guides/packaging-applications/package-testing/))
 - **MUST** implement Upgrade Testing to ensure that the current development package works when deployed over the previously released one. (see [Testing Guidelines](/how-to-guides/packaging-applications/package-testing/))
+- **MUST** automatically run journey and upgrade tests as part of release validation.
 
 ## Package maintenance
 
-- **MUST** be actively maintained by the package maintainers identified in CODEOWNERS.
-- **MUST** have a dependency management bot (such as renovate) configured to open PRs to update the core package and support dependencies.
-- **MUST** publish the package to the standard package registry, using a namespace and name that clearly identifies the application (e.g., `ghcr.io/uds-packages/neuvector`).
+- **MUST** identify the maintainers responsible for package updates, security fixes, and release approval in the package repository, for example in a `CODEOWNERS` file.
+- **MUST** automate dependency update detection and initiate a tracked update workflow for the application and its packaging dependencies, using a dependency management bot such as Renovate. Tracked workflows may use pull requests, merge requests, or issue-tracker tasks.
+- **MUST** publish the package to an organizationally identified package registry, using a namespace and name that clearly identifies the application (e.g., `ghcr.io/uds-packages/neuvector`).
 - **SHOULD** be created from the [UDS Package Template](https://github.com/uds-packages/template).
 - **SHOULD** lint configurations with appropriate tooling, such as [`yamllint`](https://github.com/adrienverge/yamllint) and [`zarf dev lint`](https://docs.zarf.dev/commands/zarf_dev_lint/).
 
 ## Versioning
 
-- **MUST** use the versioning scheme described below. If the scheme does not apply (for example, a monorepo like [UDS Core](https://github.com/defenseunicorns/uds-core)), use [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html) instead.
-- **MUST** version consistently across flavors. Flavors should differ in image bases or builds, not application versions.
+- **MUST** use a Semver 2.0.0 compatible version. When an application is versioned following an upstream app version, a suffix **SHOULD** be used to capture the package changes as described below.
+- **MUST** version consistently across flavors. Flavors should differ in image bases or builds, not application versioning.
 - **SHOULD** prepend `git` tags with a `v` to distinguish them from other tags, while leaving OCI tags as the raw version.
 
 <details>
-<summary>Example versioning scheme</summary>
+<summary>Example suffixed versioning scheme</summary>
 
 Versions follow the format `<upstream-app-version>-uds.<uds-sub-version>`.
 
@@ -90,6 +94,8 @@ Example where App Version for Reference package is `0.1.0` and the App Version s
 
 Example where App Version increments from `0.1.0` -> `0.2.0`:
   •	First UDS release `0.2.0-uds.0`
+
+This allows the application's version to be readily apparent in the package's version while still allowing the package to change manifests/configuration in between app releases.
 
 </details>
 

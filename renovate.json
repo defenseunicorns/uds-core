@@ -4,9 +4,7 @@
     ":semanticCommits",
     ":semanticCommitTypeAll(chore)"
   ],
-  "ignorePresets": [
-    ":ignoreModulesAndTests"
-  ],
+  "ignorePresets": [":ignoreModulesAndTests"],
   "branchConcurrentLimit": 0,
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
@@ -14,10 +12,15 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": [
-        "/^\\.github\\/workflows\\/test-kubernetes-matrix\\.yaml$/",
-        "/^tasks\\/setup\\.yaml$/"
-      ],
+      "managerFilePatterns": ["/^tasks\\/setup\\.yaml$/"],
+      "matchStrings": ["(?<currentValue>v\\d+\\.\\d+\\.\\d+\\+k0s\\.\\d+)"],
+      "depNameTemplate": "k0sproject/k0s",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\+k0s\\.(?<build>\\d+)$"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^tasks\\/setup\\.yaml$/"],
       "matchStrings": ["(?<currentValue>v\\d+\\.\\d+\\.\\d+\\+k3s\\d+)"],
       "depNameTemplate": "k3s-io/k3s",
       "datasourceTemplate": "github-releases",
@@ -25,8 +28,22 @@
     },
     {
       "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github\\/workflows\\/test-kubernetes-matrix\\.yaml$/"
+      ],
+      "matchStrings": ["(?<currentValue>v\\d+\\.\\d+\\.\\d+\\+k3s\\d+)"],
+      "depNameTemplate": "ghcr.io/defenseunicorns/uds-k3d/k3s",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-k3s(?<build>\\d+)$",
+      "currentValueTemplate": "{{{replace '\\+k3s' '-k3s' currentValue}}}",
+      "autoReplaceStringTemplate": "{{{replace '-k3s' '+k3s' newValue}}}"
+    },
+    {
+      "customType": "regex",
       "managerFilePatterns": ["/^tasks\\/setup\\.yaml$/"],
-      "matchStrings": ["oci:\\/\\/defenseunicorns\\/uds-k3d:(?<currentValue>\\d+\\.\\d+\\.\\d+(?:-airgap)?)"],
+      "matchStrings": [
+        "oci:\\/\\/defenseunicorns\\/uds-k3d:(?<currentValue>\\d+\\.\\d+\\.\\d+(?:-airgap)?)"
+      ],
       "depNameTemplate": "ghcr.io/defenseunicorns/packages/uds-k3d",
       "datasourceTemplate": "docker",
       "versioningTemplate": "docker"
@@ -43,86 +60,62 @@
   ],
   "packageRules": [
     {
-      "matchFileNames": [
-        "src/authservice/**"
-      ],
+      "matchFileNames": ["src/authservice/**"],
       "groupName": "authservice",
       "commitMessageTopic": "authservice"
     },
     {
-      "matchFileNames": [
-        "src/istio/**"
-      ],
+      "matchFileNames": ["src/istio/**"],
       "groupName": "istio",
       "commitMessageTopic": "istio"
     },
     {
-      "matchDepNames": [
-        "istio/istio"
-      ],
+      "matchDepNames": ["istio/istio"],
       "groupName": "istio",
       "commitMessageTopic": "istio"
     },
     {
-      "matchFileNames": [
-        "src/vector/**"
-      ],
+      "matchFileNames": ["src/vector/**"],
       "groupName": "vector",
       "commitMessageTopic": "vector"
     },
     {
-      "matchFileNames": [
-        "src/velero/**"
-      ],
+      "matchFileNames": ["src/velero/**"],
       "groupName": "velero",
       "commitMessageTopic": "velero"
     },
     {
-      "matchFileNames": [
-        "src/prometheus-stack/**"
-      ],
+      "matchFileNames": ["src/prometheus-stack/**"],
       "groupName": "prometheus-stack",
       "commitMessageTopic": "prometheus-stack"
     },
     {
-      "matchFileNames": [
-        "src/falco/**"
-      ],
+      "matchFileNames": ["src/falco/**"],
       "groupName": "falco",
       "commitMessageTopic": "falco"
     },
     {
-      "matchFileNames": [
-        "src/metrics-server/**"
-      ],
+      "matchFileNames": ["src/metrics-server/**"],
       "groupName": "metrics-server",
       "commitMessageTopic": "metrics-server"
     },
     {
-      "matchFileNames": [
-        "src/loki/**"
-      ],
+      "matchFileNames": ["src/loki/**"],
       "groupName": "loki",
       "commitMessageTopic": "loki"
     },
     {
-      "matchFileNames": [
-        "src/keycloak/**"
-      ],
+      "matchFileNames": ["src/keycloak/**"],
       "groupName": "keycloak",
       "commitMessageTopic": "keycloak"
     },
     {
-      "matchFileNames": [
-        "src/grafana/**"
-      ],
+      "matchFileNames": ["src/grafana/**"],
       "groupName": "grafana",
       "commitMessageTopic": "grafana"
     },
     {
-      "matchFileNames": [
-        "src/envoy-gateway/**"
-      ],
+      "matchFileNames": ["src/envoy-gateway/**"],
       "groupName": "envoy-gateway",
       "commitMessageTopic": "envoy-gateway"
     },
@@ -169,13 +162,10 @@
       "minimumReleaseAge": "5 days"
     },
     {
-      "matchFileNames": [
-        "package.json",
-        "package-lock.json",
-        "tasks/create.yaml"
-      ],
       "matchDepNames": [
         "pepr",
+        "kubernetes-fluent-client",
+        "defenseunicorns/kubernetes-fluent-client",
         "registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller",
         "defenseunicorns/pepr"
       ],
@@ -184,47 +174,36 @@
       "minimumReleaseAge": null
     },
     {
-      "matchFileNames": [
-        "src/portal/**"
-      ],
+      "matchFileNames": ["src/portal/**"],
       "groupName": "portal",
       "commitMessageTopic": "portal"
     },
     {
       "matchPackageNames": [
         "defenseunicorns/uds-common",
-        "mcr.microsoft.com/playwright",
-        "defenseunicorns/kubernetes-fluent-client"
+        "mcr.microsoft.com/playwright"
       ],
       "groupName": "support-deps",
       "commitMessageTopic": "support-deps"
     },
     {
-      "matchDepNames": [
-        "bottlerocket-os/bottlerocket"
-      ],
+      "matchDepNames": ["bottlerocket-os/bottlerocket"],
       "allowedVersions": "<= 1.53.0",
       "description": "Pin Bottlerocket until istio-cni FIPS compatibility is resolved (https://github.com/defenseunicorns/uds-core/issues/2490)"
     },
     {
-      "matchPackageNames": [
-        "@eslint/js"
-      ],
+      "matchPackageNames": ["@eslint/js"],
       "allowedVersions": "<10"
     },
     {
-      "matchFileNames": ["test/vitest/package.json"],
-      "matchPackageNames": ["vitest"],
+      "matchFileNames": ["package.json", "test/vitest/package.json"],
+      "matchPackageNames": ["vitest", "@vitest/coverage-v8"],
       "allowedVersions": "<5"
     },
     {
-      "matchFileNames": [
-        ".github/workflows/test-kubernetes-matrix.yaml"
-      ],
-      "matchDepNames": [
-        "k3s-io/k3s"
-      ],
-      "allowedVersions": "/^v{{major}}\\.{{minor}}\\.\\d+\\+k3s\\d+$/",
+      "matchFileNames": [".github/workflows/test-kubernetes-matrix.yaml"],
+      "matchDepNames": ["ghcr.io/defenseunicorns/uds-k3d/k3s"],
+      "allowedVersions": "/^v{{major}}\\.{{minor}}\\.\\d+-k3s\\d+$/",
       "groupName": "k3s test matrix",
       "commitMessageTopic": "k3s test matrix"
     },
@@ -244,9 +223,9 @@
     },
     {
       "matchManagers": ["mise"],
-      "excludePackageNames": ["opentofu"],
       "groupName": "support-deps",
-      "commitMessageTopic": "support dependencies"
+      "commitMessageTopic": "support dependencies",
+      "matchPackageNames": ["!opentofu"]
     },
     {
       "matchManagers": ["mise"],

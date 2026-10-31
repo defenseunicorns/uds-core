@@ -4,6 +4,7 @@
  */
 import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
+import { K8s } from "pepr";
 import { Mutex, validateNamespace } from "../utils";
 import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
 import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
@@ -27,6 +28,7 @@ export const inMemoryPackageMap: PackageHostMap = {};
 
 // Cache for in-memory ambient egress resources from package CRs
 export const inMemoryAmbientPackageMap: AmbientPackageMap = {};
+let ambientPackageMapInitialized = false;
 
 const sharedEgressMutex = new Mutex();
 
@@ -95,6 +97,19 @@ export async function reconcileSharedEgressResources(
 
   const release = await sharedEgressMutex.acquire();
   try {
+    // Load the full desired state before applying this event. A non-empty map
+    // can still be incomplete immediately after an operator restart.
+    if (!ambientPackageMapInitialized) {
+      const ambientMap = await loadAmbientPackageMapFromCluster(
+        action === PackageAction.Remove ? pkgId : undefined,
+      );
+      for (const existingPkgId of Object.keys(inMemoryAmbientPackageMap)) {
+        delete inMemoryAmbientPackageMap[existingPkgId];
+      }
+      Object.assign(inMemoryAmbientPackageMap, ambientMap);
+      ambientPackageMapInitialized = true;
+    }
+
     // Update both maps and reconcile while holding one lock. This keeps the map
     // state used by apply and purge consistent for each shared-egress transaction.
     if (istioMode === Mode.Ambient) {
@@ -184,8 +199,9 @@ export async function performEgressReconciliation() {
     }
   } catch (e) {
     const errText = `Failed to reconcile sidecar egress resources`;
-    log.error(errText, e);
-    errors.push(new Error(errText));
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    log.error({ err: e }, errText);
+    errors.push(new Error(`${errText}: ${errorMessage}`, { cause: e }));
   }
 
   // Reconcile ambient egress resources if namespace is found
@@ -202,15 +218,46 @@ export async function performEgressReconciliation() {
     }
   } catch (e) {
     const errText = `Failed to reconcile ambient egress resources`;
-    log.error(errText, e);
-    errors.push(new Error(errText));
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    log.error({ err: e }, errText);
+    errors.push(new Error(`${errText}: ${errorMessage}`, { cause: e }));
   }
 
   // If any errors occurred, aggregate them and throw
   if (errors.length > 0) {
     const aggregatedMessage = errors.map(err => err.message).join("; ");
-    throw new Error(`Egress reconciliation failed: ${aggregatedMessage}`);
+    throw new AggregateError(errors, `Egress reconciliation failed: ${aggregatedMessage}`);
   }
+}
+
+async function loadAmbientPackageMapFromCluster(
+  excludedPackageId?: string,
+): Promise<AmbientPackageMap> {
+  const packages = await K8s(UDSPackage).Get();
+  const ambientMap: AmbientPackageMap = {};
+
+  for (const pkg of packages.items ?? []) {
+    const name = pkg.metadata?.name;
+    const namespace = pkg.metadata?.namespace;
+    if (
+      !name ||
+      !namespace ||
+      pkg.metadata?.deletionTimestamp ||
+      `${name}-${namespace}` === excludedPackageId
+    ) {
+      continue;
+    }
+    if ((pkg.spec?.network?.serviceMesh?.mode ?? Mode.Ambient) !== Mode.Ambient) {
+      continue;
+    }
+
+    const entry = createAmbientPackageEntry(pkg);
+    if (entry.rules.length > 0) {
+      ambientMap[`${name}-${namespace}`] = entry;
+    }
+  }
+
+  return ambientMap;
 }
 
 // Update the inMemoryPackageMap with the latest hostResourceMap
@@ -241,6 +288,10 @@ export async function updateInMemoryAmbientPackageMap(
 ) {
   if (action === PackageAction.AddOrUpdate) {
     const entry = createAmbientPackageEntry(pkg);
+    if (entry.rules.length === 0) {
+      delete inMemoryAmbientPackageMap[pkgId];
+      return;
+    }
     validateAmbientProtocolConflicts(inMemoryAmbientPackageMap, entry, pkgId);
     inMemoryAmbientPackageMap[pkgId] = entry;
   } else if (action === PackageAction.Remove) {

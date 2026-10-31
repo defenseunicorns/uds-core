@@ -4,6 +4,7 @@
  */
 
 import { type PeprValidateRequest } from "pepr";
+import { isDeepStrictEqual } from "node:util";
 
 import { Direction, Gateway, Protocol, RemoteGenerated, RemoteProtocol, UDSPackage } from "..";
 import { UDSConfig } from "../../controllers/config/config";
@@ -20,6 +21,13 @@ import { migrate } from "../migrate";
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
 
 export async function validator(req: PeprValidateRequest<UDSPackage>) {
+  if (req.Raw.metadata?.deletionTimestamp) {
+    const oldPkg = req.OldResource as UDSPackage | undefined;
+    if (!oldPkg || !isDeepStrictEqual(req.Raw.spec, oldPkg.spec)) {
+      return req.Deny("Package spec cannot change during deletion.");
+    }
+  }
+
   const rawExposeList = req.Raw.spec?.network?.expose ?? [];
 
   // We need to detect deprecated `expose.match` even after migrate() moves it to `advancedHTTP.match`.
@@ -380,14 +388,9 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     clientIDs.add(client.clientId);
 
     // Check for global uniqueness (across all packages/namespaces)
-    const namespacesWithClientId = PackageStore.findPackagesWithSsoClientId(client.clientId);
-
-    // If we find namespaces with this client ID, make sure it's only the current namespace being updated
-    if (namespacesWithClientId.size > 0) {
-      const isOwnedByCurrentPackage = namespacesWithClientId.has(ns);
-
-      // If this client ID exists in other namespaces, deny the request
-      if (!isOwnedByCurrentPackage) {
+    if (!deletionTimestamp) {
+      const namespacesWithClientId = PackageStore.findPackagesWithSsoClientId(client.clientId);
+      if (Array.from(namespacesWithClientId).some(namespace => namespace !== ns)) {
         return req.Deny(`The client ID "${client.clientId}" is already in use by another package.`);
       }
     }
@@ -527,6 +530,20 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
             `The client ID "${client.clientId}" has redirectUris containing root paths ("/"). Authservice clients cannot have root path redirect URIs.`,
           );
         }
+      }
+    }
+  }
+
+  if (!deletionTimestamp) {
+    for (const probeClientId of PackageStore.getProbeClientIds(pkg)) {
+      if (clientIDs.has(probeClientId)) {
+        return req.Deny(
+          `The client ID "${probeClientId}" is reserved for the probe client of "${probeClientId.slice(0, -6)}".`,
+        );
+      }
+      const namespacesWithClientId = PackageStore.findPackagesWithSsoClientId(probeClientId);
+      if (Array.from(namespacesWithClientId).some(namespace => namespace !== ns)) {
+        return req.Deny(`The client ID "${probeClientId}" is already in use by another package.`);
       }
     }
   }

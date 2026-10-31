@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -128,7 +128,8 @@ export async function downloadMozillaCSVData(): Promise<MozillaCSVRecord[]> {
 export function extractCertificatesFromPEM(
   pemContent: string,
 ): { name: string; content: string }[] {
-  const certRegex = /(.*?)\n=+\n(-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----)/g;
+  const certRegex =
+    /(.*?)\n=+\n(?:#[^\n]*\n)*(-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----)/g;
   const matches = [];
   let match;
 
@@ -144,6 +145,17 @@ export function extractCertificatesFromPEM(
       name,
       content: certContent,
     });
+  }
+
+  const pemBlockCount = pemContent.match(/-----BEGIN CERTIFICATE-----/g)?.length ?? 0;
+  if (matches.length !== pemBlockCount) {
+    throw new Error(
+      `Extracted ${matches.length} of ${pemBlockCount} public CA certificates from downloaded bundle`,
+    );
+  }
+
+  if (matches.length === 0) {
+    throw new Error("No public CA certificates found in downloaded bundle");
   }
 
   return matches;
@@ -395,6 +407,10 @@ export function diffPublicCACerts(existing: PublicCACert[], downloaded: PublicCA
  * @throws {Error} When directory creation or file writing fails
  */
 export async function writePublicCABundle(certs: PublicCACert[], outputDir: string) {
+  if (certs.length === 0) {
+    throw new Error("Refusing to write an empty public CA bundle");
+  }
+
   const sortedCerts = [...certs].sort((a, b) => a.commonName.localeCompare(b.commonName));
 
   const bundleContent = sortedCerts

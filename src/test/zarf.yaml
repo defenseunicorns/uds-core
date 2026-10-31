@@ -55,10 +55,24 @@ components:
     images:
       - curlimages/curl:latest
 
+  # UDP expose test Package resources are opt-in with the UDP tests.
+  - name: udp-expose-test
+    required: false
+    manifests:
+      - name: envoy-gateway-udp-test-packages
+        files:
+          - "app-curl-envoy-udp-packages.yaml"
+
   # Deploy test workloads
   - name: test-apps
     required: true
     manifests:
+      - name: keycloak-alternate-sso-gateway
+        files:
+          - "keycloak-alternate-sso-gateway.yaml"
+      - name: keycloak-alternate-sso-virtualservice
+        files:
+          - "keycloak-alternate-sso-virtualservice.yaml"
       - name: app-admin
         files:
           - "app-admin.yaml"
@@ -93,11 +107,12 @@ components:
         localPath: ./chart
         version: 0.1.0
       - name: podinfo
-        version: 6.15.0
+        version: 6.17.0
         namespace: podinfo
         url: https://github.com/stefanprodan/podinfo.git
         gitPath: charts/podinfo
         valuesFiles:
           - ./podinfo-values.yaml
     images:
-      - ghcr.io/stefanprodan/podinfo:6.15.0
+      - ghcr.io/stefanprodan/podinfo:6.17.0
+      - quay.io/oauth2-proxy/oauth2-proxy:v7.15.5

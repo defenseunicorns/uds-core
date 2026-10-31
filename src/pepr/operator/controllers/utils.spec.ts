@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -9,11 +9,87 @@ import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { UDSPackage } from "../crd";
 import {
   createEvent,
+  deleteResourceIfUnchanged,
   getAuthserviceClients,
   Mutex,
+  purgeOrphans,
   retryWithDelay,
   validateNamespace,
 } from "./utils";
+
+describe("deleteResourceIfUnchanged", () => {
+  beforeEach(() => {
+    kubernetesObjectApiMocks.delete.mockReset().mockResolvedValue({});
+  });
+
+  it("uses Kubernetes delete preconditions for the inspected UID and resource version", async () => {
+    const resource = {
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: {
+        name: "egress-resource",
+        namespace: "test-ns",
+        uid: "pod-uid",
+        resourceVersion: "10",
+      },
+    };
+
+    await expect(deleteResourceIfUnchanged(resource)).resolves.toBe(true);
+
+    expect(kubernetesObjectApiMocks.delete).toHaveBeenCalledWith(
+      resource,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { preconditions: { uid: "pod-uid", resourceVersion: "10" } },
+    );
+  });
+
+  it("does not delete if the resource changed after it was read", async () => {
+    kubernetesObjectApiMocks.delete.mockRejectedValueOnce({ code: 409 });
+
+    await expect(
+      deleteResourceIfUnchanged({
+        apiVersion: "v1",
+        kind: "Pod",
+        metadata: {
+          name: "egress-resource",
+          namespace: "test-ns",
+          uid: "pod-uid",
+          resourceVersion: "10",
+        },
+      }),
+    ).resolves.toBe(false);
+  });
+
+  it("rejects deletion when the resource has no precondition metadata", async () => {
+    await expect(
+      deleteResourceIfUnchanged({
+        apiVersion: "v1",
+        kind: "Pod",
+        metadata: { name: "egress-resource", namespace: "test-ns" },
+      }),
+    ).rejects.toThrow("without its UID and resourceVersion");
+    expect(kubernetesObjectApiMocks.delete).not.toHaveBeenCalled();
+  });
+});
+
+const kubernetesObjectApiMocks = vi.hoisted(() => ({ delete: vi.fn() }));
+
+vi.mock("@kubernetes/client-node", async importOriginal => {
+  const actual = await importOriginal<typeof import("@kubernetes/client-node")>();
+  return {
+    ...actual,
+    KubeConfig: class {
+      loadFromDefault = vi.fn();
+    },
+    KubernetesObjectApi: {
+      makeApiClient: vi.fn(() => kubernetesObjectApiMocks),
+    },
+  };
+});
 
 // Mock K8s client and Log
 vi.mock("pepr", () => {
@@ -364,6 +440,236 @@ describe("Mutex", () => {
     };
 
     await Promise.all([task(), task(), task()]);
+  });
+});
+
+describe("purgeOrphans", () => {
+  beforeEach(() => {
+    kubernetesObjectApiMocks.delete.mockReset().mockResolvedValue({});
+  });
+
+  it("rechecks a stale list candidate before deleting", async () => {
+    const listedResource = {
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: {
+        name: "egress-resource",
+        uid: "pod-uid",
+        resourceVersion: "10",
+        labels: { "uds/package": "shared-egress-resource", "uds/generation": "old" },
+      },
+    };
+    const currentResource = {
+      ...listedResource,
+      metadata: {
+        ...listedResource.metadata,
+        labels: { "uds/package": "shared-egress-resource", "uds/generation": "still-old" },
+      },
+    };
+    const getMock = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [listedResource] })
+      .mockResolvedValueOnce(currentResource);
+    const client = createMockK8sClient({ Get: getMock });
+    vi.mocked(K8s).mockReturnValue(client);
+
+    await purgeOrphans(
+      "current",
+      "test-ns",
+      "shared-egress-resource",
+      kind.Pod as never,
+      createMockLogger(),
+    );
+
+    expect(getMock).toHaveBeenNthCalledWith(1);
+    expect(getMock).toHaveBeenNthCalledWith(2, "egress-resource");
+    expect(kubernetesObjectApiMocks.delete).toHaveBeenCalledWith(
+      currentResource,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { preconditions: { uid: "pod-uid", resourceVersion: "10" } },
+    );
+  });
+
+  it("retries transient fresh reads before deleting", async () => {
+    vi.useFakeTimers();
+
+    try {
+      const listedResource = {
+        apiVersion: "v1",
+        kind: "Pod",
+        metadata: {
+          name: "egress-resource",
+          uid: "pod-uid",
+          resourceVersion: "10",
+          labels: { "uds/package": "shared-egress-resource", "uds/generation": "old" },
+        },
+      };
+      const currentResource = {
+        ...listedResource,
+        metadata: {
+          ...listedResource.metadata,
+          labels: { "uds/package": "shared-egress-resource", "uds/generation": "still-old" },
+        },
+      };
+      const getMock = vi
+        .fn()
+        .mockResolvedValueOnce({ items: [listedResource] })
+        .mockRejectedValueOnce(new Error("temporary API failure"))
+        .mockResolvedValueOnce(currentResource);
+      vi.mocked(K8s).mockReturnValue(createMockK8sClient({ Get: getMock }));
+
+      const purge = purgeOrphans(
+        "current",
+        "test-ns",
+        "shared-egress-resource",
+        kind.Pod as never,
+        createMockLogger(),
+      );
+      await vi.runAllTimersAsync();
+      await purge;
+
+      expect(getMock).toHaveBeenCalledTimes(3);
+      expect(kubernetesObjectApiMocks.delete).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("skips deletion when the resource changes after the fresh read", async () => {
+    const listedResource = {
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: {
+        name: "egress-resource",
+        uid: "pod-uid",
+        resourceVersion: "10",
+        labels: { "uds/package": "shared-egress-resource", "uds/generation": "old" },
+      },
+    };
+    const getMock = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [listedResource] })
+      .mockResolvedValueOnce(listedResource);
+    kubernetesObjectApiMocks.delete.mockRejectedValueOnce({ code: 409 });
+    vi.mocked(K8s).mockReturnValue(createMockK8sClient({ Get: getMock }));
+
+    await expect(
+      purgeOrphans(
+        "current",
+        "test-ns",
+        "shared-egress-resource",
+        kind.Pod as never,
+        createMockLogger(),
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(kubernetesObjectApiMocks.delete).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats a missing fresh resource as already cleaned up", async () => {
+    const listedResource = {
+      kind: "Pod",
+      metadata: {
+        name: "egress-resource",
+        labels: { "uds/package": "shared-egress-resource", "uds/generation": "old" },
+      },
+    };
+    const getMock = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [listedResource] })
+      .mockRejectedValueOnce({ status: 404 });
+    const deleteMock = vi.fn().mockResolvedValue({});
+    vi.mocked(K8s).mockReturnValue(createMockK8sClient({ Get: getMock, Delete: deleteMock }));
+
+    await purgeOrphans(
+      "current",
+      "test-ns",
+      "shared-egress-resource",
+      kind.Pod as never,
+      createMockLogger(),
+    );
+
+    expect(getMock).toHaveBeenCalledTimes(2);
+    expect(deleteMock).not.toHaveBeenCalled();
+  });
+
+  it("does not delete when the fresh resource has the current generation", async () => {
+    const listedResource = {
+      kind: "Pod",
+      metadata: {
+        name: "egress-resource",
+        labels: { "uds/package": "shared-egress-resource", "uds/generation": "old" },
+      },
+    };
+    const currentResource = {
+      ...listedResource,
+      metadata: {
+        ...listedResource.metadata,
+        labels: { "uds/package": "shared-egress-resource", "uds/generation": "current" },
+      },
+    };
+    const getMock = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [listedResource] })
+      .mockResolvedValueOnce(currentResource);
+    const deleteMock = vi.fn().mockResolvedValue({});
+    vi.mocked(K8s).mockReturnValue(createMockK8sClient({ Get: getMock, Delete: deleteMock }));
+
+    await purgeOrphans(
+      "current",
+      "test-ns",
+      "shared-egress-resource",
+      kind.Pod as never,
+      createMockLogger(),
+    );
+
+    expect(deleteMock).not.toHaveBeenCalled();
+  });
+
+  it("does not delete when the fresh resource no longer matches the purge selector", async () => {
+    const listedResource = {
+      kind: "Pod",
+      metadata: {
+        name: "egress-resource",
+        labels: {
+          "uds/package": "shared-egress-resource",
+          "uds/for": "network",
+          "uds/generation": "old",
+        },
+      },
+    };
+    const currentResource = {
+      ...listedResource,
+      metadata: {
+        ...listedResource.metadata,
+        labels: {
+          "uds/package": "another-package",
+          "uds/for": "other",
+          "uds/generation": "still-old",
+        },
+      },
+    };
+    const getMock = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [listedResource] })
+      .mockResolvedValueOnce(currentResource);
+    const deleteMock = vi.fn().mockResolvedValue({});
+    vi.mocked(K8s).mockReturnValue(createMockK8sClient({ Get: getMock, Delete: deleteMock }));
+
+    await purgeOrphans(
+      "current",
+      "test-ns",
+      "shared-egress-resource",
+      kind.Pod as never,
+      createMockLogger(),
+      { "uds/for": "network" },
+    );
+
+    expect(deleteMock).not.toHaveBeenCalled();
   });
 });
 

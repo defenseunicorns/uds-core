@@ -1200,6 +1200,11 @@ func (in *Redirect) DeepCopyInto(out *Redirect) {
 		*out = new(int64)
 		**out = **in
 	}
+	if in.PrefixRewrite != nil {
+		in, out := &in.PrefixRewrite, &out.PrefixRewrite
+		*out = new(string)
+		**out = **in
+	}
 	if in.RedirectCode != nil {
 		in, out := &in.RedirectCode, &out.RedirectCode
 		*out = new(int64)

@@ -1,0 +1,18 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+keycloak:
+  keycloak:
+    devMode: false
+    autoscaling:
+      enabled: true
+    detailedObservability:
+      alerts:
+        enabled: true
+    realmInitEnv:
+      FLEET_CLIENT_ENABLED: "true"
+    postgresql:
+      host: "{{ .vars.core_identity_authorization.keycloak_db_host }}"
+      username: "{{ .vars.core_identity_authorization.keycloak_db_username }}"
+      database: "{{ .vars.core_identity_authorization.keycloak_db_database }}"
+      password: "{{ .vars.core_identity_authorization.keycloak_db_password }}"

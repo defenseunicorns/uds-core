@@ -36,8 +36,8 @@ func purgeByNames(ctx context.Context, client dynamic.Interface, gvr schema.Grou
 		if desired[item.GetName()] {
 			continue
 		}
-		uid := item.GetUID()
-		if err := client.Resource(gvr).Namespace(namespace).Delete(ctx, item.GetName(), metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}); err != nil && !apierrors.IsNotFound(err) {
+		uid, version := item.GetUID(), item.GetResourceVersion()
+		if err := client.Resource(gvr).Namespace(namespace).Delete(ctx, item.GetName(), metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid, ResourceVersion: &version}}); err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
 	}
