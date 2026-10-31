@@ -55,7 +55,7 @@ func browserIdentityPath(path, issuer string) bool {
 	if path == "/" || path == "/login" || (strings.HasPrefix(path, "/admin/") && !strings.HasPrefix(path, "/admin/realms/")) {
 		return true
 	}
-	return path == issuer+"/.well-known/openid-configuration" || path == issuer+"/auth" || path == issuer+"/protocol/openid-connect/auth" || path == issuer+"/account" || strings.HasPrefix(path, issuer+"/callback/")
+	return path == issuer+"/.well-known/openid-configuration" || path == issuer+"/auth" || path == issuer+"/protocol/openid-connect/auth" || path == issuer+"/account" || strings.HasPrefix(path, issuer+"/callback/") || strings.HasPrefix(path, issuer+"/protocol/openid-connect/3p-cookies/")
 }
 
 func makeBridge(directory devidentity.Directory, cfg configuration, upstream, host string) (*devidentity.Bridge, error) {

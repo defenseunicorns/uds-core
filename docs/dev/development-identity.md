@@ -27,7 +27,7 @@ The profile preserves the public issuer `https://sso.<domain>/realms/uds` and th
 
 The bridge rejects unregistered redirect URIs before displaying the login form. It returns Keycloak-compatible endpoint URLs in discovery and checks each browser token request against the client's current `webOrigins`. Clearing the client's origins revokes that browser access. Discovery and token preflight responses vary by origin; a successful preflight does not authorize the subsequent token request.
 
-The development administration page manages users and clients through the supported API. It does not provide Java Keycloak's console assets, third-party-cookie iframe, or browser session-status iframe. Tests that require those Java resources and dynamically added issuer hosts do not qualify this provider. Keep them enabled for the standard provider and qualify the development provider's documented login, group, revocation, and persistence behavior separately.
+The development administration page manages users and clients through the supported API. Its cookie-capability iframe reports `unsupported` without reading or setting cookies. It does not provide Java Keycloak's console assets or browser session-status iframe. Tests that require those Java resources and dynamically added issuer hosts do not qualify this provider. Keep them enabled for the standard provider and qualify the development provider's documented login, group, revocation, and persistence behavior separately.
 
 ## Public clients and pairing boundary
 
@@ -76,13 +76,13 @@ The chart defaults to the actual original Pepr service account, `pepr-system/pep
 
 ## Build and verify the provider
 
-Use the [provider build script](../../src/dev-identity/build-images.py) to build both actual runtime images from public source inputs. It requires Python 3.9 or later, Go 1.27.1, Git, and Docker with Buildx. The [input pins](../../src/dev-identity/provider-inputs.json) select Linux AMD64, `CGO_ENABLED=0`, the upstream Dex commit, the development patch digest, and the distroless base. The [bridge image recipe](../../src/dev-identity/Dockerfile.bridge) and [Dex image recipe](../../src/dev-identity/Dockerfile.dex) run the static binaries as user `65532:65532` without adding a shell.
+Use the [provider build script](../../src/dev-identity/build-images.py) to build both actual runtime images from public source inputs. It requires Python 3.9 or later, Go 1.27.3, Git, and Docker with Buildx. The [input pins](../../src/dev-identity/provider-inputs.json) select Linux AMD64, `CGO_ENABLED=0`, the upstream Dex commit, the development patch digest, and the distroless base. The [bridge image recipe](../../src/dev-identity/Dockerfile.bridge) and [Dex image recipe](../../src/dev-identity/Dockerfile.dex) run the static binaries as user `65532:65532` without adding a shell.
 
 Run the build from the Core repository root with absolute tool paths and a new output directory:
 
 ```bash
 python3 src/dev-identity/build-images.py \
-  --go /absolute/path/to/go1.27.1/bin/go \
+  --go /absolute/path/to/go1.27.3/bin/go \
   --git /absolute/path/to/git \
   --docker /absolute/path/to/docker \
   --output /tmp/native-identity-build \

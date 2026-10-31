@@ -346,7 +346,7 @@ func deleteKeycloakClient(ctx context.Context, clientID string) error {
 // ReconcileProbeClient creates the same service-account audience mapper used
 // by Core's blackbox exporter integration.
 func ReconcileProbeClient(ctx context.Context, entry udstypes.Sso) (Client, error) {
-	client := Client{ClientID: entry.ClientID + "-probe", Name: entry.Name + " Uptime Probe", Protocol: "openid-connect", StandardFlowEnabled: ptr.To(false), ServiceAccountsEnabled: ptr.To(true), FullScopeAllowed: ptr.To(false), ProtocolMappers: []ProtocolMapper{{Name: "audience", Protocol: "openid-connect", ProtocolMapper: "oidc-audience-mapper", Config: map[string]string{"included.client.audience": entry.ClientID, "access.token.claim": "true", "introspection.token.claim": "true", "id.token.claim": "false", "lightweight.claim": "false", "userinfo.token.claim": "false"}}}}
+	client := Client{ClientID: entry.ClientID + "-probe", Name: entry.Name + " Uptime Probe", Protocol: "openid-connect", PublicClient: ptr.To(false), StandardFlowEnabled: ptr.To(false), ServiceAccountsEnabled: ptr.To(true), FullScopeAllowed: ptr.To(false), ProtocolMappers: []ProtocolMapper{{Name: "audience", Protocol: "openid-connect", ProtocolMapper: "oidc-audience-mapper", Config: map[string]string{"included.client.audience": entry.ClientID, "access.token.claim": "true", "introspection.token.claim": "true", "id.token.claim": "false", "lightweight.claim": "false", "userinfo.token.claim": "false"}}}}
 	synced, err := syncClient(ctx, client)
 	if err != nil {
 		return Client{}, err

@@ -57,8 +57,8 @@ credential mode.
 
 ## Build and validate
 
-Run the following commands from the module with the trusted toolchain and
-isolated caches:
+Build with Go 1.27.3 or newer to include the current standard-library security
+fixes. Run the following commands from the module with isolated caches:
 
 ```bash
 cd src/go-controller
@@ -119,9 +119,9 @@ mode.
 
 The combined Core bootstrap, Dex profile and historical end-to-end qualification
 belong to a separate integration review. This branch leaves Core's Keycloak
-chart and identity bundle schemas unchanged. The Loki test accepts
-`UDS_CORE_OPERATOR=native` to check the controller's actual log labels; its
-default remains Pepr. Source tests and
+chart and identity bundle schemas unchanged. The log and uptime tests accept
+`UDS_CORE_OPERATOR=native` to check actual native log labels and labeled
+admission/reconciliation capability metrics. Their default remains Pepr. Source tests and
 rendering on this branch do not establish an independently repeated live
 Go-plus-Keycloak installation.
 

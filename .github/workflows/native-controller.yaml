@@ -48,13 +48,16 @@ jobs:
 
       - name: Install controller SDK and locked JavaScript dependencies
         run: |
-          mise install go@1.27.1
+          mise install go@1.27.3
           npm ci --ignore-scripts
 
       - name: Race tests and vet
         run: |
-          mise exec go@1.27.1 -- go -C src/go-controller test -race ./...
-          mise exec go@1.27.1 -- go -C src/go-controller vet ./...
+          mise exec go@1.27.3 -- go -C src/go-controller test -race ./...
+          mise exec go@1.27.3 -- go -C src/go-controller vet ./...
+
+      - name: Check production vulnerabilities
+        run: mise exec go@1.27.3 -- go -C src/go-controller run golang.org/x/vuln/cmd/govulncheck@v1.9.0 .
 
       - name: Verify Package admission against current Pepr specifications
         run: |
@@ -63,8 +66,8 @@ jobs:
 
       - name: Verify generated API and clients
         run: |
-          mise exec go@1.27.1 -- node src/go-controller/hack/generate-api.mjs
-          mise exec go@1.27.1 -- bash src/go-controller/hack/update-codegen.sh
+          mise exec go@1.27.3 -- node src/go-controller/hack/generate-api.mjs
+          mise exec go@1.27.3 -- bash src/go-controller/hack/update-codegen.sh
           git diff --exit-code -- src/go-controller/api src/go-controller/client
 
       - name: Verify chart and admission contracts

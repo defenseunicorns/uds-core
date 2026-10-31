@@ -105,6 +105,9 @@ func (b *Bridge) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		}
 	}
 	switch request.URL.Path {
+	case b.IssuerPath + "/protocol/openid-connect/3p-cookies/step1.html":
+		unsupportedCookieCheck(writer, request)
+		return
 	case "/", b.IssuerPath + "/account":
 		if request.Method != http.MethodGet {
 			writer.WriteHeader(http.StatusMethodNotAllowed)

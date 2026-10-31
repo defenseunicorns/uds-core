@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { getOperatorImplementation } from "./helpers/operator";
 import * as net from "net";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
@@ -107,8 +108,12 @@ describe("Uptime Recording Rules", { timeout: 210000 }, () => {
     "uds:ztunnel:up",
     "uds:tenant_ingressgateway:up",
     // Base - Pepr
-    "uds:pepr_admission:up",
-    "uds:pepr_watcher:up",
+    ...(getOperatorImplementation() === "native"
+      ? [
+          'uds:admission:up{implementation="go-native",uds_layer="base",uds_component="admission"}',
+          'uds:reconciliation:up{implementation="go-native",uds_layer="base",uds_component="reconciliation"}',
+        ]
+      : ["uds:pepr_admission:up", "uds:pepr_watcher:up"]),
     // Identity & Authorization
     "uds:keycloak:up",
     "uds:keycloak_waypoint:up",
