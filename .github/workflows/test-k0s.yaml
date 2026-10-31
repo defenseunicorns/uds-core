@@ -154,7 +154,7 @@ jobs:
           crane digest "$KEYCLOAK_IMAGE"
           crane config "$KEYCLOAK_IMAGE" | jq '{user: .config.User}'
           if crane export "$KEYCLOAK_IMAGE" "$KEYCLOAK_ROOTFS_ARCHIVE"; then
-            tar -tvf "$KEYCLOAK_ROOTFS_ARCHIVE" --wildcards '*quarkus-application.dat'
+            tar --numeric-owner -tvf "$KEYCLOAK_ROOTFS_ARCHIVE" --wildcards '*quarkus-application.dat'
           else
             echo "::warning::Could not inspect image filesystem ownership"
           fi
