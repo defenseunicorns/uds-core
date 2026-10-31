@@ -4,6 +4,6 @@
 # proxy image input instead of producing an invalid /istio/... image reference.
 global:
   proxy:
-    image: docker.io/istio/proxyv2:1.30.3-distroless
+    image: docker.io/istio/proxyv2:1.31.2-distroless
   proxy_init:
-    image: docker.io/istio/proxyv2:1.30.3-distroless
+    image: docker.io/istio/proxyv2:1.31.2-distroless

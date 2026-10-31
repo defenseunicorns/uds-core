@@ -8,6 +8,9 @@ const sha=data=>crypto.createHash('sha256').update(data).digest('hex');
 const canonical=name=>name.includes('/')?name:`docker.io/library/${name}`;
 
 export function verifyPackage({archive,lock,expectedImages,out,run}) {
+  if (lock.signedInputVerification?.status !== 'verified' || !lock.signedInputVerification.packages.length) {
+    throw new Error('Package verification requires verified signed upstream inputs');
+  }
   const target=path.join(out,'package-verification');
   // A prior extraction can contain unreachable image blobs. The connected
   // preload must include only this verified package's payload.

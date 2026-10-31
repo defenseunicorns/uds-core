@@ -51,6 +51,9 @@ export function retainSignedRemoteCharts(component,charts) {
     if (!chart.url) continue;
     const archive=charts[`${component.name}/${chart.name}`];
     if (!archive) throw new Error(`Signed original remote chart unavailable: ${component.name}/${chart.name}`);
+    if (path.basename(archive)!==`${chart.name}-${chart.version}.tgz`) {
+      throw new Error(`Signed chart version differs from source: ${component.name}/${chart.name}@${chart.version}`);
+    }
     chart.localPath=archive;
     delete chart.url;
   }

@@ -3,7 +3,7 @@
 kind: ZarfPackageConfig
 metadata:
   name: core-native-dev
-  version: 1.14.0-native-dev.1
+  version: 1.16.0-native-dev.1
   description: Explicit password-only native Core development profile
   authors: Defense Unicorns - Product
 variables:

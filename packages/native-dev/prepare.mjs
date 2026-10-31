@@ -11,6 +11,7 @@ import { validateRender } from './validate-render.mjs';
 import { verifyControllerReuse, verifyLocalController } from './reuse-controller.mjs';
 import { controllerImageTag, frozenControllerTag } from './image-tag.mjs';
 import { zarfDockerEnvironment } from './zarf-docker-api.mjs';
+import { verifyIdentitySource } from './identity-source.mjs';
 
 const root=path.resolve(import.meta.dirname,'../..');
 const pkg=import.meta.dirname;
@@ -45,6 +46,7 @@ try{run('git',['merge-base','--is-ancestor',inputs.core.sourceCommit,commit]);}
 catch{throw new Error('Native recipe requires its pinned Core source commit in the checkout history');}
 const sourceSHA=sha(JSON.stringify(Object.entries(sourceFiles).sort(([a],[b])=>a.localeCompare(b))));
 const lock={...inputs,architecture:arch,sourceGitHEAD:commit,sourceSHA256:sourceSHA,sourceFiles,removedImportActions:[],createdAt:null};
+if(!baseOnly)verifyIdentitySource({root,go,run,identity:inputs.identity});
 lock.componentSourceSHA256=Object.fromEntries([['controller','src/go-controller/'],['identity','src/dev-identity/'],['composition','packages/native-dev/']].map(([name,prefix])=>[name,sha(JSON.stringify(Object.entries(sourceFiles).filter(([filename])=>filename.startsWith(prefix)).sort(([a],[b])=>a.localeCompare(b))))]));
 lock.tenantActivationEnabled=!baseOnly&&!args.includes('--candidate');
 lock.connectedOnly=connected;
@@ -81,7 +83,7 @@ if(connected){
  const pilot=control.charts.find(c=>c.name==='istiod');
  const values=path.join(pkg,'values/istiod-connected.yaml');
  pilot.valuesFiles.push(values);
- lock.connectedOverrides=[{component:'istio-controlplane',chart:'istiod',sourcePath:'src/istio/values/upstream/istiod.yaml',valuesPath:'packages/native-dev/values/istiod-connected.yaml',sha256:sha(fs.readFileSync(values)),image:'docker.io/istio/proxyv2:1.30.3-distroless',reason:'An empty connected-mode Zarf registry otherwise produces /istio/proxyv2, which the Kubernetes runtime cannot pull'}];
+ lock.connectedOverrides=[{component:'istio-controlplane',chart:'istiod',sourcePath:'src/istio/values/upstream/istiod.yaml',valuesPath:'packages/native-dev/values/istiod-connected.yaml',sha256:sha(fs.readFileSync(values)),image:'docker.io/istio/proxyv2:1.31.2-distroless',reason:'An empty connected-mode Zarf registry otherwise produces /istio/proxyv2, which the Kubernetes runtime cannot pull'}];
 }
 const removedNames=['Wait for Pepr Ambient enrollment','Verify Pepr admission readiness'];
 const originalActions=control.actions?.onDeploy?.after||[];

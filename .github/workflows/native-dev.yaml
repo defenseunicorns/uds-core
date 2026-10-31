@@ -1,0 +1,62 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Native development package
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/native-dev.yaml
+      - .github/actions/setup-tools/**
+      - mise.toml
+      - package*.json
+      - packages/native-dev/**
+      - packages/base/**
+      - packages/identity-authorization/**
+      - src/go-controller/**
+      - src/dev-identity/**
+      - src/pepr/**
+      - src/istio/**
+      - src/keycloak/**
+      - src/authservice/**
+      - src/prometheus-stack/**
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-dev-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  composition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GOTOOLCHAIN: local
+      GOWORK: "off"
+    steps:
+      - name: Checkout sources and pinned Core history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Set up repository tools
+        uses: ./.github/actions/setup-tools
+      - name: Install the package build toolchain
+        run: mise install go@1.27.1
+      - name: Install locked JavaScript dependencies
+        run: npm ci --ignore-scripts
+      - name: Check composition and immutable input guards
+        run: mise exec go@1.27.1 -- node --test packages/native-dev/*.test.mjs
+      - name: Check bootstrap behavior with the real embedded CLI
+        working-directory: src/go-controller
+        run: |
+          export UDS_NATIVE_BOOTSTRAP_CLI="$(command -v uds)"
+          mise exec go@1.27.1 -- go test -race ../../packages/native-dev/scripts/*.go
+      - name: Compile and validate the complete native rendering
+        run: |
+          mise exec go@1.27.1 -- node packages/native-dev/prepare.mjs \
+            --render-only --connected \
+            --go "$(mise where go@1.27.1)/bin/go" --uds "$(command -v uds)"

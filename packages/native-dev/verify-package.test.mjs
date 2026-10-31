@@ -25,9 +25,15 @@ test('repeated verification cannot preload stale blobs from an earlier package',
   const stale=path.join(out,'package-verification/images/blobs/sha256/old-unreachable-blob');
   fs.mkdirSync(path.dirname(stale),{recursive:true});
   fs.writeFileSync(stale,'previous image payload');
-  const lock={controllerImage:image,controllerImageID:digest,identity:{bridgeImage:'unused-bridge',dexImage:'unused-dex'},signedInputVerification:{packages:[]}};
+  const lock={controllerImage:image,controllerImageID:digest,identity:{bridgeImage:'unused-bridge',dexImage:'unused-dex'},signedInputVerification:{status:'verified',packages:[{images:[]}]}};
   verifyPackage({archive,lock,expectedImages:[image],out,run:(cmd,args)=>execFileSync(`/usr/bin/${cmd}`,args)});
   assert.equal(fs.existsSync(stale),false);
   assert.equal(fs.readFileSync(path.join(out,'package-verification/images/index.json'),'utf8'),index);
   assert.equal(JSON.parse(fs.readFileSync(path.join(root,'package-receipt.json'))).checksumsVerified,1);
+});
+
+test('a package cannot claim signed inputs without a verified upstream receipt', () => {
+  for (const signedInputVerification of [undefined, {status:'not-requested',packages:[]}, {status:'verified',packages:[]}]) {
+    assert.throws(()=>verifyPackage({lock:{signedInputVerification}}), /requires verified signed upstream inputs/);
+  }
 });
