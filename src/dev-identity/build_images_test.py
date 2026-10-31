@@ -25,16 +25,16 @@ class SourceReceiptTests(unittest.TestCase):
             package.mkdir(parents=True)
             (root / 'go.mod').write_text('module receipt.test\n\ngo 1.25.0\n')
             (root / 'go.sum').write_text('')
-            (package / 'main.go').write_text('package main\n\nfunc main() {}\n')
+            (package / 'main.go').write_text('package main\n\nimport _ "embed"\n\n//go:embed login.css\nvar css string\n\nfunc main() {}\n')
             # go list reports these compiler inputs without executing/linking them.
-            for name in ['native.s', 'native.h', 'native.syso']:
+            for name in ['native.s', 'native.h', 'native.syso', 'login.css']:
                 (package / name).write_bytes(b'first-input\n')
             previous = build.MODULE
             build.MODULE = root
             try:
                 env = dict(os.environ, GOWORK='off', GOTOOLCHAIN='local', CGO_ENABLED='0', GOFLAGS='-buildvcs=false')
                 before = build.bridge_inputs(go, env)
-                for name in ['native.s', 'native.h', 'native.syso']:
+                for name in ['native.s', 'native.h', 'native.syso', 'login.css']:
                     key = 'cmd/dev-identity/' + name
                     self.assertIn(key, before)
                     (package / name).write_bytes(b'changed-input\n')

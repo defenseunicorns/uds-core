@@ -6,7 +6,6 @@ package devidentity
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -73,6 +72,9 @@ func (b *Bridge) user(request *http.Request) (User, bool) {
 }
 
 func (b *Bridge) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if serveLoginStyles(writer, request) {
+		return
+	}
 	if b.publicProtocolHeaders(writer, request) {
 		return
 	}
@@ -114,8 +116,7 @@ func (b *Bridge) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 		if user, ok := b.user(request); ok {
-			writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-			fmt.Fprint(writer, "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>UDS account</title></head><body><main><h1>UDS account</h1><p>Authenticated</p></main></body></html>")
+			renderIdentityPage(writer, http.StatusOK, "account", b.IssuerPath)
 			_ = user
 			return
 		}
@@ -140,9 +141,7 @@ func (b *Bridge) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 			}
 		}
 		http.SetCookie(writer, &http.Cookie{Name: SessionCookie, Value: "", Path: "/", Secure: true, HttpOnly: true, MaxAge: -1, SameSite: http.SameSiteLaxMode})
-		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-		writer.Header().Set("Cache-Control", "no-store")
-		fmt.Fprintf(writer, "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>UDS sign out</title></head><body><main><h1>Signed out</h1><p>You are logged out</p><a href=\"%s/account\">Sign in</a></main></body></html>", b.IssuerPath)
+		renderIdentityPage(writer, http.StatusOK, "signed-out", b.IssuerPath)
 		return
 	}
 	// Only the connector callback receives authenticated identity headers.

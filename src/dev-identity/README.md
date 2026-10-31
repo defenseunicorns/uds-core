@@ -17,6 +17,12 @@ GOWORK=off go test -race ./...
 
 The module keeps the qualified client projection and digest in a focused read-only contract. Its captured corpus records the source file hashes and verifies all optional fields without importing or building the controller. The runtime checks authoritative Kubernetes `Package` UIDs and exact client specifications before accepting configured pair authority.
 
+## Sign-in theme and browser checks
+
+The sign-in, authentication error, account, and sign-out pages use embedded HTML and CSS with the dark gray and blue form treatment used by UDS's Flowbite-based interfaces. The bridge serves the stylesheet locally, so these pages work in the airgap. The content security policy permits same-origin styles and keeps scripts, framing, and external form submissions disabled.
+
+The [browser check](../../test/playwright/identity-login/check.mjs) starts an isolated HTTPS bridge with an in-memory test directory. It checks desktop and mobile rendering, keyboard focus, text contrast, invalid-credential recovery, and sign-in/logout and callback navigation with JavaScript disabled. The development identity workflow runs this check and retains screenshots and its report in the `identity-login-browser` artifact.
+
 ## Related documentation
 
 The following sources describe the development provider and its public inputs:

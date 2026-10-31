@@ -19,6 +19,9 @@ name: Development identity
       - packages/identity-authorization/**
       - packages/standard/**
       - test/values/**
+      - test/playwright/identity-login/**
+      - test/playwright/package.json
+      - test/playwright/package-lock.json
   push:
     branches: [main]
     paths:
@@ -34,6 +37,9 @@ name: Development identity
       - packages/identity-authorization/**
       - packages/standard/**
       - test/values/**
+      - test/playwright/identity-login/**
+      - test/playwright/package.json
+      - test/playwright/package-lock.json
   workflow_dispatch:
 
 permissions:
@@ -93,3 +99,14 @@ jobs:
           untt src/keycloak/chart
           npx pepr build -z chart
           npx vitest run test/values/identity-authorization.spec.ts test/values/standard.spec.ts
+      - name: Verify the rendered identity sign-in
+        run: |
+          npm ci --ignore-scripts --prefix test/playwright
+          node test/playwright/node_modules/@playwright/test/cli.js install --with-deps chromium
+          mise exec "go@$IDENTITY_GO_VERSION" -- node test/playwright/identity-login/check.mjs "$RUNNER_TEMP/identity-login"
+      - name: Retain identity sign-in browser evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: identity-login-browser
+          path: ${{ runner.temp }}/identity-login
