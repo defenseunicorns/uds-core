@@ -89,9 +89,6 @@ jobs:
             docker logs --timestamps k0s-uds > "$LOG_DIR/k0s.log" 2>&1 || echo "::warning::Could not collect K0s process logs"
             # Read node files directly, including rotated pod logs, even when the Kubernetes API is unavailable.
             docker cp k0s-uds:/var/log/. "$LOG_DIR/node" 2>> "$LOG_DIR/collection-errors.log" || echo "::warning::Could not copy K0s node logs"
-            # Preserve file ownership for Quarkus startup failures without copying file contents.
-            docker exec k0s-uds find /var/lib/k0s/containerd -name quarkus-application.dat -exec ls -ln {} \; \
-              > "$LOG_DIR/keycloak-file-ownership.log" 2>> "$LOG_DIR/collection-errors.log" || echo "::warning::Could not inspect Keycloak file ownership"
           fi
 
       - name: Upload K0s node logs
@@ -132,29 +129,3 @@ jobs:
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: ${{ vars.SLACK_ALERT_CHANNEL }}
-
-  inspect-keycloak-image:
-    name: Inspect Unicorn Keycloak permissions
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Environment setup
-        uses: ./.github/actions/setup
-        with:
-          ghToken: ${{ secrets.GITHUB_TOKEN }}
-          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
-      - name: Inspect Unicorn Keycloak image permissions
-        timeout-minutes: 4
-        run: |
-          KEYCLOAK_IMAGE=cgr.dev/defenseunicorns.com/keycloak-fips:v26.8.1
-          KEYCLOAK_ROOTFS_ARCHIVE="$RUNNER_TEMP/keycloak-permission-rootfs.tar"
-          trap 'rm -f "$KEYCLOAK_ROOTFS_ARCHIVE"' EXIT
-          crane digest "$KEYCLOAK_IMAGE"
-          crane config "$KEYCLOAK_IMAGE" | jq '{user: .config.User}'
-          if crane export "$KEYCLOAK_IMAGE" "$KEYCLOAK_ROOTFS_ARCHIVE"; then
-            tar --numeric-owner -tvf "$KEYCLOAK_ROOTFS_ARCHIVE" --wildcards '*quarkus-application.dat'
-          else
-            echo "::warning::Could not inspect image filesystem ownership"
-          fi
