@@ -16,8 +16,9 @@ import (
 )
 
 // Webhook/cache serving runs in every replica. Only the Lease holder authors
-// reconciliation state. Losing authority cancels the process before replacement
-// work starts, so the old writer cannot continue after a Lease handoff.
+// reconciliation state. Lease loss cancels the writer context and exits the
+// process. Operations retain their API ownership/version guards: leader election
+// alone does not fence writes that the API server already accepted.
 func runLeader(ctx context.Context, client kubernetes.Interface, run func(context.Context)) error {
 	identity := os.Getenv("HOSTNAME")
 	if identity == "" {

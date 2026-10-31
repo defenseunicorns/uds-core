@@ -31,10 +31,12 @@ not describe this module. Likewise, earlier full Core/browser results used the
 combined native/Dex profile and remain integration evidence, not an independent
 Go-plus-Keycloak live pass.
 
-Core's original Keycloak chart, bundle identity schemas and existing tests are
+Core's original Keycloak chart and bundle identity schemas are
 byte-identical to upstream `129d6e4a1928ce2b10ba6c5c8b5a0e7350f4053c`. The exact identity
 administration override lives in `values.keycloak.yaml` and selects only the Go
-controller's principal through an existing chart value.
+controller's principal through an existing chart value. The Loki log assertion
+selects actual native labels when you set `UDS_CORE_OPERATOR=native`; its Pepr
+default remains unchanged.
 
 ## Historical split-source result
 
