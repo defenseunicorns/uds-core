@@ -89,6 +89,9 @@ jobs:
             docker logs --timestamps k0s-uds > "$LOG_DIR/k0s.log" 2>&1 || echo "::warning::Could not collect K0s process logs"
             # Read node files directly, including rotated pod logs, even when the Kubernetes API is unavailable.
             docker cp k0s-uds:/var/log/. "$LOG_DIR/node" 2>> "$LOG_DIR/collection-errors.log" || echo "::warning::Could not copy K0s node logs"
+            # Preserve file ownership for Quarkus startup failures without copying file contents.
+            docker exec k0s-uds find /var/lib/k0s/containerd -name quarkus-application.dat -exec ls -ln {} \; \
+              > "$LOG_DIR/keycloak-file-ownership.log" 2>> "$LOG_DIR/collection-errors.log" || echo "::warning::Could not inspect Keycloak file ownership"
           fi
 
       - name: Upload K0s node logs
