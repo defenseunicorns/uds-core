@@ -92,7 +92,9 @@ try {
   page.on("requestfailed", request => failedRequests.push(request.url()));
   const response = await page.goto(ready.url);
   assert.equal(response.status(), 200);
-  assert.equal(await page.title(), "UDS sign in");
+  assert.equal(await page.title(), "UDS sign in · Development");
+  await page.getByText("Development", { exact: true }).waitFor({ state: "visible" });
+  assert.equal(await page.locator(".footer").innerText(), "Unified Defense Stack");
   const csp = response.headers()["content-security-policy"];
   assert(csp.includes("style-src 'self'") && csp.includes("default-src 'none'"));
   assert(!csp.includes("unsafe-inline") && !csp.includes("unsafe-eval"));
@@ -105,7 +107,14 @@ try {
     "rgb(17, 24, 39)",
     "Bundled CSS was not applied",
   );
-  for (const selector of ["h1", "label", ".description", ".footer", ".button"]) {
+  for (const selector of [
+    "h1",
+    "label",
+    ".description",
+    ".footer",
+    ".button",
+    ".environment-badge",
+  ]) {
     const colors = await page
       .locator(selector)
       .first()
@@ -136,6 +145,7 @@ try {
       await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
       `Horizontal overflow at ${width}px`,
     );
+    await page.getByText("Development", { exact: true }).waitFor({ state: "visible" });
     await page.screenshot({ path: path.join(output, `login-${width}.png`), fullPage: true });
   }
   checks.push("390px and 320px mobile layout without horizontal overflow");
@@ -160,14 +170,14 @@ try {
   await password.fill("test-password");
   await submit.click();
   await page.getByRole("heading", { name: "UDS account", exact: true }).waitFor();
-  assert.equal(await page.title(), "UDS account");
+  assert.equal(await page.title(), "UDS account · Development");
   const session = (await context.cookies()).find(cookie => cookie.name === "KEYCLOAK_SESSION");
   assert(session && session.secure && session.httpOnly && session.sameSite === "Lax");
   await page.screenshot({ path: path.join(output, "login-authenticated.png"), fullPage: true });
   await page.getByRole("link", { name: "Sign out", exact: true }).click();
   await page.getByRole("heading", { name: "Signed out", exact: true }).waitFor();
   assert(!(await context.cookies()).some(cookie => cookie.name === "KEYCLOAK_SESSION"));
-  assert.equal(await page.title(), "UDS sign out");
+  assert.equal(await page.title(), "UDS sign out · Development");
   checks.push("HTML-only successful sign-in, secure session, and logout");
   await page.goto(ready.url + "/realms/uds/callback/proof?state=unchanged");
   await username.fill("doug");

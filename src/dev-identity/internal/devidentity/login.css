@@ -49,6 +49,17 @@ body {
   font-size: 20px;
   font-weight: 400;
 }
+.environment-badge {
+  align-self: center;
+  padding: 4px 8px;
+  border: 1px solid #92400e;
+  border-radius: 6px;
+  background: #451a03;
+  color: #fcd34d;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
 .auth-card {
   width: 100%;
   max-width: 440px;
