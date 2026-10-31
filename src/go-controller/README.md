@@ -119,7 +119,9 @@ mode.
 
 The combined Core bootstrap, Dex profile and historical end-to-end qualification
 belong to a separate integration review. This branch leaves Core's Keycloak
-chart, identity bundle schemas and original tests unchanged. Source tests and
+chart and identity bundle schemas unchanged. The Loki test accepts
+`UDS_CORE_OPERATOR=native` to check the controller's actual log labels; its
+default remains Pepr. Source tests and
 rendering on this branch do not establish an independently repeated live
 Go-plus-Keycloak installation.
 
