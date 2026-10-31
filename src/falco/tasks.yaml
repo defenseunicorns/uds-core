@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 tasks:
@@ -23,7 +23,7 @@ tasks:
     actions:
       - description: "Run Falco E2E tests"
         cmd: |
-          npm ci && npx vitest run "falco" --exclude "**/*integration*"
+          npm ci && SKIP_INTEGRATION=true npx vitest run "falco"
         dir: test/vitest
 
   - name: update-rules

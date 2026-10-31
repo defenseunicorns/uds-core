@@ -4,12 +4,12 @@
 image:
   registry: cgr.dev
   repository: defenseunicorns.com/falco-fips
-  tag: v0.45.0
+  tag: v0.45.1
   pullPolicy: IfNotPresent
 
 falcosidekick:
   image:
     registry: cgr.dev
     repository: defenseunicorns.com/falcosidekick-fips
-    tag: v2.35.0
+    tag: v2.35.1
     pullPolicy: IfNotPresent
