@@ -9,6 +9,40 @@ image:
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
+# Opt-in local development provider. Enable only with devMode=true and provide
+# the pinned derivative images plus a separately managed TLS Secret.
+nativeIdentity:
+  enabled: false
+  authenticationProfile: password-only
+  # Existing Pepr clients do not emit the paired-CLI provenance contract.
+  coreAudiencePairsEnabled: false
+  bridgeImage: "uds-core-dev-identity:standalone"
+  dexImage: "uds-core-dev-dex:standalone"
+  imagePullPolicy: IfNotPresent
+  tlsSecret: uds-native-identity-tls
+  controllerNamespace: pepr-system
+  controllerServiceAccount: pepr-uds-core
+  publicStorageNamespace: keycloak-dex-public
+  adminStorageNamespace: keycloak-dex-admin
+  fleetNamespace: uds-fleet-command
+  fleetServiceAccount: uds-fleet-command-sa
+  bootstrapUsers: []
+  bootstrapClients: []
+  bridgeResources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: "1"
+      memory: 256Mi
+  dexResources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: "1"
+      memory: 256Mi
+
 # Additional Keycloak features to enable beyond the required FIPS feature.
 # Avoid enabling the generic "preview" group unless explicitly required.
 features:

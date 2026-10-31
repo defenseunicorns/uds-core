@@ -1,6 +1,7 @@
 # Lint Codespell configurations
 [codespell]
 skip = .codespellrc,.git,node_modules,build,dist,*.zst,CHANGELOG.md,.playwright,.terraform,*.svg,**/pepr/operator/crd/generated/*.ts,**/uds-docs/**,**/package-lock.json,**/zarf-sbom/*, **/coverage/*, **/falco/chart/rules/*, **/certs/**, **/istio/gateway-api-crds/chart/templates/**
-ignore-words-list = NotIn,AKS,LICENS,aks,afterAll
+# "erro" is an upstream Go identifier retained verbatim in the Dex patch.
+ignore-words-list = NotIn,AKS,LICENS,aks,afterAll,erro
 enable-colors =
 check-hidden =

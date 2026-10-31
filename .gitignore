@@ -41,3 +41,6 @@ test-results/**
 coverage/**
 
 **/ca.crt
+
+# Standalone development identity build scratch.
+src/dev-identity/**/__pycache__/**

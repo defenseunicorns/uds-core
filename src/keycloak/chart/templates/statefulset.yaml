@@ -1,6 +1,8 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+{{- if not .Values.nativeIdentity.enabled }}
+
 {{- $domain := .Values.domain }}
 {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
 
@@ -518,3 +520,4 @@ spec:
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+{{- end }}
