@@ -68,6 +68,21 @@ jobs:
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
 
+      - name: Inspect Unicorn Keycloak image permissions
+        if: matrix.flavor == 'unicorn'
+        timeout-minutes: 4
+        run: |
+          KEYCLOAK_IMAGE=cgr.dev/defenseunicorns.com/keycloak-fips:v26.8.1
+          KEYCLOAK_ROOTFS_ARCHIVE="$RUNNER_TEMP/keycloak-permission-rootfs.tar"
+          trap 'rm -f "$KEYCLOAK_ROOTFS_ARCHIVE"' EXIT
+          crane digest "$KEYCLOAK_IMAGE"
+          crane config "$KEYCLOAK_IMAGE" | jq '{user: .config.User}'
+          if crane export "$KEYCLOAK_IMAGE" "$KEYCLOAK_ROOTFS_ARCHIVE"; then
+            tar -tvf "$KEYCLOAK_ROOTFS_ARCHIVE" --wildcards '*quarkus-application.dat'
+          else
+            echo "::warning::Could not inspect image filesystem ownership"
+          fi
+
       - name: Setup K0s
         run: uds run -f tasks/setup.yaml k0s-test-cluster --no-progress
         timeout-minutes: 15
