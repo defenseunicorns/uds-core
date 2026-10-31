@@ -64,10 +64,14 @@ tasks:
       validate_passthrough:
         description: Whether to validate the passthrough gateway.
         default: "true"
-    # loop through each src/* package and run the validate.yaml task
+    # Validate deployed standard components. Standalone replacement runtimes
+    # have dedicated workflows and are not installed by this profile.
     actions:
       - cmd: |
           for package in $(ls src); do
+            case "$package" in
+              go-controller|dev-identity) continue ;;
+            esac
             if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
               if [ ${package} = "istio" ]; then
                 ./uds run -f src/${package}/tasks.yaml validate --no-progress --with validate_passthrough=${{ .inputs.validate_passthrough }}
