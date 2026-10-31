@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { getOperatorImplementation } from "./helpers/operator";
 import * as net from "net";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
@@ -150,10 +151,7 @@ describe("Loki Tests", () => {
   });
 
   test("Validate pod logs from vector are present in Loki", async () => {
-    const implementation = process.env.UDS_CORE_OPERATOR ?? "pepr";
-    if (!["pepr", "native"].includes(implementation)) {
-      throw new Error(`Unknown UDS Core operator implementation: ${implementation}`);
-    }
+    const implementation = getOperatorImplementation();
     // Preserve the log-collection assertion across the explicit operator
     // profiles. Native logs retain their actual namespace, app and job labels.
     const operatorLogSelector =

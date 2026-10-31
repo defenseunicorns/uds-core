@@ -54,6 +54,10 @@ Go now preserves `redirect.prefixRewrite`, rejects `Package` spec changes during
 deletion, and reserves generated probe client IDs. Egress cleanup guards the
 inspected UID and resource version. The elected compiler repairs missing or
 modified admission parameters without requiring another admitted source change.
+Generated uptime clients explicitly select confidential authentication so Java
+Keycloak creates their service-account secrets. The module and CI require Go
+1.27.3; patched `x/net` and its required dependencies replace the earlier
+HTTP/2 and text-processing versions.
 The chart requires `uds-system` so its
 serving and recovery identities match the runtime.
 
@@ -61,7 +65,7 @@ The current checks produce these results:
 
 | Check | Result |
 | --- | --- |
-| Go race suite | 1,804 tests/subtests pass across 23 tested packages; no failed or skipped test cases. |
+| Go race suite | 1,807 tests/subtests pass across 23 tested packages; no failed or skipped test cases. |
 | Static build and vet | Pass. |
 | Original Pepr unit suite | 1,117 tests pass across 58 files. |
 | Current Package differential fixture | 140 decisions from 136 original source tests match Go, including previous-object checks. |
