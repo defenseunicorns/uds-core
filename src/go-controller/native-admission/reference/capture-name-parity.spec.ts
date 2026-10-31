@@ -47,7 +47,7 @@ afterAll(() =>
     "src/go-controller/webhook/testdata/exemption-name-parity.json",
     JSON.stringify(
       {
-        sourceRevision: "c15677633cffa17e99656a7d7ccd1f98d7cb6e4d",
+        sourceRevision: "129d6e4a1928ce2b10ba6c5c8b5a0e7350f4053c",
         cases,
       },
       null,

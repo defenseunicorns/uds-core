@@ -36,7 +36,7 @@ func updateBlackboxConfig(ctx context.Context, client kubernetes.Interface, pkg 
 	defer blackboxMu.Unlock()
 	secret, err := client.CoreV1().Secrets("monitoring").Get(ctx, blackboxSecret, metav1.GetOptions{})
 	creating := apierrors.IsNotFound(err)
-	if creating && pkg.DeletionTimestamp != nil {
+	if creating && (pkg.DeletionTimestamp != nil || (!hasUptimeChecks(pkg) && len(credentials) == 0)) {
 		return nil
 	}
 	if creating {
@@ -118,4 +118,13 @@ func updateBlackboxConfig(ctx context.Context, client kubernetes.Interface, pkg 
 		_, err = client.CoreV1().Secrets("monitoring").Update(ctx, secret, metav1.UpdateOptions{})
 	}
 	return err
+}
+
+func hasUptimeChecks(pkg *udstypes.UDSPackage) bool {
+	for _, expose := range pkg.Spec.GetExpose() {
+		if expose.Uptime != nil && expose.Uptime.Checks != nil && len(expose.Uptime.Checks.Paths) > 0 {
+			return true
+		}
+	}
+	return false
 }

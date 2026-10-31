@@ -82,7 +82,7 @@ func (c *PackageController) handleFailure(ctx context.Context, pkg *udsv1alpha1.
 }
 
 func (c *PackageController) handleFinalizer(ctx context.Context, pkg *udsv1alpha1.UDSPackage) error {
-	if !slices.Contains(pkg.Finalizers, packageFinalizer) {
+	if !slices.Contains(pkg.Finalizers, packageFinalizer) && !slices.Contains(pkg.Finalizers, legacyPackageFinalizer) {
 		return nil
 	}
 	pkg.Status.Phase = ptr.To(udsv1alpha1.PhaseRemoving)
@@ -106,7 +106,7 @@ func (c *PackageController) handleFinalizer(ctx context.Context, pkg *udsv1alpha
 	if latest.UID != pkg.UID {
 		return fmt.Errorf("package replaced during finalization")
 	}
-	latest.Finalizers = removeFinalizer(latest.Finalizers, packageFinalizer)
+	latest.Finalizers = removeFinalizer(removeFinalizer(latest.Finalizers, packageFinalizer), legacyPackageFinalizer)
 	_, err = c.udsClient.UDSPackages(pkg.Namespace).Update(ctx, latest, metav1.UpdateOptions{})
 	return err
 }

@@ -3,6 +3,7 @@
 
 variables:
   core:
+    UDS_CONTROLLER_REPLICAS: 2
     # Classification banner E2E test matrix
     CLASSIFICATION_BANNERS:
       - text: "SAMPLE BANNER"

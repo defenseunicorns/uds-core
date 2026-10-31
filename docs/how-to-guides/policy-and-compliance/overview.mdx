@@ -1,13 +1,13 @@
 ---
 title: Policy & Compliance
-description: Guides for working with UDS Core's Pepr admission policies, covering exemption creation, security posture auditing, and resolving policy violations.
+description: Guides for working with UDS Core's admission policies, covering exemption creation, security posture auditing, and resolving policy violations.
 sidebar:
   order: 8.000
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-UDS Core enforces secure workload behavior through [Pepr](https://docs.pepr.dev/) admission policies. Every resource submitted to the cluster passes through Pepr before being persisted, where mutations auto-correct common misconfigurations and validations block non-compliant resources.
+UDS Core enforces secure workload behavior through Kubernetes CEL admission policies and Go admission handlers. Mutations correct common misconfigurations and validations block non-compliant resources before persistence.
 
 These guides help you resolve policy violations, create exemptions when needed, and audit your cluster's security posture. For background on how policies and exemptions work, see the [Policy & Compliance concepts](/concepts/core-features/policy-and-compliance/).
 

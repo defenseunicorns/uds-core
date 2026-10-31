@@ -12,7 +12,7 @@ on:
       - package.json
       - package-lock.json
       - src/go-controller/**
-      - src/pepr/**
+      - src/uds-api/**
       - src/keycloak/chart/**
   push:
     branches:
@@ -24,7 +24,7 @@ on:
       - package.json
       - package-lock.json
       - src/go-controller/**
-      - src/pepr/**
+      - src/uds-api/**
       - src/keycloak/chart/**
   workflow_dispatch:
 
@@ -42,6 +42,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - name: Set up repository tools
         uses: ./.github/actions/setup-tools
@@ -59,16 +61,18 @@ jobs:
       - name: Check production vulnerabilities
         run: mise exec go@1.27.3 -- go -C src/go-controller run golang.org/x/vuln/cmd/govulncheck@v1.9.0 .
 
-      - name: Verify Package admission against current Pepr specifications
+      - name: Verify unchanged reference assertions and Go differential contract
         run: |
-          node node_modules/vitest/vitest.mjs run src/go-controller/native-admission/reference/capture-package-parity.spec.ts
-          git diff --exit-code -- src/go-controller/internal/admission/resources/testdata/package-parity.json
+          python3 src/go-controller/hack/reference-tests.py --output "$RUNNER_TEMP/core-compatibility-reference"
 
       - name: Verify generated API and clients
         run: |
           mise exec go@1.27.3 -- node src/go-controller/hack/generate-api.mjs
           mise exec go@1.27.3 -- bash src/go-controller/hack/update-codegen.sh
           git diff --exit-code -- src/go-controller/api src/go-controller/client
+
+      - name: Verify default distribution ownership
+        run: node --test src/go-controller/hack/distribution.test.mjs
 
       - name: Verify chart and admission contracts
         run: |
@@ -77,7 +81,7 @@ jobs:
           validation_dir=$(mktemp -d)
           trap 'rm -rf "$validation_dir"' EXIT
           uds zarf tools helm template uds-controller src/go-controller/chart \
-            --namespace uds-system --kube-version 1.37.1 > "$validation_dir/broad.yaml"
+            --namespace uds-system --kube-version 1.37.1 --set nativeAdmission.narrowCallbacks=false > "$validation_dir/broad.yaml"
           node src/go-controller/native-admission/check-render.mjs "$validation_dir/broad.yaml"
           uds zarf tools helm template uds-controller src/go-controller/chart \
             --namespace uds-system --kube-version 1.37.1 \

@@ -18,13 +18,11 @@ tasks:
   - name: check
     description: "Run linting checks"
     actions:
-      - description: install pepr deps
+      - description: Install locked source tooling
         cmd: npm ci
       - task: remote:renovate
       - description: "Format check"
         cmd: npm run format:check
-      - description: Build the Pepr module for values lint
-        task: build-pepr
       - description: Lint packages that expose Zarf values
         task: values-lint
       - description: yaml lint
@@ -68,26 +66,10 @@ tasks:
               exit 1
             fi
           done
-  - name: install-pepr-deps
-    description: "Install Pepr dependencies"
+  - name: install-schema-tools
+    description: Install locked schema and test tooling
     actions:
-      - cmd: npm ci
-
-  - name: build-pepr
-    description: "Build the Pepr module required by values checks"
-    inputs:
-      package:
-        description: "Optional values-bearing package being checked"
-        default: ""
-    actions:
-      - description: Build the Pepr module when required
-        cmd: |
-          package="${{ .inputs.package }}"
-          if [ -z "$package" ] || [ "$package" = "base" ] || [ "$package" = "standard" ]; then
-            npx pepr build -z chart
-          else
-            echo "Skipping Pepr build for packages/${package}"
-          fi
+      - cmd: npm ci --ignore-scripts
 
   - name: values-generate
     description: "Regenerate each values-bearing package's zarf-values.schema.json from its package definition"
@@ -96,10 +78,7 @@ tasks:
         description: "Optional values-bearing package to regenerate"
         default: ""
     actions:
-      - task: install-pepr-deps
-      - task: build-pepr
-        with:
-          package: "${{ .inputs.package }}"
+      - task: install-schema-tools
       - description: "Regenerate each package's values schema"
         shell:
           darwin: bash
@@ -120,7 +99,7 @@ tasks:
             echo "Generating packages/${pkg}/zarf-values.schema.json"
             # Write to a temp file and move on success so a failed/flaky generate never truncates a committed schema.
             tmp=$(mktemp)
-            if ! uds zarf dev generate-schema "packages/${pkg}" --flavor upstream --delete-not-found > "$tmp"; then
+            if ! uds zarf dev generate-schema "packages/${pkg}" --flavor upstream --delete-not-found --set NATIVE_CONTROLLER_IMAGE=uds-core-controller:schema > "$tmp"; then
               rm -f "$tmp"
               echo "ERROR: values schema generation failed for packages/${pkg}"
               exit 1

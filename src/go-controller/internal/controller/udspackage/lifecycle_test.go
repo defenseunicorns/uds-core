@@ -97,3 +97,19 @@ func TestFinalizerRetriesRemovingAndRemovalFailed(t *testing.T) {
 		t.Fatal("RemovalFailed never retried")
 	}
 }
+
+func TestLegacyFinalizerCleanupPreservesUnrelatedOwners(t *testing.T) {
+	for _, markers := range [][]string{{legacyPackageFinalizer}, {legacyPackageFinalizer, packageFinalizer}} {
+		ctx := context.Background()
+		now := metav1.Now()
+		pkg := &udstypes.UDSPackage{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "apps", UID: "package", DeletionTimestamp: &now, Finalizers: append(markers, "other.example/cleanup")}}
+		ctrl, uds, _ := fixtureController(t, pkg, featureflags.Flags{})
+		if err := ctrl.handleFinalizer(ctx, pkg.DeepCopy()); err != nil {
+			t.Fatal(err)
+		}
+		got, err := uds.UdsV1alpha1().UDSPackages("apps").Get(ctx, "app", metav1.GetOptions{})
+		if err != nil || len(got.Finalizers) != 1 || got.Finalizers[0] != "other.example/cleanup" {
+			t.Fatal("legacy Package stalled or unrelated finalizer removed", got, err)
+		}
+	}
+}

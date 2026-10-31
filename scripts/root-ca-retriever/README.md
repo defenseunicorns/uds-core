@@ -34,4 +34,4 @@ npm run test
 
 - DoD certificates: `certs/dod/`
 - Public certificates: `certs/public/ca-bundle.pem`
-- ConfigMap: `src/pepr/uds-operator-config/templates/uds-ca-certs.yaml`
+- ConfigMap: `src/go-controller/assets/uds-operator-config/templates/uds-ca-certs.yaml`

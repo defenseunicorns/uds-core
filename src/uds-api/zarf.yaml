@@ -1,0 +1,33 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-api
+  description: Implementation-independent UDS Core API definitions
+components:
+  - name: uds-crds
+    required: true
+    charts:
+      - name: uds-cluster-crds
+        namespace: uds-system
+        version: 0.2.0
+        localPath: chart
+    actions:
+      onDeploy:
+        before:
+          - description: Preserve Core CRDs while moving their Helm ownership to the Core
+              namespace
+            cmd: "set -eu\nfor name in packages.uds.dev exemptions.uds.dev clusterconfig.uds.dev;\
+              \ do\n  state=$(./zarf tools kubectl get crd \"$name\" --ignore-not-found\
+              \ -o go-template='{{.metadata.uid}}|{{.metadata.resourceVersion}}|{{index\
+              \ .metadata.annotations \"meta.helm.sh/release-namespace\"}}|{{index .metadata.annotations\
+              \ \"meta.helm.sh/release-name\"}}')\n  [ -n \"$state\" ] || continue\n \
+              \ old_ifs=$IFS; IFS='|'; set -- $state; IFS=$old_ifs\n  [ \"$3\" = uds-system\
+              \ ] && continue\n  if [ \"$3\" != pepr-system ] || [ \"$4\" != uds-cluster-crds\
+              \ ]; then\n    echo \"Core CRD $name is owned by another release\" >&2;\
+              \ exit 1\n  fi\n  ./zarf tools kubectl patch crd \"$name\" --type=json -p\
+              \ \"[{\\\"op\\\":\\\"test\\\",\\\"path\\\":\\\"/metadata/uid\\\",\\\"value\\\
+              \":\\\"$1\\\"},{\\\"op\\\":\\\"test\\\",\\\"path\\\":\\\"/metadata/resourceVersion\\\
+              \",\\\"value\\\":\\\"$2\\\"},{\\\"op\\\":\\\"add\\\",\\\"path\\\":\\\"/metadata/annotations/meta.helm.sh~1release-namespace\\\
+              \",\\\"value\\\":\\\"uds-system\\\"}]\"\ndone"

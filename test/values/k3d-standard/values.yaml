@@ -13,18 +13,12 @@ global:
   domain: "uds.dev"
 
 # --- base: pepr (bundle pepr var defaults) ---
-pepr-uds-core:
-  module:
-    watcher:
-      resources:
-        requests:
-          memory: "256Mi"
-          cpu: "200m"
-    admission:
-      resources:
-        requests:
-          memory: "256Mi"
-          cpu: "200m"
+uds-controller:
+  uds-controller:
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "200m"
 
 # --- base: istio control plane (demo classification banners) ---
 istio-controlplane:

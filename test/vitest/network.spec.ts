@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import * as dgram from "node:dgram";
 import * as dns from "node:dns/promises";
 import * as k8s from "@kubernetes/client-node";
-import { K8s, kind } from "pepr";
+import { K8s, kind } from "../../src/uds-api";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { execInPod } from "./helpers/k8s";
 

@@ -98,7 +98,7 @@ Core pipelines include two types of testing. They provide faster feedback on som
 
 UDS Core maintains lightweight smoke tests for each application in the platform. These tests live under the `validate` task name in `src/<pkg>/tasks.yaml`. They typically check pod readiness, pod health, and basic endpoint behavior.
 
-The `validate` tasks also test the UDS Operator and Policies in `src/pepr`. These tests use Jest and live in the individual `*.spec.ts` files. Most tests use mocks, but the full suite requires a live cluster with Pepr webhooks deployed, specifically for the policy tests.
+The `validate` tasks check Core's Go controller and admission deployment. Go unit and differential tests live under `src/go-controller/`. The existing Vitest API and Playwright browser suites exercise the default installed Core, including policy mutation, rejection, exemptions, and resource lifecycle. The isolated pinned reference suite preserves the original TypeScript assertions without adding Pepr to the production build.
 
 ### Functionality tests
 

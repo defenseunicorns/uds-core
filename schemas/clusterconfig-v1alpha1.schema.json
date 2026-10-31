@@ -121,14 +121,14 @@
       "properties": {
         "kubeApiCIDR": {
           "type": "string",
-          "description": "CIDR range for your Kubernetes control plane nodes. This is a manual override that can be\nused instead of relying on Pepr to automatically watch and update the values"
+          "description": "CIDR range for your Kubernetes control plane nodes. This is a manual override that can be\nused instead of the operator automatically watching and updating the values"
         },
         "kubeNodeCIDRs": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "CIDR(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual\noverride instead of relying on watch"
+          "description": "CIDR(s) for all Kubernetes nodes (not just control plane). A manual override instead of\nautomatic node discovery"
         }
       },
       "required": [],

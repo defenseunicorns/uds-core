@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables:
@@ -14,4 +14,5 @@ variables:
 
   # Authservice config is managed by the operator in the base layer
   core-base:
+    UDS_CONTROLLER_REPLICAS: 2
     AUTHSERVICE_REDIS_URI: redis://authservice:authservice@host.k3d.internal:6379

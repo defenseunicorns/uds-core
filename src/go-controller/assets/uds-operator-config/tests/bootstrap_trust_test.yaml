@@ -1,0 +1,20 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+suite: Core mesh bootstrap trust
+templates:
+  - istio-bootstrap-trust.yaml
+tests:
+  - it: supplies Istiod's mount before the controller can run in the mesh
+    asserts:
+      - equal:
+          path: metadata.name
+          value: uds-trust-bundle
+      - equal:
+          path: metadata.namespace
+          value: istio-system
+      - equal:
+          path: data["extra.pem"]
+          value: ""
+      - equal:
+          path: metadata.labels["uds.dev/pod-reload"]
+          value: "true"

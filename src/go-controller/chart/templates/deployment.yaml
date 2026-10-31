@@ -13,7 +13,7 @@ metadata:
   labels:
     app: uds-controller
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app: uds-controller
@@ -21,42 +21,25 @@ spec:
     metadata:
       labels:
         app: uds-controller
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: uds-controller
       containers:
         - name: controller
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: {{ .Values.image.reference | default (printf "%s:%s" .Values.image.repository .Values.image.tag) | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - {{ printf "--kube-api-qps=%v" .Values.kubernetesAPI.qps | quote }}
             - {{ printf "--kube-api-burst=%v" .Values.kubernetesAPI.burst | quote }}
           env:
+            - name: UDS_LOG_LEVEL
+              value: {{ .Values.logLevel | quote }}
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            - name: UDS_CONTROLLER_MODE
-              value: "native"
-            - name: UDS_OPERATOR_NETWORK_POLICIES_ENABLED
-              value: "false"
-            - name: UDS_OPERATOR_AUTHORIZATION_POLICIES_ENABLED
-              value: "false"
-            - name: UDS_OPERATOR_ISTIO_INJECTION_ENABLED
-              value: "false"
-            - name: UDS_OPERATOR_ISTIO_INGRESS_ENABLED
-              value: "false"
-            - name: UDS_OPERATOR_ISTIO_EGRESS_ENABLED
-              value: "false"
-            - name: UDS_OPERATOR_SSO_ENABLED
-              value: "false"
-            - name: UDS_OPERATOR_POD_MONITORS_ENABLED
-              value: "false"
-            - name: UDS_OPERATOR_SERVICE_MONITORS_ENABLED
-              value: "false"
-            - name: UDS_OPERATOR_UPTIME_PROBES_ENABLED
-              value: "false"
-            - name: UDS_OPERATOR_CA_BUNDLE_ENABLED
-              value: "false"
           volumeMounts:
             - name: keycloak-identity
               mountPath: /var/run/secrets/keycloak

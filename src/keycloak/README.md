@@ -1,6 +1,6 @@
 ## Keycloak
 
-[Keycloak](https://www.keycloak.org/) is an open source IdAM stack written in Java. This Keycloak source package provides an implementation of Keycloak and is intended to be used in conjunction with the [UDS Identity Config](https://github.com/defenseunicorns/uds-identity-config) image and the [UDS Operator](../pepr/operator/README.md).
+[Keycloak](https://www.keycloak.org/) is an open source IdAM stack written in Java. This Keycloak source package provides an implementation of Keycloak and is intended to be used in conjunction with the [UDS Identity Config](https://github.com/defenseunicorns/uds-identity-config) image and the [UDS Operator](../go-controller/README.md).
 
 ### Changes from the DoD Platform One Big Bang package
 
@@ -9,7 +9,7 @@ This package differs from the [DoD Platform One Big Bang package](https://repo1.
 - No default admin user is created for any realm. In order to administer this instance, you must use `zarf connect keycloak` to establish the global admin account.
 - TLS termination is performed by Istio via the [OPTIONAL_MUTUAL TLS config](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings-TLSmode) to enable proper Istio traffic management and multi-point mTLS validation.
 - The Keycloak instance is configured to use the [UDS Identity Config](https://github.com/defenseunicorns/uds-identity-config) image, which is a custom image that contains all the customizations needed for UDS including the core custom Keycloak plugin, custom themes, realm initialization, and PKI trust store.
-- The [UDS Operator](../pepr/operator/README.md) is used to declaratively manage Keycloak clients without any global admin-level credentials stored in the cluster.
+- The [UDS Operator](../go-controller/README.md) is used to declaratively manage Keycloak clients without any global admin-level credentials stored in the cluster.
 - The [P1 Quarkus java plugin](https://repo1.dso.mil/big-bang/product/plugins/keycloak-p1-auth-plugin/-/tree/main/quarkus-ext-routing?ref_type=heads) has been replaced with Istio logic.
 - The [P1 Java plugin](https://repo1.dso.mil/big-bang/product/plugins/keycloak-p1-auth-plugin) group restrictions and yaml config have been removed and replaced with Istio logic.
 - The [unofficial helm chart](https://github.com/codecentric/helm-charts/tree/master/charts/keycloak) from German company Codecentric has been rewritten, simplified in this repo by Defense Unicorns.

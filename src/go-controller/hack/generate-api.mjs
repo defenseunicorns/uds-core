@@ -1,6 +1,6 @@
 // Copyright 2026 Defense Unicorns
 // SPDX-License-Identifier: LicenseRef-Defense-Unicorns-Commercial
-// Generate API source from the same CRD schemas used by the TypeScript operator.
+// Generate API source from the canonical implementation-neutral Core CRD schemas.
 // api-layout.json supplies stable public Go names; it contains no field schema.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -16,7 +16,7 @@ for (const [kind, file, plural, rootType, specType, statusType] of [
  ['Package', 'package', 'packages', 'UDSPackage', 'Spec', 'PackageStatus'],
  ['ClusterConfig', 'clusterconfig', 'clusterconfig', 'ClusterConfig', 'ClusterConfigSpec', 'ClusterConfigStatus'],
 ]) {
- const crd = yaml.load(fs.readFileSync(path.join(root, `src/pepr/uds-cluster-crds/templates/${plural}.uds.dev.yaml`), 'utf8'));
+ const crd = yaml.load(fs.readFileSync(path.join(root, `src/uds-api/chart/templates/${plural}.uds.dev.yaml`), 'utf8'));
  const schema = crd.spec.versions.find(v => v.name === 'v1alpha1').schema.openAPIV3Schema;
  const hints = layout[file];
  const structs = new Map(); const enums = new Map();

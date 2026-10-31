@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 {{- if .Capabilities.APIVersions.Has "security.istio.io/v1" }}
-{{- $adminApiAllowedPrincipals := concat (list "cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa") (.Values.adminApiAllowedPrincipals | default list) }}
+{{- $adminApiAllowedPrincipals := concat (list "cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa" "cluster.local/ns/uds-system/sa/uds-controller") (.Values.adminApiAllowedPrincipals | default list) }}
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
@@ -26,7 +26,6 @@ spec:
         - source:
             notNamespaces:
               - istio-admin-gateway
-              - "pepr-system"
             notPrincipals:
               {{- range $adminApiAllowedPrincipals }}
               - {{ . | quote }}

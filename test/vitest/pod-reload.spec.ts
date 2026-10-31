@@ -1,7 +1,7 @@
 /**
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
-import { K8s, kind } from "pepr";
+import { K8s, kind } from "../../src/uds-api";
 import { v4 as uuidv4 } from "uuid";
 import { afterAll, describe, expect, test } from "vitest";
 import { waitForPodReady } from "./helpers/k8s";

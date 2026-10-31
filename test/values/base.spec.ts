@@ -25,12 +25,10 @@ beforeAll(async () => {
     preRenderDomainScenarios(PKG),
     renderManifests(PKG, {
       values: {
-        "pepr-uds-core": {
-          module: {
-            admission: {
-              podLabels: { probe: "PROBE_VISIBLE_PEPR" },
-              image: "SHOULD_NOT_APPEAR",
-            },
+        "uds-controller": {
+          "uds-controller": {
+            podLabels: { probe: "PROBE_VISIBLE_CONTROLLER" },
+            image: { reference: "SHOULD_NOT_APPEAR" },
           },
         },
         "uds-operator-config": {
@@ -150,10 +148,10 @@ beforeAll(async () => {
 });
 
 describe("base package values", () => {
-  it("pepr deployment has probe label", () => {
-    const r = findResource(manifests, "Deployment", "pepr-uds-core", "pepr-system");
+  it("Core controller deployment has probe label", () => {
+    const r = findResource(manifests, "Deployment", "uds-controller", "uds-system");
     expect(resourceString(r, "spec", "template", "metadata", "labels", "probe")).toBe(
-      "PROBE_VISIBLE_PEPR",
+      "PROBE_VISIBLE_CONTROLLER",
     );
   });
 

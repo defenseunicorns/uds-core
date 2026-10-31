@@ -232,7 +232,7 @@ tasks:
           else
             echo "UDS Package CRD is not installed; skipping UDP test Package cleanup."
           fi
-      - description: Wait for Pepr to remove the shared UDP Gateway
+      - description: Wait for Core to remove the shared UDP Gateway
         cmd: |
           set -e
           if uds zarf tools kubectl get crd gateways.gateway.networking.k8s.io >/dev/null 2>&1; then

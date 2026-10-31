@@ -13,17 +13,17 @@ capabilities:
     - security.istio.io/v1
 
 tests:
-  - it: should keep the broad admin deny exemptions for Fleet, Pepr, and the admin gateway
+  - it: should keep the broad admin deny exemptions for Fleet, the Core controller, and the admin gateway
     asserts:
       - equal:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
           value:
             - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
+            - cluster.local/ns/uds-system/sa/uds-controller
       - equal:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notNamespaces'
           value:
             - istio-admin-gateway
-            - pepr-system
 
   - it: should keep configured principals exempt from the broad admin deny
     set:
@@ -34,6 +34,7 @@ tests:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
           value:
             - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
+            - cluster.local/ns/uds-system/sa/uds-controller
             - cluster.local/ns/argo/sa/workflow-service-account
       - notContains:
           path: 'spec.rules[?(@.from[0].source.principals[0]=="cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa")].from[0].source.principals'
@@ -49,6 +50,7 @@ tests:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
           value:
             - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
+            - cluster.local/ns/uds-system/sa/uds-controller
             - cluster.local/ns/argo/sa/workflow-service-account
             - cluster.local/ns/ci-tooling/sa/realm-sync
 
@@ -83,6 +85,7 @@ tests:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
           value:
             - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
+            - cluster.local/ns/uds-system/sa/uds-controller
             - "*/ns/argo/sa/workflow-service-account"
             - cluster.local/ns/argo/sa/*
 
@@ -123,4 +126,3 @@ tests:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notNamespaces'
           value:
             - istio-admin-gateway
-            - pepr-system

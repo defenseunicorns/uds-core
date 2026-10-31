@@ -4,7 +4,7 @@
  */
 
 import * as k8s from "@kubernetes/client-node";
-import { K8s, kind } from "kubernetes-fluent-client";
+import { K8s, kind } from "../../../src/uds-api";
 import * as net from "net";
 
 const kc = new k8s.KubeConfig();

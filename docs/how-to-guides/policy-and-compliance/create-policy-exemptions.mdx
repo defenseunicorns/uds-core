@@ -19,7 +19,7 @@ You'll create a UDS `Exemption` CR to allow a workload to bypass specific UDS po
 
 ## Before you begin
 
-UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce policies on every resource submitted to the cluster. When a workload legitimately requires behavior that policy blocks (for example, a privileged DaemonSet for node-level monitoring), you can create an `Exemption` CR to bypass specific policies for targeted resources.
+UDS Core uses Kubernetes CEL policies and Go admission handlers to enforce workload policies before resources are persisted. When a workload legitimately requires behavior that policy blocks (for example, a privileged DaemonSet for node-level monitoring), you can create an `Exemption` CR to bypass specific policies for targeted resources.
 
 > [!NOTE]
 > Before creating an exemption, confirm the violation can't be resolved by adjusting your workload configuration. See the [Policy Violations](/operations/troubleshooting-and-runbooks/policy-violations/) runbook for common fixes.

@@ -1,7 +1,7 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- if .Values.admission.register }}
+{{- if eq (include "uds.admission.register" .) "true" }}
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
@@ -44,7 +44,7 @@ webhooks:
     matchConditions:
       - name: authenticated-controller-recovery
         expression: {{ include "uds.admission.bootstrapCallback" . | quote }}
-      {{- if .Values.nativeAdmission.narrowCallbacks }}
+      {{- if eq (include "uds.native.narrow" .) "true" }}
       - name: native-requires-go
         expression: {{ include "uds.admission.nativeValidateCallback" . | quote }}
       {{- end }}
@@ -86,7 +86,7 @@ webhooks:
     matchConditions:
       - name: authenticated-controller-recovery
         expression: {{ include "uds.admission.bootstrapCallback" . | quote }}
-      {{- if .Values.nativeAdmission.narrowCallbacks }}
+      {{- if eq (include "uds.native.narrow" .) "true" }}
       - name: native-requires-go
         expression: {{ include "uds.admission.nativeValidateCallback" . | quote }}
       {{- end }}

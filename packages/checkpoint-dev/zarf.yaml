@@ -123,19 +123,12 @@ components:
                 name: app.kubernetes.io/name=keycloak
                 namespace: keycloak
                 condition: Ready
-          - description: Pepr Admission to be Healthy
+          - description: Core controller to be healthy
             wait:
               cluster:
                 kind: Pod
-                name: app=pepr-uds-core
-                namespace: pepr-system
-                condition: Ready
-          - description: Pepr Watcher to be Healthy
-            wait:
-              cluster:
-                kind: Pod
-                name: app=pepr-uds-core-watcher
-                namespace: pepr-system
+                name: app=uds-controller
+                namespace: uds-system
                 condition: Ready
         onSuccess:
           - cmd: rm -f uds-checkpoint.tar busybox.tar

@@ -12,4 +12,4 @@ for (const pattern of patterns) {
   try { expression = new RegExp(pattern); } catch (error) { cases.push({ pattern, valid:false, error:error.message }); continue; }
   for (const name of names) cases.push({ pattern, valid:true, name, matched:expression.test(name), kubernetesName:/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/.test(name) });
 }
-writeFileSync("src/go-controller/internal/admission/exemptions/testdata/javascript-regex-parity.json", JSON.stringify({ sourceRevision:"c15677633cffa17e99656a7d7ccd1f98d7cb6e4d", runtime:process.version, cases },null,2)+"\n");
+writeFileSync("src/go-controller/internal/admission/exemptions/testdata/javascript-regex-parity.json", JSON.stringify({ sourceRevision:"129d6e4a1928ce2b10ba6c5c8b5a0e7350f4053c", runtime:process.version, cases },null,2)+"\n");

@@ -8,6 +8,7 @@ hk = "2.9.0"
 jq = "1.8.2"
 k3d = "5.9.0"
 node = "26.13.0"
+go = "1.27.3"
 opentofu = "1.13.2"
 
 # renovate: datasource=pypi depName=codespell versioning=pep440

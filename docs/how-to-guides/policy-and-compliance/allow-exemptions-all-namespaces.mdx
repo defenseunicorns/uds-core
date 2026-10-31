@@ -78,8 +78,8 @@ Confirm the exemption was created and processed:
 # Verify the `Exemption` CR exists in the application namespace
 uds zarf tools kubectl get exemptions -n my-app
 
-# Check Pepr logs for processing
-uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core --tail=50 | grep "Processing exemption"
+# Check Core controller logs for processing
+uds zarf tools kubectl logs -n uds-system deploy/uds-controller --tail=50
 ```
 
 Clean up the test exemption:

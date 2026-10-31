@@ -21,7 +21,7 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-  globalIgnores(["**/node_modules", "**/dist", "**/uds-docs/"]),
+  globalIgnores(["**/node_modules", "**/dist", "**/uds-docs/", "src/go-controller/native-admission/reference/**"]),
   {
     extends: compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
 

@@ -126,7 +126,7 @@ Depending on the scope and focus of your changes you may find other specific typ
 
 Each individual component of UDS Core contains lightweight validations in its own `src/<component>/tasks.yaml` file. These validations focus on the bare minimum functionality, typically covering pod health and endpoint accessibility.
 
-Unit test files are placed next to the source code they are testing and are used for Pepr code (under `src/pepr/`). These tests should be designed to run without requiring a running cluster.
+Go unit tests live next to the controller code under `src/go-controller/` and run with `go test -race ./...`. The pinned pre-replacement TypeScript suite runs as an isolated compatibility oracle through `src/go-controller/hack/reference-tests.py`; it is not a Core build or runtime dependency. Integration suites exercise the default Core installation.
 
 We also place end-to-end tests under the `e2e` folder. In particular we use [Playwright](https://playwright.dev/) for browser based testing and have authentication setup to login to applications with a shared SSO session. We also use [Vitest](https://vitest.dev/) for some lower level API and Kubernetes based testing.
 

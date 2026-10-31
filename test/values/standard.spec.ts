@@ -61,8 +61,8 @@ beforeAll(async () => {
 });
 
 describe("standard package values", () => {
-  it("pepr deployment has expected memory request", () => {
-    const r = findResource(manifests, "Deployment", "pepr-uds-core", "pepr-system");
+  it("Core controller deployment has expected memory request", () => {
+    const r = findResource(manifests, "Deployment", "uds-controller", "uds-system");
     expect(
       resourceString(
         r,

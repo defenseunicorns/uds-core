@@ -25,7 +25,7 @@ func TestJavaScriptRegexDifferential(t *testing.T) {
 	if err := json.Unmarshal(raw, &fixture); err != nil {
 		t.Fatal(err)
 	}
-	if fixture.SourceRevision != "c15677633cffa17e99656a7d7ccd1f98d7cb6e4d" || len(fixture.Cases) != 1008 {
+	if fixture.SourceRevision != "129d6e4a1928ce2b10ba6c5c8b5a0e7350f4053c" || len(fixture.Cases) != 1008 {
 		t.Fatal("missing pinned differential corpus")
 	}
 	for _, test := range fixture.Cases {

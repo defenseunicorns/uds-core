@@ -27,7 +27,7 @@ func TestPinnedExemptionNameSelection(t *testing.T) {
 	if err := json.Unmarshal(raw, &fixture); err != nil {
 		t.Fatal(err)
 	}
-	if fixture.SourceRevision != "c15677633cffa17e99656a7d7ccd1f98d7cb6e4d" || len(fixture.Cases) != 21 {
+	if fixture.SourceRevision != "129d6e4a1928ce2b10ba6c5c8b5a0e7350f4053c" || len(fixture.Cases) != 21 {
 		t.Fatal("incomplete pinned name selection corpus")
 	}
 	var manifest struct {

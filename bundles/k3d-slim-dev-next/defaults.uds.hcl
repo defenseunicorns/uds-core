@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables = {
-  pepr_watcher_memory_request   = "64Mi"
-  pepr_admission_memory_request = "64Mi"
-  pepr_watcher_cpu_request      = "100m"
-  pepr_admission_cpu_request    = "100m"
+  uds_controller_replicas = "1"
+  uds_controller_memory_request = "256Mi"
+  uds_controller_cpu_request = "200m"
 
   istiod_memory_request = "1024Mi"
   istiod_cpu_request    = "100m"

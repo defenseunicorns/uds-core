@@ -11,10 +11,11 @@ import (
 	"slices"
 )
 
-const packageFinalizer = "pepr.dev/finalizer"
+const packageFinalizer = "uds.dev/finalizer"
+const legacyPackageFinalizer = "pepr.dev/finalizer"
 
-// The historical marker remains compatible with existing Packages. Persist it
-// before creating external identity clients or other non-GC resources.
+// Persist Core ownership before creating external side effects. Legacy markers
+// are also honored during deletion so existing Packages need no application migration.
 func (c *PackageController) ensureFinalizer(ctx context.Context, pkg *udsv1alpha1.UDSPackage) error {
 	if slices.Contains(pkg.Finalizers, packageFinalizer) {
 		return nil

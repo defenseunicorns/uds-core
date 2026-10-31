@@ -14,7 +14,7 @@ on:
     paths:
       - "certs/**"
       - "scripts/root-ca-retriever/**"
-      - "src/pepr/uds-operator-config/templates/uds-ca-certs.yaml"
+      - "src/go-controller/assets/uds-operator-config/templates/uds-ca-certs.yaml"
       - ".github/workflows/check-ca-certs.yaml"
 
 permissions:

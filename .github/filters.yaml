@@ -1,14 +1,15 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 crds:
   - "packages/crds/**"
-  - "src/pepr/uds-cluster-crds/**"
+  - "src/uds-api/chart/**"
 
 base:
   - "packages/base/**"
   - "src/istio/**"
-  - "src/pepr/**"
+  - "src/go-controller/**"
+  - "src/uds-api/**"
   - "bundles/base-shim/**"
 
 identity-authorization:

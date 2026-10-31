@@ -38,3 +38,16 @@ func TestBlackboxModulesAreOwnedPerPackage(t *testing.T) {
 		t.Fatalf("one Package erased another's probe module: %v", modules)
 	}
 }
+
+func TestPackageWithoutUptimeDoesNotRequireMonitoringInstallation(t *testing.T) {
+	client := fake.NewClientset()
+	pkg := &udstypes.UDSPackage{ObjectMeta: metav1.ObjectMeta{Name: "controller", Namespace: "uds-system", UID: "controller"}}
+	if err := updateBlackboxConfig(context.Background(), client, pkg, map[string]string{}); err != nil {
+		t.Fatal(err)
+	}
+	for _, action := range client.Actions() {
+		if action.GetVerb() != "get" {
+			t.Fatalf("empty uptime configuration changed global monitoring state: %s", action.GetVerb())
+		}
+	}
+}

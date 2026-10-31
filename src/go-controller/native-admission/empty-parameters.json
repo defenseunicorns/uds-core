@@ -3,7 +3,10 @@
   "kind": "AdmissionParameters",
   "metadata": {
     "name": "uds-native-grants",
-    "namespace": "uds-policy-exemptions"
+    "namespace": "uds-policy-exemptions",
+    "annotations": {
+      "helm.sh/resource-policy": "keep"
+    }
   },
   "spec": {
     "nativeMatchers": [],

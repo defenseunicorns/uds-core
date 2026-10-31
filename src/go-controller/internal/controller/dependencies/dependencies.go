@@ -109,8 +109,8 @@ func (c *Controller) Refresh() {
 	nodes := c.factory.Core().V1().Nodes().Informer().GetStore().List()
 	slices := c.factory.Discovery().V1().EndpointSlices().Informer().GetStore().List()
 	service, _, _ := c.factory.Core().V1().Services().Informer().GetStore().GetByKey("default/kubernetes")
-	operator, _, _ := c.factory.Core().V1().Secrets().Informer().GetStore().GetByKey("pepr-system/uds-operator-config")
-	certs, _, _ := c.factory.Core().V1().ConfigMaps().Informer().GetStore().GetByKey("pepr-system/uds-ca-certs")
+	operator, _, _ := c.factory.Core().V1().Secrets().Informer().GetStore().GetByKey("uds-system/uds-operator-config")
+	certs, _, _ := c.factory.Core().V1().ConfigMaps().Informer().GetStore().GetByKey("uds-system/uds-ca-certs")
 	config.Update(func(cfg *config.Config) {
 		cfg.DiscoveredNodeCIDRs = NodeCIDRs(nodes)
 		cfg.DiscoveredAPICIDRs = EndpointCIDRs(slices)

@@ -1,10 +1,10 @@
-# Native admission for the development fork
+# Core native admission
 
-This profile replaces Core's TypeScript admission authority with Kubernetes native policies and the Go webhook. Its policy, diagnostic and regex fixtures retain the Core 1.14 reference `c15677633cffa17e99656a7d7ccd1f98d7cb6e4d`. Package validation follows the current Core 1.16 source at `129d6e4a1928ce2b10ba6c5c8b5a0e7350f4053c`, including immutable deletion specifications and generated probe-client reservations. The native profile requires Kubernetes 1.37 or newer and the complete Go webhook.
+Core uses Kubernetes native policies and the Go webhook for admission. Its policy, diagnostic, resource, waypoint, name, regex, and Package differential fixtures follow Core 1.16 at `129d6e4a1928ce2b10ba6c5c8b5a0e7350f4053c`, including immutable deletion specifications and generated probe-client reservations. Core requires Kubernetes 1.36 or newer and the complete Go webhook.
 
 ## Admission ownership
 
-Kubernetes evaluates the ordinary Pod and Service checks, safe defaults, exemption markers, common diagnostic arrays, Prometheus monitor defaults, Probe isolation, and simple custom resource constraints. Go evaluates trusted Istio image and container classification, JavaScript numeric label semantics, arbitrary diagnostic JSON arrays, JavaScript-only exemption patterns, and advanced `Package`, `Exemption`, and `ClusterConfig` validation. Broad registration runs the complete Go policy fallback during initial qualification. Qualified narrow registration avoids ordinary Pod and Service callbacks while each selected Go request still receives every applicable policy check.
+Kubernetes evaluates the ordinary Pod and Service checks, safe defaults, exemption markers, common diagnostic arrays, Prometheus monitor defaults, Probe isolation, and simple custom resource constraints. Go evaluates trusted Istio image and container classification, JavaScript numeric label semantics, arbitrary diagnostic JSON arrays, JavaScript-only exemption patterns, and advanced `Package`, `Exemption`, and `ClusterConfig` validation. The standard deployment uses narrow registration, avoiding ordinary Pod and Service callbacks while each selected Go request still receives every applicable policy check. Broad registration remains an internal qualification tool.
 
 Both engines derive exemption authority from the protected `Exemption` resources. An annotation or label never grants permission to bypass a policy. Mutation markers report the granted exemption; both engines remove stale markers when they can resolve the policy's current authority.
 
@@ -12,7 +12,7 @@ The source SDK excludes `kube-system`, `pepr-system`, and `zarf` from ordinary p
 
 ## Callback routing
 
-Set `nativeAdmission.narrowCallbacks: true` only after you qualify the native definitions, exact bindings, and actual fallback canaries. The chart defaults this field to `false` and rejects it when `nativeAdmission.enabled` is false. During activation, retain broad Go callbacks while you install native policies and bindings. Narrow the callbacks only after the native routing contract passes actual API checks. During rollback, restore broad callbacks before removing native authority.
+The standard chart enables native admission and narrow Go callbacks. Core's internal bootstrap phase starts reconciliation before callback registration, waits for the compiled authority, then installs and verifies the complete native contract. Application packages do not configure these phases or select an operator.
 
 The routing annotation `policy.uds.dev/native-fallback` requests complete Go mutation and validation. It cannot grant an exemption. Native mutation writes the current protected snapshot revision when the resource namespace has a JavaScript-only policy scope or the Pod's diagnostic JSON requires Go parsing. Both Go callback match conditions select any nonempty routing value, including a forged or stale value. Native validation delegates a legacy policy only when that annotation equals the current protected revision. Missing or stale routing cannot authorize delegation; both engines continue to resolve grants from protected resources.
 
@@ -67,7 +67,7 @@ Each replica validates the key pair, CA chain, expiration, and serving hostname.
 
 During rotation, the manager records the previous authority in the shared Secret's rotation metadata and publishes both old and new trust. It waits five seconds for trust propagation before switching its serving leaf. Existing replicas retain their valid old leaf during that interval; newly started replicas wait before joining the Service. After one minute, the manager removes the previous root. Invalid key pairs, roots, or hostnames make readiness fail and prevent successful TLS handshakes. The serving context also fences responses during shutdown.
 
-Cold bootstrap uses `admission.register: false` and `nativeAdmission.enabled: false`. That phase creates the serving identity, backend, parameter CRD, and mandatory recovery policies. Reconciliation already runs in full native ownership mode; only callback registration and parameterized native admission remain disabled. Activate both fields only after serving readiness, a valid compiled snapshot with a non-bootstrap revision, and identity readiness. The chart rejects native activation when remote registration is disabled. During an existing-cluster transition, stop and drain the Pepr watcher before starting Go reconciliation. Retain complete Pepr admission until complete Go registration succeeds, then retire only the replaced callbacks.
+Core's package manages bootstrap and activation internally. The backend starts before admission registration, with mandatory recovery policies already installed. The installer waits for serving readiness and a valid compiler-owned snapshot, then registers complete Go callbacks and activates native admission. It verifies the actual native and Go contracts plus admission canaries before retiring the previous Core callbacks. The previous watcher is fully drained before Go reconciliation begins.
 
 ## Rendering and qualification
 
@@ -81,6 +81,6 @@ The API qualification must verify CEL types and actual mutation behavior. Mutati
 
 Use these source contracts and manifests when checking admission behavior:
 
-- [Core policies](../../pepr/policies/) describes the pinned reference implementations.
-- [Custom resource validators](../../pepr/operator/crd/validators/) defines the advanced validation contracts.
+- [Policy contract](policies.json) defines the deployed native checks.
+- [Go resource validators](../internal/admission/resources/) defines the advanced validation contracts.
 - [Controller chart](../chart/) contains the complete webhook routing and mandatory recovery policies.

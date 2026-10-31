@@ -1,11 +1,157 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 kind: ZarfPackageConfig
 metadata:
-  name: uds-core-controller
-  version: 0.1.0-native-dev
-  description: Native Go backend bootstrap; requires explicitly qualified native admission activation
+  name: uds-core-operator
+  description: UDS Core controller and native Kubernetes admission
+variables:
+  - name: DOMAIN
+    description: Cluster domain
+    default: uds.dev
+  - name: ADMIN_DOMAIN
+    description: Domain for admin services, defaults to `admin.DOMAIN`
+  - name: CA_BUNDLE_CERTS
+    description: Base64 encoded CA certs (bundle) in PEM format that UDS Core will inherently
+      trust. At a minimum this must at least include your Domain CA Cert if using Private
+      PKI for your UDS Core Deployment
+    default: ""
+  - name: CA_BUNDLE_INCLUDE_DOD_CERTS
+    description: Whether to include DoD root and intermediate certificates in the cluster
+      CA bundle
+    default: "false"
+  - name: CA_BUNDLE_INCLUDE_PUBLIC_CERTS
+    description: Whether to include public root and intermediate certificates in the
+      cluster CA bundle
+    default: "false"
+  - name: UDS_LOG_LEVEL
+    description: UDS Operator log level
+    default: debug
+  - name: AUTHSERVICE_REDIS_URI
+    description: UDS Authservice Redis URI
+    default: ""
+  - name: ALLOW_ALL_NS_EXEMPTIONS
+    description: Whether to allow exemptions to be created in all namespaces
+    default: "false"
+  - name: UDS_CONTROLLER_IMAGE
+    description: Core-internal controller image resolved by the source build
+    default: "###ZARF_PKG_TMPL_NATIVE_CONTROLLER_IMAGE###"
+  - name: UDS_CORE_TRANSITION_DIR
+    description: Core installer internal temporary directory
+    default: ""
+values:
+  files:
+    - zarf-values.yaml
 components:
+  - name: uds-core-tools
+    required: true
+    actions:
+      onDeploy:
+        before:
+          - cmd: mktemp -d "${TMPDIR:-/tmp}/uds-core-transition.XXXXXXXX"
+            setVariables:
+              - name: UDS_CORE_TRANSITION_DIR
+        after:
+          - description: Capture the exact installer Kubernetes context for internal transition
+              checks
+            cmd: 'umask 077
+
+              ./zarf tools kubectl config view --raw --flatten --minify > "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/kubeconfig"'
+          - description: Require native admission APIs before changing existing Core ownership
+            cmd: '"###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run" preflight'
+    files:
+      - source: ../../build/controller-tools/linux-amd64
+        target: "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/linux-amd64"
+        executable: true
+      - source: ../../build/controller-tools/linux-arm64
+        target: "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/linux-arm64"
+        executable: true
+      - source: ../../build/controller-tools/darwin-amd64
+        target: "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/darwin-amd64"
+        executable: true
+      - source: ../../build/controller-tools/darwin-arm64
+        target: "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/darwin-arm64"
+        executable: true
+      - source: hack/run-transition.sh
+        target: "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run"
+        executable: true
+      - source: ../../build/controller-tools/admission-contract.json
+        target: "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/admission-contract.json"
+  - name: uds-operator-config
+    required: true
+    charts:
+      - name: uds-operator-config
+        namespace: uds-system
+        version: 0.1.0
+        localPath: assets/uds-operator-config
+        templatedValuesFiles:
+          - assets/uds-operator-config/values.yaml
+        values:
+          - sourcePath: .uds-operator-config.uds-operator-config
+            targetPath: .
+    actions:
+      onDeploy:
+        before:
+          - description: Preserve existing ClusterConfig ownership during the Core namespace
+              transition
+            maxTotalSeconds: 300
+            cmd: '"###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run" api'
+          - description: Create the mesh namespace before its bootstrap trust mount
+            cmd: "./zarf tools kubectl create namespace istio-system --dry-run=client
+              -o yaml | ./zarf tools kubectl apply -f -
+
+              ./zarf tools kubectl create namespace monitoring --dry-run=client -o yaml
+              | ./zarf tools kubectl apply -f -"
+  - name: uds-exemptions
+    required: true
+    charts:
+      - name: uds-exemptions
+        namespace: uds-policy-exemptions
+        version: 0.1.0
+        localPath: assets/uds-exemptions
+        valuesFiles:
+          - assets/uds-exemptions/values.yaml
+        values:
+          - sourcePath: .uds-exemptions.uds-exemptions
+            targetPath: .
+  - name: uds-controller-bootstrap
+    required: true
+    charts:
+      - name: uds-controller
+        releaseName: uds-controller
+        namespace: uds-system
+        version: 0.1.0
+        localPath: chart
+        valuesFiles:
+          - packaging-bootstrap.yaml
+        values:
+          - sourcePath: .uds-controller.uds-controller
+            targetPath: .
+            excludePaths:
+              - .uds-controller.uds-controller.image
+              - .uds-controller.uds-controller.admission
+              - .uds-controller.uds-controller.nativeAdmission
+        variables:
+          - name: UDS_CONTROLLER_IMAGE
+            path: image.reference
+          - name: UDS_LOG_LEVEL
+            path: logLevel
+    images:
+      - "###ZARF_PKG_TMPL_NATIVE_CONTROLLER_IMAGE###"
+    actions:
+      onDeploy:
+        before:
+          - description: Drain the previous Core writer before Go reconciliation starts
+            maxTotalSeconds: 300
+            cmd: '"###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run" drain'
+        after:
+          - description: Wait for Core controller caches and serving identity
+            maxTotalSeconds: 180
+            cmd: ./zarf tools kubectl -n uds-system rollout status deployment/uds-controller
+              --timeout=150s
+          - description: Wait for the compiler-owned admission snapshot
+            maxTotalSeconds: 300
+            cmd: '"###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run" snapshot'
   - name: uds-controller
     required: true
     charts:
@@ -19,19 +165,25 @@ components:
         values:
           - sourcePath: .uds-controller.uds-controller
             targetPath: .
+            excludePaths:
+              - .uds-controller.uds-controller.image
+              - .uds-controller.uds-controller.admission
+              - .uds-controller.uds-controller.nativeAdmission
+        variables:
+          - name: UDS_CONTROLLER_IMAGE
+            path: image.reference
+          - name: UDS_LOG_LEVEL
+            path: logLevel
     images:
       - "###ZARF_PKG_TMPL_NATIVE_CONTROLLER_IMAGE###"
     actions:
       onDeploy:
-        before:
-          - description: Require functioning Istio before ambient controller startup
-            maxTotalSeconds: 300
-            cmd: |
-              set -eu
-              ./zarf tools kubectl -n istio-system rollout status deployment/istiod --timeout=120s
-              ./zarf tools kubectl -n istio-system rollout status daemonset/istio-cni-node --timeout=120s
-              ./zarf tools kubectl -n istio-system rollout status daemonset/ztunnel --timeout=120s
         after:
-          - description: Require backend readiness before registration
-            maxTotalSeconds: 120
-            cmd: ./zarf tools kubectl -n uds-system rollout status deployment/uds-controller --timeout=120s
+          - description: Verify the deployed CEL contract and actual API canaries
+            maxTotalSeconds: 300
+            cmd: '"###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run" verify'
+          - description: Retire only the replaced Core Pepr module
+            maxTotalSeconds: 300
+            cmd: '"###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run" retire'
+          - description: Remove the private Core installer tools
+            cmd: test -n "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###" && rm -rf -- "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###"

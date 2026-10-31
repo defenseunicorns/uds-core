@@ -11,14 +11,14 @@ import { Steps } from '@astrojs/starlight/components';
 
 Use this runbook when:
 
-- A pod is rejected by an admission webhook with a Pepr denial message
+- A pod is rejected by a UDS admission policy or webhook
 - A workload's security context or configuration was unexpectedly modified after deployment
 - A Deployment, DaemonSet, or StatefulSet shows 0 available replicas with no obvious pod-level errors
 
 **Example error:**
 
 ```plaintext
-admission webhook "pepr-uds-core.pepr.dev" denied the request: Privilege escalation is disallowed. Authorized: [allowPrivilegeEscalation = false | privileged = false] Found: {"name":"test","ctx":{"capabilities":{"drop":["ALL"]},"privileged":true}}
+ValidatingAdmissionPolicy 'uds-native-pod-profile' with binding 'uds-native-pod-profile' denied request: Privilege escalation is disallowed.
 ```
 
 > [!NOTE]
@@ -26,7 +26,7 @@ admission webhook "pepr-uds-core.pepr.dev" denied the request: Privilege escalat
 
 ## Overview
 
-UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce two types of policies on every resource submitted to the cluster:
+UDS Core uses Kubernetes CEL admission policies and Go admission handlers to enforce two types of policies on every resource submitted to the cluster:
 
 1. **Mutations:** run first and silently correct common misconfigurations. Your workloads may be adjusted without any error.
 2. **Validations:** run after mutations and reject resources that cannot be automatically corrected, returning a clear error message.
@@ -37,13 +37,7 @@ UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce two types of policies on
 
 1. **Check for a validation denial**
 
-   Stream denial events to see if your workload is being rejected:
-
-   ```bash
-   uds monitor pepr denied -f
-   ```
-
-   If denials aren't streaming in real time, you can also check controller events directly. Denials appear on the owning controller, not the pod itself:
+   Check Kubernetes controller events. Denials appear on the owning controller, not the pod itself:
 
    ```bash
    # For Deployments, check the ReplicaSet
@@ -55,14 +49,14 @@ UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce two types of policies on
    uds zarf tools kubectl describe statefulset -n <namespace> <name>
    ```
 
-   **What to look for:** denial events in the monitor output, or admission webhook denial messages in the controller Events section. If found, skip to [Cause 1: Validation rejected your resource](#cause-1-validation-rejected-your-resource).
+   **What to look for:** policy or webhook denial messages in the controller Events section. If found, skip to [Cause 1: Validation rejected your resource](#cause-1-validation-rejected-your-resource).
 
 2. **Check whether a mutation adjusted your workload**
 
-   If there's no denial but your workload behaves unexpectedly, check for mutation events:
+   If there's no denial but your workload behaves unexpectedly, inspect its admission annotations:
 
    ```bash
-   uds monitor pepr mutated -f
+   uds zarf tools kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.metadata.annotations}'
    ```
 
    You can also compare the running pod's security context against your original spec:
@@ -71,10 +65,9 @@ UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce two types of policies on
    uds zarf tools kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.containers[0].securityContext}'
    ```
 
-   **What to look for:** mutation events for your workload in the monitor output, or security context values that differ from your spec. If found, skip to [Cause 2: Mutation adjusted your workload](#cause-2-mutation-adjusted-your-workload).
+   **What to look for:** the `policy.uds.dev/native-mutation-revision` annotation, the compatible `uds-core.pepr.dev/mutated` diagnostic annotation, and security context values that differ from your spec. If found, skip to [Cause 2: Mutation adjusted your workload](#cause-2-mutation-adjusted-your-workload).
 
-   > [!TIP]
-   > Use `uds monitor pepr policies -f` to see all policy events (allow, deny, mutate) in a single stream, or run `uds monitor pepr --help` for all available filters.
+
 
 </Steps>
 
@@ -152,7 +145,7 @@ uds zarf tools kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.con
 
 **Success indicators:**
 - All pods are `Running` and `Ready`
-- No denial events in `uds monitor pepr denied -f` output
+- No new admission denial events on the owning controller
 - Security context fields match expected values
 
 ## Additional help

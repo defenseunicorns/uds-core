@@ -22,7 +22,7 @@ tasks:
   - name: base
     description: "Build and test the base layer"
     actions:
-      - task: create:pepr-build
+      - task: create:controller-build
       - task: setup:k3d-test-cluster
       - cmd: ./uds run -f tasks/test.yaml single-layer --set FLAVOR=${FLAVOR} --set=layer=base
 
@@ -64,13 +64,12 @@ tasks:
       validate_passthrough:
         description: Whether to validate the passthrough gateway.
         default: "true"
-    # Validate deployed standard components. Standalone replacement runtimes
-    # have dedicated workflows and are not installed by this profile.
+    # Validate the components installed by the standard Core distribution.
     actions:
       - cmd: |
           for package in $(ls src); do
             case "$package" in
-              go-controller|dev-identity) continue ;;
+              uds-api|dev-identity) continue ;;
             esac
             if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
               if [ ${package} = "istio" ]; then
@@ -164,7 +163,6 @@ tasks:
     actions:
       - cmd: |
           npm ci
-          npx pepr build -z chart
           npx vitest run test/values/ --hookTimeout=350000
 
   - name: uds-core

@@ -1,0 +1,29 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+operator:
+  AUTHSERVICE_REDIS_URI: "{{.Variables.AUTHSERVICE_REDIS_URI}}"
+  KEYCLOAK_CLIENT_MODE: "CLIENT_SECRET"
+  # When true, the UDS Operator admits SSO clients with publicClient: true that
+  # use flows beyond device flow (PKCE S256 is required). Defaults to false so
+  # public clients other than device-flow-only are rejected at admission.
+  ALLOW_PUBLIC_CLIENTS: false
+
+cluster:
+  attributes:
+    clusterName: ""
+    clusterTags: []
+  caBundle:
+    certs: "{{.Variables.CA_BUNDLE_CERTS}}"
+    includeDoDCerts: "{{.Variables.CA_BUNDLE_INCLUDE_DOD_CERTS}}"
+    includePublicCerts: "{{.Variables.CA_BUNDLE_INCLUDE_PUBLIC_CERTS}}"
+  expose:
+    # Domain configuration (admin defaults to `admin.UDS_DOMAIN`)
+    # Explicit values take precedence, then package variables, then admin.<domain>.
+    domain: "{{default .Variables.DOMAIN .Values.global.domain}}"
+    adminDomain: '{{default (default (printf "admin.%s" (default .Variables.DOMAIN .Values.global.domain)) .Variables.ADMIN_DOMAIN) .Values.global.adminDomain}}'
+  policy:
+    allowAllNsExemptions: "{{.Variables.ALLOW_ALL_NS_EXEMPTIONS}}"
+  networking:
+    kubeApiCIDR: ""
+    kubeNodeCIDRs: []
