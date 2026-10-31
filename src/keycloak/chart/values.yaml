@@ -468,7 +468,7 @@ env: []
 migrations:
   # Deletes the generated truststore to enable recreating it by Keycloak
   deleteGeneratedTrustStore: false
-  # Runs a privileged init container during `helm upgrade` to chown persistent volumes
+  # Runs an upgrade-only CHOWN init container to migrate volumes to the configured runtime identity
   upgradePermissions: false
 
 # Third-party integration settings, such as L7 Load Balancer support
