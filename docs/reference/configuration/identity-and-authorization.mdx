@@ -31,7 +31,7 @@ The `nativeIdentity` Helm values select an optional password-only Go and Dex pro
 | `nativeIdentity.controllerNamespace`, `nativeIdentity.controllerServiceAccount` | string | `pepr-system`, `pepr-uds-core` | Authorize the original Pepr account for scoped management. |
 | `nativeIdentity.coreAudiencePairsEnabled` | boolean | `false` | Require an additional verified provenance producer before cross-client CLI pairing. The original Pepr profile rejects enablement. |
 
-Reference the [development identity guide](../../dev/development-identity.md) for complete inputs, image builds, state persistence, and qualification limits. Fleet uses the existing `realmInitEnv.FLEET_CLIENT_ENABLED` opt-in; namespace recreation requires restoring its scoped identity Role and RoleBinding. Historical combined-provider test results do not qualify this standalone split.
+Reference the [development identity guide](https://github.com/defenseunicorns/uds-core/blob/main/docs/dev/development-identity.md) for complete inputs, image builds, state persistence, and qualification limits. Fleet uses the existing `realmInitEnv.FLEET_CLIENT_ENABLED` opt-in; namespace recreation requires restoring its scoped identity Role and RoleBinding. Historical combined-provider test results do not qualify this standalone split.
 
 ## Realm initialization variables
 

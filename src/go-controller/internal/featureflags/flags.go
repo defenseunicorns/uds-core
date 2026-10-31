@@ -6,7 +6,12 @@
 // (env == "false"), the Go controller is enabled for that phase.
 package featureflags
 
-import "os"
+import (
+	"errors"
+	"os"
+)
+
+var ErrIncompleteOwnership = errors.New("native controller requires full Package ownership; partial reconciliation and admission-only modes are unsupported; stop and drain the Pepr watcher before starting Go")
 
 // Flags holds the per-phase feature flags for the Go controller.
 // A flag is true when the Go controller should handle that phase.
@@ -48,4 +53,13 @@ func goEnabled(envName string) bool {
 		return true
 	}
 	return os.Getenv(envName) == "false"
+}
+
+// ValidateOwnership rejects partial writers because Package status and finalizers
+// remain one shared contract. The process does not implement admission-only mode.
+func (f Flags) ValidateOwnership() error {
+	if !f.NetworkPolicies || !f.AuthorizationPolicies || !f.IstioInjection || !f.IstioIngress || !f.IstioEgress || !f.SSO || !f.PodMonitors || !f.ServiceMonitors || !f.UptimeProbes || !f.CABundle {
+		return ErrIncompleteOwnership
+	}
+	return nil
 }

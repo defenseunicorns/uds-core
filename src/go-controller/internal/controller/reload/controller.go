@@ -80,8 +80,10 @@ func (c *Controller) observe(old, obj interface{}) {
 	if !enabled {
 		return
 	}
-	prior, wasEnabled := dataRequest(old)
-	changed := wasEnabled && prior.UID == cur.UID && prior.Token != cur.Token
+	prior, _ := dataRequest(old)
+	// First publication may opt in while replacing bootstrap data. Existing
+	// consumers must reload that change even if the old object was unlabelled.
+	changed := old != nil && prior.UID == cur.UID && prior.Token != cur.Token
 	if old != nil && !changed && prior.Selector == cur.Selector {
 		return
 	}

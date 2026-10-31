@@ -17,8 +17,6 @@ import (
 
 	"time"
 
-	"os"
-
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/config"
 
 	"github.com/google/uuid"
@@ -36,44 +34,9 @@ func getToken(ctx context.Context) (string, error) {
 		return cachedToken, nil
 	}
 
-	mode := config.Get().KeycloakClientMode
-	data := url.Values{"grant_type": {"client_credentials"}}
-	assertion, readErr := os.ReadFile("/var/run/secrets/keycloak/token")
-	useAssertion := mode == "SIGNED_JWT" || (mode != "CLIENT_SECRET" && readErr == nil)
-	if useAssertion {
-		if readErr != nil {
-			return "", fmt.Errorf("read projected identity assertion: %w", readErr)
-		}
-		data.Set("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
-		data.Set("client_assertion", strings.TrimSpace(string(assertion)))
-	} else {
-		secret, err := getOperatorSecret(ctx)
-		if err != nil {
-			return "", err
-		}
-		if secret == "" {
-			return "", fmt.Errorf("missing operator client secret")
-		}
-		data.Set("client_id", "uds-operator")
-		data.Set("client_secret", secret)
-	}
-	resp, err := requestManagementToken(ctx, data)
+	resp, err := requestOperatorToken(ctx, config.Get().KeycloakClientMode, readProjectedAssertion)
 	if err != nil {
 		return "", err
-	}
-	if useAssertion && mode != "SIGNED_JWT" && (resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden) {
-		resp.Body.Close()
-		secret, err := getOperatorSecret(ctx)
-		if err != nil {
-			return "", err
-		}
-		if secret == "" {
-			return "", fmt.Errorf("missing operator client secret")
-		}
-		resp, err = requestManagementToken(ctx, url.Values{"grant_type": {"client_credentials"}, "client_id": {"uds-operator"}, "client_secret": {secret}})
-		if err != nil {
-			return "", err
-		}
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {

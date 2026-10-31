@@ -32,6 +32,6 @@ components:
               ./zarf tools kubectl -n istio-system rollout status daemonset/istio-cni-node --timeout=120s
               ./zarf tools kubectl -n istio-system rollout status daemonset/ztunnel --timeout=120s
         after:
-          - description: Require dormant backend readiness before registration
+          - description: Require backend readiness before registration
             maxTotalSeconds: 120
             cmd: ./zarf tools kubectl -n uds-system rollout status deployment/uds-controller --timeout=120s
