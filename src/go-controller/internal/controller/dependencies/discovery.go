@@ -70,7 +70,7 @@ func ServiceCIDRs(obj interface{}) []string {
 func LoadOperatorSecret(cfg *config.Config, obj interface{}) {
 	cfg.AllowPublicClients = false
 	cfg.AuthserviceRedisUri = ""
-	cfg.KeycloakClientMode = "AUTO"
+	cfg.KeycloakClientMode = "CLIENT_SECRET"
 	secret, ok := obj.(*corev1.Secret)
 	if !ok {
 		return

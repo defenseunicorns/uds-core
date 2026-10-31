@@ -65,7 +65,7 @@ The current checks produce these results:
 
 | Check | Result |
 | --- | --- |
-| Go race suite | 1,807 tests/subtests pass across 23 tested packages; no failed or skipped test cases. |
+| Go race suite | 1,820 tests/subtests pass across 23 tested packages; no failed or skipped test cases. |
 | Static build and vet | Pass. |
 | Original Pepr unit suite | 1,117 tests pass across 58 files. |
 | Current Package differential fixture | 140 decisions from 136 original source tests match Go, including previous-object checks. |

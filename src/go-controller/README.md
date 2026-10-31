@@ -85,10 +85,12 @@ principal separately from OAuth credentials. The values grant only
 `cluster.local/ns/uds-system/sa/uds-controller`; they do not enable another
 identity provider or change realm authentication requirements.
 
-The original `CLIENT_SECRET` mode uses the existing `uds-operator` client
-secret. `SIGNED_JWT` and `AUTO` assertion modes require their own
-original-Keycloak compatibility proof; a projected token with the correct
-audience does not establish that proof. Keep the controller ambient-enrolled and
+`CLIENT_SECRET` is the default, including when the mode setting is missing or
+invalid. It uses the existing `uds-operator` client secret. Projected assertions
+require explicit `SIGNED_JWT` or `AUTO` selection. The Java qualification run
+confirmed that `AUTO` falls back to the secret, but Java rejects the assertion
+and logs `client_not_found` on token refresh. Keep Java on `CLIENT_SECRET`;
+`SIGNED_JWT` requires provider-specific compatibility proof. Keep the controller ambient-enrolled and
 its chart-generated identity egress permission. Namespace access alone does not
 grant administration. Install the chart in `uds-system` with its fixed
 `uds-controller` ServiceAccount. Serving trust, authenticated recovery and

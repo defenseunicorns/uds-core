@@ -39,7 +39,7 @@ func TestOperatorSecretDeletionRevokesPublicClientFlag(t *testing.T) {
 		t.Fatal("operator config was not loaded")
 	}
 	LoadOperatorSecret(&cfg, nil)
-	if cfg.AllowPublicClients || cfg.AuthserviceRedisUri != "" || cfg.KeycloakClientMode != "AUTO" {
+	if cfg.AllowPublicClients || cfg.AuthserviceRedisUri != "" || cfg.KeycloakClientMode != "CLIENT_SECRET" {
 		t.Fatal("deleted secret retained stale privileges")
 	}
 }
@@ -54,5 +54,17 @@ func TestStatusAndManagedFieldsUpdatesDoNotCauseWorkloadDrift(t *testing.T) {
 	next.Labels = map[string]string{"app": "changed"}
 	if !relevantChange(old, next) {
 		t.Fatal("Pod label drift ignored")
+	}
+}
+
+func TestMissingOrInvalidOperatorModeUsesClientSecret(t *testing.T) {
+	for _, mode := range []string{"", "unknown"} {
+		t.Run(mode, func(t *testing.T) {
+			cfg := config.Config{KeycloakClientMode: "SIGNED_JWT"}
+			LoadOperatorSecret(&cfg, &corev1.Secret{Data: map[string][]byte{"KEYCLOAK_CLIENT_MODE": []byte(mode)}})
+			if cfg.KeycloakClientMode != "CLIENT_SECRET" {
+				t.Fatal("missing/invalid configuration retained assertion authentication")
+			}
+		})
 	}
 }
