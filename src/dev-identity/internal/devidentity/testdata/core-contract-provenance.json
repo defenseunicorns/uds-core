@@ -1,0 +1,12 @@
+{
+  "sourceCommit": "0b2cc453",
+  "coreBaseCommit": "c15677633cffa17e99656a7d7ccd1f98d7cb6e4d",
+  "sourceFiles": {
+    "api/uds/v1alpha1/package.go": "44be66e2a020ca7ebd9fae7666c906c50a33a320c51fbce5e71262253476608d",
+    "internal/controller/sso/client.go": "844314e0f79c929f9c9a92eebc092db723017be6460620f70988ad070182a9ec",
+    "internal/controller/sso/client_conversion.go": "e1db353e45a3f1759cbf82d87a09180f6a8996a1d8f706e742f4bdb736e8bb6f",
+    "internal/controller/sso/client_provenance.go": "bd7cae2563b050c6133d5f1ce4e5e303de81ea310d29ba08e51039d1f14af1a2"
+  },
+  "scope": "Captured qualified Go conversion/digest contract only; does not establish Pepr provenance or live independent Dex parity",
+  "caseCount": 54
+}

@@ -1,0 +1,21 @@
+{
+  "applied": [
+    {
+      "setting": "Istiod pilot.resources.requests.memory",
+      "value": "128Mi",
+      "evidence": "Ark Core1.14 connected tuned audit passed functional canaries at128Mi request; roughly71Mi quiet RSS; no restrictive memory limit introduced",
+      "evidencePath": "docs/audits/2026-10-03-uds-slim-dev-footprint.md",
+      "limit": "Reservation adjustment only; not a physical-memory or guest-capacity saving"
+    }
+  ],
+  "keepUntilMeasured": ["Istio CNI budget", "ztunnel budget", "admin and tenant gateway budgets", "finished Go controller request/limits", "dual-issuer Dex and bridge budgets", "Authservice request/limits", "CoreDNS budget"],
+  "parentTrials": [
+    {"candidate": "Use Zarf connected deployment without resident registry/agent after qualified install", "check": "Fresh install, image pulls, offline contract exclusion, and guest charged-memory/disk peaks"},
+    {"candidate": "Tune Authservice threads and assign a measured budget", "check": "Full browser session/logout, group denial, concurrent login, uptime service-account probes, and rollout races"},
+    {"candidate": "Reduce unnecessary repeated informer/reconcile writes and tighten API call budgets", "check": "Package churn, dependency changes, deletion/restart races, and API throttling under full Core suite"},
+    {"candidate": "Pre-fetch verified component charts/images and static binaries before cold boot", "check": "Report acquisition/verification/build separately from API-to-mesh-to-identity-to-tenant readiness"},
+    {"candidate": "Qualify a smaller guest or warm-pool allocation", "check": "Concurrent producers, image unpacking, tenant application pressure, cgroup charged-memory peak, and OOM/restart evidence"},
+    {"candidate": "Consolidate gateway processes only behind retained admin/public authority boundaries", "check": "Gateway bypass, admin path denial, origin/misdirected requests, SSO, and exact mTLS principal tests"}
+  ],
+  "footprintCaveat": "Prior14MiB Go and14MiB Dex observations used narrower prototypes; full controller and dual-issuer identity must be remeasured. No replica/process removal beyond replacing Pepr/Keycloak is claimed here."
+}

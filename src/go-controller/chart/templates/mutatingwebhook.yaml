@@ -1,0 +1,96 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.admission.register }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: uds-controller-pods
+  labels:
+    app: uds-controller
+webhooks:
+  - name: mutate-pods.uds.dev
+    matchConditions:
+      - name: authenticated-controller-recovery
+        expression: {{ include "uds.admission.bootstrapCallback" . | quote }}
+      {{- if .Values.nativeAdmission.narrowCallbacks }}
+      - name: native-requires-go
+        expression: {{ include "uds.admission.nativeMutateCallback" . | quote }}
+      {{- end }}
+    admissionReviewVersions:
+      - v1
+    sideEffects: None
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    reinvocationPolicy: IfNeeded
+    clientConfig:
+      service:
+        name: uds-controller
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-pods
+        port: 443
+      caBundle: {{ include "uds.admission.caBundle" . | quote }}
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        resources:
+          - pods
+          - pods/ephemeralcontainers
+          - services
+        operations:
+          - CREATE
+          - UPDATE
+        scope: "Namespaced"
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - pepr-system
+            - istio-system
+            - zarf
+  - name: mutate-pods-istio-system.uds.dev
+    matchConditions:
+      - name: authenticated-controller-recovery
+        expression: {{ include "uds.admission.bootstrapCallback" . | quote }}
+      {{- if .Values.nativeAdmission.narrowCallbacks }}
+      - name: native-requires-go
+        expression: {{ include "uds.admission.nativeMutateCallback" . | quote }}
+      {{- end }}
+    admissionReviewVersions:
+      - v1
+    sideEffects: None
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    reinvocationPolicy: IfNeeded
+    clientConfig:
+      service:
+        name: uds-controller
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-pods
+        port: 443
+      caBundle: {{ include "uds.admission.caBundle" . | quote }}
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        resources:
+          - pods
+          - pods/ephemeralcontainers
+          - services
+        operations:
+          - CREATE
+          - UPDATE
+        scope: "Namespaced"
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values:
+            - istio-system
+
+{{- end }}

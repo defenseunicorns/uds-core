@@ -1,0 +1,86 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+suite: Keycloak provider storage ownership
+templates:
+  - pvc.yaml
+  - uds-exemption.yaml
+
+tests:
+  - it: preserves the two original default development PVCs
+    template: pvc.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: preserves the two original development PVCs
+    template: pvc.yaml
+    set:
+      devMode: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-keycloa-data
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-keycloa-themes
+        documentIndex: 1
+
+  - it: preserves all four explicitly selected Java PVCs
+    template: pvc.yaml
+    set:
+      persistence.providers.enabled: true
+      persistence.conf.enabled: true
+      persistence.data.enabled: true
+      persistence.themes.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 4
+
+  - it: omits unused Java development volumes for the native provider
+    template: pvc.yaml
+    set:
+      devMode: true
+      nativeIdentity.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: omits every unused Java volume even when persistence flags remain enabled
+    template: pvc.yaml
+    set:
+      devMode: true
+      nativeIdentity.enabled: true
+      persistence.providers.enabled: true
+      persistence.conf.enabled: true
+      persistence.data.enabled: true
+      persistence.themes.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: retains the original Java upgrade permission migration
+    template: uds-exemption.yaml
+    release:
+      upgrade: true
+    set:
+      devMode: true
+      migrations.upgradePermissions: true
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: does not grant a Java volume migration exemption to native identity
+    template: uds-exemption.yaml
+    release:
+      upgrade: true
+    set:
+      devMode: true
+      nativeIdentity.enabled: true
+      migrations.upgradePermissions: true
+    asserts:
+      - hasDocuments:
+          count: 0

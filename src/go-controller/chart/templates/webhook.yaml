@@ -1,0 +1,200 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.admission.register }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: uds-controller-clusterconfig
+  labels:
+    app: uds-controller
+webhooks:
+  - name: clusterconfig.uds.dev
+    admissionReviewVersions:
+      - v1
+    sideEffects: None
+    failurePolicy: Fail
+    matchPolicy: Exact
+    clientConfig:
+      service:
+        name: uds-controller
+        namespace: {{ .Release.Namespace }}
+        path: /validate-clusterconfig-delete
+        port: 443
+      caBundle: {{ include "uds.admission.caBundle" . | quote }}
+    rules:
+      - apiGroups:
+          - uds.dev
+        apiVersions:
+          - "*"
+        resources:
+          - clusterconfig
+        operations:
+          - DELETE
+        scope: "Cluster"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: uds-controller-pods
+  labels:
+    app: uds-controller
+webhooks:
+  - name: validate-pods.uds.dev
+    matchConditions:
+      - name: authenticated-controller-recovery
+        expression: {{ include "uds.admission.bootstrapCallback" . | quote }}
+      {{- if .Values.nativeAdmission.narrowCallbacks }}
+      - name: native-requires-go
+        expression: {{ include "uds.admission.nativeValidateCallback" . | quote }}
+      {{- end }}
+    admissionReviewVersions:
+      - v1
+    sideEffects: None
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    clientConfig:
+      service:
+        name: uds-controller
+        namespace: {{ .Release.Namespace }}
+        path: /validate-pods
+        port: 443
+      caBundle: {{ include "uds.admission.caBundle" . | quote }}
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        resources:
+          - pods
+          - pods/ephemeralcontainers
+          - services
+        operations:
+          - CREATE
+          - UPDATE
+        scope: "Namespaced"
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - pepr-system
+            - istio-system
+            - zarf
+  - name: validate-pods-istio-system.uds.dev
+    matchConditions:
+      - name: authenticated-controller-recovery
+        expression: {{ include "uds.admission.bootstrapCallback" . | quote }}
+      {{- if .Values.nativeAdmission.narrowCallbacks }}
+      - name: native-requires-go
+        expression: {{ include "uds.admission.nativeValidateCallback" . | quote }}
+      {{- end }}
+    admissionReviewVersions:
+      - v1
+    sideEffects: None
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    clientConfig:
+      service:
+        name: uds-controller
+        namespace: {{ .Release.Namespace }}
+        path: /validate-pods
+        port: 443
+      caBundle: {{ include "uds.admission.caBundle" . | quote }}
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        resources:
+          - pods
+          - pods/ephemeralcontainers
+          - services
+        operations:
+          - CREATE
+          - UPDATE
+        scope: "Namespaced"
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values:
+            - istio-system
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: uds-controller-resources
+  labels:
+    app: uds-controller
+webhooks:
+  - name: validate-resources.uds.dev
+    admissionReviewVersions:
+      - v1
+    sideEffects: None
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    timeoutSeconds: 10
+    clientConfig:
+      service:
+        name: uds-controller
+        namespace: {{ .Release.Namespace }}
+        path: /validate-resources
+        port: 443
+      caBundle: {{ include "uds.admission.caBundle" . | quote }}
+    rules:
+      - apiGroups:
+          - uds.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - packages
+          - exemptions
+          - clusterconfig
+        operations:
+          - CREATE
+          - UPDATE
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - pepr-system
+            - istio-system
+            - zarf
+  - name: validate-resources-istio-system.uds.dev
+    admissionReviewVersions:
+      - v1
+    sideEffects: None
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    timeoutSeconds: 10
+    clientConfig:
+      service:
+        name: uds-controller
+        namespace: {{ .Release.Namespace }}
+        path: /validate-resources
+        port: 443
+      caBundle: {{ include "uds.admission.caBundle" . | quote }}
+    rules:
+      - apiGroups:
+          - uds.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - packages
+          - exemptions
+        operations:
+          - CREATE
+          - UPDATE
+        scope: Namespaced
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values:
+            - istio-system
+
+{{- end }}

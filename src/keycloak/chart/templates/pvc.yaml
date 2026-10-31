@@ -1,6 +1,7 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+{{- if not .Values.nativeIdentity.enabled }}
 {{- if .Values.persistence.providers.enabled }}
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -80,4 +81,5 @@ spec:
   {{- if .Values.persistence.storageClassName }}
   storageClassName: "{{ .Values.persistence.storageClassName }}"
   {{- end }}
+{{- end }}
 {{- end }}

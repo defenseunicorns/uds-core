@@ -1,0 +1,15 @@
+{
+  "apiVersion": "policy.uds.dev/v1alpha1",
+  "kind": "AdmissionParameters",
+  "metadata": {
+    "name": "uds-native-grants",
+    "namespace": "uds-policy-exemptions"
+  },
+  "spec": {
+    "nativeMatchers": [],
+    "legacyScopes": [],
+    "revision": "bootstrap-empty",
+    "valid": true,
+    "allowAllNamespaces": false
+  }
+}

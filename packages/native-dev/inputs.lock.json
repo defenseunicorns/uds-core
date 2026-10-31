@@ -1,0 +1,107 @@
+{
+  "core": {
+    "version": "1.16.0",
+    "sourceCommit": "fd9769cd9e791d9b6ad86251af0f4899992a9ae5",
+    "repository": "https://github.com/defenseunicorns/uds-core",
+    "signatureIdentity": "https://github.com/defenseunicorns/uds-core/.github/workflows/publish.yaml@refs/tags/v1.16.0",
+    "signatureIssuer": "https://token.actions.githubusercontent.com"
+  },
+  "go": "go1.27.3",
+  "zarfDockerAPIVersion": "1.45",
+  "distroless": "gcr.io/distroless/static-debian13@sha256:e2e927ec666bae08560abb3c55d0659eceabb657f56b6782ab500a9fc7f555e3",
+  "identity": {
+    "bridgeImage": "uds-core-dev-identity:pairing-20261031-v1",
+    "bridgePlatformManifest": "sha256:4d3c018d7a4c1b16d6e91eac774139e8f594337ad46c9a2fa398ec0ad538abd9",
+    "bridgeImageID": "sha256:d7e60e5b47fbfa6b0e56f233364f84f286e143dfd3d892375a98721ae797c070",
+    "bridgeBinarySHA256": "cc430e1b5281440725d5c2fc63bf4a9d381eeb7dabe08a96a044db6353126a90",
+    "dexImage": "uds-core-dev-dex:pairing-20261031-v1",
+    "dexPlatformManifest": "sha256:3bd69a9daaaadc3f85f24cbf10645c14b547953dfeba4e439f6efe62d81115e4",
+    "dexImageID": "sha256:19bab2a5e38833043e8749bff44874796eb2553333e7497d6a3a87149e80f8ec",
+    "dexBinarySHA256": "b74d8857d766a055e2e7b0bfeaa1d599f5a66d76ed5e90ce97df97154db59c0f",
+    "upstreamDexCommit": "11d2eeb52b42e1980e14cb91e69dd9e3faab2076",
+    "authenticationProfile": "password-only",
+    "saml": "unsupported-fail-closed",
+    "bridgeSourceSHA256": "08cb0b42cb48e72188678e84c004b41ed6ff49bf2170543a24c2c575a32e9d53",
+    "buildMode": "reproducible-release-buildvcs-false-stripped",
+    "bridgeIndexOrManifest": "sha256:d7e60e5b47fbfa6b0e56f233364f84f286e143dfd3d892375a98721ae797c070",
+    "bridgeImageConfig": "sha256:9ac6bf66b92517308d3abf2447c3b3e64e709c61d5d4f5b24d306261da64c37f",
+    "dexIndexOrManifest": "sha256:19bab2a5e38833043e8749bff44874796eb2553333e7497d6a3a87149e80f8ec",
+    "dexImageConfig": "sha256:e78e02b96a8f4f0ffe2710666f67aae421c16102bcea2a7969f99801a9baa461",
+    "bridgeSourceFiles": {
+      "cmd/dev-identity/config.go": "9e2e843862fd0aa1b430749b4021500ddd244fca74479751964eecc5c4212509",
+      "cmd/dev-identity/main.go": "1b4fb4085275f65808f8959b937879c760d35ef09d09674f5a639950e6892a67",
+      "cmd/dev-identity/runtime.go": "1e96ab81cda79b5f8197d3d9620bdd0f4f5f05ab02c1884494cab6e011b84017",
+      "go.mod": "02e1ed4df47008262fe33b6a1dcd4e4a192d6f605454567e53fc8760d365a9a5",
+      "go.sum": "fc6bdc73b0472bc6fbf4bea5924b053e8661977ed0aa1560b3df41031029fe73",
+      "internal/devidentity/authority.go": "ed7242211b14fb63450cc09fb3c83576ad76ad9ddb2bf198e992d4c9b6684cc3",
+      "internal/devidentity/bridge.go": "7344e3a497aa4393d620804960d5f13ff0c467fd03c501603c65b5d2ff17f780",
+      "internal/devidentity/client_generation.go": "36aeeed33adc5315f0a9f420c23bee200a79c1093720f320add0b07c92ed0bff",
+      "internal/devidentity/client_publication.go": "d18caed8615319aced6ed7259d896a3c885cd54bbb1daca46d11698b991ad715",
+      "internal/devidentity/client_revisions.go": "499a89389b4503286caca2425b0e1add9c0bcf7b7c8c9949b5fc15cb2e197e1c",
+      "internal/devidentity/client_scopes.go": "a17154a96f271f5ad6aff32cb6b5d5712788fe43f2532788e7e534e591719ac5",
+      "internal/devidentity/client_store.go": "d70ca6914643b9833aa6c20c386c0bba1b181bc207e8bb7ac3c779257cf68fe6",
+      "internal/devidentity/client_successor.go": "e8c48d3d3bc0fa2449be9707bfdb48a9dba9a49ce65353e27ef9befe1e7f035b",
+      "internal/devidentity/cookie_capability.go": "f3274b905a7a8cf347e2d0c968758aa0b30c988b1c318f21d752922115f6edd9",
+      "internal/devidentity/core_audience.go": "e7e7cc8ecf3ea7411c817d132fbd3b2bdb60875b2cc23c19d9814a71176341b7",
+      "internal/devidentity/core_contract.go": "115577bc594719e58e2259f47f98620fe48ae3402fa21c53ce8b06e65a774d32",
+      "internal/devidentity/core_projection.go": "0c99dc30dcc61f3a0ae7fdbda5d5b7674154c58ab573bf4390a28bf7b4a995b1",
+      "internal/devidentity/core_restore.go": "a7ba06099961c38288620c75c5ad20e74b9e8e6e370cff6056801019689a8094",
+      "internal/devidentity/directory.go": "4430a2cbc3d0946da6392d0344262530a45486fd9f6e2d6d602b41ac6b1c37e3",
+      "internal/devidentity/end_sessions.go": "50da91eafc1d36c62cf52442ffef98d20febbc5d04d97f5321f704d6e72e789a",
+      "internal/devidentity/fleet_policy.go": "c29ee1ffb2204bc6816438f87e87a3cc0de69e34b467b8e1ed8688bd64638a17",
+      "internal/devidentity/kube_directory.go": "3dd2fecfb05bda2d87046006f61e1a2a722d250c43e307996aadf0e425806271",
+      "internal/devidentity/kube_errors.go": "d29362f1afb3a5ed198592ac1a414cfc2849668a763e53da6d33968b46c9d42d",
+      "internal/devidentity/login.go": "f880df795163cddfe703b001467ac66b5e96a8962cdb7922f093f2fb635e19a6",
+      "internal/devidentity/management.go": "810e9b7a86df5eb489809a5f347d823941bb27f636e5bcf377e47002023b9355",
+      "internal/devidentity/management_authentication.go": "394d2cb6c90672cac908e66004e6647dbfceaf130fbc8f4367010378ba7de565",
+      "internal/devidentity/management_clients.go": "cbb0b99cf998ad774b1ab96552819d732d3914c58f637cea76f18968a3e46876",
+      "internal/devidentity/management_frontend.go": "75247b099e1d0109eaeab1b71ded230f1b7e21da82bee194ff39a1f429a9bde7",
+      "internal/devidentity/management_groups.go": "f988d6ae2474225dfc6770139fcb08aa17ae436241f68a9c2a8ede82e4ddea0a",
+      "internal/devidentity/management_token.go": "da85617caf6e377c3e7c036991fcb2ff588fdc2091a269b74a721468e5fec310",
+      "internal/devidentity/management_users.go": "d26706d4dcec9adfb54088a3bc4f8e68ac1333d30d2788c35ddde33042279da6",
+      "internal/devidentity/oidc_http.go": "50dd2e994f31bd6b4767ac2b1a01cf7cc81bba427bd059b4b2497e27848c9d6e",
+      "internal/devidentity/pkce.go": "c1e76b805decc4a31a6d6772cbd24ed5526fa88364e0acaca220cd34d43a6552",
+      "internal/devidentity/prune.go": "5257e360b04aec707049877d00b104be6aa2526f2261164e29ebca100a4f2d14",
+      "internal/devidentity/publication_snapshot.go": "d5d3dd8cdeb2490f05fdf042da3bc2492ced3fbab4633127b4c96225748ce225",
+      "internal/devidentity/refresh.go": "5aeb313ee5cc50263eca220a0a51f9f0f6a2986a37010683559d97aed9c04ede",
+      "internal/devidentity/service_identity.go": "7880bab26e5ba48ec65419b4545fa032c665146472c91cac1d24d1f68d9e6843",
+      "internal/devidentity/sessions.go": "eb1dae7dd96fb1a1b1eb45b145d34383a92342221cde55915f39ddc612616abf",
+      "internal/devidentity/store.go": "423f3b10c85df04fe764e184efa14d7a5f18eb2ae2be84043fd966b909dc7dbc",
+      "internal/devidentity/user_authorization.go": "76bd3833fba77e9f68517e7dc1da787a361a8aa0ee48b450c045c4f148276b85"
+    },
+    "providerModule": "src/dev-identity",
+    "coreAudiencePairsEnabled": true,
+    "sourceSplitNotice": "Rebuilt with the security-fixed toolchain and dependencies; exact runtime qualification is recorded separately.",
+    "providerRecipeFiles": {
+      "build-images.py": "48e2b9606372cfc7d667db1e1af4500d570fcd95687c9eeb4606e2e826217fc6",
+      "provider-inputs.json": "30eeee04fddf298ed6a014d1e70c072955da848fe64fbb1c229c91d70d9b7cd4",
+      "dex-core-dev.patch": "35dc8d9d3cc457140a87150a5bb9ec493057a5a977944a007e948ef7f27793d2",
+      "Dockerfile.bridge": "e6b0c4ec0e427d6018441b69510e1a3c092b1173c34f133875b7bb1b3e440f02",
+      "Dockerfile.dex": "bf715c23b768978d7af5ca5e6daac9ea1a87d72faf339065a1f6feced32a8a34"
+    }
+  },
+  "architecture": "amd64",
+  "signedPackages": [
+    {
+      "name": "core-base",
+      "source": "oci://ghcr.io/defenseunicorns/packages/uds/core-base:1.16.0-upstream",
+      "filename": "zarf-package-core-base-amd64-1.16.0-upstream.tar.zst",
+      "sha256": "5d4860df0331ce3b3d1021575b8f7fe310ad83b9f009727f3e2bb8fcdada0125",
+      "components": [
+        "istio-controlplane",
+        "istio-admin-gateway",
+        "istio-tenant-gateway"
+      ]
+    },
+    {
+      "name": "core-identity-authorization",
+      "source": "oci://ghcr.io/defenseunicorns/packages/uds/core-identity-authorization:1.16.0-upstream",
+      "filename": "zarf-package-core-identity-authorization-amd64-1.16.0-upstream.tar.zst",
+      "sha256": "7cee1d4c81071b7db5f6a56fa253253c60dce2b458279248b9bca555e3895464",
+      "components": [
+        "authservice",
+        "keycloak"
+      ]
+    }
+  ]
+}

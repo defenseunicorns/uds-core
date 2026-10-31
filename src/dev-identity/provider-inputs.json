@@ -1,0 +1,11 @@
+{
+  "goVersion": "go1.27.3",
+  "targetOS": "linux",
+  "targetArchitecture": "amd64",
+  "targetAMD64": "v1",
+  "CGOEnabled": "0",
+  "dexRepository": "https://github.com/dexidp/dex.git",
+  "dexCommit": "11d2eeb52b42e1980e14cb91e69dd9e3faab2076",
+  "dexPatchSHA256": "35dc8d9d3cc457140a87150a5bb9ec493057a5a977944a007e948ef7f27793d2",
+  "runtimeBase": "gcr.io/distroless/static-debian13@sha256:e2e927ec666bae08560abb3c55d0659eceabb657f56b6782ab500a9fc7f555e3"
+}

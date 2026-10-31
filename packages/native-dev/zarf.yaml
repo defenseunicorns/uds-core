@@ -1,0 +1,199 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+kind: ZarfPackageConfig
+metadata:
+  name: core-native-dev
+  version: 1.16.0-native-dev.1
+  description: Explicit password-only native Core development profile
+  authors: Defense Unicorns - Product
+variables:
+  - name: DOMAIN
+    default: uds.dev
+  - name: ADMIN_DOMAIN
+    default: admin.uds.dev
+  - name: NATIVE_BOOTSTRAP_USER
+    default: system:admin
+  - name: NATIVE_BOOTSTRAP_CLI
+    description: Trusted absolute path to the UDS executable running on the deployment host
+    default: ""
+  - name: CA_BUNDLE_CERTS
+    default: ""
+  - name: UDS_LOG_LEVEL
+    default: info
+values:
+  files:
+    - zarf-values.yaml
+components:
+  - name: native-dev-preflight
+    required: true
+    files:
+      - source: .build/native-dev-bootstrap
+        target: native-dev-bootstrap
+        executable: true
+      - source: .build/build-lock.json
+        target: native-dev-build-lock.json
+      - source: .build/native-mutation-bootstrap.json
+        target: native-dev-mutation-bootstrap.json
+    actions:
+      onDeploy:
+        # Zarf copies this component's helper files before its after actions.
+        # The component contains no cluster payload before this preflight gate.
+        after:
+          - description: Verify native capabilities and fence tenant authoring during bootstrap
+            cmd: UDS_NATIVE_BOOTSTRAP_CLI="${ZARF_VAR_NATIVE_BOOTSTRAP_CLI}" UDS_NATIVE_BOOTSTRAP_CLI_MODE=uds ./native-dev-bootstrap preflight --installer "${ZARF_VAR_NATIVE_BOOTSTRAP_USER}"
+  - name: uds-crds
+    required: true
+    import:
+      path: ../../src/pepr
+  - name: prometheus-operator-crds
+    required: true
+    import:
+      path: ../../src/prometheus-stack
+  - name: uds-operator-config
+    required: true
+    import:
+      path: .build/imports/operator-config
+  - name: native-dev-trust-bootstrap
+    required: true
+    actions:
+      onDeploy:
+        before:
+          - description: Prepare infrastructure namespaces and initial Istio trust mount
+            cmd: UDS_NATIVE_BOOTSTRAP_CLI="${ZARF_VAR_NATIVE_BOOTSTRAP_CLI}" UDS_NATIVE_BOOTSTRAP_CLI_MODE=uds ./native-dev-bootstrap trust --domain "${ZARF_VAR_DOMAIN}" --admin-domain "${ZARF_VAR_ADMIN_DOMAIN}"
+  - name: native-dev-private-dns
+    required: true
+    actions:
+      onDeploy:
+        before:
+          - description: Load exact private identity DNS before Istiod can discover JWKS authorities
+            maxTotalSeconds: 300
+            cmd: UDS_NATIVE_BOOTSTRAP_CLI="${ZARF_VAR_NATIVE_BOOTSTRAP_CLI}" UDS_NATIVE_BOOTSTRAP_CLI_MODE=uds ./native-dev-bootstrap private-dns --phase install --domain "${ZARF_VAR_DOMAIN}" --admin-domain "${ZARF_VAR_ADMIN_DOMAIN}"
+  - name: gateway-api-crds
+    required: true
+    import:
+      path: ../../src/istio/common
+  - name: istio-controlplane
+    required: true
+    import:
+      path: .build/imports/istio
+  - name: uds-controller-bootstrap
+    required: true
+    import:
+      name: uds-controller
+      path: ../../src/go-controller
+    charts:
+      - name: uds-controller
+        releaseName: uds-controller
+        valuesFiles:
+          - .build/controller-image.yaml
+          - values/controller-budget.yaml
+          - values/controller-bootstrap.yaml
+  - name: uds-controller-registration
+    required: true
+    charts:
+      - name: uds-controller
+        releaseName: uds-controller
+        namespace: uds-system
+        version: 0.1.0
+        localPath: ../../src/go-controller/chart
+        valuesFiles:
+          - .build/controller-image.yaml
+          - values/controller-budget.yaml
+          - values/controller-registration.yaml
+    actions:
+      onDeploy:
+        before:
+          - description: Verify backend and compiled admission input before registering callbacks
+            maxTotalSeconds: 360
+            cmd: UDS_NATIVE_BOOTSTRAP_CLI="${ZARF_VAR_NATIVE_BOOTSTRAP_CLI}" UDS_NATIVE_BOOTSTRAP_CLI_MODE=uds ./native-dev-bootstrap gate --phase backend
+        after:
+          - description: Verify complete callbacks before identity and Package inputs
+            maxTotalSeconds: 360
+            cmd: UDS_NATIVE_BOOTSTRAP_CLI="${ZARF_VAR_NATIVE_BOOTSTRAP_CLI}" UDS_NATIVE_BOOTSTRAP_CLI_MODE=uds ./native-dev-bootstrap gate --phase callbacks
+  - name: uds-exemptions
+    required: true
+    import:
+      path: ../../src/pepr
+  - name: istio-egress-ambient
+    required: true
+    import:
+      path: ../../src/istio
+  - name: keycloak
+    required: true
+    import:
+      path: .build/imports/identity
+  - name: authservice
+    required: true
+    import:
+      path: ../../src/authservice
+  - name: native-dev-mutation-bootstrap
+    required: true
+    actions:
+      onDeploy:
+        after:
+          - description: Install native mutations and verify current revision stamp before validation fences
+            maxTotalSeconds: 360
+            cmd: UDS_NATIVE_BOOTSTRAP_CLI="${ZARF_VAR_NATIVE_BOOTSTRAP_CLI}" UDS_NATIVE_BOOTSTRAP_CLI_MODE=uds ./native-dev-bootstrap mutations
+  - name: uds-controller-active
+    required: true
+    charts:
+      - name: uds-controller
+        releaseName: uds-controller
+        namespace: uds-system
+        version: 0.1.0
+        localPath: ../../src/go-controller/chart
+        valuesFiles:
+          - .build/controller-image.yaml
+          - values/controller-budget.yaml
+          - values/controller-active.yaml
+    actions:
+      onDeploy:
+        before:
+          - description: Require identity, callbacks and compiled authority before native delegation
+            maxTotalSeconds: 360
+            cmd: UDS_NATIVE_BOOTSTRAP_CLI="${ZARF_VAR_NATIVE_BOOTSTRAP_CLI}" UDS_NATIVE_BOOTSTRAP_CLI_MODE=uds ./native-dev-bootstrap gate --phase identity
+        after:
+          - description: Prove native deny and mutation behavior before public gateways
+            maxTotalSeconds: 360
+            cmd: UDS_NATIVE_BOOTSTRAP_CLI="${ZARF_VAR_NATIVE_BOOTSTRAP_CLI}" UDS_NATIVE_BOOTSTRAP_CLI_MODE=uds ./native-dev-bootstrap gate --phase native
+  - name: uds-controller-narrow
+    required: true
+    charts:
+      - name: uds-controller
+        releaseName: uds-controller
+        namespace: uds-system
+        version: 0.1.0
+        localPath: ../../src/go-controller/chart
+        valuesFiles:
+          - .build/controller-image.yaml
+          - values/controller-budget.yaml
+          - values/controller-narrow.yaml
+    actions:
+      onDeploy:
+        before:
+          - description: Require all active native bindings and broad callback canaries before delegation
+            maxTotalSeconds: 360
+            cmd: UDS_NATIVE_BOOTSTRAP_CLI="${ZARF_VAR_NATIVE_BOOTSTRAP_CLI}" UDS_NATIVE_BOOTSTRAP_CLI_MODE=uds ./native-dev-bootstrap gate --phase native
+        after:
+          - description: Verify the protected native route after callback narrowing
+            maxTotalSeconds: 360
+            cmd: UDS_NATIVE_BOOTSTRAP_CLI="${ZARF_VAR_NATIVE_BOOTSTRAP_CLI}" UDS_NATIVE_BOOTSTRAP_CLI_MODE=uds ./native-dev-bootstrap gate --phase native
+  - name: istio-admin-gateway
+    required: true
+    import:
+      path: .build/imports/istio
+  - name: istio-tenant-gateway
+    required: true
+    import:
+      path: .build/imports/istio
+  - name: native-dev-ready
+    required: true
+    actions:
+      onDeploy:
+        after:
+          - description: Resolve exact private identity authorities through their real TLS gateways
+            maxTotalSeconds: 300
+            cmd: UDS_NATIVE_BOOTSTRAP_CLI="${ZARF_VAR_NATIVE_BOOTSTRAP_CLI}" UDS_NATIVE_BOOTSTRAP_CLI_MODE=uds ./native-dev-bootstrap private-dns --phase verify --domain "${ZARF_VAR_DOMAIN}" --admin-domain "${ZARF_VAR_ADMIN_DOMAIN}"
+          - description: Open tenant authoring only after full native readiness and public gateways
+            maxTotalSeconds: 600
+            cmd: UDS_NATIVE_BOOTSTRAP_CLI="${ZARF_VAR_NATIVE_BOOTSTRAP_CLI}" UDS_NATIVE_BOOTSTRAP_CLI_MODE=uds ./native-dev-bootstrap finish

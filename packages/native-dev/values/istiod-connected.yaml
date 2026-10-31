@@ -1,0 +1,9 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+# Connected deployments have no Zarf registry. Preserve the exact signed
+# proxy image input instead of producing an invalid /istio/... image reference.
+global:
+  proxy:
+    image: docker.io/istio/proxyv2:1.31.2-distroless
+  proxy_init:
+    image: docker.io/istio/proxyv2:1.31.2-distroless

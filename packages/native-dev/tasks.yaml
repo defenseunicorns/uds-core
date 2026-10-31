@@ -1,0 +1,16 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+tasks:
+  - name: prepare
+    description: Build verified native binaries and derive explicit original-component overlays
+    actions:
+      - cmd: node packages/native-dev/prepare.mjs
+  - name: package
+    description: Prepare and create the complete native development package in one ordered deployment
+    actions:
+      - cmd: node packages/native-dev/prepare.mjs --package
+  - name: render
+    description: Compile and validate the composed definition without image builds or deployment
+    actions:
+      - cmd: node packages/native-dev/prepare.mjs --render-only

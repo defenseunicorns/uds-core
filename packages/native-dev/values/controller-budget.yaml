@@ -1,0 +1,8 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Experimental private development profile, measured with the same 100m/128Mi
+# controller limits. The general chart and binary retain their 20/40 defaults.
+kubernetesAPI:
+  qps: 100
+  burst: 200

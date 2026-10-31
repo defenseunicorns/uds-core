@@ -1,0 +1,8 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Hosted private guests require a UID-bound authenticated outer broker; this
+# recipe provisions only the inner gateway Services. The broker is a separate
+# integration requirement. Production Core gateway defaults are unchanged.
+service:
+  type: ClusterIP

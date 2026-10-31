@@ -794,8 +794,91 @@
           "description": "Enable default uptime monitoring probes for Keycloak endpoints"
         }
       },
-      "required": ["enabled"],
+      "required": [
+        "enabled"
+      ],
       "additionalProperties": false
+    },
+    "nativeIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "imagePullPolicy": {
+          "type": "string",
+          "enum": [
+            "Never",
+            "IfNotPresent",
+            "Always"
+          ]
+        },
+        "bootstrapUsers": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "bootstrapClients": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "bridgeResources": {
+          "type": "object"
+        },
+        "dexResources": {
+          "type": "object"
+        },
+        "bridgeImage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dexImage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tlsSecret": {
+          "type": "string",
+          "minLength": 1
+        },
+        "controllerNamespace": {
+          "type": "string",
+          "minLength": 1
+        },
+        "controllerServiceAccount": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publicStorageNamespace": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adminStorageNamespace": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fleetNamespace": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fleetServiceAccount": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authenticationProfile": {
+          "type": "string",
+          "enum": [
+            "password-only"
+          ]
+        },
+        "coreAudiencePairsEnabled": {
+          "type": "boolean",
+          "description": "Enable only with a verified Core operator provenance producer; original Pepr pairing is unsupported."
+        }
+      }
     }
   }
 }

@@ -1,0 +1,6500 @@
+{
+  "sourceRevision": "c15677633cffa17e99656a7d7ccd1f98d7cb6e4d",
+  "cases": [
+    {
+      "name": "parseImageRef > should handle empty input",
+      "function": "parseImageRef",
+      "args": [
+        ""
+      ],
+      "result": null,
+      "after": [
+        ""
+      ]
+    },
+    {
+      "name": "parseImageRef > should handle repository names",
+      "function": "parseImageRef",
+      "args": [
+        "istio/proxyv2"
+      ],
+      "result": {
+        "registry": "docker.io",
+        "repository": "istio/proxyv2"
+      },
+      "after": [
+        "istio/proxyv2"
+      ]
+    },
+    {
+      "name": "parseImageRef > should handle repository names with tags",
+      "function": "parseImageRef",
+      "args": [
+        "istio/proxyv2:1.2.3"
+      ],
+      "result": {
+        "registry": "docker.io",
+        "repository": "istio/proxyv2"
+      },
+      "after": [
+        "istio/proxyv2:1.2.3"
+      ]
+    },
+    {
+      "name": "parseImageRef > should handle repository names with digests",
+      "function": "parseImageRef",
+      "args": [
+        "istio/proxyv2@sha256:abc123"
+      ],
+      "result": {
+        "registry": "docker.io",
+        "repository": "istio/proxyv2"
+      },
+      "after": [
+        "istio/proxyv2@sha256:abc123"
+      ]
+    },
+    {
+      "name": "parseImageRef > should handle non-namespaced repositories",
+      "function": "parseImageRef",
+      "args": [
+        "proxyv2:latest"
+      ],
+      "result": {
+        "registry": "docker.io",
+        "repository": "proxyv2"
+      },
+      "after": [
+        "proxyv2:latest"
+      ]
+    },
+    {
+      "name": "parseImageRef > should handle custom registry without port",
+      "function": "parseImageRef",
+      "args": [
+        "registry.example.com/org/nginx:latest"
+      ],
+      "result": {
+        "registry": "registry.example.com",
+        "repository": "org/nginx"
+      },
+      "after": [
+        "registry.example.com/org/nginx:latest"
+      ]
+    },
+    {
+      "name": "parseImageRef > should handle custom registry with port",
+      "function": "parseImageRef",
+      "args": [
+        "registry.example.com:5000/org/nginx:latest"
+      ],
+      "result": {
+        "registry": "registry.example.com:5000",
+        "repository": "org/nginx"
+      },
+      "after": [
+        "registry.example.com:5000/org/nginx:latest"
+      ]
+    },
+    {
+      "name": "parseImageRef > should handle IP addresses with port",
+      "function": "parseImageRef",
+      "args": [
+        "192.168.1.100:5000/org/nginx:latest"
+      ],
+      "result": {
+        "registry": "192.168.1.100:5000",
+        "repository": "org/nginx"
+      },
+      "after": [
+        "192.168.1.100:5000/org/nginx:latest"
+      ]
+    },
+    {
+      "name": "parseImageRef > should handle localhost with port",
+      "function": "parseImageRef",
+      "args": [
+        "localhost:5000/nginx:latest"
+      ],
+      "result": {
+        "registry": "localhost:5000",
+        "repository": "nginx"
+      },
+      "after": [
+        "localhost:5000/nginx:latest"
+      ]
+    },
+    {
+      "name": "parseImageRef > should return null on standalone registry without repository",
+      "function": "parseImageRef",
+      "args": [
+        "registry.example.com:5000"
+      ],
+      "result": null,
+      "after": [
+        "registry.example.com:5000"
+      ]
+    },
+    {
+      "name": "parseImageRef > should handle multi-level repository paths",
+      "function": "parseImageRef",
+      "args": [
+        "registry.example.com/org/team/service:1.0.0"
+      ],
+      "result": {
+        "registry": "registry.example.com",
+        "repository": "org/team/service"
+      },
+      "after": [
+        "registry.example.com/org/team/service:1.0.0"
+      ]
+    },
+    {
+      "name": "validateIstioImage > should return true for unicorn flavor image with correct registry",
+      "function": "validateIstioImage",
+      "args": [
+        "cgr.dev/defenseunicorns.com/istio-proxy-fips:1.16.0"
+      ],
+      "result": true,
+      "after": [
+        "cgr.dev/defenseunicorns.com/istio-proxy-fips:1.16.0"
+      ]
+    },
+    {
+      "name": "validateIstioImage > should return true for upstream flavor image with correct registry",
+      "function": "validateIstioImage",
+      "args": [
+        "docker.io/istio/proxyv2:1.16.0"
+      ],
+      "result": true,
+      "after": [
+        "docker.io/istio/proxyv2:1.16.0"
+      ]
+    },
+    {
+      "name": "validateIstioImage > should return true for registry1 flavor image with correct registry",
+      "function": "validateIstioImage",
+      "args": [
+        "registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.16.0"
+      ],
+      "result": true,
+      "after": [
+        "registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.16.0"
+      ]
+    },
+    {
+      "name": "validateIstioImage > should return true for any flavor image from the current registry",
+      "function": "validateIstioImage",
+      "args": [
+        "127.0.0.1:31999/istio/proxyv2:1.16.0"
+      ],
+      "result": true,
+      "after": [
+        "127.0.0.1:31999/istio/proxyv2:1.16.0"
+      ]
+    },
+    {
+      "name": "validateIstioImage > should return true for any flavor image from the current registry",
+      "function": "validateIstioImage",
+      "args": [
+        "127.0.0.1:31999/ironbank/tetrate/istio/proxyv2:1.16.0"
+      ],
+      "result": true,
+      "after": [
+        "127.0.0.1:31999/ironbank/tetrate/istio/proxyv2:1.16.0"
+      ]
+    },
+    {
+      "name": "validateIstioImage > should handle images with tags and digests",
+      "function": "validateIstioImage",
+      "args": [
+        "cgr.dev/defenseunicorns.com/istio-proxy-fips:latest"
+      ],
+      "result": true,
+      "after": [
+        "cgr.dev/defenseunicorns.com/istio-proxy-fips:latest"
+      ]
+    },
+    {
+      "name": "validateIstioImage > should handle images with tags and digests",
+      "function": "validateIstioImage",
+      "args": [
+        "cgr.dev/defenseunicorns.com/istio-proxy-fips@sha256:abc123"
+      ],
+      "result": true,
+      "after": [
+        "cgr.dev/defenseunicorns.com/istio-proxy-fips@sha256:abc123"
+      ]
+    },
+    {
+      "name": "validateIstioImage > should return false for invalid image references",
+      "function": "validateIstioImage",
+      "args": [
+        ""
+      ],
+      "result": false,
+      "after": [
+        ""
+      ]
+    },
+    {
+      "name": "validateIstioImage > should return false for invalid image references",
+      "function": "validateIstioImage",
+      "args": [
+        " "
+      ],
+      "result": false,
+      "after": [
+        " "
+      ]
+    },
+    {
+      "name": "validateIstioImage > should return false for invalid image references",
+      "function": "validateIstioImage",
+      "args": [
+        "@"
+      ],
+      "result": false,
+      "after": [
+        "@"
+      ]
+    },
+    {
+      "name": "validateIstioImage > should return false for invalid image references",
+      "function": "validateIstioImage",
+      "args": [
+        ":"
+      ],
+      "result": false,
+      "after": [
+        ":"
+      ]
+    },
+    {
+      "name": "validateIstioImage > should return false for images with wrong registry",
+      "function": "validateIstioImage",
+      "args": [
+        "wrong.registry/istio/proxyv2:1.16.0"
+      ],
+      "result": false,
+      "after": [
+        "wrong.registry/istio/proxyv2:1.16.0"
+      ]
+    },
+    {
+      "name": "validateIstioImage > should return false for images with wrong registry",
+      "function": "validateIstioImage",
+      "args": [
+        "localhost/repo:1.16.0"
+      ],
+      "result": false,
+      "after": [
+        "localhost/repo:1.16.0"
+      ]
+    },
+    {
+      "name": "validateIstioImage > should return false for images with wrong repository",
+      "function": "validateIstioImage",
+      "args": [
+        "quay.io/wrong/repo:1.16.0"
+      ],
+      "result": false,
+      "after": [
+        "quay.io/wrong/repo:1.16.0"
+      ]
+    },
+    {
+      "name": "validateIstioImage > should return false for images with wrong repository",
+      "function": "validateIstioImage",
+      "args": [
+        "registry1.dso.mil/wrong/repo:1.16.0"
+      ],
+      "result": false,
+      "after": [
+        "registry1.dso.mil/wrong/repo:1.16.0"
+      ]
+    },
+    {
+      "name": "isIstioProxyContainer > should return true for a valid Istio proxy container",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "istio-proxy",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "ports": [
+            {
+              "name": "http-envoy-prom",
+              "containerPort": 15090
+            }
+          ],
+          "args": [
+            "proxy",
+            "sidecar"
+          ]
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "name": "istio-proxy",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "ports": [
+            {
+              "name": "http-envoy-prom",
+              "containerPort": 15090
+            }
+          ],
+          "args": [
+            "proxy",
+            "sidecar"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isIstioProxyContainer > should return false for container with wrong name",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "not-istio-proxy",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "ports": [
+            {
+              "name": "http-envoy-prom",
+              "containerPort": 15090
+            }
+          ],
+          "args": [
+            "proxy",
+            "sidecar"
+          ]
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "name": "not-istio-proxy",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "ports": [
+            {
+              "name": "http-envoy-prom",
+              "containerPort": 15090
+            }
+          ],
+          "args": [
+            "proxy",
+            "sidecar"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isIstioProxyContainer > should return false for container with invalid image",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "istio-proxy",
+          "image": "quay.io/wrong/repo:1.16.0",
+          "ports": [
+            {
+              "name": "http-envoy-prom",
+              "containerPort": 15090
+            }
+          ],
+          "args": [
+            "proxy",
+            "sidecar"
+          ]
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "name": "istio-proxy",
+          "image": "quay.io/wrong/repo:1.16.0",
+          "ports": [
+            {
+              "name": "http-envoy-prom",
+              "containerPort": 15090
+            }
+          ],
+          "args": [
+            "proxy",
+            "sidecar"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isIstioProxyContainer > should return false for container with wrong port name",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "istio-proxy",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "ports": [
+            {
+              "name": "wrong-port-name",
+              "containerPort": 15090
+            }
+          ],
+          "args": [
+            "proxy",
+            "sidecar"
+          ]
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "name": "istio-proxy",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "ports": [
+            {
+              "name": "wrong-port-name",
+              "containerPort": 15090
+            }
+          ],
+          "args": [
+            "proxy",
+            "sidecar"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isIstioProxyContainer > should return false for container with wrong first arg",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "istio-proxy",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "ports": [
+            {
+              "name": "http-envoy-prom",
+              "containerPort": 15090
+            }
+          ],
+          "args": [
+            "not-proxy",
+            "sidecar"
+          ]
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "name": "istio-proxy",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "ports": [
+            {
+              "name": "http-envoy-prom",
+              "containerPort": 15090
+            }
+          ],
+          "args": [
+            "not-proxy",
+            "sidecar"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isIstioProxyContainer > should return false for container with no image",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "istio-proxy",
+          "ports": [
+            {
+              "name": "http-envoy-prom",
+              "containerPort": 15090
+            }
+          ],
+          "args": [
+            "proxy",
+            "sidecar"
+          ]
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "name": "istio-proxy",
+          "ports": [
+            {
+              "name": "http-envoy-prom",
+              "containerPort": 15090
+            }
+          ],
+          "args": [
+            "proxy",
+            "sidecar"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isIstioInitContainer > should return true for a valid Istio init container",
+      "function": "isIstioInitContainer",
+      "args": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "istio-init",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "istio-init",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isIstioInitContainer > should return false for a non-Istio init container",
+      "function": "isIstioInitContainer",
+      "args": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "some-other-container",
+                  "image": "some-image:latest",
+                  "args": [
+                    "some-command"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "istio-init",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "some-other-container",
+                  "image": "some-image:latest",
+                  "args": [
+                    "some-command"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "istio-init",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isIstioInitContainer > should return false when request is missing the required annotation",
+      "function": "isIstioInitContainer",
+      "args": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {}
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": false
+        },
+        {
+          "name": "istio-init",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {}
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": false
+        },
+        {
+          "name": "istio-init",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isIstioInitContainer > should return false when container has wrong name",
+      "function": "isIstioInitContainer",
+      "args": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "not-istio-init",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "not-istio-init",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isIstioInitContainer > should return false when container has wrong first argument",
+      "function": "isIstioInitContainer",
+      "args": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "istio-init",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "args": [
+            "wrong-arg"
+          ]
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "istio-init",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "args": [
+            "wrong-arg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isIstioInitContainer > should return false when container has invalid image",
+      "function": "isIstioInitContainer",
+      "args": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "istio-init",
+          "image": "docker.io/not-istio/invalid-image:1.0.0",
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "istio-init",
+          "image": "docker.io/not-istio/invalid-image:1.0.0",
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isIstioInitContainer > should return false when container has command defined",
+      "function": "isIstioInitContainer",
+      "args": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "istio-init",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "command": [
+            "/bin/sh"
+          ],
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "istio-init",
+          "image": "docker.io/istio/proxyv2:1.16.0",
+          "command": [
+            "/bin/sh"
+          ],
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isIstioInitContainer > should return false when container has no image",
+      "function": "isIstioInitContainer",
+      "args": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "istio-init",
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "Raw": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "name": "test-pod",
+              "namespace": "default",
+              "annotations": {
+                "sidecar.istio.io/status": "{\"version\":\"1.20.0\"}"
+              }
+            },
+            "spec": {
+              "containers": [],
+              "initContainers": [
+                {
+                  "name": "istio-proxy",
+                  "image": "docker.io/istio/proxyv2:1.16.0",
+                  "ports": [
+                    {
+                      "name": "http-envoy-prom",
+                      "containerPort": 15090
+                    }
+                  ],
+                  "args": [
+                    "proxy",
+                    "sidecar"
+                  ]
+                }
+              ]
+            }
+          },
+          "annotation": true
+        },
+        {
+          "name": "istio-init",
+          "args": [
+            "istio-iptables"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "setPrivilegeEscalation > sets allowPrivilegeEscalation=false when undefined, not privileged, and no SYS_ADMIN capability",
+      "function": "setPrivilegeEscalation",
+      "args": [
+        [
+          {
+            "name": "ok-no-sc"
+          },
+          {
+            "name": "ok-basic",
+            "securityContext": {
+              "privileged": false
+            }
+          },
+          {
+            "name": "ok-cap",
+            "securityContext": {
+              "privileged": false,
+              "capabilities": {
+                "add": [
+                  "NET_ADMIN"
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      "result": true,
+      "after": [
+        [
+          {
+            "name": "ok-no-sc",
+            "securityContext": {
+              "allowPrivilegeEscalation": false
+            }
+          },
+          {
+            "name": "ok-basic",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          },
+          {
+            "name": "ok-cap",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false,
+              "capabilities": {
+                "add": [
+                  "NET_ADMIN"
+                ]
+              }
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "setPrivilegeEscalation > does not modify containers when allowPrivilegeEscalation is already set (true or false)",
+      "function": "setPrivilegeEscalation",
+      "args": [
+        [
+          {
+            "name": "already-true",
+            "securityContext": {
+              "allowPrivilegeEscalation": true,
+              "privileged": false
+            }
+          },
+          {
+            "name": "already-false",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          }
+        ]
+      ],
+      "result": false,
+      "after": [
+        [
+          {
+            "name": "already-true",
+            "securityContext": {
+              "allowPrivilegeEscalation": true,
+              "privileged": false
+            }
+          },
+          {
+            "name": "already-false",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "setPrivilegeEscalation > skips privileged containers",
+      "function": "setPrivilegeEscalation",
+      "args": [
+        [
+          {
+            "name": "priv",
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ]
+      ],
+      "result": false,
+      "after": [
+        [
+          {
+            "name": "priv",
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "setPrivilegeEscalation > skips containers that add SYS_ADMIN capability",
+      "function": "setPrivilegeEscalation",
+      "args": [
+        [
+          {
+            "name": "cap-prefixed",
+            "securityContext": {
+              "privileged": false,
+              "capabilities": {
+                "add": [
+                  "CAP_SYS_ADMIN"
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      "result": false,
+      "after": [
+        [
+          {
+            "name": "cap-prefixed",
+            "securityContext": {
+              "privileged": false,
+              "capabilities": {
+                "add": [
+                  "CAP_SYS_ADMIN"
+                ]
+              }
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "setPrivilegeEscalation > treats empty or undefined capabilities.add as eligible for setting APE=false",
+      "function": "setPrivilegeEscalation",
+      "args": [
+        [
+          {
+            "name": "no-capabilities",
+            "securityContext": {
+              "privileged": false
+            }
+          },
+          {
+            "name": "empty-add",
+            "securityContext": {
+              "privileged": false,
+              "capabilities": {
+                "add": []
+              }
+            }
+          }
+        ]
+      ],
+      "result": true,
+      "after": [
+        [
+          {
+            "name": "no-capabilities",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          },
+          {
+            "name": "empty-add",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false,
+              "capabilities": {
+                "add": []
+              }
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "setPrivilegeEscalation > handles multiple containers and returns true if any were changed",
+      "function": "setPrivilegeEscalation",
+      "args": [
+        [
+          {
+            "name": "changed",
+            "securityContext": {
+              "privileged": false
+            }
+          },
+          {
+            "name": "unchanged",
+            "securityContext": {
+              "allowPrivilegeEscalation": true,
+              "privileged": false
+            }
+          }
+        ]
+      ],
+      "result": true,
+      "after": [
+        [
+          {
+            "name": "changed",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          },
+          {
+            "name": "unchanged",
+            "securityContext": {
+              "allowPrivilegeEscalation": true,
+              "privileged": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "setPrivilegeEscalation > is idempotent: second call returns false and leaves values as-is",
+      "function": "setPrivilegeEscalation",
+      "args": [
+        [
+          {
+            "name": "idemp",
+            "securityContext": {
+              "privileged": false
+            }
+          }
+        ]
+      ],
+      "result": true,
+      "after": [
+        [
+          {
+            "name": "idemp",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "setPrivilegeEscalation > is idempotent: second call returns false and leaves values as-is",
+      "function": "setPrivilegeEscalation",
+      "args": [
+        [
+          {
+            "name": "idemp",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          }
+        ]
+      ],
+      "result": false,
+      "after": [
+        [
+          {
+            "name": "idemp",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "validatePrivilegeEscalation > flags containers when allowPrivilegeEscalation is true OR privileged is true",
+      "function": "validatePrivilegeEscalation",
+      "args": [
+        [
+          {
+            "name": "ape-true",
+            "ctx": {
+              "allowPrivilegeEscalation": true
+            }
+          },
+          {
+            "name": "priv-true",
+            "ctx": {
+              "allowPrivilegeEscalation": false,
+              "privileged": true
+            }
+          },
+          {
+            "name": "ok",
+            "ctx": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          }
+        ]
+      ],
+      "result": [
+        {
+          "name": "ape-true",
+          "ctx": {
+            "allowPrivilegeEscalation": true
+          }
+        },
+        {
+          "name": "priv-true",
+          "ctx": {
+            "allowPrivilegeEscalation": false,
+            "privileged": true
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "ape-true",
+            "ctx": {
+              "allowPrivilegeEscalation": true
+            }
+          },
+          {
+            "name": "priv-true",
+            "ctx": {
+              "allowPrivilegeEscalation": false,
+              "privileged": true
+            }
+          },
+          {
+            "name": "ok",
+            "ctx": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "validatePrivilegeEscalation > treats undefined allowPrivilegeEscalation as a violation (documents current behavior)",
+      "function": "validatePrivilegeEscalation",
+      "args": [
+        [
+          {
+            "name": "undef-ape",
+            "ctx": {
+              "privileged": false
+            }
+          },
+          {
+            "name": "ok",
+            "ctx": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          }
+        ]
+      ],
+      "result": [
+        {
+          "name": "undef-ape",
+          "ctx": {
+            "privileged": false
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "undef-ape",
+            "ctx": {
+              "privileged": false
+            }
+          },
+          {
+            "name": "ok",
+            "ctx": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "validatePrivilegeEscalation > returns empty when all containers have allowPrivilegeEscalation=false and privileged=false",
+      "function": "validatePrivilegeEscalation",
+      "args": [
+        [
+          {
+            "name": "c1",
+            "ctx": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          },
+          {
+            "name": "c2",
+            "ctx": {
+              "allowPrivilegeEscalation": false
+            }
+          }
+        ]
+      ],
+      "result": [],
+      "after": [
+        [
+          {
+            "name": "c1",
+            "ctx": {
+              "allowPrivilegeEscalation": false,
+              "privileged": false
+            }
+          },
+          {
+            "name": "c2",
+            "ctx": {
+              "allowPrivilegeEscalation": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "validatePrivilegeEscalation > does not mutate inputs (pure filter)",
+      "function": "validatePrivilegeEscalation",
+      "args": [
+        [
+          {
+            "name": "ape-true",
+            "ctx": {
+              "allowPrivilegeEscalation": true
+            }
+          }
+        ]
+      ],
+      "result": [
+        {
+          "name": "ape-true",
+          "ctx": {
+            "allowPrivilegeEscalation": true
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "ape-true",
+            "ctx": {
+              "allowPrivilegeEscalation": true
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "validatePrivilegeEscalation > handles empty container list",
+      "function": "validatePrivilegeEscalation",
+      "args": [
+        []
+      ],
+      "result": [],
+      "after": [
+        []
+      ]
+    },
+    {
+      "name": "setNonRootUserSettings > initializes securityContext if missing and applies defaults",
+      "function": "setNonRootUserSettings",
+      "args": [
+        {
+          "containers": []
+        },
+        {
+          "name": "test"
+        }
+      ],
+      "result": null,
+      "after": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsNonRoot": true,
+            "runAsUser": 1000,
+            "runAsGroup": 1000
+          }
+        },
+        {
+          "name": "test"
+        }
+      ]
+    },
+    {
+      "name": "setNonRootUserSettings > initializes securityContext if missing and applies defaults",
+      "function": "setNonRootUserSettings",
+      "args": [
+        {
+          "containers": [],
+          "securityContext": {}
+        },
+        {
+          "name": "test"
+        }
+      ],
+      "result": null,
+      "after": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsNonRoot": true,
+            "runAsUser": 1000,
+            "runAsGroup": 1000
+          }
+        },
+        {
+          "name": "test"
+        }
+      ]
+    },
+    {
+      "name": "setNonRootUserSettings > does not override existing runAsNonRoot if already set",
+      "function": "setNonRootUserSettings",
+      "args": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsNonRoot": true
+          }
+        },
+        {
+          "name": "test"
+        }
+      ],
+      "result": null,
+      "after": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsNonRoot": true,
+            "runAsUser": 1000,
+            "runAsGroup": 1000
+          }
+        },
+        {
+          "name": "test"
+        }
+      ]
+    },
+    {
+      "name": "setNonRootUserSettings > does not override existing runAsNonRoot if already set",
+      "function": "setNonRootUserSettings",
+      "args": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsNonRoot": false
+          }
+        },
+        {
+          "name": "test"
+        }
+      ],
+      "result": null,
+      "after": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsNonRoot": false,
+            "runAsUser": 1000,
+            "runAsGroup": 1000
+          }
+        },
+        {
+          "name": "test"
+        }
+      ]
+    },
+    {
+      "name": "setNonRootUserSettings > does not override existing runAsUser/runAsGroup when no labels provided",
+      "function": "setNonRootUserSettings",
+      "args": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsUser": 1234,
+            "runAsGroup": 2345
+          }
+        },
+        {
+          "name": "test"
+        }
+      ],
+      "result": null,
+      "after": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsUser": 1234,
+            "runAsGroup": 2345,
+            "runAsNonRoot": true
+          }
+        },
+        {
+          "name": "test"
+        }
+      ]
+    },
+    {
+      "name": "setNonRootUserSettings > uses uds/user and uds/group labels instead of defaults; sets runAsNonRoot true if unset",
+      "function": "setNonRootUserSettings",
+      "args": [
+        {
+          "containers": []
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/user": "2001",
+            "uds/group": "2002"
+          }
+        }
+      ],
+      "result": null,
+      "after": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsUser": 2001,
+            "runAsGroup": 2002,
+            "runAsNonRoot": true
+          }
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/user": "2001",
+            "uds/group": "2002"
+          }
+        }
+      ]
+    },
+    {
+      "name": "setNonRootUserSettings > sets fsGroup when uds/fsgroup label is present",
+      "function": "setNonRootUserSettings",
+      "args": [
+        {
+          "containers": []
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/fsgroup": "3003"
+          }
+        }
+      ],
+      "result": null,
+      "after": [
+        {
+          "containers": [],
+          "securityContext": {
+            "fsGroup": 3003,
+            "runAsNonRoot": true,
+            "runAsUser": 1000,
+            "runAsGroup": 1000
+          }
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/fsgroup": "3003"
+          }
+        }
+      ]
+    },
+    {
+      "name": "setNonRootUserSettings > parseInt behavior: labels with extra text still parse",
+      "function": "setNonRootUserSettings",
+      "args": [
+        {
+          "containers": []
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/user": "1000abc",
+            "uds/group": "2000xyz",
+            "uds/fsgroup": "3000q"
+          }
+        }
+      ],
+      "result": null,
+      "after": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsUser": 1000,
+            "runAsGroup": 2000,
+            "fsGroup": 3000,
+            "runAsNonRoot": true
+          }
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/user": "1000abc",
+            "uds/group": "2000xyz",
+            "uds/fsgroup": "3000q"
+          }
+        }
+      ]
+    },
+    {
+      "name": "setNonRootUserSettings > parseInt behavior: non-numeric labels become NaN (documents current behavior)",
+      "function": "setNonRootUserSettings",
+      "args": [
+        {
+          "containers": []
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/user": "abc",
+            "uds/group": "def",
+            "uds/fsgroup": "ghi"
+          }
+        }
+      ],
+      "result": null,
+      "after": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsUser": null,
+            "runAsGroup": null,
+            "fsGroup": null,
+            "runAsNonRoot": true
+          }
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/user": "abc",
+            "uds/group": "def",
+            "uds/fsgroup": "ghi"
+          }
+        }
+      ]
+    },
+    {
+      "name": "setNonRootUserSettings > labels override existing values; runAsNonRoot unchanged if set",
+      "function": "setNonRootUserSettings",
+      "args": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsUser": 1111,
+            "runAsGroup": 2222,
+            "fsGroup": 3333,
+            "runAsNonRoot": false
+          }
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/user": "4444",
+            "uds/group": "5555",
+            "uds/fsgroup": "6666"
+          }
+        }
+      ],
+      "result": null,
+      "after": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsUser": 4444,
+            "runAsGroup": 5555,
+            "fsGroup": 6666,
+            "runAsNonRoot": false
+          }
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/user": "4444",
+            "uds/group": "5555",
+            "uds/fsgroup": "6666"
+          }
+        }
+      ]
+    },
+    {
+      "name": "setNonRootUserSettings > is idempotent (calling twice preserves outcomes)",
+      "function": "setNonRootUserSettings",
+      "args": [
+        {
+          "containers": []
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/user": "2001",
+            "uds/group": "2002"
+          }
+        }
+      ],
+      "result": null,
+      "after": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsUser": 2001,
+            "runAsGroup": 2002,
+            "runAsNonRoot": true
+          }
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/user": "2001",
+            "uds/group": "2002"
+          }
+        }
+      ]
+    },
+    {
+      "name": "setNonRootUserSettings > is idempotent (calling twice preserves outcomes)",
+      "function": "setNonRootUserSettings",
+      "args": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsUser": 2001,
+            "runAsGroup": 2002,
+            "runAsNonRoot": true
+          }
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/user": "2001",
+            "uds/group": "2002"
+          }
+        }
+      ],
+      "result": null,
+      "after": [
+        {
+          "containers": [],
+          "securityContext": {
+            "runAsUser": 2001,
+            "runAsGroup": 2002,
+            "runAsNonRoot": true
+          }
+        },
+        {
+          "name": "test",
+          "labels": {
+            "uds/user": "2001",
+            "uds/group": "2002"
+          }
+        }
+      ]
+    },
+    {
+      "name": "isRootSecurityContext > returns false when context is empty/undefined fields",
+      "function": "isRootSecurityContext",
+      "args": [
+        {}
+      ],
+      "result": false,
+      "after": [
+        {}
+      ]
+    },
+    {
+      "name": "isRootSecurityContext > returns true when runAsNonRoot is explicitly false",
+      "function": "isRootSecurityContext",
+      "args": [
+        {
+          "runAsNonRoot": false
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "runAsNonRoot": false
+        }
+      ]
+    },
+    {
+      "name": "isRootSecurityContext > returns true when runAsUser is 0",
+      "function": "isRootSecurityContext",
+      "args": [
+        {
+          "runAsUser": 0
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "runAsUser": 0
+        }
+      ]
+    },
+    {
+      "name": "isRootSecurityContext > returns true when supplementalGroups includes 0 (regardless of position)",
+      "function": "isRootSecurityContext",
+      "args": [
+        {
+          "supplementalGroups": [
+            0
+          ]
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "supplementalGroups": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isRootSecurityContext > returns true when supplementalGroups includes 0 (regardless of position)",
+      "function": "isRootSecurityContext",
+      "args": [
+        {
+          "supplementalGroups": [
+            10,
+            0,
+            999
+          ]
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "supplementalGroups": [
+            10,
+            0,
+            999
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isRootSecurityContext > returns false when runAsNonRoot is true, runAsUser non-zero, and no 0 in supplementalGroups",
+      "function": "isRootSecurityContext",
+      "args": [
+        {
+          "runAsNonRoot": true,
+          "runAsUser": 1000,
+          "supplementalGroups": [
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "runAsNonRoot": true,
+          "runAsUser": 1000,
+          "supplementalGroups": [
+            1,
+            2,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "name": "isRootSecurityContext > returns false when supplementalGroups is empty or undefined",
+      "function": "isRootSecurityContext",
+      "args": [
+        {
+          "supplementalGroups": []
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "supplementalGroups": []
+        }
+      ]
+    },
+    {
+      "name": "isRootSecurityContext > returns false when supplementalGroups is empty or undefined",
+      "function": "isRootSecurityContext",
+      "args": [
+        {}
+      ],
+      "result": false,
+      "after": [
+        {}
+      ]
+    },
+    {
+      "name": "isRootSecurityContext > treats NaN runAsUser as not root (documents current behavior)",
+      "function": "isRootSecurityContext",
+      "args": [
+        {
+          "runAsUser": null
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "runAsUser": null
+        }
+      ]
+    },
+    {
+      "name": "validateProcMount > returns no violations for containers with no procMount or allowed values",
+      "function": "validateProcMount",
+      "args": [
+        [
+          {
+            "name": "noField",
+            "ctx": {}
+          },
+          {
+            "name": "allowed1",
+            "ctx": {
+              "procMount": "Default"
+            }
+          },
+          {
+            "name": "allowed2",
+            "ctx": {
+              "procMount": "Unmasked"
+            }
+          }
+        ],
+        [
+          "Default",
+          "Unmasked"
+        ]
+      ],
+      "result": {
+        "violations": [],
+        "isPodViolation": false
+      },
+      "after": [
+        [
+          {
+            "name": "noField",
+            "ctx": {}
+          },
+          {
+            "name": "allowed1",
+            "ctx": {
+              "procMount": "Default"
+            }
+          },
+          {
+            "name": "allowed2",
+            "ctx": {
+              "procMount": "Unmasked"
+            }
+          }
+        ],
+        [
+          "Default",
+          "Unmasked"
+        ]
+      ]
+    },
+    {
+      "name": "validateProcMount > returns only the containers that use disallowed procMount values",
+      "function": "validateProcMount",
+      "args": [
+        [
+          {
+            "name": "ok1",
+            "ctx": {
+              "procMount": "Default"
+            }
+          },
+          {
+            "name": "bad",
+            "ctx": {
+              "procMount": "BadValue"
+            }
+          },
+          {
+            "name": "ok2",
+            "ctx": {}
+          },
+          {
+            "name": "ok3",
+            "ctx": {
+              "procMount": "Unmasked"
+            }
+          }
+        ],
+        [
+          "Default",
+          "Unmasked"
+        ]
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "bad",
+            "ctx": {
+              "procMount": "BadValue"
+            }
+          }
+        ],
+        "isPodViolation": false
+      },
+      "after": [
+        [
+          {
+            "name": "ok1",
+            "ctx": {
+              "procMount": "Default"
+            }
+          },
+          {
+            "name": "bad",
+            "ctx": {
+              "procMount": "BadValue"
+            }
+          },
+          {
+            "name": "ok2",
+            "ctx": {}
+          },
+          {
+            "name": "ok3",
+            "ctx": {
+              "procMount": "Unmasked"
+            }
+          }
+        ],
+        [
+          "Default",
+          "Unmasked"
+        ]
+      ]
+    },
+    {
+      "name": "validateProcMount > does not flag containers when procMount is undefined even if undefined is not allowed (documents current behavior)",
+      "function": "validateProcMount",
+      "args": [
+        [
+          {
+            "name": "u",
+            "ctx": {}
+          }
+        ],
+        [
+          "Default"
+        ]
+      ],
+      "result": {
+        "violations": [],
+        "isPodViolation": false
+      },
+      "after": [
+        [
+          {
+            "name": "u",
+            "ctx": {}
+          }
+        ],
+        [
+          "Default"
+        ]
+      ]
+    },
+    {
+      "name": "validateProcMount > does not mutate inputs",
+      "function": "validateProcMount",
+      "args": [
+        [
+          {
+            "name": "bad",
+            "ctx": {
+              "procMount": "BadValue"
+            }
+          }
+        ],
+        [
+          "Default"
+        ]
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "bad",
+            "ctx": {
+              "procMount": "BadValue"
+            }
+          }
+        ],
+        "isPodViolation": false
+      },
+      "after": [
+        [
+          {
+            "name": "bad",
+            "ctx": {
+              "procMount": "BadValue"
+            }
+          }
+        ],
+        [
+          "Default"
+        ]
+      ]
+    },
+    {
+      "name": "validateSeccompProfile > POD violation when pod seccomp type is not allowed",
+      "function": "validateSeccompProfile",
+      "args": [
+        {
+          "seccompProfile": {
+            "type": "Unconfined"
+          }
+        },
+        [],
+        [
+          "RuntimeDefault",
+          "Localhost"
+        ]
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "pod",
+            "ctx": {
+              "seccompProfile": {
+                "type": "Unconfined"
+              }
+            }
+          }
+        ],
+        "isPodViolation": true
+      },
+      "after": [
+        {
+          "seccompProfile": {
+            "type": "Unconfined"
+          }
+        },
+        [],
+        [
+          "RuntimeDefault",
+          "Localhost"
+        ]
+      ]
+    },
+    {
+      "name": "validateSeccompProfile > POD type undefined: violation unless undefined is explicitly allowed",
+      "function": "validateSeccompProfile",
+      "args": [
+        {},
+        [],
+        [
+          "RuntimeDefault"
+        ]
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "pod",
+            "ctx": {}
+          }
+        ],
+        "isPodViolation": true
+      },
+      "after": [
+        {},
+        [],
+        [
+          "RuntimeDefault"
+        ]
+      ]
+    },
+    {
+      "name": "validateSeccompProfile > POD type undefined: violation unless undefined is explicitly allowed",
+      "function": "validateSeccompProfile",
+      "args": [
+        {},
+        [],
+        [
+          "RuntimeDefault",
+          null
+        ]
+      ],
+      "result": {
+        "violations": [],
+        "isPodViolation": false
+      },
+      "after": [
+        {},
+        [],
+        [
+          "RuntimeDefault",
+          null
+        ]
+      ]
+    },
+    {
+      "name": "validateSeccompProfile > no POD violation when pod seccomp type is allowed",
+      "function": "validateSeccompProfile",
+      "args": [
+        {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        [],
+        [
+          "RuntimeDefault",
+          "Localhost"
+        ]
+      ],
+      "result": {
+        "violations": [],
+        "isPodViolation": false
+      },
+      "after": [
+        {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        [],
+        [
+          "RuntimeDefault",
+          "Localhost"
+        ]
+      ]
+    },
+    {
+      "name": "validateSeccompProfile > treats missing podSecurityContext the same as undefined type (violation)",
+      "function": "validateSeccompProfile",
+      "args": [
+        null,
+        [],
+        [
+          "RuntimeDefault"
+        ]
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "pod",
+            "ctx": {}
+          }
+        ],
+        "isPodViolation": true
+      },
+      "after": [
+        null,
+        [],
+        [
+          "RuntimeDefault"
+        ]
+      ]
+    },
+    {
+      "name": "validateSeccompProfile > flags CONTAINER violations for disallowed/undefined types when pod passes",
+      "function": "validateSeccompProfile",
+      "args": [
+        {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        [
+          {
+            "name": "ok",
+            "ctx": {
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          },
+          {
+            "name": "bad1",
+            "ctx": {
+              "seccompProfile": {
+                "type": "Unconfined"
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {}
+          }
+        ],
+        [
+          "RuntimeDefault"
+        ]
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "bad1",
+            "ctx": {
+              "seccompProfile": {
+                "type": "Unconfined"
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {}
+          }
+        ],
+        "isPodViolation": false
+      },
+      "after": [
+        {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        [
+          {
+            "name": "ok",
+            "ctx": {
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          },
+          {
+            "name": "bad1",
+            "ctx": {
+              "seccompProfile": {
+                "type": "Unconfined"
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {}
+          }
+        ],
+        [
+          "RuntimeDefault"
+        ]
+      ]
+    },
+    {
+      "name": "validateSeccompProfile > containers with undefined type are OK when undefined is allowed",
+      "function": "validateSeccompProfile",
+      "args": [
+        {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        [
+          {
+            "name": "ok-undef",
+            "ctx": {}
+          },
+          {
+            "name": "ok",
+            "ctx": {
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        [
+          "RuntimeDefault",
+          null
+        ]
+      ],
+      "result": {
+        "violations": [],
+        "isPodViolation": false
+      },
+      "after": [
+        {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        [
+          {
+            "name": "ok-undef",
+            "ctx": {}
+          },
+          {
+            "name": "ok",
+            "ctx": {
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        [
+          "RuntimeDefault",
+          null
+        ]
+      ]
+    },
+    {
+      "name": "validateSeccompProfile > accepts Localhost when allowed (localhostProfile value not validated)",
+      "function": "validateSeccompProfile",
+      "args": [
+        {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        [
+          {
+            "name": "c1",
+            "ctx": {
+              "seccompProfile": {
+                "type": "Localhost",
+                "localhostProfile": "profiles/my.json"
+              }
+            }
+          },
+          {
+            "name": "c2",
+            "ctx": {
+              "seccompProfile": {
+                "type": "Localhost"
+              }
+            }
+          }
+        ],
+        [
+          "RuntimeDefault",
+          "Localhost"
+        ]
+      ],
+      "result": {
+        "violations": [],
+        "isPodViolation": false
+      },
+      "after": [
+        {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        [
+          {
+            "name": "c1",
+            "ctx": {
+              "seccompProfile": {
+                "type": "Localhost",
+                "localhostProfile": "profiles/my.json"
+              }
+            }
+          },
+          {
+            "name": "c2",
+            "ctx": {
+              "seccompProfile": {
+                "type": "Localhost"
+              }
+            }
+          }
+        ],
+        [
+          "RuntimeDefault",
+          "Localhost"
+        ]
+      ]
+    },
+    {
+      "name": "validateSELinuxOptions > flags a POD violation when pod seLinuxOptions.user or .role is set",
+      "function": "validateSELinuxOptions",
+      "args": [
+        {
+          "seLinuxOptions": {
+            "user": "system_u"
+          }
+        },
+        []
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "pod",
+            "ctx": {
+              "seLinuxOptions": {
+                "user": "system_u"
+              }
+            }
+          }
+        ],
+        "isPodViolation": true
+      },
+      "after": [
+        {
+          "seLinuxOptions": {
+            "user": "system_u"
+          }
+        },
+        []
+      ]
+    },
+    {
+      "name": "validateSELinuxOptions > flags a POD violation when pod seLinuxOptions.user or .role is set",
+      "function": "validateSELinuxOptions",
+      "args": [
+        {
+          "seLinuxOptions": {
+            "role": "system_r"
+          }
+        },
+        []
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "pod",
+            "ctx": {
+              "seLinuxOptions": {
+                "role": "system_r"
+              }
+            }
+          }
+        ],
+        "isPodViolation": true
+      },
+      "after": [
+        {
+          "seLinuxOptions": {
+            "role": "system_r"
+          }
+        },
+        []
+      ]
+    },
+    {
+      "name": "validateSELinuxOptions > does NOT flag a POD violation when user/role are absent (type/level only or undefined)",
+      "function": "validateSELinuxOptions",
+      "args": [
+        {
+          "seLinuxOptions": {
+            "type": "spc_t",
+            "level": "s0"
+          }
+        },
+        []
+      ],
+      "result": {
+        "violations": [],
+        "isPodViolation": false
+      },
+      "after": [
+        {
+          "seLinuxOptions": {
+            "type": "spc_t",
+            "level": "s0"
+          }
+        },
+        []
+      ]
+    },
+    {
+      "name": "validateSELinuxOptions > does NOT flag a POD violation when user/role are absent (type/level only or undefined)",
+      "function": "validateSELinuxOptions",
+      "args": [
+        {},
+        []
+      ],
+      "result": {
+        "violations": [],
+        "isPodViolation": false
+      },
+      "after": [
+        {},
+        []
+      ]
+    },
+    {
+      "name": "validateSELinuxOptions > short-circuits: pod violation returns only POD and skips container checks",
+      "function": "validateSELinuxOptions",
+      "args": [
+        {
+          "seLinuxOptions": {
+            "user": "system_u"
+          }
+        },
+        [
+          {
+            "name": "c1",
+            "ctx": {
+              "seLinuxOptions": {
+                "role": "system_r"
+              }
+            }
+          },
+          {
+            "name": "c2",
+            "ctx": {}
+          }
+        ]
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "pod",
+            "ctx": {
+              "seLinuxOptions": {
+                "user": "system_u"
+              }
+            }
+          }
+        ],
+        "isPodViolation": true
+      },
+      "after": [
+        {
+          "seLinuxOptions": {
+            "user": "system_u"
+          }
+        },
+        [
+          {
+            "name": "c1",
+            "ctx": {
+              "seLinuxOptions": {
+                "role": "system_r"
+              }
+            }
+          },
+          {
+            "name": "c2",
+            "ctx": {}
+          }
+        ]
+      ]
+    },
+    {
+      "name": "validateSELinuxOptions > flags containers that set user or role; ignores others",
+      "function": "validateSELinuxOptions",
+      "args": [
+        {},
+        [
+          {
+            "name": "ok1",
+            "ctx": {}
+          },
+          {
+            "name": "bad1",
+            "ctx": {
+              "seLinuxOptions": {
+                "user": "system_u"
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {
+              "seLinuxOptions": {
+                "role": "system_r"
+              }
+            }
+          },
+          {
+            "name": "ok2",
+            "ctx": {
+              "seLinuxOptions": {
+                "type": "spc_t",
+                "level": "s0"
+              }
+            }
+          }
+        ]
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "bad1",
+            "ctx": {
+              "seLinuxOptions": {
+                "user": "system_u"
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {
+              "seLinuxOptions": {
+                "role": "system_r"
+              }
+            }
+          }
+        ],
+        "isPodViolation": false
+      },
+      "after": [
+        {},
+        [
+          {
+            "name": "ok1",
+            "ctx": {}
+          },
+          {
+            "name": "bad1",
+            "ctx": {
+              "seLinuxOptions": {
+                "user": "system_u"
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {
+              "seLinuxOptions": {
+                "role": "system_r"
+              }
+            }
+          },
+          {
+            "name": "ok2",
+            "ctx": {
+              "seLinuxOptions": {
+                "type": "spc_t",
+                "level": "s0"
+              }
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "validateSELinuxOptions > containers with undefined seLinuxOptions do not violate",
+      "function": "validateSELinuxOptions",
+      "args": [
+        {},
+        [
+          {
+            "name": "c1",
+            "ctx": {}
+          },
+          {
+            "name": "c2",
+            "ctx": {}
+          }
+        ]
+      ],
+      "result": {
+        "violations": [],
+        "isPodViolation": false
+      },
+      "after": [
+        {},
+        [
+          {
+            "name": "c1",
+            "ctx": {}
+          },
+          {
+            "name": "c2",
+            "ctx": {}
+          }
+        ]
+      ]
+    },
+    {
+      "name": "validateSELinuxTypes > flags a POD violation when pod type is not in allowed list",
+      "function": "validateSELinuxTypes",
+      "args": [
+        {
+          "seLinuxOptions": {
+            "type": "spc_t"
+          }
+        },
+        [],
+        [
+          "container_t"
+        ]
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "pod",
+            "ctx": {
+              "seLinuxOptions": {
+                "type": "spc_t"
+              }
+            }
+          }
+        ],
+        "isPodViolation": true
+      },
+      "after": [
+        {
+          "seLinuxOptions": {
+            "type": "spc_t"
+          }
+        },
+        [],
+        [
+          "container_t"
+        ]
+      ]
+    },
+    {
+      "name": "validateSELinuxTypes > does NOT flag a POD violation when pod type is allowed",
+      "function": "validateSELinuxTypes",
+      "args": [
+        {
+          "seLinuxOptions": {
+            "type": "container_t"
+          }
+        },
+        [],
+        [
+          "container_t"
+        ]
+      ],
+      "result": {
+        "violations": [],
+        "isPodViolation": false
+      },
+      "after": [
+        {
+          "seLinuxOptions": {
+            "type": "container_t"
+          }
+        },
+        [],
+        [
+          "container_t"
+        ]
+      ]
+    },
+    {
+      "name": "validateSELinuxTypes > treats missing type as a violation unless undefined is explicitly allowed",
+      "function": "validateSELinuxTypes",
+      "args": [
+        {},
+        [],
+        [
+          "container_t"
+        ]
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "pod",
+            "ctx": {}
+          }
+        ],
+        "isPodViolation": true
+      },
+      "after": [
+        {},
+        [],
+        [
+          "container_t"
+        ]
+      ]
+    },
+    {
+      "name": "validateSELinuxTypes > treats missing type as a violation unless undefined is explicitly allowed",
+      "function": "validateSELinuxTypes",
+      "args": [
+        {},
+        [],
+        [
+          "container_t",
+          null
+        ]
+      ],
+      "result": {
+        "violations": [],
+        "isPodViolation": false
+      },
+      "after": [
+        {},
+        [],
+        [
+          "container_t",
+          null
+        ]
+      ]
+    },
+    {
+      "name": "validateSELinuxTypes > when podSecurityContext is undefined, behaves like missing type (violation)",
+      "function": "validateSELinuxTypes",
+      "args": [
+        null,
+        [],
+        [
+          "container_t"
+        ]
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "pod",
+            "ctx": {}
+          }
+        ],
+        "isPodViolation": true
+      },
+      "after": [
+        null,
+        [],
+        [
+          "container_t"
+        ]
+      ]
+    },
+    {
+      "name": "validateSELinuxTypes > flags containers with disallowed or missing types",
+      "function": "validateSELinuxTypes",
+      "args": [
+        {
+          "seLinuxOptions": {
+            "type": "container_t"
+          }
+        },
+        [
+          {
+            "name": "ok",
+            "ctx": {
+              "seLinuxOptions": {
+                "type": "container_t"
+              }
+            }
+          },
+          {
+            "name": "bad1",
+            "ctx": {
+              "seLinuxOptions": {
+                "type": "spc_t"
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {}
+          }
+        ],
+        [
+          "container_t"
+        ]
+      ],
+      "result": {
+        "violations": [
+          {
+            "name": "bad1",
+            "ctx": {
+              "seLinuxOptions": {
+                "type": "spc_t"
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {}
+          }
+        ],
+        "isPodViolation": false
+      },
+      "after": [
+        {
+          "seLinuxOptions": {
+            "type": "container_t"
+          }
+        },
+        [
+          {
+            "name": "ok",
+            "ctx": {
+              "seLinuxOptions": {
+                "type": "container_t"
+              }
+            }
+          },
+          {
+            "name": "bad1",
+            "ctx": {
+              "seLinuxOptions": {
+                "type": "spc_t"
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {}
+          }
+        ],
+        [
+          "container_t"
+        ]
+      ]
+    },
+    {
+      "name": "validateSELinuxTypes > ignores containers with missing type when undefined is allowed",
+      "function": "validateSELinuxTypes",
+      "args": [
+        {
+          "seLinuxOptions": {
+            "type": "container_t"
+          }
+        },
+        [
+          {
+            "name": "ok1",
+            "ctx": {}
+          },
+          {
+            "name": "ok2",
+            "ctx": {
+              "seLinuxOptions": {
+                "type": "container_t"
+              }
+            }
+          }
+        ],
+        [
+          "container_t",
+          null
+        ]
+      ],
+      "result": {
+        "violations": [],
+        "isPodViolation": false
+      },
+      "after": [
+        {
+          "seLinuxOptions": {
+            "type": "container_t"
+          }
+        },
+        [
+          {
+            "name": "ok1",
+            "ctx": {}
+          },
+          {
+            "name": "ok2",
+            "ctx": {
+              "seLinuxOptions": {
+                "type": "container_t"
+              }
+            }
+          }
+        ],
+        [
+          "container_t",
+          null
+        ]
+      ]
+    },
+    {
+      "name": "setAllContainersDropAllCapabilities > forces drop: ['ALL'] regardless of initial shape",
+      "function": "setAllContainersDropAllCapabilities",
+      "args": [
+        [
+          {
+            "name": "no-sc",
+            "image": "nginx"
+          },
+          {
+            "name": "no-cap",
+            "image": "nginx",
+            "securityContext": {}
+          },
+          {
+            "name": "has-drop",
+            "image": "nginx",
+            "securityContext": {
+              "capabilities": {
+                "drop": [
+                  "NET_RAW"
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      "result": null,
+      "after": [
+        [
+          {
+            "name": "no-sc",
+            "image": "nginx",
+            "securityContext": {
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          },
+          {
+            "name": "no-cap",
+            "image": "nginx",
+            "securityContext": {
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          },
+          {
+            "name": "has-drop",
+            "image": "nginx",
+            "securityContext": {
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "setAllContainersDropAllCapabilities > preserves other capabilities fields (like add) when overwriting drop",
+      "function": "setAllContainersDropAllCapabilities",
+      "args": [
+        [
+          {
+            "name": "keep-add",
+            "image": "nginx",
+            "securityContext": {
+              "capabilities": {
+                "add": [
+                  "NET_BIND_SERVICE"
+                ],
+                "drop": [
+                  "NET_RAW"
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      "result": null,
+      "after": [
+        [
+          {
+            "name": "keep-add",
+            "image": "nginx",
+            "securityContext": {
+              "capabilities": {
+                "add": [
+                  "NET_BIND_SERVICE"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "setAllContainersDropAllCapabilities > updates all containers in the list, not just the first",
+      "function": "setAllContainersDropAllCapabilities",
+      "args": [
+        [
+          {
+            "name": "c1",
+            "image": "nginx"
+          },
+          {
+            "name": "c2",
+            "image": "busybox",
+            "securityContext": {
+              "capabilities": {
+                "add": [
+                  "SYS_PTRACE"
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      "result": null,
+      "after": [
+        [
+          {
+            "name": "c1",
+            "image": "nginx",
+            "securityContext": {
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          },
+          {
+            "name": "c2",
+            "image": "busybox",
+            "securityContext": {
+              "capabilities": {
+                "add": [
+                  "SYS_PTRACE"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "setAllContainersDropAllCapabilities > is idempotent (calling twice keeps the same outcome and preserves other fields)",
+      "function": "setAllContainersDropAllCapabilities",
+      "args": [
+        [
+          {
+            "name": "idempotent",
+            "image": "nginx",
+            "securityContext": {
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "SYS_ADMIN"
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      "result": null,
+      "after": [
+        [
+          {
+            "name": "idempotent",
+            "image": "nginx",
+            "securityContext": {
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "setAllContainersDropAllCapabilities > is idempotent (calling twice keeps the same outcome and preserves other fields)",
+      "function": "setAllContainersDropAllCapabilities",
+      "args": [
+        [
+          {
+            "name": "idempotent",
+            "image": "nginx",
+            "securityContext": {
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      "result": null,
+      "after": [
+        [
+          {
+            "name": "idempotent",
+            "image": "nginx",
+            "securityContext": {
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "setAllContainersDropAllCapabilities > handles empty container list without throwing",
+      "function": "setAllContainersDropAllCapabilities",
+      "args": [
+        []
+      ],
+      "result": null,
+      "after": [
+        []
+      ]
+    },
+    {
+      "name": "findContainersWithoutDropAllCapability > treats missing/undefined/empty drop as violations",
+      "function": "findContainersWithoutDropAllCapability",
+      "args": [
+        [
+          {
+            "name": "no-cap",
+            "ctx": {}
+          },
+          {
+            "name": "undef-cap",
+            "ctx": {}
+          },
+          {
+            "name": "no-drop",
+            "ctx": {
+              "capabilities": {}
+            }
+          },
+          {
+            "name": "empty-drop",
+            "ctx": {
+              "capabilities": {
+                "drop": []
+              }
+            }
+          }
+        ],
+        "ALL"
+      ],
+      "result": [
+        {
+          "name": "no-cap",
+          "ctx": {}
+        },
+        {
+          "name": "undef-cap",
+          "ctx": {}
+        },
+        {
+          "name": "no-drop",
+          "ctx": {
+            "capabilities": {}
+          }
+        },
+        {
+          "name": "empty-drop",
+          "ctx": {
+            "capabilities": {
+              "drop": []
+            }
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "no-cap",
+            "ctx": {}
+          },
+          {
+            "name": "undef-cap",
+            "ctx": {}
+          },
+          {
+            "name": "no-drop",
+            "ctx": {
+              "capabilities": {}
+            }
+          },
+          {
+            "name": "empty-drop",
+            "ctx": {
+              "capabilities": {
+                "drop": []
+              }
+            }
+          }
+        ],
+        "ALL"
+      ]
+    },
+    {
+      "name": "findContainersWithoutDropAllCapability > does NOT return containers that drop the required capability (even with others present)",
+      "function": "findContainersWithoutDropAllCapability",
+      "args": [
+        [
+          {
+            "name": "all-only",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          },
+          {
+            "name": "all-and-others",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "NET_RAW",
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ],
+        "ALL"
+      ],
+      "result": [],
+      "after": [
+        [
+          {
+            "name": "all-only",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          },
+          {
+            "name": "all-and-others",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "NET_RAW",
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ],
+        "ALL"
+      ]
+    },
+    {
+      "name": "findContainersWithoutDropAllCapability > returns containers that drop other capabilities but not the required one",
+      "function": "findContainersWithoutDropAllCapability",
+      "args": [
+        [
+          {
+            "name": "missing1",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "NET_RAW"
+                ]
+              }
+            }
+          },
+          {
+            "name": "missing2",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "SYS_ADMIN",
+                  "CHOWN"
+                ]
+              }
+            }
+          }
+        ],
+        "ALL"
+      ],
+      "result": [
+        {
+          "name": "missing1",
+          "ctx": {
+            "capabilities": {
+              "drop": [
+                "NET_RAW"
+              ]
+            }
+          }
+        },
+        {
+          "name": "missing2",
+          "ctx": {
+            "capabilities": {
+              "drop": [
+                "SYS_ADMIN",
+                "CHOWN"
+              ]
+            }
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "missing1",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "NET_RAW"
+                ]
+              }
+            }
+          },
+          {
+            "name": "missing2",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "SYS_ADMIN",
+                  "CHOWN"
+                ]
+              }
+            }
+          }
+        ],
+        "ALL"
+      ]
+    },
+    {
+      "name": "findContainersWithoutDropAllCapability > mixed list: only those missing the required capability are returned",
+      "function": "findContainersWithoutDropAllCapability",
+      "args": [
+        [
+          {
+            "name": "ok1",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad1",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "NET_RAW"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {}
+          },
+          {
+            "name": "ok2",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "SYS_PTRACE"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ],
+        "ALL"
+      ],
+      "result": [
+        {
+          "name": "bad1",
+          "ctx": {
+            "capabilities": {
+              "drop": [
+                "NET_RAW"
+              ]
+            }
+          }
+        },
+        {
+          "name": "bad2",
+          "ctx": {}
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "ok1",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad1",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "NET_RAW"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {}
+          },
+          {
+            "name": "ok2",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "SYS_PTRACE"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ],
+        "ALL"
+      ]
+    },
+    {
+      "name": "findContainersWithoutDropAllCapability > is case-sensitive: 'all' does not satisfy 'ALL' (documents current behavior)",
+      "function": "findContainersWithoutDropAllCapability",
+      "args": [
+        [
+          {
+            "name": "bad",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "all"
+                ]
+              }
+            }
+          },
+          {
+            "name": "ok",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ],
+        "ALL"
+      ],
+      "result": [
+        {
+          "name": "bad",
+          "ctx": {
+            "capabilities": {
+              "drop": [
+                "all"
+              ]
+            }
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "bad",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "all"
+                ]
+              }
+            }
+          },
+          {
+            "name": "ok",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ],
+        "ALL"
+      ]
+    },
+    {
+      "name": "findContainersWithoutDropAllCapability > works with a different required capability string",
+      "function": "findContainersWithoutDropAllCapability",
+      "args": [
+        [
+          {
+            "name": "ok",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "SYS_ADMIN"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "NET_RAW"
+                ]
+              }
+            }
+          }
+        ],
+        "SYS_ADMIN"
+      ],
+      "result": [
+        {
+          "name": "bad",
+          "ctx": {
+            "capabilities": {
+              "drop": [
+                "NET_RAW"
+              ]
+            }
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "ok",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "SYS_ADMIN"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "NET_RAW"
+                ]
+              }
+            }
+          }
+        ],
+        "SYS_ADMIN"
+      ]
+    },
+    {
+      "name": "findContainersWithoutDropAllCapability > does not mutate inputs (pure filter)",
+      "function": "findContainersWithoutDropAllCapability",
+      "args": [
+        [
+          {
+            "name": "x",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "NET_RAW"
+                ]
+              }
+            }
+          }
+        ],
+        "ALL"
+      ],
+      "result": [
+        {
+          "name": "x",
+          "ctx": {
+            "capabilities": {
+              "drop": [
+                "NET_RAW"
+              ]
+            }
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "x",
+            "ctx": {
+              "capabilities": {
+                "drop": [
+                  "NET_RAW"
+                ]
+              }
+            }
+          }
+        ],
+        "ALL"
+      ]
+    },
+    {
+      "name": "validateContainerCapabilities > ignores containers without a non-empty capabilities.add",
+      "function": "validateContainerCapabilities",
+      "args": [
+        [
+          {
+            "name": "no-sc",
+            "ctx": {}
+          },
+          {
+            "name": "no-cap",
+            "ctx": {
+              "capabilities": {}
+            }
+          },
+          {
+            "name": "empty",
+            "ctx": {
+              "capabilities": {
+                "add": []
+              }
+            }
+          }
+        ],
+        [
+          "NET_BIND_SERVICE"
+        ]
+      ],
+      "result": [],
+      "after": [
+        [
+          {
+            "name": "no-sc",
+            "ctx": {}
+          },
+          {
+            "name": "no-cap",
+            "ctx": {
+              "capabilities": {}
+            }
+          },
+          {
+            "name": "empty",
+            "ctx": {
+              "capabilities": {
+                "add": []
+              }
+            }
+          }
+        ],
+        [
+          "NET_BIND_SERVICE"
+        ]
+      ]
+    },
+    {
+      "name": "validateContainerCapabilities > returns empty when all added caps are allowed",
+      "function": "validateContainerCapabilities",
+      "args": [
+        [
+          {
+            "name": "c1",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "NET_BIND_SERVICE",
+                  "CHOWN"
+                ]
+              }
+            }
+          },
+          {
+            "name": "c2",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "DAC_OVERRIDE"
+                ]
+              }
+            }
+          }
+        ],
+        [
+          "NET_BIND_SERVICE",
+          "CHOWN",
+          "DAC_OVERRIDE"
+        ]
+      ],
+      "result": [],
+      "after": [
+        [
+          {
+            "name": "c1",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "NET_BIND_SERVICE",
+                  "CHOWN"
+                ]
+              }
+            }
+          },
+          {
+            "name": "c2",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "DAC_OVERRIDE"
+                ]
+              }
+            }
+          }
+        ],
+        [
+          "NET_BIND_SERVICE",
+          "CHOWN",
+          "DAC_OVERRIDE"
+        ]
+      ]
+    },
+    {
+      "name": "validateContainerCapabilities > returns only containers with at least one disallowed cap, mapping to name + add only",
+      "function": "validateContainerCapabilities",
+      "args": [
+        [
+          {
+            "name": "ok",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "NET_BIND_SERVICE"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad1",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "SYS_ADMIN"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "SYS_TIME"
+                ]
+              }
+            }
+          }
+        ],
+        [
+          "NET_BIND_SERVICE",
+          "CHOWN"
+        ]
+      ],
+      "result": [
+        {
+          "name": "bad1",
+          "ctx": {
+            "capabilities": {
+              "add": [
+                "SYS_ADMIN"
+              ]
+            }
+          }
+        },
+        {
+          "name": "bad2",
+          "ctx": {
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "SYS_TIME"
+              ]
+            }
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "ok",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "NET_BIND_SERVICE"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad1",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "SYS_ADMIN"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "SYS_TIME"
+                ]
+              }
+            }
+          }
+        ],
+        [
+          "NET_BIND_SERVICE",
+          "CHOWN"
+        ]
+      ]
+    },
+    {
+      "name": "validateContainerCapabilities > drops unrelated securityContext fields and creates new objects",
+      "function": "validateContainerCapabilities",
+      "args": [
+        [
+          {
+            "name": "bad",
+            "ctx": {
+              "allowPrivilegeEscalation": true,
+              "runAsUser": 1234,
+              "capabilities": {
+                "add": [
+                  "SYS_ADMIN"
+                ]
+              }
+            }
+          }
+        ],
+        [
+          "NET_BIND_SERVICE"
+        ]
+      ],
+      "result": [
+        {
+          "name": "bad",
+          "ctx": {
+            "capabilities": {
+              "add": [
+                "SYS_ADMIN"
+              ]
+            }
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "bad",
+            "ctx": {
+              "allowPrivilegeEscalation": true,
+              "runAsUser": 1234,
+              "capabilities": {
+                "add": [
+                  "SYS_ADMIN"
+                ]
+              }
+            }
+          }
+        ],
+        [
+          "NET_BIND_SERVICE"
+        ]
+      ]
+    },
+    {
+      "name": "validateContainerCapabilities > defaults missing name to \"unnamed\"",
+      "function": "validateContainerCapabilities",
+      "args": [
+        [
+          {
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "SYS_ADMIN"
+                ]
+              }
+            }
+          }
+        ],
+        [
+          "NET_BIND_SERVICE"
+        ]
+      ],
+      "result": [
+        {
+          "name": "unnamed",
+          "ctx": {
+            "capabilities": {
+              "add": [
+                "SYS_ADMIN"
+              ]
+            }
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "SYS_ADMIN"
+                ]
+              }
+            }
+          }
+        ],
+        [
+          "NET_BIND_SERVICE"
+        ]
+      ]
+    },
+    {
+      "name": "validateContainerCapabilities > preserves the order of the add list in the output",
+      "function": "validateContainerCapabilities",
+      "args": [
+        [
+          {
+            "name": "bad",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE",
+                  "SETUID",
+                  "SETGID"
+                ]
+              }
+            }
+          }
+        ],
+        [
+          "CHOWN",
+          "SETUID"
+        ]
+      ],
+      "result": [
+        {
+          "name": "bad",
+          "ctx": {
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE",
+                "SETUID",
+                "SETGID"
+              ]
+            }
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "bad",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE",
+                  "SETUID",
+                  "SETGID"
+                ]
+              }
+            }
+          }
+        ],
+        [
+          "CHOWN",
+          "SETUID"
+        ]
+      ]
+    },
+    {
+      "name": "validateContainerCapabilities > when allowed list is empty, any non-empty add list is a violation",
+      "function": "validateContainerCapabilities",
+      "args": [
+        [
+          {
+            "name": "bad1",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "NET_RAW"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "SYS_TIME"
+                ]
+              }
+            }
+          },
+          {
+            "name": "skip-empty",
+            "ctx": {
+              "capabilities": {
+                "add": []
+              }
+            }
+          }
+        ],
+        []
+      ],
+      "result": [
+        {
+          "name": "bad1",
+          "ctx": {
+            "capabilities": {
+              "add": [
+                "NET_RAW"
+              ]
+            }
+          }
+        },
+        {
+          "name": "bad2",
+          "ctx": {
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "SYS_TIME"
+              ]
+            }
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "bad1",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "NET_RAW"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "SYS_TIME"
+                ]
+              }
+            }
+          },
+          {
+            "name": "skip-empty",
+            "ctx": {
+              "capabilities": {
+                "add": []
+              }
+            }
+          }
+        ],
+        []
+      ]
+    },
+    {
+      "name": "validateContainerCapabilities > case-sensitive check (documents current behavior)",
+      "function": "validateContainerCapabilities",
+      "args": [
+        [
+          {
+            "name": "bad",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "net_bind_service"
+                ]
+              }
+            }
+          }
+        ],
+        [
+          "NET_BIND_SERVICE"
+        ]
+      ],
+      "result": [
+        {
+          "name": "bad",
+          "ctx": {
+            "capabilities": {
+              "add": [
+                "net_bind_service"
+              ]
+            }
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "bad",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "net_bind_service"
+                ]
+              }
+            }
+          }
+        ],
+        [
+          "NET_BIND_SERVICE"
+        ]
+      ]
+    },
+    {
+      "name": "validateContainerCapabilities > mixed list: only partially-disallowed containers are returned; fully-allowed are omitted",
+      "function": "validateContainerCapabilities",
+      "args": [
+        [
+          {
+            "name": "ok1",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad1",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "SYS_ADMIN"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "SYS_TIME"
+                ]
+              }
+            }
+          },
+          {
+            "name": "skip1",
+            "ctx": {}
+          },
+          {
+            "name": "skip2",
+            "ctx": {
+              "capabilities": {
+                "add": []
+              }
+            }
+          }
+        ],
+        [
+          "CHOWN"
+        ]
+      ],
+      "result": [
+        {
+          "name": "bad1",
+          "ctx": {
+            "capabilities": {
+              "add": [
+                "SYS_ADMIN"
+              ]
+            }
+          }
+        },
+        {
+          "name": "bad2",
+          "ctx": {
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "SYS_TIME"
+              ]
+            }
+          }
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "ok1",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad1",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "SYS_ADMIN"
+                ]
+              }
+            }
+          },
+          {
+            "name": "bad2",
+            "ctx": {
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "SYS_TIME"
+                ]
+              }
+            }
+          },
+          {
+            "name": "skip1",
+            "ctx": {}
+          },
+          {
+            "name": "skip2",
+            "ctx": {
+              "capabilities": {
+                "add": []
+              }
+            }
+          }
+        ],
+        [
+          "CHOWN"
+        ]
+      ]
+    },
+    {
+      "name": "isPodUsingIstioUserID > should return true when runAsUser is 1337",
+      "function": "isPodUsingIstioUserID",
+      "args": [
+        {
+          "spec": {
+            "securityContext": {
+              "runAsUser": 1337
+            }
+          }
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "spec": {
+            "securityContext": {
+              "runAsUser": 1337
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "isPodUsingIstioUserID > should return true when runAsGroup is 1337",
+      "function": "isPodUsingIstioUserID",
+      "args": [
+        {
+          "spec": {
+            "securityContext": {
+              "runAsGroup": 1337
+            }
+          }
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "spec": {
+            "securityContext": {
+              "runAsGroup": 1337
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "isPodUsingIstioUserID > should return true when fsGroup is 1337",
+      "function": "isPodUsingIstioUserID",
+      "args": [
+        {
+          "spec": {
+            "securityContext": {
+              "fsGroup": 1337
+            }
+          }
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "spec": {
+            "securityContext": {
+              "fsGroup": 1337
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "isPodUsingIstioUserID > should return true when supplementalGroups is 1337",
+      "function": "isPodUsingIstioUserID",
+      "args": [
+        {
+          "spec": {
+            "securityContext": {
+              "supplementalGroups": [
+                1000,
+                1337,
+                2000
+              ]
+            }
+          }
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "spec": {
+            "securityContext": {
+              "supplementalGroups": [
+                1000,
+                1337,
+                2000
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "isPodUsingIstioUserID > should return false for non-Istio security contexts",
+      "function": "isPodUsingIstioUserID",
+      "args": [
+        {
+          "spec": {
+            "securityContext": {
+              "runAsUser": 1000,
+              "runAsGroup": 2000,
+              "fsGroup": 3000,
+              "supplementalGroups": [
+                4000,
+                5000
+              ]
+            }
+          }
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "spec": {
+            "securityContext": {
+              "runAsUser": 1000,
+              "runAsGroup": 2000,
+              "fsGroup": 3000,
+              "supplementalGroups": [
+                4000,
+                5000
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "isPodUsingIstioUserID > should handle undefined spec or security context",
+      "function": "isPodUsingIstioUserID",
+      "args": [
+        {}
+      ],
+      "result": false,
+      "after": [
+        {}
+      ]
+    },
+    {
+      "name": "isPodUsingIstioUserID > should handle undefined spec or security context",
+      "function": "isPodUsingIstioUserID",
+      "args": [
+        {
+          "spec": {}
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "spec": {}
+        }
+      ]
+    },
+    {
+      "name": "findContainerUsingIstioUserID > should find containers using Istio UID/GID",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "container-1",
+          "securityContext": {
+            "runAsUser": 1000
+          }
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "name": "container-1",
+          "securityContext": {
+            "runAsUser": 1000
+          }
+        }
+      ]
+    },
+    {
+      "name": "findContainerUsingIstioUserID > should find containers using Istio UID/GID",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "container-2",
+          "securityContext": {
+            "runAsUser": 1337
+          }
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "name": "container-2",
+          "securityContext": {
+            "runAsUser": 1337
+          }
+        }
+      ]
+    },
+    {
+      "name": "findContainerUsingIstioUserID > should find containers using Istio UID/GID",
+      "function": "findContainerUsingIstioUserID",
+      "args": [
+        [
+          {
+            "name": "container-1",
+            "securityContext": {
+              "runAsUser": 1000
+            }
+          },
+          {
+            "name": "container-2",
+            "securityContext": {
+              "runAsUser": 1337
+            }
+          },
+          {
+            "name": "container-3",
+            "securityContext": {
+              "runAsGroup": 1337
+            }
+          }
+        ]
+      ],
+      "result": "container-2",
+      "after": [
+        [
+          {
+            "name": "container-1",
+            "securityContext": {
+              "runAsUser": 1000
+            }
+          },
+          {
+            "name": "container-2",
+            "securityContext": {
+              "runAsUser": 1337
+            }
+          },
+          {
+            "name": "container-3",
+            "securityContext": {
+              "runAsGroup": 1337
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "findContainerUsingIstioUserID > should handle edge cases",
+      "function": "findContainerUsingIstioUserID",
+      "args": [
+        []
+      ],
+      "result": null,
+      "after": [
+        []
+      ]
+    },
+    {
+      "name": "findContainerUsingIstioUserID > should handle edge cases",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "no-context",
+          "securityContext": {}
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "name": "no-context",
+          "securityContext": {}
+        }
+      ]
+    },
+    {
+      "name": "findContainerUsingIstioUserID > should handle edge cases",
+      "function": "findContainerUsingIstioUserID",
+      "args": [
+        [
+          {
+            "name": "no-context",
+            "securityContext": {}
+          }
+        ]
+      ],
+      "result": null,
+      "after": [
+        [
+          {
+            "name": "no-context",
+            "securityContext": {}
+          }
+        ]
+      ]
+    },
+    {
+      "name": "findContainerUsingIstioUserID > should handle edge cases",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "no-match",
+          "securityContext": {
+            "runAsUser": 1000
+          }
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "name": "no-match",
+          "securityContext": {
+            "runAsUser": 1000
+          }
+        }
+      ]
+    },
+    {
+      "name": "findContainerUsingIstioUserID > should handle edge cases",
+      "function": "findContainerUsingIstioUserID",
+      "args": [
+        [
+          {
+            "name": "no-match",
+            "securityContext": {
+              "runAsUser": 1000
+            }
+          }
+        ]
+      ],
+      "result": null,
+      "after": [
+        [
+          {
+            "name": "no-match",
+            "securityContext": {
+              "runAsUser": 1000
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "checkIstioAmbientOverrides > should handle pod metadata variations",
+      "function": "checkIstioAmbientOverrides",
+      "args": [
+        {}
+      ],
+      "result": [],
+      "after": [
+        {}
+      ]
+    },
+    {
+      "name": "checkIstioAmbientOverrides > should handle pod metadata variations",
+      "function": "checkIstioAmbientOverrides",
+      "args": [
+        {
+          "metadata": {}
+        }
+      ],
+      "result": [],
+      "after": [
+        {
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "name": "checkIstioAmbientOverrides > should only detect blocked ambient annotations",
+      "function": "checkIstioAmbientOverrides",
+      "args": [
+        {
+          "metadata": {
+            "annotations": {
+              "ambient.istio.io/bypass-inbound-capture": "true",
+              "some.other/annotation": "value"
+            }
+          }
+        }
+      ],
+      "result": [
+        "ambient.istio.io/bypass-inbound-capture"
+      ],
+      "after": [
+        {
+          "metadata": {
+            "annotations": {
+              "ambient.istio.io/bypass-inbound-capture": "true",
+              "some.other/annotation": "value"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "checkIstioSidecarOverrides > should handle pod metadata variations",
+      "function": "checkIstioSidecarOverrides",
+      "args": [
+        {}
+      ],
+      "result": [],
+      "after": [
+        {}
+      ]
+    },
+    {
+      "name": "checkIstioSidecarOverrides > should handle pod metadata variations",
+      "function": "checkIstioSidecarOverrides",
+      "args": [
+        {
+          "metadata": {}
+        }
+      ],
+      "result": [],
+      "after": [
+        {
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "name": "checkIstioSidecarOverrides > should detect blocked sidecar annotations",
+      "function": "checkIstioSidecarOverrides",
+      "args": [
+        {
+          "metadata": {
+            "annotations": {
+              "sidecar.istio.io/bootstrapOverride": "/path",
+              "proxy.istio.io/config": "custom",
+              "sidecar.istio.io/userVolume": "vol",
+              "sidecar.istio.io/userVolumeMount": "mount",
+              "ignored/annotation": "value"
+            }
+          }
+        }
+      ],
+      "result": [
+        "proxy.istio.io/config",
+        "sidecar.istio.io/bootstrapOverride",
+        "sidecar.istio.io/userVolume",
+        "sidecar.istio.io/userVolumeMount"
+      ],
+      "after": [
+        {
+          "metadata": {
+            "annotations": {
+              "sidecar.istio.io/bootstrapOverride": "/path",
+              "proxy.istio.io/config": "custom",
+              "sidecar.istio.io/userVolume": "vol",
+              "sidecar.istio.io/userVolumeMount": "mount",
+              "ignored/annotation": "value"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "checkIstioSidecarOverrides > should be case sensitive and not match partial names",
+      "function": "checkIstioSidecarOverrides",
+      "args": [
+        {
+          "metadata": {
+            "annotations": {
+              "SIDECAR.ISTIO.IO/BOOTSTRAPOVERRIDE": "/path",
+              "sidecar.istio.io/userVolumeX": "no-match"
+            }
+          }
+        }
+      ],
+      "result": [],
+      "after": [
+        {
+          "metadata": {
+            "annotations": {
+              "SIDECAR.ISTIO.IO/BOOTSTRAPOVERRIDE": "/path",
+              "sidecar.istio.io/userVolumeX": "no-match"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "checkIstioTrafficInterceptionOverrides > should handle pod metadata variations",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "app",
+          "image": "app:latest"
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "name": "app",
+          "image": "app:latest"
+        }
+      ]
+    },
+    {
+      "name": "checkIstioTrafficInterceptionOverrides > should handle pod metadata variations",
+      "function": "checkIstioTrafficInterceptionOverrides",
+      "args": [
+        [
+          {
+            "name": "app",
+            "image": "app:latest"
+          }
+        ],
+        {}
+      ],
+      "result": [],
+      "after": [
+        [
+          {
+            "name": "app",
+            "image": "app:latest"
+          }
+        ],
+        {}
+      ]
+    },
+    {
+      "name": "checkIstioTrafficInterceptionOverrides > should handle pod metadata variations",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "app",
+          "image": "app:latest"
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "name": "app",
+          "image": "app:latest"
+        }
+      ]
+    },
+    {
+      "name": "checkIstioTrafficInterceptionOverrides > should handle pod metadata variations",
+      "function": "checkIstioTrafficInterceptionOverrides",
+      "args": [
+        [
+          {
+            "name": "app",
+            "image": "app:latest"
+          }
+        ],
+        {
+          "metadata": {}
+        }
+      ],
+      "result": [],
+      "after": [
+        [
+          {
+            "name": "app",
+            "image": "app:latest"
+          }
+        ],
+        {
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "name": "checkIstioTrafficInterceptionOverrides > should detect blocked traffic interception settings",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "app",
+          "image": "app:latest"
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "name": "app",
+          "image": "app:latest"
+        }
+      ]
+    },
+    {
+      "name": "checkIstioTrafficInterceptionOverrides > should detect blocked traffic interception settings",
+      "function": "checkIstioTrafficInterceptionOverrides",
+      "args": [
+        [
+          {
+            "name": "app",
+            "image": "app:latest"
+          }
+        ],
+        {
+          "metadata": {
+            "namespace": "test-namespace",
+            "annotations": {
+              "sidecar.istio.io/inject": "false",
+              "traffic.sidecar.istio.io/excludeInboundPorts": "8080",
+              "some.other/annotation": "value"
+            },
+            "labels": {
+              "sidecar.istio.io/inject": "disabled",
+              "app": "test-app"
+            }
+          }
+        }
+      ],
+      "result": [
+        "annotation sidecar.istio.io/inject",
+        "annotation traffic.sidecar.istio.io/excludeInboundPorts",
+        "label sidecar.istio.io/inject"
+      ],
+      "after": [
+        [
+          {
+            "name": "app",
+            "image": "app:latest"
+          }
+        ],
+        {
+          "metadata": {
+            "namespace": "test-namespace",
+            "annotations": {
+              "sidecar.istio.io/inject": "false",
+              "traffic.sidecar.istio.io/excludeInboundPorts": "8080",
+              "some.other/annotation": "value"
+            },
+            "labels": {
+              "sidecar.istio.io/inject": "disabled",
+              "app": "test-app"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "checkIstioTrafficInterceptionOverrides > should ignore allowed cases",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "app",
+          "image": "app:latest"
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "name": "app",
+          "image": "app:latest"
+        }
+      ]
+    },
+    {
+      "name": "checkIstioTrafficInterceptionOverrides > should ignore allowed cases",
+      "function": "checkIstioTrafficInterceptionOverrides",
+      "args": [
+        [
+          {
+            "name": "app",
+            "image": "app:latest"
+          }
+        ],
+        {
+          "metadata": {
+            "annotations": {
+              "sidecar.istio.io/inject": "true"
+            }
+          }
+        }
+      ],
+      "result": [],
+      "after": [
+        [
+          {
+            "name": "app",
+            "image": "app:latest"
+          }
+        ],
+        {
+          "metadata": {
+            "annotations": {
+              "sidecar.istio.io/inject": "true"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "checkIstioTrafficInterceptionOverrides > should ignore waypoint pods",
+      "function": "isIstioProxyContainer",
+      "args": [
+        {
+          "name": "istio-proxy",
+          "image": "docker.io/istio/proxyv2:1.20.0",
+          "args": [
+            "proxy",
+            "waypoint",
+            "--log-level=info"
+          ],
+          "ports": [
+            {
+              "name": "http-envoy-prom",
+              "containerPort": 15020
+            }
+          ]
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "name": "istio-proxy",
+          "image": "docker.io/istio/proxyv2:1.20.0",
+          "args": [
+            "proxy",
+            "waypoint",
+            "--log-level=info"
+          ],
+          "ports": [
+            {
+              "name": "http-envoy-prom",
+              "containerPort": 15020
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "checkIstioTrafficInterceptionOverrides > should ignore waypoint pods",
+      "function": "checkIstioTrafficInterceptionOverrides",
+      "args": [
+        [
+          {
+            "name": "istio-proxy",
+            "image": "docker.io/istio/proxyv2:1.20.0",
+            "args": [
+              "proxy",
+              "waypoint",
+              "--log-level=info"
+            ],
+            "ports": [
+              {
+                "name": "http-envoy-prom",
+                "containerPort": 15020
+              }
+            ]
+          }
+        ],
+        {
+          "metadata": {
+            "labels": {
+              "sidecar.istio.io/inject": "false"
+            }
+          }
+        }
+      ],
+      "result": [],
+      "after": [
+        [
+          {
+            "name": "istio-proxy",
+            "image": "docker.io/istio/proxyv2:1.20.0",
+            "args": [
+              "proxy",
+              "waypoint",
+              "--log-level=info"
+            ],
+            "ports": [
+              {
+                "name": "http-envoy-prom",
+                "containerPort": 15020
+              }
+            ]
+          }
+        ],
+        {
+          "metadata": {
+            "labels": {
+              "sidecar.istio.io/inject": "false"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Storage Validation Tests > validateVolumeTypes > should allow all supported volume types",
+      "function": "validateVolumeTypes",
+      "args": [
+        [
+          {
+            "name": "config",
+            "configMap": {
+              "name": "test-config"
+            }
+          },
+          {
+            "name": "csi-vol",
+            "csi": {
+              "driver": "test-driver"
+            }
+          },
+          {
+            "name": "downward",
+            "downwardAPI": {
+              "items": []
+            }
+          },
+          {
+            "name": "empty",
+            "emptyDir": {}
+          },
+          {
+            "name": "ephemeral",
+            "ephemeral": {
+              "volumeClaimTemplate": {
+                "spec": {
+                  "accessModes": [
+                    "ReadWriteOnce"
+                  ],
+                  "resources": {
+                    "requests": {
+                      "storage": "1Gi"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "image-vol",
+            "image": {
+              "reference": "busybox:latest",
+              "pullPolicy": "IfNotPresent"
+            }
+          },
+          {
+            "name": "pvc",
+            "persistentVolumeClaim": {
+              "claimName": "test-pvc"
+            }
+          },
+          {
+            "name": "projected",
+            "projected": {
+              "sources": []
+            }
+          },
+          {
+            "name": "secret-vol",
+            "secret": {
+              "secretName": "test-secret"
+            }
+          }
+        ]
+      ],
+      "result": [
+        true,
+        null
+      ],
+      "after": [
+        [
+          {
+            "name": "config",
+            "configMap": {
+              "name": "test-config"
+            }
+          },
+          {
+            "name": "csi-vol",
+            "csi": {
+              "driver": "test-driver"
+            }
+          },
+          {
+            "name": "downward",
+            "downwardAPI": {
+              "items": []
+            }
+          },
+          {
+            "name": "empty",
+            "emptyDir": {}
+          },
+          {
+            "name": "ephemeral",
+            "ephemeral": {
+              "volumeClaimTemplate": {
+                "spec": {
+                  "accessModes": [
+                    "ReadWriteOnce"
+                  ],
+                  "resources": {
+                    "requests": {
+                      "storage": "1Gi"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "image-vol",
+            "image": {
+              "reference": "busybox:latest",
+              "pullPolicy": "IfNotPresent"
+            }
+          },
+          {
+            "name": "pvc",
+            "persistentVolumeClaim": {
+              "claimName": "test-pvc"
+            }
+          },
+          {
+            "name": "projected",
+            "projected": {
+              "sources": []
+            }
+          },
+          {
+            "name": "secret-vol",
+            "secret": {
+              "secretName": "test-secret"
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Storage Validation Tests > validateVolumeTypes > should reject unsupported volume types",
+      "function": "validateVolumeTypes",
+      "args": [
+        [
+          {
+            "name": "hostpath",
+            "hostPath": {
+              "path": "/data"
+            }
+          },
+          {
+            "name": "unsupported",
+            "unknown": {}
+          }
+        ]
+      ],
+      "result": [
+        false,
+        {
+          "name": "hostpath",
+          "type": "hostPath"
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "hostpath",
+            "hostPath": {
+              "path": "/data"
+            }
+          },
+          {
+            "name": "unsupported",
+            "unknown": {}
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Storage Validation Tests > validateVolumeTypes > should handle empty volumes array",
+      "function": "validateVolumeTypes",
+      "args": [
+        []
+      ],
+      "result": [
+        true,
+        null
+      ],
+      "after": [
+        []
+      ]
+    },
+    {
+      "name": "Storage Validation Tests > validateVolumeTypes > should handle unnamed volumes",
+      "function": "validateVolumeTypes",
+      "args": [
+        [
+          {
+            "configMap": {}
+          }
+        ]
+      ],
+      "result": [
+        true,
+        null
+      ],
+      "after": [
+        [
+          {
+            "configMap": {}
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Storage Validation Tests > validateHostPathVolumes > should allow read-only hostPath volumes",
+      "function": "validateHostPathVolumes",
+      "args": [
+        [
+          {
+            "name": "data",
+            "hostPath": {
+              "path": "/data"
+            }
+          }
+        ],
+        [
+          {
+            "name": "test",
+            "volumeMounts": [
+              {
+                "name": "data",
+                "mountPath": "/mnt/data",
+                "readOnly": true
+              }
+            ]
+          }
+        ]
+      ],
+      "result": [
+        true,
+        null
+      ],
+      "after": [
+        [
+          {
+            "name": "data",
+            "hostPath": {
+              "path": "/data"
+            }
+          }
+        ],
+        [
+          {
+            "name": "test",
+            "volumeMounts": [
+              {
+                "name": "data",
+                "mountPath": "/mnt/data",
+                "readOnly": true
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Storage Validation Tests > validateHostPathVolumes > should reject read-write hostPath volumes",
+      "function": "validateHostPathVolumes",
+      "args": [
+        [
+          {
+            "name": "data",
+            "hostPath": {
+              "path": "/data"
+            }
+          }
+        ],
+        [
+          {
+            "name": "test",
+            "volumeMounts": [
+              {
+                "name": "data",
+                "mountPath": "/mnt/data",
+                "readOnly": false
+              }
+            ]
+          }
+        ]
+      ],
+      "result": [
+        false,
+        {
+          "name": "data"
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "data",
+            "hostPath": {
+              "path": "/data"
+            }
+          }
+        ],
+        [
+          {
+            "name": "test",
+            "volumeMounts": [
+              {
+                "name": "data",
+                "mountPath": "/mnt/data",
+                "readOnly": false
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Storage Validation Tests > validateHostPathVolumes > should handle multiple containers with same volume",
+      "function": "validateHostPathVolumes",
+      "args": [
+        [
+          {
+            "name": "data",
+            "hostPath": {
+              "path": "/data"
+            }
+          }
+        ],
+        [
+          {
+            "name": "reader",
+            "volumeMounts": [
+              {
+                "name": "data",
+                "mountPath": "/mnt/read",
+                "readOnly": true
+              }
+            ]
+          },
+          {
+            "name": "writer",
+            "volumeMounts": [
+              {
+                "name": "data",
+                "mountPath": "/mnt/write",
+                "readOnly": false
+              }
+            ]
+          }
+        ]
+      ],
+      "result": [
+        false,
+        {
+          "name": "data"
+        }
+      ],
+      "after": [
+        [
+          {
+            "name": "data",
+            "hostPath": {
+              "path": "/data"
+            }
+          }
+        ],
+        [
+          {
+            "name": "reader",
+            "volumeMounts": [
+              {
+                "name": "data",
+                "mountPath": "/mnt/read",
+                "readOnly": true
+              }
+            ]
+          },
+          {
+            "name": "writer",
+            "volumeMounts": [
+              {
+                "name": "data",
+                "mountPath": "/mnt/write",
+                "readOnly": false
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Storage Validation Tests > validateHostPathVolumes > should handle no volumes or containers",
+      "function": "validateHostPathVolumes",
+      "args": [
+        [],
+        []
+      ],
+      "result": [
+        true,
+        null
+      ],
+      "after": [
+        [],
+        []
+      ]
+    },
+    {
+      "name": "Storage Validation Tests > validateHostPathVolumes > should handle no volumes or containers",
+      "function": "validateHostPathVolumes",
+      "args": [
+        [
+          {
+            "name": "test"
+          }
+        ],
+        []
+      ],
+      "result": [
+        true,
+        null
+      ],
+      "after": [
+        [
+          {
+            "name": "test"
+          }
+        ],
+        []
+      ]
+    },
+    {
+      "name": "Storage Validation Tests > validateHostPathVolumes > should handle unnamed volumes",
+      "function": "validateHostPathVolumes",
+      "args": [
+        [
+          {
+            "hostPath": {
+              "path": "/data"
+            }
+          }
+        ],
+        [
+          {
+            "name": "test",
+            "volumeMounts": [
+              {
+                "name": "",
+                "mountPath": "/mnt/data"
+              }
+            ]
+          }
+        ]
+      ],
+      "result": [
+        true,
+        null
+      ],
+      "after": [
+        [
+          {
+            "hostPath": {
+              "path": "/data"
+            }
+          }
+        ],
+        [
+          {
+            "name": "test",
+            "volumeMounts": [
+              {
+                "name": "",
+                "mountPath": "/mnt/data"
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "name": "checkNoHostNamespaces > should approve pods that don't use host namespaces",
+      "function": "checkNoHostNamespaces",
+      "args": [
+        {
+          "containers": []
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "containers": []
+        }
+      ]
+    },
+    {
+      "name": "checkNoHostNamespaces > should deny pods using hostNetwork",
+      "function": "checkNoHostNamespaces",
+      "args": [
+        {
+          "containers": [],
+          "hostNetwork": true
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "containers": [],
+          "hostNetwork": true
+        }
+      ]
+    },
+    {
+      "name": "checkNoHostNamespaces > should deny pods using hostIPC",
+      "function": "checkNoHostNamespaces",
+      "args": [
+        {
+          "containers": [],
+          "hostIPC": true
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "containers": [],
+          "hostIPC": true
+        }
+      ]
+    },
+    {
+      "name": "checkNoHostNamespaces > should deny pods using hostPID",
+      "function": "checkNoHostNamespaces",
+      "args": [
+        {
+          "containers": [],
+          "hostPID": true
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "containers": [],
+          "hostPID": true
+        }
+      ]
+    },
+    {
+      "name": "checkNoHostNamespaces > should deny pods using multiple host namespaces",
+      "function": "checkNoHostNamespaces",
+      "args": [
+        {
+          "containers": [],
+          "hostNetwork": true,
+          "hostIPC": true,
+          "hostPID": false
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "containers": [],
+          "hostNetwork": true,
+          "hostIPC": true,
+          "hostPID": false
+        }
+      ]
+    },
+    {
+      "name": "checkNoHostPorts > should approve containers with no ports",
+      "function": "checkNoHostPorts",
+      "args": [
+        [
+          {
+            "name": "test-container"
+          }
+        ]
+      ],
+      "result": true,
+      "after": [
+        [
+          {
+            "name": "test-container"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "checkNoHostPorts > should approve containers with ports but no host ports",
+      "function": "checkNoHostPorts",
+      "args": [
+        [
+          {
+            "name": "test-container",
+            "ports": [
+              {
+                "containerPort": 80
+              },
+              {
+                "containerPort": 443
+              }
+            ]
+          }
+        ]
+      ],
+      "result": true,
+      "after": [
+        [
+          {
+            "name": "test-container",
+            "ports": [
+              {
+                "containerPort": 80
+              },
+              {
+                "containerPort": 443
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "name": "checkNoHostPorts > should deny containers with host ports",
+      "function": "checkNoHostPorts",
+      "args": [
+        [
+          {
+            "name": "test-container",
+            "ports": [
+              {
+                "containerPort": 80
+              },
+              {
+                "containerPort": 443,
+                "hostPort": 8443
+              }
+            ]
+          }
+        ]
+      ],
+      "result": false,
+      "after": [
+        [
+          {
+            "name": "test-container",
+            "ports": [
+              {
+                "containerPort": 80
+              },
+              {
+                "containerPort": 443,
+                "hostPort": 8443
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "name": "checkNoHostPorts > should deny when any container in a list has host ports",
+      "function": "checkNoHostPorts",
+      "args": [
+        [
+          {
+            "name": "container-1",
+            "ports": [
+              {
+                "containerPort": 80
+              }
+            ]
+          },
+          {
+            "name": "container-2",
+            "ports": [
+              {
+                "containerPort": 443,
+                "hostPort": 8443
+              }
+            ]
+          },
+          {
+            "name": "container-3",
+            "ports": [
+              {
+                "containerPort": 8080
+              }
+            ]
+          }
+        ]
+      ],
+      "result": false,
+      "after": [
+        [
+          {
+            "name": "container-1",
+            "ports": [
+              {
+                "containerPort": 80
+              }
+            ]
+          },
+          {
+            "name": "container-2",
+            "ports": [
+              {
+                "containerPort": 443,
+                "hostPort": 8443
+              }
+            ]
+          },
+          {
+            "name": "container-3",
+            "ports": [
+              {
+                "containerPort": 8080
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "name": "checkNotExternalNameService > should approve undefined service specs",
+      "function": "checkNotExternalNameService",
+      "args": [
+        null
+      ],
+      "result": true,
+      "after": [
+        null
+      ]
+    },
+    {
+      "name": "checkNotExternalNameService > should approve ClusterIP services",
+      "function": "checkNotExternalNameService",
+      "args": [
+        {
+          "type": "ClusterIP",
+          "ports": []
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "type": "ClusterIP",
+          "ports": []
+        }
+      ]
+    },
+    {
+      "name": "checkNotExternalNameService > should approve LoadBalancer services",
+      "function": "checkNotExternalNameService",
+      "args": [
+        {
+          "type": "LoadBalancer",
+          "ports": []
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "type": "LoadBalancer",
+          "ports": []
+        }
+      ]
+    },
+    {
+      "name": "checkNotExternalNameService > should deny ExternalName services",
+      "function": "checkNotExternalNameService",
+      "args": [
+        {
+          "type": "ExternalName",
+          "externalName": "external.example.com",
+          "ports": []
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "type": "ExternalName",
+          "externalName": "external.example.com",
+          "ports": []
+        }
+      ]
+    },
+    {
+      "name": "checkNotNodePortService > should approve undefined service specs",
+      "function": "checkNotNodePortService",
+      "args": [
+        null
+      ],
+      "result": true,
+      "after": [
+        null
+      ]
+    },
+    {
+      "name": "checkNotNodePortService > should approve ClusterIP services",
+      "function": "checkNotNodePortService",
+      "args": [
+        {
+          "type": "ClusterIP",
+          "ports": []
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "type": "ClusterIP",
+          "ports": []
+        }
+      ]
+    },
+    {
+      "name": "checkNotNodePortService > should approve LoadBalancer services",
+      "function": "checkNotNodePortService",
+      "args": [
+        {
+          "type": "LoadBalancer",
+          "ports": []
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "type": "LoadBalancer",
+          "ports": []
+        }
+      ]
+    },
+    {
+      "name": "checkNotNodePortService > should approve ExternalName services",
+      "function": "checkNotNodePortService",
+      "args": [
+        {
+          "type": "ExternalName",
+          "externalName": "external.example.com",
+          "ports": []
+        }
+      ],
+      "result": true,
+      "after": [
+        {
+          "type": "ExternalName",
+          "externalName": "external.example.com",
+          "ports": []
+        }
+      ]
+    },
+    {
+      "name": "checkNotNodePortService > should deny NodePort services",
+      "function": "checkNotNodePortService",
+      "args": [
+        {
+          "type": "NodePort",
+          "ports": []
+        }
+      ],
+      "result": false,
+      "after": [
+        {
+          "type": "NodePort",
+          "ports": []
+        }
+      ]
+    }
+  ]
+}

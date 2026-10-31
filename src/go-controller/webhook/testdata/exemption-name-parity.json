@@ -1,0 +1,221 @@
+{
+  "sourceRevision": "c15677633cffa17e99656a7d7ccd1f98d7cb6e4d",
+  "cases": [
+    {
+      "pattern": "^generated-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": "assigned-one",
+          "generateName": "generated-"
+        }
+      },
+      "matched": false
+    },
+    {
+      "pattern": "^generated-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "generateName": "generated-"
+        }
+      },
+      "matched": true
+    },
+    {
+      "pattern": "^generated-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": "",
+          "generateName": "generated-"
+        }
+      },
+      "matched": true
+    },
+    {
+      "pattern": "^generated-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": "assigned-one"
+        }
+      },
+      "matched": false
+    },
+    {
+      "pattern": "^generated-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": ""
+        }
+      },
+      "matched": false
+    },
+    {
+      "pattern": "^generated-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app"
+        }
+      },
+      "matched": false
+    },
+    {
+      "pattern": "^generated-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": "",
+          "generateName": ""
+        }
+      },
+      "matched": false
+    },
+    {
+      "pattern": "^assigned-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": "assigned-one",
+          "generateName": "generated-"
+        }
+      },
+      "matched": true
+    },
+    {
+      "pattern": "^assigned-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "generateName": "generated-"
+        }
+      },
+      "matched": false
+    },
+    {
+      "pattern": "^assigned-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": "",
+          "generateName": "generated-"
+        }
+      },
+      "matched": false
+    },
+    {
+      "pattern": "^assigned-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": "assigned-one"
+        }
+      },
+      "matched": true
+    },
+    {
+      "pattern": "^assigned-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": ""
+        }
+      },
+      "matched": false
+    },
+    {
+      "pattern": "^assigned-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app"
+        }
+      },
+      "matched": false
+    },
+    {
+      "pattern": "^assigned-.*$",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": "",
+          "generateName": ""
+        }
+      },
+      "matched": false
+    },
+    {
+      "pattern": "",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": "assigned-one",
+          "generateName": "generated-"
+        }
+      },
+      "matched": true
+    },
+    {
+      "pattern": "",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "generateName": "generated-"
+        }
+      },
+      "matched": true
+    },
+    {
+      "pattern": "",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": "",
+          "generateName": "generated-"
+        }
+      },
+      "matched": true
+    },
+    {
+      "pattern": "",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": "assigned-one"
+        }
+      },
+      "matched": true
+    },
+    {
+      "pattern": "",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": ""
+        }
+      },
+      "matched": false
+    },
+    {
+      "pattern": "",
+      "object": {
+        "metadata": {
+          "namespace": "app"
+        }
+      },
+      "matched": false
+    },
+    {
+      "pattern": "",
+      "object": {
+        "metadata": {
+          "namespace": "app",
+          "name": "",
+          "generateName": ""
+        }
+      },
+      "matched": true
+    }
+  ]
+}

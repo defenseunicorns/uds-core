@@ -1,0 +1,140 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Native development package
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/native-dev.yaml
+      - .github/actions/setup-tools/**
+      - mise.toml
+      - package*.json
+      - zarf-config.yaml
+      - tasks/lint.yaml
+      - packages/native-dev/**
+      - packages/base/**
+      - packages/identity-authorization/**
+      - src/go-controller/**
+      - src/dev-identity/**
+      - src/pepr/**
+      - src/istio/**
+      - src/keycloak/**
+      - src/authservice/**
+      - src/prometheus-stack/**
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/native-dev.yaml
+      - .github/actions/setup-tools/**
+      - mise.toml
+      - package*.json
+      - zarf-config.yaml
+      - tasks/lint.yaml
+      - packages/native-dev/**
+      - packages/base/**
+      - packages/identity-authorization/**
+      - src/go-controller/**
+      - src/dev-identity/**
+      - src/pepr/**
+      - src/istio/**
+      - src/keycloak/**
+      - src/authservice/**
+      - src/prometheus-stack/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-dev-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  composition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GOTOOLCHAIN: local
+      GOWORK: "off"
+    steps:
+      - name: Checkout sources and pinned Core history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Set up repository tools
+        uses: ./.github/actions/setup-tools
+      - name: Install the package build toolchain
+        run: mise install go@1.27.3
+      - name: Install locked JavaScript dependencies
+        run: npm ci --ignore-scripts
+      - name: Check composition and immutable input guards
+        run: mise exec go@1.27.3 -- node --test packages/native-dev/*.test.mjs
+      - name: Check bootstrap behavior with the real embedded CLI
+        working-directory: src/go-controller
+        run: |
+          export UDS_NATIVE_BOOTSTRAP_CLI="$(command -v uds)"
+          mise exec go@1.27.3 -- go test -race ../../packages/native-dev/scripts/*.go
+      - name: Compile and validate the complete native rendering
+        run: |
+          mise exec go@1.27.3 -- node packages/native-dev/prepare.mjs \
+            --render-only --connected \
+            --go "$(mise where go@1.27.3)/bin/go" --uds "$(command -v uds)"
+      - name: Validate the deployable native values contract
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          import { execFileSync } from 'node:child_process';
+          import yaml from 'js-yaml';
+
+          const build = 'packages/native-dev/.build';
+          const assembly = `${build}/assembly`;
+          const lock = JSON.parse(fs.readFileSync(`${build}/build-lock.json`, 'utf8'));
+          const setIndex = lock.zarfCreateArguments.indexOf('--set');
+          if (setIndex < 0 || !lock.zarfCreateArguments[setIndex + 1]) {
+            throw new Error('Prepared controller image templates are missing');
+          }
+          const flags = [
+            '--flavor', 'upstream', '--set', lock.zarfCreateArguments[setIndex + 1],
+            '--cache', `${build}/zarf-cache`, '--tmpdir', `${build}/zarf-tmp`, '--no-color',
+          ];
+          const definitionPath = `${assembly}/zarf.yaml`;
+          const definition = yaml.load(fs.readFileSync(definitionPath, 'utf8'));
+          if (definition.values.schema !== 'zarf-values.schema.json') {
+            throw new Error('Prepared assembly does not declare its deployable values schema');
+          }
+          const schema = fs.readFileSync(`${assembly}/${definition.values.schema}`);
+          if (crypto.createHash('sha256').update(schema).digest('hex') !== lock.valuesSchemaSHA256) {
+            throw new Error('Prepared values schema does not match its build lock');
+          }
+          execFileSync('uds', ['zarf', 'dev', 'lint', assembly, ...flags], { stdio: 'inherit' });
+          const renderArgs = [
+            'zarf', 'dev', 'inspect', 'manifests', assembly, '--flavor', 'upstream',
+            '--create-set', lock.zarfCreateArguments[setIndex + 1], '--kube-version', '1.37.1',
+            '--deploy-set-variables',
+            'DOMAIN=uds.dev,ADMIN_DOMAIN=admin.uds.dev,CA_BUNDLE_CERTS=,UDS_LOG_LEVEL=info,' +
+              'CNI_CONF_DIR=/var/lib/rancher/k3s/agent/etc/cni/net.d,CNI_BIN_DIR=/var/lib/rancher/k3s/data/cni',
+            '--cache', `${build}/zarf-cache`, '--tmpdir', `${build}/zarf-tmp`, '--no-color',
+          ];
+          const rendered = execFileSync('uds', renderArgs, {
+            encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, stdio: ['ignore', 'pipe', 'inherit'],
+          });
+          fs.writeFileSync(`${build}/values-validated-manifests.yaml`, rendered);
+          const invalidValues = `${assembly}/invalid-values.yaml`;
+          fs.writeFileSync(invalidValues, 'global:\n  domain: false\n');
+          try {
+            let rejected = false;
+            try {
+              execFileSync('uds', [...renderArgs, '--values', invalidValues], { encoding: 'utf8' });
+            } catch (error) {
+              const diagnostics = String(error.stderr);
+              if (!diagnostics.includes('global.domain: Invalid type')) throw error;
+              console.log('Confirmed the deployable schema rejects an invalid domain type');
+              rejected = true;
+            }
+            if (!rejected) throw new Error('Prepared values schema accepted an invalid domain type');
+          } finally {
+            fs.rmSync(invalidValues);
+          }
+          NODE

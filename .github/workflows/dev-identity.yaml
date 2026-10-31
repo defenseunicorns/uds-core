@@ -1,0 +1,95 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+---
+name: Development identity
+
+"on":
+  pull_request:
+    paths:
+      - .github/workflows/dev-identity.yaml
+      - .github/actions/setup-tools/**
+      - mise.toml
+      - package.json
+      - package-lock.json
+      - src/dev-identity/**
+      - src/keycloak/**
+      - src/pepr/operator/controllers/keycloak/**
+      - src/pepr/operator/crd/**
+      - packages/identity-authorization/**
+      - packages/standard/**
+      - test/values/**
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/dev-identity.yaml
+      - .github/actions/setup-tools/**
+      - mise.toml
+      - package.json
+      - package-lock.json
+      - src/dev-identity/**
+      - src/keycloak/**
+      - src/pepr/operator/controllers/keycloak/**
+      - src/pepr/operator/crd/**
+      - packages/identity-authorization/**
+      - packages/standard/**
+      - test/values/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dev-identity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-and-chart:
+    name: Development identity source and chart
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GOWORK: "off"
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-tools
+      - name: Install the provider's pinned Go compiler
+        run: |
+          version=$(python3 -c 'import json; print(json.load(open("src/dev-identity/provider-inputs.json"))["goVersion"].removeprefix("go"))')
+          mise install "go@$version"
+          echo "IDENTITY_GO_VERSION=$version" >> "$GITHUB_ENV"
+      - name: Test the identity bridge and source receipts
+        run: |
+          mise exec "go@$IDENTITY_GO_VERSION" -- go -C src/dev-identity test -race ./...
+          mise exec "go@$IDENTITY_GO_VERSION" -- go -C src/dev-identity vet ./...
+          mise exec "go@$IDENTITY_GO_VERSION" -- python3 src/dev-identity/build_images_test.py
+      - name: Test the pinned Dex derivative
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, subprocess
+          from pathlib import Path
+          pins = json.loads(Path('src/dev-identity/provider-inputs.json').read_text())
+          patch = Path('src/dev-identity/dex-core-dev.patch').resolve()
+          assert hashlib.sha256(patch.read_bytes()).hexdigest() == pins['dexPatchSHA256']
+          target = Path(os.environ['RUNNER_TEMP']) / 'dev-identity-dex'
+          subprocess.run(['git', 'clone', '--no-checkout', '--', pins['dexRepository'], str(target)], check=True)
+          subprocess.run(['git', '-C', str(target), 'checkout', '--detach', pins['dexCommit']], check=True)
+          subprocess.run(['git', '-C', str(target), 'apply', '--check', str(patch)], check=True)
+          subprocess.run(['git', '-C', str(target), 'apply', str(patch)], check=True)
+          PY
+          mise exec "go@$IDENTITY_GO_VERSION" -- go -C "$RUNNER_TEMP/dev-identity-dex" test -race ./server ./cmd/dex ./connector/authproxy
+      - name: Check shipped executable vulnerability reachability
+        run: |
+          mkdir -p "$RUNNER_TEMP/identity-security-tools"
+          GOBIN="$RUNNER_TEMP/identity-security-tools" mise exec "go@$IDENTITY_GO_VERSION" -- go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+          mise exec "go@$IDENTITY_GO_VERSION" -- "$RUNNER_TEMP/identity-security-tools/govulncheck" -C src/dev-identity ./cmd/dev-identity ./cmd/identity-probe
+          mise exec "go@$IDENTITY_GO_VERSION" -- "$RUNNER_TEMP/identity-security-tools/govulncheck" -C "$RUNNER_TEMP/dev-identity-dex" ./cmd/dex
+      - name: Check Keycloak charts and package values
+        run: |
+          npm ci --ignore-scripts
+          untt src/keycloak/chart
+          npx pepr build -z chart
+          npx vitest run test/values/identity-authorization.spec.ts test/values/standard.spec.ts

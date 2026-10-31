@@ -1,0 +1,282 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+rule_files:
+  - ../.build/uptime-rules.yaml
+evaluation_interval: 1m
+tests:
+  - name: healthy
+    interval: 1m
+    input_series:
+      - series: uds_native_admission_ready{implementation="go-native"}
+        values: 1+0x5
+      - series: uds_native_policies_active{implementation="go-native"}
+        values: 1+0x5
+      - series: uds_native_reconciliation_ready{implementation="go-native"}
+        values: 1+0x5
+      - series: up{job="uds-controller",namespace="uds-system"}
+        values: 1+0x5
+      - series: deployment:up{deployment="uds-controller",namespace="uds-system"}
+        values: 1+0x5
+      - series: kube_state_metrics:up
+        values: 1+0x5
+    promql_expr_test:
+      - expr: max(uds:admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+      - expr: max(uds:reconciliation:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+      - expr: max(uds:pepr_admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+      - expr: max(uds:pepr_watcher:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+  - name: serving-failed
+    interval: 1m
+    input_series:
+      - series: uds_native_admission_ready{implementation="go-native"}
+        values: 0+0x5
+      - series: uds_native_policies_active{implementation="go-native"}
+        values: 1+0x5
+      - series: uds_native_reconciliation_ready{implementation="go-native"}
+        values: 1+0x5
+      - series: up{job="uds-controller",namespace="uds-system"}
+        values: 1+0x5
+      - series: deployment:up{deployment="uds-controller",namespace="uds-system"}
+        values: 1+0x5
+      - series: kube_state_metrics:up
+        values: 1+0x5
+    promql_expr_test:
+      - expr: max(uds:admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:reconciliation:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+      - expr: max(uds:pepr_admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:pepr_watcher:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+  - name: native-revoked
+    interval: 1m
+    input_series:
+      - series: uds_native_admission_ready{implementation="go-native"}
+        values: 1+0x5
+      - series: uds_native_policies_active{implementation="go-native"}
+        values: 0+0x5
+      - series: uds_native_reconciliation_ready{implementation="go-native"}
+        values: 1+0x5
+      - series: up{job="uds-controller",namespace="uds-system"}
+        values: 1+0x5
+      - series: deployment:up{deployment="uds-controller",namespace="uds-system"}
+        values: 1+0x5
+      - series: kube_state_metrics:up
+        values: 1+0x5
+    promql_expr_test:
+      - expr: max(uds:admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:reconciliation:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+      - expr: max(uds:pepr_admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:pepr_watcher:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+  - name: leader-lost
+    interval: 1m
+    input_series:
+      - series: uds_native_admission_ready{implementation="go-native"}
+        values: 1+0x5
+      - series: uds_native_policies_active{implementation="go-native"}
+        values: 1+0x5
+      - series: uds_native_reconciliation_ready{implementation="go-native"}
+        values: 0+0x5
+      - series: up{job="uds-controller",namespace="uds-system"}
+        values: 1+0x5
+      - series: deployment:up{deployment="uds-controller",namespace="uds-system"}
+        values: 1+0x5
+      - series: kube_state_metrics:up
+        values: 1+0x5
+    promql_expr_test:
+      - expr: max(uds:admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+      - expr: max(uds:reconciliation:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:pepr_admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+      - expr: max(uds:pepr_watcher:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+  - name: scrape-failed
+    interval: 1m
+    input_series:
+      - series: uds_native_admission_ready{implementation="go-native"}
+        values: 1+0x5
+      - series: uds_native_policies_active{implementation="go-native"}
+        values: 1+0x5
+      - series: uds_native_reconciliation_ready{implementation="go-native"}
+        values: 1+0x5
+      - series: up{job="uds-controller",namespace="uds-system"}
+        values: 0+0x5
+      - series: deployment:up{deployment="uds-controller",namespace="uds-system"}
+        values: 1+0x5
+      - series: kube_state_metrics:up
+        values: 1+0x5
+    promql_expr_test:
+      - expr: max(uds:admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:reconciliation:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:pepr_admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:pepr_watcher:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+  - name: deployment-down
+    interval: 1m
+    input_series:
+      - series: uds_native_admission_ready{implementation="go-native"}
+        values: 1+0x5
+      - series: uds_native_policies_active{implementation="go-native"}
+        values: 1+0x5
+      - series: uds_native_reconciliation_ready{implementation="go-native"}
+        values: 1+0x5
+      - series: up{job="uds-controller",namespace="uds-system"}
+        values: 1+0x5
+      - series: deployment:up{deployment="uds-controller",namespace="uds-system"}
+        values: 0+0x5
+      - series: kube_state_metrics:up
+        values: 1+0x5
+    promql_expr_test:
+      - expr: max(uds:admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:reconciliation:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:pepr_admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:pepr_watcher:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+  - name: state-metrics-down
+    interval: 1m
+    input_series:
+      - series: uds_native_admission_ready{implementation="go-native"}
+        values: 1+0x5
+      - series: uds_native_policies_active{implementation="go-native"}
+        values: 1+0x5
+      - series: uds_native_reconciliation_ready{implementation="go-native"}
+        values: 1+0x5
+      - series: up{job="uds-controller",namespace="uds-system"}
+        values: 1+0x5
+      - series: deployment:up{deployment="uds-controller",namespace="uds-system"}
+        values: 1+0x5
+      - series: kube_state_metrics:up
+        values: 0+0x5
+    promql_expr_test:
+      - expr: max(uds:admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:reconciliation:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:pepr_admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:pepr_watcher:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+  - name: missing-inputs
+    interval: 1m
+    input_series: []
+    promql_expr_test:
+      - expr: max(uds:admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:reconciliation:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:pepr_admission:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: max(uds:pepr_watcher:up)
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 0

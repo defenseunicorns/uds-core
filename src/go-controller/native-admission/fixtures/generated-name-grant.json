@@ -1,0 +1,22 @@
+{
+  "apiVersion": "uds.dev/v1alpha1",
+  "kind": "Exemption",
+  "metadata": {
+    "name": "native-generated-name-parity",
+    "namespace": "uds-policy-exemptions"
+  },
+  "spec": {
+    "exemptions": [
+      {
+        "matcher": {
+          "namespace": "native-contract-test",
+          "name": "^native-generated-allowed-.*",
+          "kind": "pod"
+        },
+        "policies": [
+          "RequireNonRootUser"
+        ]
+      }
+    ]
+  }
+}

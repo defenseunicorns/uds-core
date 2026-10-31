@@ -1,0 +1,39 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+global:
+  domain: uds.dev
+  adminDomain: admin.uds.dev
+uds-operator-config:
+  uds-operator-config:
+    operator:
+      KEYCLOAK_CLIENT_MODE: SIGNED_JWT
+      ALLOW_PUBLIC_CLIENTS: false
+    cluster:
+      caBundle:
+        includeDoDCerts: false
+        includePublicCerts: false
+uds-controller:
+  uds-controller: {}
+istio-controlplane:
+  istiod:
+    pilot:
+      resources:
+        requests:
+          memory: 128Mi
+# Retain existing CNI, ztunnel, gateway, controller and identity budgets until
+# the finished profile is measured under cold boot and application pressure.
+istio-admin-gateway:
+  gateway:
+    autoscaling:
+      enabled: false
+    replicaCount: 1
+istio-tenant-gateway:
+  gateway:
+    autoscaling:
+      enabled: false
+    replicaCount: 1
+keycloak:
+  keycloak: {}
+authservice:
+  authservice: {}

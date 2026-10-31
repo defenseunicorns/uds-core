@@ -1,0 +1,245 @@
+{
+  "sourceRevision": "c15677633cffa17e99656a7d7ccd1f98d7cb6e4d",
+  "cases": [
+    {
+      "annotation": "",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[\"disallow-privileged\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[]",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[\"disallow-privileged\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[]",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": " [\r\n] ",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[\"disallow-privileged\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": " [\r\n] ",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[\"drop-all-capabilities\",\"disallow-privileged\",\"drop-all-capabilities\"]",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[\"drop-all-capabilities\",\"disallow-privileged\",\"drop-all-capabilities\",\"require-non-root-user\"]"
+    },
+    {
+      "annotation": "[\"drop-all-capabilities\",\"disallow-privileged\",\"drop-all-capabilities\"]",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[\"drop-all-capabilities\",\"disallow-privileged\",\"drop-all-capabilities\",\"require-non-root-user\"]"
+    },
+    {
+      "annotation": "[\"\\u0064rop-all-capabilities\"]",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[\"drop-all-capabilities\",\"disallow-privileged\",\"require-non-root-user\"]"
+    },
+    {
+      "annotation": "[\"\\u0064rop-all-capabilities\"]",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[\"drop-all-capabilities\",\"require-non-root-user\"]"
+    },
+    {
+      "annotation": "[{\"z\":1,\"a\":2},null,true]",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[{\"z\":1,\"a\":2},null,true,\"disallow-privileged\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[{\"z\":1,\"a\":2},null,true]",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[{\"z\":1,\"a\":2},null,true,\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[1.0,1e2,-0]",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[1,100,0,\"disallow-privileged\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[1.0,1e2,-0]",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[1,100,0,\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[\"<tag>&\\u2028\\u2029\"]",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[\"<tag>&  \",\"disallow-privileged\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[\"<tag>&\\u2028\\u2029\"]",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[\"<tag>&  \",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[\"\\ud800\"]",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[\"\\ud800\",\"disallow-privileged\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[\"\\ud800\"]",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[\"\\ud800\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[\"\\udc00\"]",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[\"\\udc00\",\"disallow-privileged\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[\"\\udc00\"]",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[\"\\udc00\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[\"\\ud83d\\ude00\"]",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[\"😀\",\"disallow-privileged\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[\"\\ud83d\\ude00\"]",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[\"😀\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[{\"9\":1,\"1\":2,\"x\":3,\"0\":4,\"a\":5}]",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[{\"0\":4,\"1\":2,\"9\":1,\"x\":3,\"a\":5},\"disallow-privileged\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[{\"9\":1,\"1\":2,\"x\":3,\"0\":4,\"a\":5}]",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[{\"0\":4,\"1\":2,\"9\":1,\"x\":3,\"a\":5},\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[1e400,-1e400,9007199254740993,0.0000001]",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[null,null,9007199254740992,1e-7,\"disallow-privileged\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[1e400,-1e400,9007199254740993,0.0000001]",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[null,null,9007199254740992,1e-7,\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[true,false,\"unknown\",{\"__proto__\":{\"constructor\":\"data\"}}]",
+      "alreadyDefaulted": false,
+      "failed": false,
+      "expected": "[true,false,\"unknown\",{\"__proto__\":{\"constructor\":\"data\"}},\"disallow-privileged\",\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "[true,false,\"unknown\",{\"__proto__\":{\"constructor\":\"data\"}}]",
+      "alreadyDefaulted": true,
+      "failed": false,
+      "expected": "[true,false,\"unknown\",{\"__proto__\":{\"constructor\":\"data\"}},\"require-non-root-user\",\"drop-all-capabilities\"]"
+    },
+    {
+      "annotation": "null",
+      "alreadyDefaulted": false,
+      "failed": true,
+      "expected": "null"
+    },
+    {
+      "annotation": "null",
+      "alreadyDefaulted": true,
+      "failed": true,
+      "expected": "null"
+    },
+    {
+      "annotation": "{}",
+      "alreadyDefaulted": false,
+      "failed": true,
+      "expected": "{}"
+    },
+    {
+      "annotation": "{}",
+      "alreadyDefaulted": true,
+      "failed": true,
+      "expected": "{}"
+    },
+    {
+      "annotation": "[",
+      "alreadyDefaulted": false,
+      "failed": true,
+      "expected": "["
+    },
+    {
+      "annotation": "[",
+      "alreadyDefaulted": true,
+      "failed": true,
+      "expected": "["
+    },
+    {
+      "annotation": "\"text\"",
+      "alreadyDefaulted": false,
+      "failed": true,
+      "expected": "\"text\""
+    },
+    {
+      "annotation": "\"text\"",
+      "alreadyDefaulted": true,
+      "failed": true,
+      "expected": "\"text\""
+    },
+    {
+      "annotation": "42",
+      "alreadyDefaulted": false,
+      "failed": true,
+      "expected": "42"
+    },
+    {
+      "annotation": "42",
+      "alreadyDefaulted": true,
+      "failed": true,
+      "expected": "42"
+    },
+    {
+      "annotation": "false",
+      "alreadyDefaulted": false,
+      "failed": true,
+      "expected": "false"
+    },
+    {
+      "annotation": "false",
+      "alreadyDefaulted": true,
+      "failed": true,
+      "expected": "false"
+    }
+  ]
+}

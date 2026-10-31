@@ -3,6 +3,9 @@
 
 {{- if .Capabilities.APIVersions.Has "security.istio.io/v1" }}
 {{- $adminApiAllowedPrincipals := concat (list "cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa") (.Values.adminApiAllowedPrincipals | default list) }}
+{{- if .Values.nativeIdentity.enabled }}
+{{- $adminApiAllowedPrincipals = append $adminApiAllowedPrincipals (printf "cluster.local/ns/%s/sa/%s" .Values.nativeIdentity.controllerNamespace .Values.nativeIdentity.controllerServiceAccount) }}
+{{- end }}
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:

@@ -1,0 +1,7046 @@
+{
+  "sourceRevision": "c15677633cffa17e99656a7d7ccd1f98d7cb6e4d",
+  "runtime": "v24.21.0",
+  "cases": [
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "q",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "8",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "p{L}",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "123",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "\u0001",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "",
+      "valid": true,
+      "name": "😀",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "job",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^job$",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^job-.*$",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^(?:job|worker)-[a-z0-9]+$",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^a{1,3}$",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a+?",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "q",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "8",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "p{L}",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "123",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "\u0001",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": ".",
+      "valid": true,
+      "name": "😀",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "q",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "8",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "\u0001",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^.$",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^..$",
+      "valid": true,
+      "name": "😀",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<=job-)worker",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<!bad-)worker",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "worker(?=-good)",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "worker(?!-bad)",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(job)-\\1",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<prefix>job)-\\k<prefix>",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(?<n>a)|(?<n>b)",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(a)\\2",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "8",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\8",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\0",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "\u0001",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\cA",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "q",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\q",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\x61",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\u0061",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\u{61}",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "p{L}",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\p{L}+",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "8",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "123",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\d+",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "q",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "p{L}",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "\u0001",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\D+",
+      "valid": true,
+      "name": "😀",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "q",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "8",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "p{L}",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "123",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\w+",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "p{L}",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "\u0001",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\W+",
+      "valid": true,
+      "name": "😀",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\s+",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "q",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "8",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "p{L}",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "123",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "\u0001",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\S+",
+      "valid": true,
+      "name": "😀",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\bjob\\b",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\Bjob\\B",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[\\b]",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "q",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "p{L}",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[a-z]",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "8",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "p{L}",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "123",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "\u0001",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[^a-z]",
+      "valid": true,
+      "name": "😀",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[a-]",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[]",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "q",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "8",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "p{L}",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "123",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "\u0001",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[^]",
+      "valid": true,
+      "name": "😀",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a$",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "q",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "8",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "p{L}",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "123",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "\u0001",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a*",
+      "valid": true,
+      "name": "😀",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a{2,}",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a{2,1}",
+      "valid": false,
+      "error": "Invalid regular expression: /a{2,1}/: numbers out of order in {} quantifier"
+    },
+    {
+      "pattern": "*",
+      "valid": false,
+      "error": "Invalid regular expression: /*/: Nothing to repeat"
+    },
+    {
+      "pattern": "[",
+      "valid": false,
+      "error": "Invalid regular expression: /[/: Unterminated character class"
+    },
+    {
+      "pattern": ")",
+      "valid": false,
+      "error": "Invalid regular expression: /)/: Unmatched ')'"
+    },
+    {
+      "pattern": "(?P<python>job)",
+      "valid": false,
+      "error": "Invalid regular expression: /(?P<python>job)/: Invalid group"
+    },
+    {
+      "pattern": "(?i)job",
+      "valid": false,
+      "error": "Invalid regular expression: /(?i)job/: Invalid group"
+    },
+    {
+      "pattern": "[z-a]",
+      "valid": false,
+      "error": "Invalid regular expression: /[z-a]/: Range out of order in character class"
+    },
+    {
+      "pattern": "[a--b]",
+      "valid": false,
+      "error": "Invalid regular expression: /[a--b]/: Range out of order in character class"
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "(a|ab)+",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "^a(?:b)?$",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "a",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "ab",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "aa",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "a\n",
+      "matched": true,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "a|worker",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "[.]",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "a.b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\.",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "job-job",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "worker-good",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "a-b",
+      "matched": true,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "\\-",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "my-job-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "job-job",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "worker-good",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "bad-worker",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "a",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "ab",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "aa",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "q",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "8",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "p{L}",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "a.b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "a-b",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "123",
+      "matched": false,
+      "kubernetesName": true
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "a\n",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "\u0001",
+      "matched": false,
+      "kubernetesName": false
+    },
+    {
+      "pattern": "foo/bar",
+      "valid": true,
+      "name": "😀",
+      "matched": false,
+      "kubernetesName": false
+    }
+  ]
+}

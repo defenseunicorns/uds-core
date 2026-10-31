@@ -1,0 +1,132 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.nativeIdentity.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: uds-native-identity
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: uds-native-identity
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [get, list, create, update, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: uds-native-identity
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: uds-native-identity
+subjects:
+  - kind: ServiceAccount
+    name: uds-native-identity
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: uds-native-identity-authority
+rules:
+  - apiGroups: [authentication.k8s.io]
+    resources: [tokenreviews]
+    verbs: [create]
+  - apiGroups: [uds.dev]
+    resources: [packages]
+    verbs: [get]
+  - apiGroups: [apiextensions.k8s.io]
+    resources: [customresourcedefinitions]
+    resourceNames: [authcodes.dex.coreos.com, authrequests.dex.coreos.com, oauth2clients.dex.coreos.com, signingkeies.dex.coreos.com, refreshtokens.dex.coreos.com, passwords.dex.coreos.com, offlinesessionses.dex.coreos.com, connectors.dex.coreos.com, devicerequests.dex.coreos.com, devicetokens.dex.coreos.com]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: uds-native-identity-authority
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: uds-native-identity-authority
+subjects:
+  - kind: ServiceAccount
+    name: uds-native-identity
+    namespace: {{ .Release.Namespace }}
+{{- range $namespace := list .Values.nativeIdentity.publicStorageNamespace .Values.nativeIdentity.adminStorageNamespace }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $namespace }}
+  labels:
+    uds.dev/native-identity-storage: "true"
+    zarf.dev/agent: ignore
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: uds-native-dex-storage
+  namespace: {{ $namespace }}
+rules:
+  - apiGroups: [dex.coreos.com]
+    resources: [authcodes, authrequests, oauth2clients, signingkeies, refreshtokens, passwords, offlinesessionses, connectors, devicerequests, devicetokens]
+    verbs: [get, list, create, update, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: uds-native-dex-storage
+  namespace: {{ $namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: uds-native-dex-storage
+subjects:
+  - kind: ServiceAccount
+    name: uds-native-identity
+    namespace: {{ $.Release.Namespace }}
+{{- end }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.nativeIdentity.fleetNamespace }}
+  labels:
+    zarf.dev/agent: ignore
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: uds-native-fleet-bound-identity
+  namespace: {{ .Values.nativeIdentity.fleetNamespace }}
+rules:
+  - apiGroups: [""]
+    resources: [serviceaccounts]
+    resourceNames: [{{ .Values.nativeIdentity.fleetServiceAccount | quote }}]
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: uds-native-fleet-bound-identity
+  namespace: {{ .Values.nativeIdentity.fleetNamespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: uds-native-fleet-bound-identity
+subjects:
+  - kind: ServiceAccount
+    name: uds-native-identity
+    namespace: {{ .Release.Namespace }}
+{{- end }}

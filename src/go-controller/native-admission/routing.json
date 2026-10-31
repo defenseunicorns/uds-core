@@ -1,0 +1,6 @@
+{
+  "annotation": "policy.uds.dev/native-fallback",
+  "mutationRevision": "policy.uds.dev/native-mutation-revision",
+  "validate": "request.namespace == 'uds-system' || (has(object.metadata.annotations) && \"policy.uds.dev/native-fallback\" in object.metadata.annotations && object.metadata.annotations[\"policy.uds.dev/native-fallback\"] != '') || (request.resource.resource == 'pods' && (object.spec.containers + (has(object.spec.initContainers) ? object.spec.initContainers : []) + (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers : [])).exists(c,c.name in ['istio-proxy','istio-init']))",
+  "mutate": "request.namespace == 'uds-system' || (has(object.metadata.annotations) && \"policy.uds.dev/native-fallback\" in object.metadata.annotations && object.metadata.annotations[\"policy.uds.dev/native-fallback\"] != '') || (request.resource.resource == 'pods' && (has(object.metadata.labels) && ['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels && object.metadata.labels[k]!='')))"
+}

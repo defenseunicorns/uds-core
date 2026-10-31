@@ -387,6 +387,134 @@
               },
               "type": "object"
             },
+            "nativeIdentity": {
+              "additionalProperties": false,
+              "properties": {
+                "adminStorageNamespace": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "authenticationProfile": {
+                  "enum": [
+                    "password-only"
+                  ],
+                  "type": "string"
+                },
+                "bootstrapClients": {
+                  "items": {
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "bootstrapUsers": {
+                  "items": {
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "bridgeImage": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "bridgeResources": {
+                  "properties": {
+                    "limits": {
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "requests": {
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "controllerNamespace": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "controllerServiceAccount": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "coreAudiencePairsEnabled": {
+                  "type": "boolean"
+                },
+                "dexImage": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "dexResources": {
+                  "properties": {
+                    "limits": {
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "requests": {
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "fleetNamespace": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "fleetServiceAccount": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "imagePullPolicy": {
+                  "enum": [
+                    "Never",
+                    "IfNotPresent",
+                    "Always"
+                  ],
+                  "type": "string"
+                },
+                "publicStorageNamespace": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "tlsSecret": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
             "nodeSelector": {
               "properties": {},
               "type": "object"

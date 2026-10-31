@@ -55,11 +55,21 @@ tasks:
             echo "ERROR: packages/${package}/zarf-values.yaml does not exist"
             exit 1
           fi
+          if [ "$package" = "native-dev" ]; then
+            echo "ERROR: native-dev values require its prepared assembly; use the Native development package workflow"
+            exit 1
+          fi
           # A package exposes native values when it provides this default values file.
           for values_file in packages/*/zarf-values.yaml; do
             pkg="${values_file#packages/}"
             pkg="${pkg%/zarf-values.yaml}"
             if [ -n "$package" ] && [ "$pkg" != "$package" ]; then
+              continue
+            fi
+            # Native development imports are derived by prepare.mjs. Its dedicated
+            # workflow generates their schema and runs the same built-in values lint.
+            if [ "$pkg" = "native-dev" ]; then
+              echo "Checking native-dev values is delegated to the prepared-assembly workflow"
               continue
             fi
             echo "Linting packages/${pkg}"
@@ -111,10 +121,18 @@ tasks:
             echo "ERROR: packages/${package}/zarf-values.yaml does not exist"
             exit 1
           fi
+          if [ "$package" = "native-dev" ]; then
+            echo "ERROR: native-dev has a generated assembly schema; use the Native development package workflow"
+            exit 1
+          fi
           for values_file in packages/*/zarf-values.yaml; do
             pkg="${values_file#packages/}"
             pkg="${pkg%/zarf-values.yaml}"
             if [ -n "$package" ] && [ "$pkg" != "$package" ]; then
+              continue
+            fi
+            if [ "$pkg" = "native-dev" ]; then
+              echo "The prepared-assembly workflow generates and checks the native-dev values schema"
               continue
             fi
             echo "Generating packages/${pkg}/zarf-values.schema.json"

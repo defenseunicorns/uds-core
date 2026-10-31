@@ -1,0 +1,21 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if and .Values.nativeAdmission.enabled (not .Values.admission.register) }}
+{{- fail "Native admission activation requires complete Go webhook registration" }}
+{{- end }}
+{{- if and .Values.nativeAdmission.narrowCallbacks (not .Values.nativeAdmission.enabled) }}
+{{- fail "nativeAdmission.narrowCallbacks requires qualified nativeAdmission.enabled policies and bindings" }}
+{{- end }}
+{{- range (.Files.Get "files/native-admission/policies.json" | fromJson).items }}
+{{- if or $.Values.nativeAdmission.enabled (hasPrefix "uds-native-controller-" .metadata.name) }}
+---
+{{ toYaml . }}
+{{- end }}
+{{- end }}
+{{- if .Values.nativeAdmission.enabled }}
+{{- if not (lookup "policy.uds.dev/v1alpha1" "AdmissionParameters" "uds-policy-exemptions" "uds-native-grants") }}
+---
+{{ .Files.Get "files/native-admission/empty-parameters.json" }}
+{{- end }}
+{{- end }}

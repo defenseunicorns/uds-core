@@ -1,0 +1,1519 @@
+diff --git a/Dockerfile.core-dev b/Dockerfile.core-dev
+new file mode 100644
+index 00000000..75dc2f48
+--- /dev/null
++++ b/Dockerfile.core-dev
+@@ -0,0 +1,8 @@
++# Copyright 2026 The Dex Authors
++# SPDX-License-Identifier: Apache-2.0
++
++FROM gcr.io/distroless/static-debian13@sha256:e2e927ec666bae08560abb3c55d0659eceabb657f56b6782ab500a9fc7f555e3
++COPY --chmod=0755 dex-dev /usr/local/bin/dex-dev
++COPY web /srv/dex/web
++USER 65532:65532
++ENTRYPOINT ["/usr/local/bin/dex-dev"]
+diff --git a/cmd/dex/config.go b/cmd/dex/config.go
+index 8861ddef..349367f9 100644
+--- a/cmd/dex/config.go
++++ b/cmd/dex/config.go
+@@ -34,7 +34,8 @@ type Config struct {
+ 	Expiry    Expiry    `json:"expiry"`
+ 	Logger    Logger    `json:"logger"`
+ 
+-	Frontend server.WebConfig `json:"frontend"`
++	Frontend            server.WebConfig                  `json:"frontend"`
++	DevelopmentIdentity *server.DevelopmentIdentityConfig `json:"developmentIdentity,omitempty"`
+ 
+ 	// Signer configuration controls signing of JWT tokens issued by Dex.
+ 	Signer Signer `json:"signer"`
+diff --git a/cmd/dex/serve.go b/cmd/dex/serve.go
+index 54d150af..0b6ae93e 100644
+--- a/cmd/dex/serve.go
++++ b/cmd/dex/serve.go
+@@ -356,6 +356,7 @@ func runServe(options serveOptions) error {
+ 		SkipApprovalScreen:         c.OAuth2.SkipApprovalScreen,
+ 		AlwaysShowLoginScreen:      c.OAuth2.AlwaysShowLoginScreen,
+ 		PasswordConnector:          c.OAuth2.PasswordConnector,
++		DevelopmentIdentity:        c.DevelopmentIdentity,
+ 		Headers:                    c.Web.Headers.ToHTTPHeader(),
+ 		AllowedOrigins:             c.Web.AllowedOrigins,
+ 		AllowedHeaders:             c.Web.AllowedHeaders,
+@@ -616,6 +617,9 @@ func applyConfigOverrides(options serveOptions, config *Config) {
+ 			"urn:ietf:params:oauth:grant-type:device_code",
+ 			"urn:ietf:params:oauth:grant-type:token-exchange",
+ 		}
++		if config.DevelopmentIdentity != nil {
++			config.OAuth2.GrantTypes = append(config.OAuth2.GrantTypes, "client_credentials")
++		}
+ 	}
+ }
+ 
+diff --git a/connector/authproxy/authproxy.go b/connector/authproxy/authproxy.go
+index 3fe451b2..7f9b37a7 100644
+--- a/connector/authproxy/authproxy.go
++++ b/connector/authproxy/authproxy.go
+@@ -4,10 +4,12 @@
+ package authproxy
+ 
+ import (
++	"encoding/json"
+ 	"fmt"
+ 	"log/slog"
+ 	"net/http"
+ 	"net/url"
++	"strconv"
+ 	"strings"
+ 
+ 	"github.com/dexidp/dex/connector"
+@@ -19,13 +21,17 @@ import (
+ // Headers retrieved to fetch user's email and group can be configured
+ // with userHeader and groupHeader.
+ type Config struct {
+-	UserIDHeader         string   `json:"userIDHeader"`
+-	UserHeader           string   `json:"userHeader"`
+-	UserNameHeader       string   `json:"userNameHeader"`
+-	EmailHeader          string   `json:"emailHeader"`
+-	GroupHeader          string   `json:"groupHeader"`
+-	GroupHeaderSeparator string   `json:"groupHeaderSeparator"`
+-	Groups               []string `json:"staticGroups"`
++	Refresh              *RefreshConfig `json:"refresh,omitempty"`
++	UserIDHeader         string         `json:"userIDHeader"`
++	UserHeader           string         `json:"userHeader"`
++	UserNameHeader       string         `json:"userNameHeader"`
++	EmailHeader          string         `json:"emailHeader"`
++	EmailVerifiedHeader  string         `json:"emailVerifiedHeader,omitempty"`
++	SessionVersionHeader string         `json:"sessionVersionHeader,omitempty"`
++	GroupHeader          string         `json:"groupHeader"`
++	GroupHeaderSeparator string         `json:"groupHeaderSeparator"`
++	GroupHeaderEncoding  string         `json:"groupHeaderEncoding,omitempty"`
++	Groups               []string       `json:"staticGroups"`
+ }
+ 
+ // Open returns an authentication strategy which requires no user interaction.
+@@ -55,17 +61,24 @@ func (c *Config) Open(id string, logger *slog.Logger) (connector.Connector, erro
+ 		groupHeaderSeparator = ","
+ 	}
+ 
+-	return &callback{
++	connector := &callback{
+ 		userIDHeader:         userIDHeader,
+ 		userHeader:           userHeader,
+ 		userNameHeader:       userNameHeader,
+ 		emailHeader:          emailHeader,
++		emailVerifiedHeader:  c.EmailVerifiedHeader,
++		sessionVersionHeader: c.SessionVersionHeader,
+ 		groupHeader:          groupHeader,
+ 		groupHeaderSeparator: groupHeaderSeparator,
++		groupHeaderEncoding:  c.GroupHeaderEncoding,
+ 		groups:               c.Groups,
+ 		logger:               logger.With(slog.Group("connector", "type", "authproxy", "id", id)),
+ 		pathSuffix:           "/" + id,
+-	}, nil
++	}
++	if c.Refresh != nil {
++		return newRefreshCallback(connector, *c.Refresh)
++	}
++	return connector, nil
+ }
+ 
+ // Callback is a connector which returns an identity with the HTTP header
+@@ -75,8 +88,11 @@ type callback struct {
+ 	userNameHeader       string
+ 	userHeader           string
+ 	emailHeader          string
++	emailVerifiedHeader  string
++	sessionVersionHeader string
+ 	groupHeader          string
+ 	groupHeaderSeparator string
++	groupHeaderEncoding  string
+ 	groups               []string
+ 	logger               *slog.Logger
+ 	pathSuffix           string
+@@ -113,12 +129,37 @@ func (m *callback) HandleCallback(s connector.Scopes, _ []byte, r *http.Request)
+ 	if remoteUserEmail == "" {
+ 		remoteUserEmail = remoteUser
+ 	}
++	emailVerified := true
++	if m.emailVerifiedHeader != "" {
++		var err error
++		emailVerified, err = strconv.ParseBool(r.Header.Get(m.emailVerifiedHeader))
++		if err != nil {
++			return connector.Identity{}, fmt.Errorf("invalid verified email header")
++		}
++	}
++	var connectorData []byte
++	if m.sessionVersionHeader != "" {
++		version, err := strconv.ParseUint(r.Header.Get(m.sessionVersionHeader), 10, 64)
++		if err != nil {
++			return connector.Identity{}, fmt.Errorf("invalid identity session version")
++		}
++		connectorData, _ = json.Marshal(struct {
++			Version uint64 `json:"version"`
++		}{version})
++	}
+ 	groups := m.groups
+ 	headerGroup := r.Header.Get(m.groupHeader)
+ 	if headerGroup != "" {
+-		splitheaderGroup := strings.Split(headerGroup, m.groupHeaderSeparator)
+-		for i, v := range splitheaderGroup {
+-			splitheaderGroup[i] = strings.TrimSpace(v)
++		splitheaderGroup := []string{}
++		if m.groupHeaderEncoding == "json" {
++			if err := json.Unmarshal([]byte(headerGroup), &splitheaderGroup); err != nil {
++				return connector.Identity{}, fmt.Errorf("invalid identity group header")
++			}
++		} else {
++			splitheaderGroup = strings.Split(headerGroup, m.groupHeaderSeparator)
++			for i, v := range splitheaderGroup {
++				splitheaderGroup[i] = strings.TrimSpace(v)
++			}
+ 		}
+ 		groups = append(splitheaderGroup, groups...)
+ 	}
+@@ -127,7 +168,8 @@ func (m *callback) HandleCallback(s connector.Scopes, _ []byte, r *http.Request)
+ 		Username:          remoteUser,
+ 		PreferredUsername: remoteUserName,
+ 		Email:             remoteUserEmail,
+-		EmailVerified:     true,
++		EmailVerified:     emailVerified,
+ 		Groups:            groups,
++		ConnectorData:     connectorData,
+ 	}, nil
+ }
+diff --git a/connector/authproxy/core_identity_test.go b/connector/authproxy/core_identity_test.go
+new file mode 100644
+index 00000000..3922578b
+--- /dev/null
++++ b/connector/authproxy/core_identity_test.go
+@@ -0,0 +1,41 @@
++// Copyright 2026 The Dex Authors
++// SPDX-License-Identifier: Apache-2.0
++
++package authproxy
++
++import (
++	"log/slog"
++	"net/http/httptest"
++	"reflect"
++	"testing"
++
++	"github.com/dexidp/dex/connector"
++)
++
++func TestCoreClaimsRetainLiteralGroupsAndVerifiedEmailAuthority(t *testing.T) {
++	configuration := Config{GroupHeaderEncoding: "json", EmailVerifiedHeader: "X-Remote-Email-Verified"}
++	opened, err := configuration.Open("uds", slog.Default())
++	if err != nil {
++		t.Fatal(err)
++	}
++	callback := opened.(connector.CallbackConnector)
++	request := httptest.NewRequest("GET", "https://identity.example.test/callback/uds", nil)
++	request.Header.Set("X-Remote-User", "actual-user")
++	request.Header.Set("X-Remote-User-Id", "actual-user-id")
++	request.Header.Set("X-Remote-User-Email", "user@example.test")
++	request.Header.Set("X-Remote-Email-Verified", "false")
++	request.Header.Set("X-Remote-Group", `["/literal, /UDS Core/Admin"]`)
++	identity, err := callback.HandleCallback(connector.Scopes{}, nil, request)
++	if err != nil || identity.EmailVerified || !reflect.DeepEqual(identity.Groups, []string{"/literal, /UDS Core/Admin"}) {
++		t.Fatal("directory claim authority changed", identity, err)
++	}
++	request.Header.Set("X-Remote-Group", `invalid JSON`)
++	if _, err := callback.HandleCallback(connector.Scopes{}, nil, request); err == nil {
++		t.Fatal("invalid group state accepted")
++	}
++	request.Header.Set("X-Remote-Group", `[]`)
++	request.Header.Del("X-Remote-Email-Verified")
++	if _, err := callback.HandleCallback(connector.Scopes{}, nil, request); err == nil {
++		t.Fatal("unknown email verification accepted")
++	}
++}
+diff --git a/connector/authproxy/refresh.go b/connector/authproxy/refresh.go
+new file mode 100644
+index 00000000..20a2209e
+--- /dev/null
++++ b/connector/authproxy/refresh.go
+@@ -0,0 +1,99 @@
++// Copyright 2026 The Dex Authors
++// SPDX-License-Identifier: Apache-2.0
++
++package authproxy
++
++import (
++	"context"
++	"crypto/tls"
++	"crypto/x509"
++	"encoding/json"
++	"fmt"
++	"github.com/dexidp/dex/connector"
++	"io"
++	"net/http"
++	"net/url"
++	"os"
++	"time"
++)
++
++// Refresh is opt-in. Existing authproxy deployments keep their original
++// callback-only behavior. Core's private identity lookup requires mutual TLS
++// and refreshes group membership instead of trusting stale callback claims.
++type RefreshConfig struct {
++	Endpoint   string `json:"endpoint"`
++	RootCA     string `json:"rootCA"`
++	ClientCert string `json:"clientCert"`
++	ClientKey  string `json:"clientKey"`
++}
++
++type refreshCallback struct {
++	*callback
++	endpoint *url.URL
++	client   *http.Client
++}
++
++func newRefreshCallback(base *callback, cfg RefreshConfig) (connector.Connector, error) {
++	endpoint, err := url.Parse(cfg.Endpoint)
++	if err != nil || endpoint.Scheme != "https" || endpoint.Host == "" {
++		return nil, fmt.Errorf("authproxy refresh requires HTTPS endpoint")
++	}
++	roots := x509.NewCertPool()
++	raw, err := os.ReadFile(cfg.RootCA)
++	if err != nil || !roots.AppendCertsFromPEM(raw) {
++		return nil, fmt.Errorf("invalid authproxy refresh root CA")
++	}
++	certificate, err := tls.LoadX509KeyPair(cfg.ClientCert, cfg.ClientKey)
++	if err != nil {
++		return nil, fmt.Errorf("authproxy refresh client certificate: %w", err)
++	}
++	transport := &http.Transport{TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12, RootCAs: roots, Certificates: []tls.Certificate{certificate}}}
++	return &refreshCallback{callback: base, endpoint: endpoint, client: &http.Client{Transport: transport, Timeout: 5 * time.Second}}, nil
++}
++
++func (c *refreshCallback) Refresh(ctx context.Context, scopes connector.Scopes, identity connector.Identity) (connector.Identity, error) {
++	endpoint := *c.endpoint
++	query := endpoint.Query()
++	query.Set("userId", identity.UserID)
++	endpoint.RawQuery = query.Encode()
++	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
++	if err != nil {
++		return connector.Identity{}, err
++	}
++	response, err := c.client.Do(request)
++	if err != nil {
++		return connector.Identity{}, err
++	}
++	defer response.Body.Close()
++	if response.StatusCode != http.StatusOK {
++		return connector.Identity{}, fmt.Errorf("authproxy identity refresh rejected: %d", response.StatusCode)
++	}
++	var user struct {
++		ID, Username, Email string
++		Groups              []string
++		EmailVerified       bool
++		SessionVersion      uint64
++	}
++	if err := json.NewDecoder(io.LimitReader(response.Body, 1<<20)).Decode(&user); err != nil {
++		return connector.Identity{}, err
++	}
++	if user.ID != identity.UserID || user.Username == "" || user.Email == "" {
++		return connector.Identity{}, fmt.Errorf("authproxy identity refresh mismatch")
++	}
++	if c.sessionVersionHeader != "" {
++		var data struct {
++			Version uint64 `json:"version"`
++		}
++		if json.Unmarshal(identity.ConnectorData, &data) != nil || data.Version != user.SessionVersion {
++			return connector.Identity{}, fmt.Errorf("authproxy credential/session authority revoked")
++		}
++	}
++	identity.Username = user.Username
++	identity.PreferredUsername = user.Username
++	identity.Email = user.Email
++	if c.emailVerifiedHeader != "" {
++		identity.EmailVerified = user.EmailVerified
++	}
++	identity.Groups = user.Groups
++	return identity, nil
++}
+diff --git a/go.mod b/go.mod
+index ee55dd4e..a24f341c 100644
+--- a/go.mod
++++ b/go.mod
+@@ -1,6 +1,6 @@
+ module github.com/dexidp/dex
+ 
+-go 1.25.0
++go 1.27.3
+ 
+ require (
+ 	cloud.google.com/go/compute/metadata v0.9.0
+@@ -13,7 +13,7 @@ require (
+ 	github.com/dexidp/dex/api/v2 v2.4.0
+ 	github.com/fsnotify/fsnotify v1.9.0
+ 	github.com/ghodss/yaml v1.0.0
+-	github.com/go-jose/go-jose/v4 v4.1.3
++	github.com/go-jose/go-jose/v4 v4.1.4
+ 	github.com/go-ldap/ldap/v3 v3.4.12
+ 	github.com/go-sql-driver/mysql v1.9.3
+ 	github.com/google/uuid v1.6.0
+@@ -28,23 +28,23 @@ require (
+ 	github.com/openbao/openbao/api/v2 v2.5.1
+ 	github.com/pkg/errors v0.9.1
+ 	github.com/prometheus/client_golang v1.23.2
+-	github.com/russellhaering/goxmldsig v1.5.0
++	github.com/russellhaering/goxmldsig v1.6.0
+ 	github.com/spf13/cobra v1.10.2
+ 	github.com/stretchr/testify v1.11.1
+ 	go.etcd.io/etcd/client/pkg/v3 v3.6.8
+ 	go.etcd.io/etcd/client/v3 v3.6.8
+-	golang.org/x/crypto v0.48.0
++	golang.org/x/crypto v0.57.0
+ 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
+-	golang.org/x/net v0.50.0
+-	golang.org/x/oauth2 v0.35.0
++	golang.org/x/net v0.60.0
++	golang.org/x/oauth2 v0.36.0
+ 	google.golang.org/api v0.267.0
+-	google.golang.org/grpc v1.79.1
++	google.golang.org/grpc v1.83.2
+ 	google.golang.org/protobuf v1.36.11
+ )
+ 
+ require (
+ 	ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9 // indirect
+-	cloud.google.com/go/auth v0.18.1 // indirect
++	cloud.google.com/go/auth v0.18.2 // indirect
+ 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
+ 	dario.cat/mergo v1.0.1 // indirect
+ 	filippo.io/edwards25519 v1.1.1 // indirect
+@@ -105,21 +105,21 @@ require (
+ 	go.etcd.io/etcd/api/v3 v3.6.8 // indirect
+ 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
+ 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0 // indirect
+-	go.opentelemetry.io/otel v1.39.0 // indirect
+-	go.opentelemetry.io/otel/metric v1.39.0 // indirect
+-	go.opentelemetry.io/otel/trace v1.39.0 // indirect
++	go.opentelemetry.io/otel v1.44.0 // indirect
++	go.opentelemetry.io/otel/metric v1.44.0 // indirect
++	go.opentelemetry.io/otel/trace v1.44.0 // indirect
+ 	go.uber.org/multierr v1.11.0 // indirect
+ 	go.uber.org/zap v1.27.0 // indirect
+ 	go.yaml.in/yaml/v2 v2.4.2 // indirect
+-	golang.org/x/mod v0.32.0 // indirect
+-	golang.org/x/sync v0.19.0 // indirect
+-	golang.org/x/sys v0.41.0 // indirect
+-	golang.org/x/text v0.34.0 // indirect
++	golang.org/x/mod v0.41.0 // indirect
++	golang.org/x/sync v0.23.0 // indirect
++	golang.org/x/sys v0.48.0 // indirect
++	golang.org/x/text v0.42.0 // indirect
+ 	golang.org/x/time v0.14.0 // indirect
+-	golang.org/x/tools v0.41.0 // indirect
++	golang.org/x/tools v0.49.0 // indirect
+ 	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
+-	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 // indirect
+-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57 // indirect
++	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
++	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
+ 	gopkg.in/yaml.v2 v2.4.0 // indirect
+ 	gopkg.in/yaml.v3 v3.0.1 // indirect
+ )
+diff --git a/go.sum b/go.sum
+index ac41652e..642d2d12 100644
+--- a/go.sum
++++ b/go.sum
+@@ -1,7 +1,7 @@
+ ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9 h1:E0wvcUXTkgyN4wy4LGtNzMNGMytJN8afmIWXJVMi4cc=
+ ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9/go.mod h1:Oe1xWPuu5q9LzyrWfbZmEZxFYeu4BHTyzfjeW2aZp/w=
+-cloud.google.com/go/auth v0.18.1 h1:IwTEx92GFUo2pJ6Qea0EU3zYvKnTAeRCODxfA/G5UWs=
+-cloud.google.com/go/auth v0.18.1/go.mod h1:GfTYoS9G3CWpRA3Va9doKN9mjPGRS+v41jmZAhBzbrA=
++cloud.google.com/go/auth v0.18.2 h1:+Nbt5Ev0xEqxlNjd6c+yYUeosQ5TtEUaNcN/3FozlaM=
++cloud.google.com/go/auth v0.18.2/go.mod h1:xD+oY7gcahcu7G2SG2DsBerfFxgPAJz17zz2joOFF3M=
+ cloud.google.com/go/auth/oauth2adapt v0.2.8 h1:keo8NaayQZ6wimpNSmW5OPc283g65QNIiLpZnkHRbnc=
+ cloud.google.com/go/auth/oauth2adapt v0.2.8/go.mod h1:XQ9y31RkqZCcwJWNSx2Xvric3RrU88hAYYbjDWYDL+c=
+ cloud.google.com/go/compute/metadata v0.9.0 h1:pDUj4QMoPejqq20dK0Pg2N4yG9zIkYGdBtwLoEkH9Zs=
+@@ -67,8 +67,8 @@ github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
+ github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
+ github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667 h1:BP4M0CvQ4S3TGls2FvczZtj5Re/2ZzkV9VwqPHH/3Bo=
+ github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667/go.mod h1:hEBeB/ic+5LoWskz+yKT7vGhhPYkProFKoKdwZRWMe0=
+-github.com/go-jose/go-jose/v4 v4.1.3 h1:CVLmWDhDVRa6Mi/IgCgaopNosCaHz7zrMeF9MlZRkrs=
+-github.com/go-jose/go-jose/v4 v4.1.3/go.mod h1:x4oUasVrzR7071A4TnHLGSPpNOm2a21K9Kf04k1rs08=
++github.com/go-jose/go-jose/v4 v4.1.4 h1:moDMcTHmvE6Groj34emNPLs/qtYXRVcd6S7NHbHz3kA=
++github.com/go-jose/go-jose/v4 v4.1.4/go.mod h1:x4oUasVrzR7071A4TnHLGSPpNOm2a21K9Kf04k1rs08=
+ github.com/go-ldap/ldap/v3 v3.4.12 h1:1b81mv7MagXZ7+1r7cLTWmyuTqVqdwbtJSjC0DAp9s4=
+ github.com/go-ldap/ldap/v3 v3.4.12/go.mod h1:+SPAGcTtOfmGsCb3h1RFiq4xpp4N636G75OEace8lNo=
+ github.com/go-logr/logr v1.2.2/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=
+@@ -205,8 +205,8 @@ github.com/prometheus/procfs v0.16.1 h1:hZ15bTNuirocR6u0JZ6BAHHmwS1p8B4P6MRqxtzM
+ github.com/prometheus/procfs v0.16.1/go.mod h1:teAbpZRB1iIAJYREa1LsoWUXykVXA1KlTmWl8x/U+Is=
+ github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
+ github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
+-github.com/russellhaering/goxmldsig v1.5.0 h1:AU2UkkYIUOTyZRbe08XMThaOCelArgvNfYapcmSjBNw=
+-github.com/russellhaering/goxmldsig v1.5.0/go.mod h1:x98CjQNFJcWfMxeOrMnMKg70lvDP6tE0nTaeUnjXDmk=
++github.com/russellhaering/goxmldsig v1.6.0 h1:8fdWXEPh2k/NZNQBPFNoVfS3JmzS4ZprY/sAOpKQLks=
++github.com/russellhaering/goxmldsig v1.6.0/go.mod h1:TrnaquDcYxWXfJrOjeMBTX4mLBeYAqaHEyUeWPxZlBM=
+ github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
+ github.com/ryanuber/go-glob v1.0.0 h1:iQh3xXAumdQ+4Ufa5b25cRpC5TYKlno6hsv6Cb3pkBk=
+ github.com/ryanuber/go-glob v1.0.0/go.mod h1:807d1WSdnB0XRJzKNil9Om6lcp/3a0v4qIHxIXzX/Yc=
+@@ -246,16 +246,16 @@ go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.6
+ go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.61.0/go.mod h1:snMWehoOh2wsEwnvvwtDyFCxVeDAODenXHtn5vzrKjo=
+ go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0 h1:F7Jx+6hwnZ41NSFTO5q4LYDtJRXBf2PD0rNBkeB/lus=
+ go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0/go.mod h1:UHB22Z8QsdRDrnAtX4PntOl36ajSxcdUMt1sF7Y6E7Q=
+-go.opentelemetry.io/otel v1.39.0 h1:8yPrr/S0ND9QEfTfdP9V+SiwT4E0G7Y5MO7p85nis48=
+-go.opentelemetry.io/otel v1.39.0/go.mod h1:kLlFTywNWrFyEdH0oj2xK0bFYZtHRYUdv1NklR/tgc8=
+-go.opentelemetry.io/otel/metric v1.39.0 h1:d1UzonvEZriVfpNKEVmHXbdf909uGTOQjA0HF0Ls5Q0=
+-go.opentelemetry.io/otel/metric v1.39.0/go.mod h1:jrZSWL33sD7bBxg1xjrqyDjnuzTUB0x1nBERXd7Ftcs=
+-go.opentelemetry.io/otel/sdk v1.39.0 h1:nMLYcjVsvdui1B/4FRkwjzoRVsMK8uL/cj0OyhKzt18=
+-go.opentelemetry.io/otel/sdk v1.39.0/go.mod h1:vDojkC4/jsTJsE+kh+LXYQlbL8CgrEcwmt1ENZszdJE=
+-go.opentelemetry.io/otel/sdk/metric v1.39.0 h1:cXMVVFVgsIf2YL6QkRF4Urbr/aMInf+2WKg+sEJTtB8=
+-go.opentelemetry.io/otel/sdk/metric v1.39.0/go.mod h1:xq9HEVH7qeX69/JnwEfp6fVq5wosJsY1mt4lLfYdVew=
+-go.opentelemetry.io/otel/trace v1.39.0 h1:2d2vfpEDmCJ5zVYz7ijaJdOF59xLomrvj7bjt6/qCJI=
+-go.opentelemetry.io/otel/trace v1.39.0/go.mod h1:88w4/PnZSazkGzz/w84VHpQafiU4EtqqlVdxWy+rNOA=
++go.opentelemetry.io/otel v1.44.0 h1:JjwHmHpA4iZ3wBxluu2fbbE7j4kqlE8jXyAyPXH7HqU=
++go.opentelemetry.io/otel v1.44.0/go.mod h1:BMgjTHL9WPRlRjL2oZCBTL4whCGtXch2H4BhOPIAyYc=
++go.opentelemetry.io/otel/metric v1.44.0 h1:1w0gILTcHdr3YI+ixLyjemwrVnsMURbTZFrSYCdDdmc=
++go.opentelemetry.io/otel/metric v1.44.0/go.mod h1:8O7hanEPBNgEMmybD3s2VBKcgWOCsA6tzHBPODAiquo=
++go.opentelemetry.io/otel/sdk v1.44.0 h1:nHYwb9lK+fJPU/dnT6s7W7Z8itMWyqrnVfbheVYrZ58=
++go.opentelemetry.io/otel/sdk v1.44.0/go.mod h1:Osuydd3Se74nqjAKxid74N5eC+jfEqfTegHRnq58oK0=
++go.opentelemetry.io/otel/sdk/metric v1.44.0 h1:3LlKgI+VjbVsjNRFZJZAJ30WjXC5VkNRks6si09iEfI=
++go.opentelemetry.io/otel/sdk/metric v1.44.0/go.mod h1:5B5pMARnXxKhltooO4xUuCBorl65a4EpnTalObqOigA=
++go.opentelemetry.io/otel/trace v1.44.0 h1:jxF5CsGYCe74MCRx2X4g7WsY/VBKRqqpNvXlX/6gtIk=
++go.opentelemetry.io/otel/trace v1.44.0/go.mod h1:oLl1jrMQAVo6v3GAggN+1VH9VIz9iUSvW53sW1Q8PIE=
+ go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
+ go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
+ go.uber.org/multierr v1.11.0 h1:blXXJkSxSSfBVBlC76pxqeO+LN3aDfLQo+309xJstO0=
+@@ -268,44 +268,44 @@ go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
+ golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+ golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
+ golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
+-golang.org/x/crypto v0.48.0 h1:/VRzVqiRSggnhY7gNRxPauEQ5Drw9haKdM0jqfcCFts=
+-golang.org/x/crypto v0.48.0/go.mod h1:r0kV5h3qnFPlQnBSrULhlsRfryS2pmewsg+XfMgkVos=
++golang.org/x/crypto v0.57.0 h1:3ZVCjf8Ggz7zneR/EHRVx68Ctf+2pmIMP2UFhh9cC6M=
++golang.org/x/crypto v0.57.0/go.mod h1:Fdz0i5U6CoizGwLda9DttjSk6qlZo25zYNtR+ycvuZA=
+ golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741 h1:fGZugkZk2UgYBxtpKmvub51Yno1LJDeEsRp2xGD+0gY=
+ golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741/go.mod h1:cyybsKvd6eL0RnXn6p/Grxp8F5bW7iYuBgsNCOHpMYE=
+ golang.org/x/mod v0.2.0/go.mod h1:s0Qsj1ACt9ePp/hMypM3fl4fZqREWJwdYDEqhRiZZUA=
+ golang.org/x/mod v0.3.0/go.mod h1:s0Qsj1ACt9ePp/hMypM3fl4fZqREWJwdYDEqhRiZZUA=
+-golang.org/x/mod v0.32.0 h1:9F4d3PHLljb6x//jOyokMv3eX+YDeepZSEo3mFJy93c=
+-golang.org/x/mod v0.32.0/go.mod h1:SgipZ/3h2Ci89DlEtEXWUk/HteuRin+HHhN+WbNhguU=
++golang.org/x/mod v0.41.0 h1:qJmnOUb4YB+FsEuM3HcWucdZASCPGhsX6uljO6pog0c=
++golang.org/x/mod v0.41.0/go.mod h1:Ek9pY8RKWXwsWvd3rQiHYtMqkjSUV+s1Rj7j4H5Ur6o=
+ golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
+ golang.org/x/net v0.0.0-20190620200207-3b0461eec859/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+ golang.org/x/net v0.0.0-20200226121028-0de0cce0169b/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+ golang.org/x/net v0.0.0-20201021035429-f5854403a974/go.mod h1:sp8m0HH+o8qH0wwXwYZr8TS3Oi6o0r6Gce1SSxlDquU=
+-golang.org/x/net v0.50.0 h1:ucWh9eiCGyDR3vtzso0WMQinm2Dnt8cFMuQa9K33J60=
+-golang.org/x/net v0.50.0/go.mod h1:UgoSli3F/pBgdJBHCTc+tp3gmrU4XswgGRgtnwWTfyM=
+-golang.org/x/oauth2 v0.35.0 h1:Mv2mzuHuZuY2+bkyWXIHMfhNdJAdwW3FuWeCPYN5GVQ=
+-golang.org/x/oauth2 v0.35.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
++golang.org/x/net v0.60.0 h1:79p50tfZlm0J9YfoDsSi639qSXNGVwEzOPLCxM2FsYU=
++golang.org/x/net v0.60.0/go.mod h1:2DA/G1UfVbCpQPeWTmMPGY7Cs2PkBkwu743bVX5PIVg=
++golang.org/x/oauth2 v0.36.0 h1:peZ/1z27fi9hUOFCAZaHyrpWG5lwe0RJEEEeH0ThlIs=
++golang.org/x/oauth2 v0.36.0/go.mod h1:YDBUJMTkDnJS+A4BP4eZBjCqtokkg1hODuPjwiGPO7Q=
+ golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+ golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+ golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+-golang.org/x/sync v0.19.0 h1:vV+1eWNmZ5geRlYjzm2adRgW2/mcpevXNg50YZtPCE4=
+-golang.org/x/sync v0.19.0/go.mod h1:9KTHXmSnoGruLpwFjVSX0lNNA75CykiMECbovNTZqGI=
++golang.org/x/sync v0.23.0 h1:KameEIfc1IkluZyXWLn39Wd4tURc6GbCiISGiZm2bQk=
++golang.org/x/sync v0.23.0/go.mod h1:sUUOizhqBxiL6pEWpqNLUiaJn1ShEbZ6BBqskPbjZm0=
+ golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
+ golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+ golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+-golang.org/x/sys v0.41.0 h1:Ivj+2Cp/ylzLiEU89QhWblYnOE9zerudt9Ftecq2C6k=
+-golang.org/x/sys v0.41.0/go.mod h1:OgkHotnGiDImocRcuBABYBEXf8A9a87e/uXjp9XT3ks=
++golang.org/x/sys v0.48.0 h1:bbX/i/6MgT9BVLM9RT1thmxL04yeTAhbEz4SyadbXoo=
++golang.org/x/sys v0.48.0/go.mod h1:hNLxWAXmnKAxqDtdwIYC4bM9oQPEecfsnNMuSxOs3og=
+ golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+ golang.org/x/text v0.3.3/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
+-golang.org/x/text v0.34.0 h1:oL/Qq0Kdaqxa1KbNeMKwQq0reLCCaFtqu2eNuSeNHbk=
+-golang.org/x/text v0.34.0/go.mod h1:homfLqTYRFyVYemLBFl5GgL/DWEiH5wcsQ5gSh1yziA=
++golang.org/x/text v0.42.0 h1:JbOZXgfeCPU9gacVtYliJqOhD+zhrEqK4LfdpmlUZqI=
++golang.org/x/text v0.42.0/go.mod h1:ojzP1Z+2QtioaF8DTtO8K5q7JWVVYwZKenzujK0Zd0E=
+ golang.org/x/time v0.14.0 h1:MRx4UaLrDotUKUdCIqzPC48t1Y9hANFKIRpNx+Te8PI=
+ golang.org/x/time v0.14.0/go.mod h1:eL/Oa2bBBK0TkX57Fyni+NgnyQQN4LitPmob2Hjnqw4=
+ golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
+ golang.org/x/tools v0.0.0-20191119224855-298f0cb1881e/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
+ golang.org/x/tools v0.0.0-20200619180055-7c47624df98f/go.mod h1:EkVYQZoAsY45+roYkvgYkIh4xh/qjgUK9TdY2XT94GE=
+ golang.org/x/tools v0.0.0-20210106214847-113979e3529a/go.mod h1:emZCQorbCU4vsT4fOWvOPXz4eW1wZW4PmDk9uLelYpA=
+-golang.org/x/tools v0.41.0 h1:a9b8iMweWG+S0OBnlU36rzLp20z1Rp10w+IY2czHTQc=
+-golang.org/x/tools v0.41.0/go.mod h1:XSY6eDqxVNiYgezAVqqCeihT4j1U2CCsqvH3WhQpnlg=
++golang.org/x/tools v0.49.0 h1:3NI7VXzL9+1WZD52Dx2ttoPwD5DWrFGpl9mFZDlmisI=
++golang.org/x/tools v0.49.0/go.mod h1:SJNXV9DBKT0UbdttsQjbfJlAE/q+y36++zo3uL3N0Oo=
+ golang.org/x/tools/go/expect v0.1.0-deprecated h1:jY2C5HGYR5lqex3gEniOQL0r7Dq5+VGVgY1nudX5lXY=
+ golang.org/x/tools/go/expect v0.1.0-deprecated/go.mod h1:eihoPOH+FgIqa3FpoTwguz/bVUSGBlGQU67vpBeOrBY=
+ golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated h1:1h2MnaIAIXISqTFKdENegdpAgUXz6NrPEsbIeWaBRvM=
+@@ -314,18 +314,18 @@ golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8T
+ golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+ golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+ golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+-gonum.org/v1/gonum v0.16.0 h1:5+ul4Swaf3ESvrOnidPp4GZbzf0mxVQpDCYUQE7OJfk=
+-gonum.org/v1/gonum v0.16.0/go.mod h1:fef3am4MQ93R2HHpKnLk4/Tbh/s0+wqD5nfa6Pnwy4E=
++gonum.org/v1/gonum v0.17.0 h1:VbpOemQlsSMrYmn7T2OUvQ4dqxQXU+ouZFQsZOx50z4=
++gonum.org/v1/gonum v0.17.0/go.mod h1:El3tOrEuMpv2UdMrbNlKEh9vd86bmQ6vqIcDwxEOc1E=
+ google.golang.org/api v0.267.0 h1:w+vfWPMPYeRs8qH1aYYsFX68jMls5acWl/jocfLomwE=
+ google.golang.org/api v0.267.0/go.mod h1:Jzc0+ZfLnyvXma3UtaTl023TdhZu6OMBP9tJ+0EmFD0=
+ google.golang.org/genproto v0.0.0-20260128011058-8636f8732409 h1:VQZ/yAbAtjkHgH80teYd2em3xtIkkHd7ZhqfH2N9CsM=
+ google.golang.org/genproto v0.0.0-20260128011058-8636f8732409/go.mod h1:rxKD3IEILWEu3P44seeNOAwZN4SaoKaQ/2eTg4mM6EM=
+-google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 h1:merA0rdPeUV3YIIfHHcH4qBkiQAc1nfCKSI7lB4cV2M=
+-google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409/go.mod h1:fl8J1IvUjCilwZzQowmw2b7HQB2eAuYBabMXzWurF+I=
+-google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57 h1:mWPCjDEyshlQYzBpMNHaEof6UX1PmHcaUODUywQ0uac=
+-google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57/go.mod h1:j9x/tPzZkyxcgEFkiKEEGxfvyumM01BEtsW8xzOahRQ=
+-google.golang.org/grpc v1.79.1 h1:zGhSi45ODB9/p3VAawt9a+O/MULLl9dpizzNNpq7flY=
+-google.golang.org/grpc v1.79.1/go.mod h1:KmT0Kjez+0dde/v2j9vzwoAScgEPx/Bw1CYChhHLrHQ=
++google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa h1:Kjn0N0tCrDgiAFW+lGO4JZ3ck44CehvJQMAwj9QF0G8=
++google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa/go.mod h1:q4lMZS6kskjT5HvCPrnnypcDPVJqT/f4nfxmkE7gryY=
++google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa h1:mZHHdPZl0dbGHCflZgAq/Q468DWVFcU2whhB2KAo8fk=
++google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa/go.mod h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8=
++google.golang.org/grpc v1.83.2 h1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU=
++google.golang.org/grpc v1.83.2/go.mod h1:YPI1hK3kDked6iHvgX3tR0y+nX/qpMFKhPgFsokw1S8=
+ google.golang.org/protobuf v1.36.11 h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=
+ google.golang.org/protobuf v1.36.11/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
+ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+diff --git a/server/development_generation.go b/server/development_generation.go
+new file mode 100644
+index 00000000..8a67f7cb
+--- /dev/null
++++ b/server/development_generation.go
+@@ -0,0 +1,47 @@
++// Copyright 2026 The Dex Authors
++// SPDX-License-Identifier: Apache-2.0
++
++package server
++
++import (
++	"fmt"
++	"regexp"
++	"strings"
++)
++
++const developmentGenerationPrefix = "uds:package-generation:"
++
++var developmentGenerationValue = regexp.MustCompile(`^[0-9a-f]{64}$`)
++
++func developmentGrantGeneration(scopes []string) (string, error) {
++	result := ""
++	for _, scope := range scopes {
++		if !strings.HasPrefix(scope, developmentGenerationPrefix) {
++			continue
++		}
++		value := strings.TrimPrefix(scope, developmentGenerationPrefix)
++		if result != "" || !developmentGenerationValue.MatchString(value) {
++			return "", fmt.Errorf("invalid native grant generation")
++		}
++		result = value
++	}
++	return result, nil
++}
++
++func retainDevelopmentGrantGeneration(original, requested []string) ([]string, error) {
++	value, err := developmentGrantGeneration(original)
++	if err != nil {
++		return nil, err
++	}
++	requestedValue, err := developmentGrantGeneration(requested)
++	if err != nil {
++		return nil, err
++	}
++	if requestedValue != "" && requestedValue != value {
++		return nil, fmt.Errorf("refresh cannot choose another generation")
++	}
++	if value != "" && requestedValue == "" {
++		requested = append(append([]string(nil), requested...), developmentGenerationPrefix+value)
++	}
++	return requested, nil
++}
+diff --git a/server/development_generation_test.go b/server/development_generation_test.go
+new file mode 100644
+index 00000000..9c0404b8
+--- /dev/null
++++ b/server/development_generation_test.go
+@@ -0,0 +1,102 @@
++// Copyright 2026 The Dex Authors
++// SPDX-License-Identifier: Apache-2.0
++
++package server
++
++import (
++	"crypto/sha256"
++	"encoding/base64"
++	"encoding/json"
++	"net/http"
++	"net/url"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/dexidp/dex/storage"
++	"github.com/stretchr/testify/require"
++)
++
++func TestDevelopmentOriginalGenerationSurvivesRefreshScopeNarrowing(t *testing.T) {
++	old := developmentGenerationPrefix + strings.Repeat("a", 64)
++	scopes, err := retainDevelopmentGrantGeneration([]string{scopeOpenID, scopeGroups, old}, []string{scopeOpenID})
++	require.NoError(t, err)
++	require.Equal(t, []string{scopeOpenID, old}, scopes)
++	_, err = retainDevelopmentGrantGeneration([]string{old}, []string{developmentGenerationPrefix + strings.Repeat("b", 64)})
++	require.Error(t, err)
++	for _, scopes := range [][]string{{old, old}, {developmentGenerationPrefix + "short"}, {developmentGenerationPrefix + strings.Repeat("A", 64)}} {
++		_, err := developmentGrantGeneration(scopes)
++		require.Error(t, err)
++	}
++	original := []string{scopeOpenID, scopeProfile}
++	actual, err := retainDevelopmentGrantGeneration(original, original)
++	require.NoError(t, err)
++	require.Equal(t, original, actual)
++}
++
++func TestDevelopmentSameClientIDRecreationCannotAdoptOriginalRefreshGrant(t *testing.T) {
++	generation := strings.Repeat("a", 64)
++	authorityCalls := 0
++	authority, cfg := developmentAuthority(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		authorityCalls++
++		require.NotEmpty(t, r.TLS.VerifiedChains)
++		if r.URL.Query().Get("clientId") != "cli" || r.URL.Query().Get("userId") != "owner" || r.URL.Query().Get("clientGeneration") != generation {
++			w.WriteHeader(403)
++			return
++		}
++		w.WriteHeader(204)
++	}))
++	cfg.UserAuthorizationEndpoint = authority.URL + "/internal/user-authorization"
++	httpServer, s := newTestServer(t, func(c *Config) { c.DevelopmentIdentity = &cfg })
++	defer httpServer.Close()
++	require.NoError(t, s.storage.CreateConnector(t.Context(), storage.Connector{ID: "uds", Type: "mockCallback", Name: "unit trusted directory", ResourceVersion: "1"}))
++	cli := storage.Client{ID: "cli", Public: true, RedirectURIs: []string{"https://app.example.test/callback"}}
++	require.NoError(t, s.storage.CreateClient(t.Context(), cli))
++	verifier := strings.Repeat("v", 43)
++	hash := sha256.Sum256([]byte(verifier))
++	challenge := base64.RawURLEncoding.EncodeToString(hash[:])
++	issueCode := func(gen string) string {
++		code := storage.NewID()
++		require.NoError(t, s.storage.CreateAuthCode(t.Context(), storage.AuthCode{ID: code, ClientID: "cli", ConnectorID: "uds", RedirectURI: cli.RedirectURIs[0], Expiry: time.Now().Add(time.Minute), Nonce: "real-nonce", Scopes: []string{scopeOpenID, scopeOfflineAccess, developmentGenerationPrefix + gen}, Claims: storage.Claims{UserID: "owner", Username: "Owner", PreferredUsername: "owner"}, PKCE: storage.PKCE{CodeChallenge: challenge, CodeChallengeMethod: "S256"}}))
++		return code
++	}
++	exchange := func(code string) *http.Response {
++		response, err := http.PostForm(httpServer.URL+"/token", url.Values{"client_id": {"cli"}, "grant_type": {"authorization_code"}, "code": {code}, "redirect_uri": {cli.RedirectURIs[0]}, "code_verifier": {verifier}})
++		require.NoError(t, err)
++		return response
++	}
++	response := exchange(issueCode(generation))
++	require.Equal(t, 200, response.StatusCode)
++	var tokens struct {
++		ID      string `json:"id_token"`
++		Refresh string `json:"refresh_token"`
++	}
++	require.NoError(t, json.NewDecoder(response.Body).Decode(&tokens))
++	response.Body.Close()
++	require.NotEmpty(t, tokens.ID)
++	require.NotEmpty(t, tokens.Refresh)
++	originalCalls := authorityCalls
++	require.Greater(t, originalCalls, 0)
++	// The same logical client ID is genuinely replaced in Dex storage.
++	require.NoError(t, s.storage.DeleteClient(t.Context(), "cli"))
++	require.NoError(t, s.storage.CreateClient(t.Context(), cli))
++	generation = strings.Repeat("b", 64)
++	for _, scope := range []string{"", scopeOpenID, scopeOpenID + " " + developmentGenerationPrefix + generation} {
++		response, err := http.PostForm(httpServer.URL+"/token", url.Values{"client_id": {"cli"}, "grant_type": {"refresh_token"}, "refresh_token": {tokens.Refresh}, "scope": {scope}})
++		require.NoError(t, err)
++		require.Equal(t, 400, response.StatusCode)
++		var failure map[string]string
++		require.NoError(t, json.NewDecoder(response.Body).Decode(&failure))
++		response.Body.Close()
++		require.Equal(t, errInvalidGrant, failure["error"])
++	}
++	// An outstanding code from the old UID also cannot obtain a signature.
++	response = exchange(issueCode(strings.Repeat("a", 64)))
++	require.GreaterOrEqual(t, response.StatusCode, 400)
++	response.Body.Close()
++	// A fresh S256 authorization grant for the replacement is usable.
++	response = exchange(issueCode(generation))
++	require.Equal(t, 200, response.StatusCode)
++	response.Body.Close()
++	require.Greater(t, authorityCalls, originalCalls)
++}
+diff --git a/server/development_identity.go b/server/development_identity.go
+new file mode 100644
+index 00000000..3ae0bddc
+--- /dev/null
++++ b/server/development_identity.go
+@@ -0,0 +1,141 @@
++// Copyright 2026 The Dex Authors
++// SPDX-License-Identifier: Apache-2.0
++
++package server
++
++import (
++	"context"
++	"crypto/tls"
++	"crypto/x509"
++	"encoding/json"
++	"fmt"
++	"io"
++	"net/http"
++	"net/url"
++	"os"
++	"time"
++
++	"github.com/dexidp/dex/storage"
++)
++
++// DevelopmentIdentityConfig is opt-in and requires a private HTTPS authority
++// with mutual TLS. It supplies managed service-account claims after Dex's
++// ordinary client-secret verification. The caller cannot select identity,
++// groups, or additional audiences.
++type DevelopmentIdentityConfig struct {
++	Endpoint                  string `json:"endpoint"`
++	RootCA                    string `json:"rootCA"`
++	ClientCert                string `json:"clientCert"`
++	ClientKey                 string `json:"clientKey"`
++	UserAuthorizationEndpoint string `json:"userAuthorizationEndpoint,omitempty"`
++}
++
++type developmentIdentity struct {
++	endpoint                  *url.URL
++	client                    *http.Client
++	userAuthorizationEndpoint *url.URL
++}
++
++func newDevelopmentIdentity(cfg DevelopmentIdentityConfig) (*developmentIdentity, error) {
++	endpoint, err := url.Parse(cfg.Endpoint)
++	if err != nil || endpoint.Scheme != "https" || endpoint.Host == "" {
++		return nil, fmt.Errorf("development identity requires HTTPS")
++	}
++	raw, err := os.ReadFile(cfg.RootCA)
++	if err != nil {
++		return nil, err
++	}
++	roots := x509.NewCertPool()
++	if !roots.AppendCertsFromPEM(raw) {
++		return nil, fmt.Errorf("invalid development identity trust root")
++	}
++	cert, err := tls.LoadX509KeyPair(cfg.ClientCert, cfg.ClientKey)
++	if err != nil {
++		return nil, err
++	}
++	transport := &http.Transport{TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12, RootCAs: roots, Certificates: []tls.Certificate{cert}}}
++	identity := &developmentIdentity{endpoint: endpoint, client: &http.Client{Transport: transport, Timeout: 5 * time.Second}}
++	if cfg.UserAuthorizationEndpoint != "" {
++		identity.userAuthorizationEndpoint, err = url.Parse(cfg.UserAuthorizationEndpoint)
++		if err != nil || identity.userAuthorizationEndpoint.Scheme != "https" || identity.userAuthorizationEndpoint.Host == "" {
++			return nil, fmt.Errorf("user authorization requires HTTPS")
++		}
++	}
++	return identity, nil
++}
++
++func (s *Server) authorizeDevelopmentUser(ctx context.Context, clientID, userID, connectorID string, scopes []string) error {
++	if s.developmentIdentity == nil || s.developmentIdentity.userAuthorizationEndpoint == nil || connectorID != "uds" {
++		return nil
++	}
++	generation, err := developmentGrantGeneration(scopes)
++	if err != nil {
++		return err
++	}
++	endpoint := *s.developmentIdentity.userAuthorizationEndpoint
++	query := endpoint.Query()
++	query.Set("clientId", clientID)
++	query.Set("userId", userID)
++	if generation != "" {
++		query.Set("clientGeneration", generation)
++	}
++	endpoint.RawQuery = query.Encode()
++	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
++	if err != nil {
++		return err
++	}
++	response, err := s.developmentIdentity.client.Do(request)
++	if err != nil {
++		return err
++	}
++	defer response.Body.Close()
++	if response.StatusCode != 204 {
++		return fmt.Errorf("development user authorization rejected: %d", response.StatusCode)
++	}
++	return nil
++}
++
++func (s *Server) handleDevelopmentClientCredentials(writer http.ResponseWriter, request *http.Request, client storage.Client) {
++	if s.developmentIdentity == nil || client.Public {
++		s.tokenErrHelper(writer, errUnauthorizedClient, "service-account grant unavailable", 401)
++		return
++	}
++	endpoint := *s.developmentIdentity.endpoint
++	query := endpoint.Query()
++	query.Set("clientId", client.ID)
++	endpoint.RawQuery = query.Encode()
++	lookup, err := http.NewRequestWithContext(request.Context(), http.MethodGet, endpoint.String(), nil)
++	if err != nil {
++		s.tokenErrHelper(writer, errServerError, "identity lookup unavailable", 503)
++		return
++	}
++	response, err := s.developmentIdentity.client.Do(lookup)
++	if err != nil {
++		s.tokenErrHelper(writer, errServerError, "identity lookup unavailable", 503)
++		return
++	}
++	defer response.Body.Close()
++	if response.StatusCode != 200 {
++		s.tokenErrHelper(writer, errUnauthorizedClient, "service-account grant rejected", 401)
++		return
++	}
++	var identity struct {
++		ClientID, ID, Username string
++		Groups, Audiences      []string
++	}
++	if json.NewDecoder(io.LimitReader(response.Body, 1<<20)).Decode(&identity) != nil || identity.ClientID != client.ID || identity.ID == "" || identity.Username == "" {
++		s.tokenErrHelper(writer, errServerError, "invalid managed identity", 503)
++		return
++	}
++	scopes := []string{scopeProfile, scopeGroups}
++	for _, audience := range identity.Audiences {
++		scopes = append(scopes, "audience:server:client_id:"+audience)
++	}
++	claims := storage.Claims{UserID: identity.ID, Username: identity.Username, PreferredUsername: identity.Username, Groups: identity.Groups}
++	token, expiry, err := s.newAccessToken(request.Context(), client.ID, claims, scopes, "", "uds-service-account")
++	if err != nil {
++		s.tokenErrHelper(writer, errServerError, "could not issue service-account token", 503)
++		return
++	}
++	s.writeAccessToken(writer, &accessTokenResponse{AccessToken: token, TokenType: "bearer", ExpiresIn: int(expiry.Sub(s.now()).Seconds())})
++}
+diff --git a/server/development_identity_test.go b/server/development_identity_test.go
+new file mode 100644
+index 00000000..3011e56f
+--- /dev/null
++++ b/server/development_identity_test.go
+@@ -0,0 +1,143 @@
++// Copyright 2026 The Dex Authors
++// SPDX-License-Identifier: Apache-2.0
++
++package server
++
++import (
++	"crypto/ecdsa"
++	"crypto/elliptic"
++	"crypto/rand"
++	"crypto/tls"
++	"crypto/x509"
++	"crypto/x509/pkix"
++	"encoding/json"
++	"encoding/pem"
++	"math/big"
++	"net"
++	"net/http"
++	"net/http/httptest"
++	"net/url"
++	"os"
++	"path/filepath"
++	"testing"
++	"time"
++
++	"github.com/coreos/go-oidc/v3/oidc"
++	"github.com/dexidp/dex/storage"
++	"github.com/stretchr/testify/require"
++)
++
++func developmentAuthority(t *testing.T, handler http.Handler) (*httptest.Server, DevelopmentIdentityConfig) {
++	t.Helper()
++	caKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
++	require.NoError(t, err)
++	ca := &x509.Certificate{SerialNumber: big.NewInt(1), Subject: pkix.Name{CommonName: "authority CA"}, NotBefore: time.Now().Add(-time.Minute), NotAfter: time.Now().Add(time.Hour), IsCA: true, BasicConstraintsValid: true, KeyUsage: x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature}
++	caDER, err := x509.CreateCertificate(rand.Reader, ca, ca, &caKey.PublicKey, caKey)
++	require.NoError(t, err)
++	leaf := func(serial int64, client bool) ([]byte, []byte) {
++		key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
++		require.NoError(t, err)
++		usage := x509.ExtKeyUsageServerAuth
++		if client {
++			usage = x509.ExtKeyUsageClientAuth
++		}
++		cert := &x509.Certificate{SerialNumber: big.NewInt(serial), Subject: pkix.Name{CommonName: "authority"}, NotBefore: ca.NotBefore, NotAfter: ca.NotAfter, KeyUsage: x509.KeyUsageDigitalSignature, ExtKeyUsage: []x509.ExtKeyUsage{usage}, IPAddresses: []net.IP{net.ParseIP("127.0.0.1")}}
++		der, err := x509.CreateCertificate(rand.Reader, cert, ca, &key.PublicKey, caKey)
++		require.NoError(t, err)
++		private, err := x509.MarshalPKCS8PrivateKey(key)
++		require.NoError(t, err)
++		return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: private})
++	}
++	serverCert, serverKey := leaf(2, false)
++	clientCert, clientKey := leaf(3, true)
++	pair, err := tls.X509KeyPair(serverCert, serverKey)
++	require.NoError(t, err)
++	roots := x509.NewCertPool()
++	roots.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: caDER}))
++	server := httptest.NewUnstartedServer(handler)
++	server.TLS = &tls.Config{MinVersion: tls.VersionTLS12, Certificates: []tls.Certificate{pair}, ClientAuth: tls.RequireAndVerifyClientCert, ClientCAs: roots}
++	server.StartTLS()
++	t.Cleanup(server.Close)
++	dir := t.TempDir()
++	files := map[string][]byte{"ca.pem": pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: caDER}), "client.pem": clientCert, "client.key": clientKey}
++	for name, raw := range files {
++		require.NoError(t, os.WriteFile(filepath.Join(dir, name), raw, 0600))
++	}
++	return server, DevelopmentIdentityConfig{Endpoint: server.URL + "/internal/service-identity", RootCA: filepath.Join(dir, "ca.pem"), ClientCert: filepath.Join(dir, "client.pem"), ClientKey: filepath.Join(dir, "client.key")}
++}
++
++func TestDevelopmentClientCredentialsUseVerifiedManagedIdentityAndDexSignatures(t *testing.T) {
++	enabled, identityClientID, lookups := true, "probe", 0
++	_, config := developmentAuthority(t, http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
++		lookups++
++		require.Equal(t, "probe", request.URL.Query().Get("clientId"))
++		require.NotEmpty(t, request.TLS.VerifiedChains)
++		if !enabled {
++			writer.WriteHeader(403)
++			return
++		}
++		json.NewEncoder(writer).Encode(map[string]any{"ClientID": identityClientID, "ID": "service-account-uuid", "Username": "service-account-probe", "Audiences": []string{"target"}, "Groups": []string{}})
++	}))
++	httpServer, server := newTestServer(t, func(cfg *Config) {
++		cfg.DevelopmentIdentity = &config
++		cfg.AllowedGrantTypes = append(cfg.AllowedGrantTypes, "client_credentials")
++	})
++	defer httpServer.Close()
++	require.NoError(t, server.storage.CreateClient(t.Context(), storage.Client{ID: "probe", Secret: "real-probe-secret"}))
++	require.NoError(t, server.storage.CreateClient(t.Context(), storage.Client{ID: "target", Secret: "target-secret", TrustedPeers: []string{"probe"}}))
++	request := func(secret string) *http.Response {
++		response, err := http.PostForm(httpServer.URL+"/token", url.Values{"grant_type": {"client_credentials"}, "client_id": {"probe"}, "client_secret": {secret}, "scope": {"audience:server:client_id:untrusted"}})
++		require.NoError(t, err)
++		return response
++	}
++	response := request("wrong-secret")
++	require.Equal(t, 401, response.StatusCode)
++	response.Body.Close()
++	require.Equal(t, 0, lookups)
++	response = request("real-probe-secret")
++	require.Equal(t, 200, response.StatusCode)
++	var tokens struct{ AccessToken, IDToken, RefreshToken string }
++	var raw map[string]json.RawMessage
++	require.NoError(t, json.NewDecoder(response.Body).Decode(&raw))
++	response.Body.Close()
++	require.NoError(t, json.Unmarshal(raw["access_token"], &tokens.AccessToken))
++	require.NotContains(t, raw, "id_token")
++	require.NotContains(t, raw, "refresh_token")
++	verifier := oidc.NewVerifier(httpServer.URL, oidc.NewRemoteKeySet(t.Context(), httpServer.URL+"/keys"), &oidc.Config{ClientID: "target"})
++	verified, err := verifier.Verify(t.Context(), tokens.AccessToken)
++	require.NoError(t, err)
++	require.ElementsMatch(t, []string{"probe", "target"}, verified.Audience)
++	var claims struct {
++		Name   string   `json:"name"`
++		Groups []string `json:"groups"`
++		AZP    string   `json:"azp"`
++	}
++	require.NoError(t, verified.Claims(&claims))
++	require.Equal(t, "service-account-probe", claims.Name)
++	require.Equal(t, "probe", claims.AZP)
++	require.Empty(t, claims.Groups)
++	enabled = false
++	response = request("real-probe-secret")
++	require.Equal(t, 401, response.StatusCode)
++	response.Body.Close()
++	enabled = true
++	identityClientID = "untrusted"
++	response = request("real-probe-secret")
++	require.Equal(t, 503, response.StatusCode)
++	response.Body.Close()
++}
++
++func TestDevelopmentAuthorityRequiresHTTPSAndMutualTLS(t *testing.T) {
++	_, err := newDevelopmentIdentity(DevelopmentIdentityConfig{Endpoint: "http://identity.internal"})
++	require.Error(t, err)
++	server, cfg := developmentAuthority(t, http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) { writer.WriteHeader(200) }))
++	client, err := newDevelopmentIdentity(cfg)
++	require.NoError(t, err)
++	transport := client.client.Transport.(*http.Transport).Clone()
++	transport.TLSClientConfig.Certificates = nil
++	response, err := (&http.Client{Transport: transport}).Get(server.URL)
++	if response != nil {
++		response.Body.Close()
++	}
++	require.Error(t, err)
++}
+diff --git a/server/development_pkce.go b/server/development_pkce.go
+new file mode 100644
+index 00000000..21dc4840
+--- /dev/null
++++ b/server/development_pkce.go
+@@ -0,0 +1,36 @@
++// Copyright 2026 The Dex Authors
++// SPDX-License-Identifier: Apache-2.0
++
++package server
++
++import (
++	"net/url"
++	"regexp"
++
++	"github.com/dexidp/dex/storage"
++)
++
++var developmentS256Challenge = regexp.MustCompile(`^[A-Za-z0-9_-]{43}$`)
++var developmentVerifier = regexp.MustCompile(`^[A-Za-z0-9._~-]{43,128}$`)
++
++func validDevelopmentPKCEAuthorization(values url.Values) bool {
++	return len(values["code_challenge"]) == 1 && len(values["code_challenge_method"]) == 1 &&
++		values.Get("code_challenge_method") == codeChallengeMethodS256 && developmentS256Challenge.MatchString(values.Get("code_challenge")) &&
++		values.Get("response_type") == responseTypeCode
++}
++func validDevelopmentPKCEToken(values url.Values, pkce storage.PKCE) bool {
++	return pkce.CodeChallengeMethod == codeChallengeMethodS256 && developmentS256Challenge.MatchString(pkce.CodeChallenge) &&
++		len(values["code_verifier"]) == 1 && developmentVerifier.MatchString(values.Get("code_verifier"))
++}
++
++// The native public CLI declares an ID-token audience mapper. Keep its access
++// token bound to the CLI itself rather than implicitly widening both tokens.
++func developmentPublicAccessScopes(scopes []string) []string {
++	result := make([]string, 0, len(scopes))
++	for _, scope := range scopes {
++		if _, crossClient := parseCrossClientScope(scope); !crossClient {
++			result = append(result, scope)
++		}
++	}
++	return result
++}
+diff --git a/server/development_pkce_test.go b/server/development_pkce_test.go
+new file mode 100644
+index 00000000..3ca57681
+--- /dev/null
++++ b/server/development_pkce_test.go
+@@ -0,0 +1,127 @@
++// Copyright 2026 The Dex Authors
++// SPDX-License-Identifier: Apache-2.0
++
++package server
++
++import (
++	"crypto/sha256"
++	"encoding/base64"
++	"encoding/json"
++	"net/http"
++	"net/http/httptest"
++	"net/url"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/coreos/go-oidc/v3/oidc"
++	"github.com/dexidp/dex/storage"
++	"github.com/stretchr/testify/require"
++)
++
++func TestDevelopmentPublicClientRequiresS256AtAuthorization(t *testing.T) {
++	httpServer, s := newTestServer(t, nil)
++	defer httpServer.Close()
++	s.developmentIdentity = &developmentIdentity{}
++	require.NoError(t, s.storage.CreateClient(t.Context(), storage.Client{ID: "cli", Public: true, RedirectURIs: []string{"https://app.example.test/callback"}}))
++	verifier := strings.Repeat("v", 43)
++	hash := sha256.Sum256([]byte(verifier))
++	challenge := base64.RawURLEncoding.EncodeToString(hash[:])
++	for name, extra := range map[string]url.Values{
++		"missing": {}, "plain": {"code_challenge": {verifier}, "code_challenge_method": {"plain"}}, "method-omitted": {"code_challenge": {challenge}}, "short": {"code_challenge": {"short"}, "code_challenge_method": {"S256"}}, "duplicate-method": {"code_challenge": {challenge}, "code_challenge_method": {"S256", "plain"}},
++	} {
++		t.Run(name, func(t *testing.T) {
++			q := url.Values{"client_id": {"cli"}, "response_type": {"code"}, "scope": {"openid"}, "redirect_uri": {"https://app.example.test/callback"}}
++			for key, value := range extra {
++				q[key] = value
++			}
++			_, err := s.parseAuthorizationRequest(httptest.NewRequest(http.MethodGet, httpServer.URL+"/auth?"+q.Encode(), nil))
++			require.Error(t, err)
++		})
++	}
++	q := url.Values{"client_id": {"cli"}, "response_type": {"code"}, "scope": {"openid"}, "redirect_uri": {"https://app.example.test/callback"}, "code_challenge": {challenge}, "code_challenge_method": {"S256"}}
++	auth, err := s.parseAuthorizationRequest(httptest.NewRequest(http.MethodGet, httpServer.URL+"/auth?"+q.Encode(), nil))
++	require.NoError(t, err)
++	require.Equal(t, storage.PKCE{CodeChallenge: challenge, CodeChallengeMethod: "S256"}, auth.PKCE)
++	// Upstream mode remains unchanged without native development identity.
++	s.developmentIdentity = nil
++	q.Del("code_challenge")
++	q.Del("code_challenge_method")
++	_, err = s.parseAuthorizationRequest(httptest.NewRequest(http.MethodGet, httpServer.URL+"/auth?"+q.Encode(), nil))
++	require.NoError(t, err)
++}
++
++func TestDevelopmentPublicTokenRejectsLegacyUnboundAndPlainCodes(t *testing.T) {
++	httpServer, s := newTestServer(t, nil)
++	defer httpServer.Close()
++	s.developmentIdentity = &developmentIdentity{}
++	client := storage.Client{ID: "cli", Public: true, RedirectURIs: []string{"https://app.example.test/callback"}}
++	require.NoError(t, s.storage.CreateClient(t.Context(), client))
++	verifier := strings.Repeat("v", 43)
++	hash := sha256.Sum256([]byte(verifier))
++	challenge := base64.RawURLEncoding.EncodeToString(hash[:])
++	for name, item := range map[string]struct {
++		pkce     storage.PKCE
++		verifier string
++	}{
++		"pre-checkpoint-unbound": {storage.PKCE{}, ""}, "plain": {storage.PKCE{CodeChallenge: verifier, CodeChallengeMethod: "plain"}, verifier}, "missing-verifier": {storage.PKCE{CodeChallenge: challenge, CodeChallengeMethod: "S256"}, ""}, "wrong-verifier": {storage.PKCE{CodeChallenge: challenge, CodeChallengeMethod: "S256"}, strings.Repeat("w", 43)},
++	} {
++		t.Run(name, func(t *testing.T) {
++			code := storage.AuthCode{ID: name, ClientID: "cli", RedirectURI: "https://app.example.test/callback", Expiry: time.Now().Add(time.Minute), PKCE: item.pkce}
++			require.NoError(t, s.storage.CreateAuthCode(t.Context(), code))
++			form := url.Values{"grant_type": {"authorization_code"}, "client_id": {"cli"}, "redirect_uri": {code.RedirectURI}, "code": {name}, "code_verifier": {item.verifier}}
++			request := httptest.NewRequest(http.MethodPost, httpServer.URL+"/token", strings.NewReader(form.Encode()))
++			request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
++			require.NoError(t, request.ParseForm())
++			response := httptest.NewRecorder()
++			s.handleAuthCode(response, request, client)
++			require.Equal(t, 400, response.Code)
++			var errorBody map[string]string
++			require.NoError(t, json.Unmarshal(response.Body.Bytes(), &errorBody))
++			require.Equal(t, errInvalidGrant, errorBody["error"])
++		})
++	}
++}
++
++func TestDevelopmentPublicAudienceIsRealIDTokenOnlyWithStableSubject(t *testing.T) {
++	httpServer, s := newTestServer(t, nil)
++	defer httpServer.Close()
++	s.developmentIdentity = &developmentIdentity{}
++	require.NoError(t, s.storage.CreateClient(t.Context(), storage.Client{ID: "cli", Public: true}))
++	require.NoError(t, s.storage.CreateClient(t.Context(), storage.Client{ID: "server", Secret: "server-secret", TrustedPeers: []string{"cli"}}))
++	claims := storage.Claims{UserID: "real-directory-id", Username: "Owner", PreferredUsername: "owner", Groups: []string{"/UDS Core/Admin"}, Email: "owner@example.test", EmailVerified: true}
++	scopes := []string{scopeOpenID, scopeProfile, scopeEmail, scopeGroups, "audience:server:client_id:server"}
++	idToken, _, err := s.newIDToken(t.Context(), "cli", claims, scopes, "nonce", "", "", "uds")
++	require.NoError(t, err)
++	accessToken, _, err := s.newAccessToken(t.Context(), "cli", claims, scopes, "nonce", "uds")
++	require.NoError(t, err)
++	webToken, _, err := s.newIDToken(t.Context(), "server", claims, scopes[:4], "nonce", "", "", "uds")
++	require.NoError(t, err)
++	verify := func(token, clientID string) *oidc.IDToken {
++		v := oidc.NewVerifier(httpServer.URL, oidc.NewRemoteKeySet(t.Context(), httpServer.URL+"/keys"), &oidc.Config{ClientID: clientID})
++		actual, err := v.Verify(t.Context(), token)
++		require.NoError(t, err)
++		return actual
++	}
++	id := verify(idToken, "server")
++	require.ElementsMatch(t, []string{"cli", "server"}, id.Audience)
++	access := verify(accessToken, "cli")
++	require.Equal(t, []string{"cli"}, access.Audience)
++	require.Equal(t, id.Subject, access.Subject)
++	require.Equal(t, id.Subject, verify(webToken, "server").Subject)
++	var signed struct {
++		AZP      string   `json:"azp"`
++		Name     string   `json:"name"`
++		Username string   `json:"preferred_username"`
++		Groups   []string `json:"groups"`
++	}
++	require.NoError(t, id.Claims(&signed))
++	require.Equal(t, "cli", signed.AZP)
++	require.Equal(t, "Owner", signed.Name)
++	require.Equal(t, "owner", signed.Username)
++	require.Equal(t, claims.Groups, signed.Groups)
++	// Revoking actual stored trust prevents a subsequent signature, including refresh.
++	require.NoError(t, s.storage.UpdateClient(t.Context(), "server", func(client storage.Client) (storage.Client, error) { client.TrustedPeers = nil; return client, nil }))
++	_, _, err = s.newIDToken(t.Context(), "cli", claims, scopes, "nonce", "", "", "uds")
++	require.Error(t, err)
++}
+diff --git a/server/handlers.go b/server/handlers.go
+index 62f1650c..78f28fce 100644
+--- a/server/handlers.go
++++ b/server/handlers.go
+@@ -879,6 +879,8 @@ func (s *Server) handleToken(w http.ResponseWriter, r *http.Request) {
+ 		return
+ 	}
+ 	switch grantType {
++	case "client_credentials":
++		s.withClientFromStorage(w, r, s.handleDevelopmentClientCredentials)
+ 	case grantTypeDeviceCode:
+ 		s.handleDeviceToken(w, r)
+ 	case grantTypeAuthorizationCode:
+@@ -928,6 +930,11 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
+ 		return
+ 	}
+ 
++	if s.developmentIdentity != nil && client.Public && !validDevelopmentPKCEToken(r.PostForm, authCode.PKCE) {
++		s.tokenErrHelper(w, errInvalidGrant, "Public native client requires S256 code verifier.", http.StatusBadRequest)
++		return
++	}
++
+ 	// RFC 7636 (PKCE)
+ 	codeChallengeFromStorage := authCode.PKCE.CodeChallenge
+ 	providedCodeVerifier := r.PostFormValue("code_verifier")
+@@ -959,6 +966,11 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
+ 		return
+ 	}
+ 
++	if err := s.authorizeDevelopmentUser(ctx, client.ID, authCode.Claims.UserID, authCode.ConnectorID, authCode.Scopes); err != nil {
++		s.tokenErrHelper(w, errInvalidGrant, "Original grant generation revoked.", http.StatusBadRequest)
++		return
++	}
++
+ 	tokenResponse, err := s.exchangeAuthCode(ctx, w, authCode, client)
+ 	if err != nil {
+ 		s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+@@ -971,14 +983,12 @@ func (s *Server) exchangeAuthCode(ctx context.Context, w http.ResponseWriter, au
+ 	accessToken, _, err := s.newAccessToken(ctx, client.ID, authCode.Claims, authCode.Scopes, authCode.Nonce, authCode.ConnectorID)
+ 	if err != nil {
+ 		s.logger.ErrorContext(ctx, "failed to create new access token", "err", err)
+-		s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+ 		return nil, err
+ 	}
+ 
+ 	idToken, expiry, err := s.newIDToken(ctx, client.ID, authCode.Claims, authCode.Scopes, authCode.Nonce, accessToken, authCode.ID, authCode.ConnectorID)
+ 	if err != nil {
+ 		s.logger.ErrorContext(ctx, "failed to create ID token", "err", err)
+-		s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+ 		return nil, err
+ 	}
+ 
+diff --git a/server/oauth2.go b/server/oauth2.go
+index 5821f0ff..2c59ca08 100644
+--- a/server/oauth2.go
++++ b/server/oauth2.go
+@@ -266,6 +266,15 @@ type federatedIDClaims struct {
+ }
+ 
+ func (s *Server) newAccessToken(ctx context.Context, clientID string, claims storage.Claims, scopes []string, nonce, connID string) (accessToken string, expiry time.Time, err error) {
++	if s.developmentIdentity != nil {
++		client, err := s.storage.GetClient(ctx, clientID)
++		if err != nil {
++			return "", time.Time{}, err
++		}
++		if client.Public {
++			scopes = developmentPublicAccessScopes(scopes)
++		}
++	}
+ 	return s.newIDToken(ctx, clientID, claims, scopes, nonce, storage.NewID(), "", connID)
+ }
+ 
+@@ -313,6 +322,9 @@ func genSubject(userID string, connID string) (string, error) {
+ }
+ 
+ func (s *Server) newIDToken(ctx context.Context, clientID string, claims storage.Claims, scopes []string, nonce, accessToken, code, connID string) (idToken string, expiry time.Time, err error) {
++	if err := s.authorizeDevelopmentUser(ctx, clientID, claims.UserID, connID, scopes); err != nil {
++		return "", time.Time{}, err
++	}
+ 	issuedAt := s.now()
+ 	expiry = issuedAt.Add(s.idTokensValidFor)
+ 
+@@ -455,6 +467,10 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
+ 		return &redirectedAuthErr{state, redirectURI, typ, fmt.Sprintf(format, a...)}
+ 	}
+ 
++	if s.developmentIdentity != nil && client.Public && !validDevelopmentPKCEAuthorization(q) {
++		return nil, newRedirectedErr(errInvalidRequest, "Public native client requires S256 authorization-code PKCE")
++	}
++
+ 	if connectorID != "" {
+ 		connectors, err := s.storage.ListConnectors(ctx)
+ 		if err != nil {
+@@ -473,8 +489,7 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
+ 	}
+ 
+ 	if codeChallengeMethod != codeChallengeMethodS256 && codeChallengeMethod != codeChallengeMethodPlain {
+-		description := fmt.Sprintf("Unsupported PKCE challenge method (%q).", codeChallengeMethod)
+-		return nil, newRedirectedErr(errInvalidRequest, description)
++		return nil, newRedirectedErr(errInvalidRequest, "Unsupported PKCE challenge method (%q).", codeChallengeMethod)
+ 	}
+ 
+ 	var (
+@@ -488,6 +503,12 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
+ 			hasOpenIDScope = true
+ 		case scopeOfflineAccess, scopeEmail, scopeProfile, scopeGroups, scopeFederatedID:
+ 		default:
++			if s.developmentIdentity != nil && strings.HasPrefix(scope, developmentGenerationPrefix) {
++				if _, err := developmentGrantGeneration(scopes); err != nil {
++					return nil, newRedirectedErr(errInvalidScope, "Invalid grant generation")
++				}
++				continue
++			}
+ 			peerID, ok := parseCrossClientScope(scope)
+ 			if !ok {
+ 				unrecognized = append(unrecognized, scope)
+@@ -557,8 +578,7 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
+ 	}
+ 	if rt.token {
+ 		if redirectURI == redirectURIOOB {
+-			err := fmt.Sprintf("Cannot use response type 'token' with redirect_uri '%s'.", redirectURIOOB)
+-			return nil, newRedirectedErr(errInvalidRequest, err)
++			return nil, newRedirectedErr(errInvalidRequest, "Cannot use response type 'token' with redirect_uri '%s'.", redirectURIOOB)
+ 		}
+ 	}
+ 
+diff --git a/server/refreshhandlers.go b/server/refreshhandlers.go
+index b47bd52c..4891b630 100644
+--- a/server/refreshhandlers.go
++++ b/server/refreshhandlers.go
+@@ -414,12 +414,28 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, clie
+ 		return
+ 	}
+ 
++	// Check the original stored grant before caller-requested scope narrowing
++	// or rotation. A replacement client cannot adopt an older UID grant.
++	if err := s.authorizeDevelopmentUser(r.Context(), client.ID, rCtx.storageToken.Claims.UserID, rCtx.storageToken.ConnectorID, rCtx.storageToken.Scopes); err != nil {
++		s.tokenErrHelper(w, errInvalidGrant, "Original grant generation revoked.", http.StatusBadRequest)
++		return
++	}
++
+ 	rCtx.scopes, rerr = s.getRefreshScopes(r, rCtx.storageToken)
+ 	if rerr != nil {
+ 		s.refreshTokenErrHelper(w, rerr)
+ 		return
+ 	}
+ 
++	if s.developmentIdentity != nil {
++		var err error
++		rCtx.scopes, err = retainDevelopmentGrantGeneration(rCtx.storageToken.Scopes, rCtx.scopes)
++		if err != nil {
++			s.tokenErrHelper(w, errInvalidGrant, "Original grant generation revoked.", http.StatusBadRequest)
++			return
++		}
++	}
++
+ 	newToken, ident, rerr := s.updateRefreshToken(r.Context(), rCtx)
+ 	if rerr != nil {
+ 		s.refreshTokenErrHelper(w, rerr)
+diff --git a/server/server.go b/server/server.go
+index e923e3e0..88008b86 100644
+--- a/server/server.go
++++ b/server/server.go
+@@ -106,6 +106,10 @@ type Config struct {
+ 	// If set, the server will use this connector to handle password grants
+ 	PasswordConnector string
+ 
++	// DevelopmentIdentity enables Core's opt-in, mTLS-backed service-account
++	// grant. OIDC claims and signatures remain owned by Dex.
++	DevelopmentIdentity *DevelopmentIdentityConfig
++
+ 	GCFrequency time.Duration // Defaults to 5 minutes
+ 
+ 	// If specified, the server will use this function for determining time.
+@@ -187,7 +191,8 @@ type Server struct {
+ 	alwaysShowLogin bool
+ 
+ 	// Used for password grant
+-	passwordConnector string
++	passwordConnector   string
++	developmentIdentity *developmentIdentity
+ 
+ 	supportedResponseTypes map[string]bool
+ 
+@@ -253,6 +258,9 @@ func newServer(ctx context.Context, c Config) (*Server, error) {
+ 	if c.PasswordConnector != "" {
+ 		allSupportedGrants[grantTypePassword] = true
+ 	}
++	if c.DevelopmentIdentity != nil {
++		allSupportedGrants["client_credentials"] = true
++	}
+ 
+ 	var supportedGrants []string
+ 	if len(c.AllowedGrantTypes) > 0 {
+@@ -312,6 +320,12 @@ func newServer(ctx context.Context, c Config) (*Server, error) {
+ 		logger:                 c.Logger,
+ 		signer:                 c.Signer,
+ 	}
++	if c.DevelopmentIdentity != nil {
++		s.developmentIdentity, err = newDevelopmentIdentity(*c.DevelopmentIdentity)
++		if err != nil {
++			return nil, fmt.Errorf("development identity authority: %w", err)
++		}
++	}
+ 
+ 	// Retrieves connector objects in backend storage. This list includes the static connectors
+ 	// defined in the ConfigMap and dynamic connectors retrieved from the storage.
+diff --git a/storage/kubernetes/core_client_list_test.go b/storage/kubernetes/core_client_list_test.go
+new file mode 100644
+index 00000000..2baec6c5
+--- /dev/null
++++ b/storage/kubernetes/core_client_list_test.go
+@@ -0,0 +1,58 @@
++// Copyright 2026 The Dex Authors
++// SPDX-License-Identifier: Apache-2.0
++
++package kubernetes
++
++import (
++	"context"
++	"encoding/json"
++	"net/http"
++	"net/http/httptest"
++	"testing"
++)
++
++func TestCoreClientListUsesActualNamespaceAndPreservesClientAuthority(t *testing.T) {
++	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
++		if request.Method != http.MethodGet || request.URL.Path != "/apis/dex.coreos.com/v1/namespaces/dex-public/oauth2clients" {
++			t.Errorf("unexpected actual storage request: %s %s", request.Method, request.URL.Path)
++			writer.WriteHeader(400)
++			return
++		}
++		json.NewEncoder(writer).Encode(ClientList{Clients: []Client{{ID: "actual-client", Secret: "actual-secret", Public: false, RedirectURIs: []string{"https://app.example.test/callback"}, TrustedPeers: []string{"actual-probe"}}}})
++	}))
++	defer server.Close()
++	client := &client{baseURL: server.URL, namespace: "dex-public", apiVersion: "dex.coreos.com/v1", client: server.Client()}
++	clients, err := client.ListClients(t.Context())
++	if err != nil || len(clients) != 1 || clients[0].ID != "actual-client" || clients[0].Secret != "actual-secret" || clients[0].Public || len(clients[0].TrustedPeers) != 1 {
++		t.Fatal("storage client authority did not survive list", err)
++	}
++}
++
++func TestCoreClientListNeverTurnsAPIFailureIntoEmptyAuthority(t *testing.T) {
++	for _, status := range []int{401, 403, 500} {
++		t.Run(http.StatusText(status), func(t *testing.T) {
++			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) { writer.WriteHeader(status) }))
++			defer server.Close()
++			client := &client{baseURL: server.URL, namespace: "dex-public", apiVersion: "dex.coreos.com/v1", client: server.Client()}
++			if _, err := client.ListClients(t.Context()); err == nil {
++				t.Fatal("API error became empty client authority")
++			}
++		})
++	}
++}
++
++func TestCoreClientListRespectsCancellation(t *testing.T) {
++	started := make(chan struct{})
++	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) { close(started); <-request.Context().Done() }))
++	defer server.Close()
++	client := &client{baseURL: server.URL, namespace: "dex-public", apiVersion: "dex.coreos.com/v1", client: server.Client()}
++	ctx, cancel := context.WithCancel(t.Context())
++	defer cancel()
++	done := make(chan error, 1)
++	go func() { _, err := client.ListClients(ctx); done <- err }()
++	<-started
++	cancel()
++	if err := <-done; err == nil {
++		t.Fatal("cancelled storage list succeeded")
++	}
++}
+diff --git a/storage/kubernetes/storage.go b/storage/kubernetes/storage.go
+index 028ced7e..ce47c283 100644
+--- a/storage/kubernetes/storage.go
++++ b/storage/kubernetes/storage.go
+@@ -2,6 +2,7 @@ package kubernetes
+ 
+ import (
+ 	"context"
++	"encoding/json"
+ 	"errors"
+ 	"fmt"
+ 	"log/slog"
+@@ -388,7 +389,34 @@ func (cli *client) GetConnector(ctx context.Context, id string) (storage.Connect
+ }
+ 
+ func (cli *client) ListClients(ctx context.Context) ([]storage.Client, error) {
+-	return nil, errors.New("not implemented")
++	endpoint, err := cli.urlFor(cli.apiVersion, cli.namespace, resourceClient, "")
++	if err != nil {
++		return nil, err
++	}
++	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
++	if err != nil {
++		return nil, err
++	}
++	response, err := cli.client.Do(request)
++	if err != nil {
++		return nil, err
++	}
++	defer closeResp(response)
++	if err := checkHTTPErr(response, http.StatusOK); err != nil {
++		return nil, err
++	}
++	var listed ClientList
++	if err := json.NewDecoder(response.Body).Decode(&listed); err != nil {
++		return nil, err
++	}
++	clients := make([]storage.Client, 0, len(listed.Clients))
++	for _, client := range listed.Clients {
++		if err := ctx.Err(); err != nil {
++			return nil, err
++		}
++		clients = append(clients, toStorageClient(client))
++	}
++	return clients, nil
+ }
+ 
+ func (cli *client) ListRefreshTokens(ctx context.Context) ([]storage.RefreshToken, error) {
