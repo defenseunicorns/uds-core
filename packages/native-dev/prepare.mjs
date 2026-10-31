@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
+import { isDeepStrictEqual } from 'node:util';
 import yaml from 'js-yaml';
 import { verifySignedInputs, retainSignedRemoteCharts } from './signed-inputs.mjs';
 import { verifyPackage } from './verify-package.mjs';
@@ -185,6 +186,15 @@ if(baseOnly){
  }
 }
 fs.writeFileSync(path.join(assembly,'zarf.yaml'),yaml.dump(main,{noRefs:true,lineWidth:120}));
+// The deployable assembly owns its values schema; rendering and package creation
+// must validate the same contract rather than adding a CI-only schema later.
+const valuesSchema=JSON.parse(run(uds,['zarf','dev','generate-schema',assembly,...cliOptions,'--set',set,'--delete-not-found'],{maxBuffer:32*1024*1024}));
+valuesSchema.additionalProperties=false;
+const valuesSchemaBytes=JSON.stringify(valuesSchema,null,2)+'\n';
+fs.writeFileSync(path.join(assembly,'zarf-values.schema.json'),valuesSchemaBytes);
+main.values.schema='zarf-values.schema.json';
+lock.valuesSchemaSHA256=sha(valuesSchemaBytes);
+fs.writeFileSync(path.join(assembly,'zarf.yaml'),yaml.dump(main,{noRefs:true,lineWidth:120}));
 lock.identityIncluded=!baseOnly;
 lock.zarfCreateArguments[3]=assembly;
 const definition=run(uds,['zarf','dev','inspect','definition',assembly,...cliOptions,'--set',set]);fs.writeFileSync(path.join(out,'composed-zarf.yaml'),definition);
@@ -207,6 +217,12 @@ if(args.includes('--package')){
  const imageArchive=path.join(pkg,'build',`${main.metadata.name}-${arch}-images.tar`);
  run('tar',['-cf',imageArchive,'-C',path.join(out,'package-verification','images'),'.']);
  const receipt=JSON.parse(fs.readFileSync(packageReceipt));
+ const packagedSchema=fs.readFileSync(path.join(out,'package-verification','values.schema.json'));
+ // Zarf normalizes schema JSON formatting when packaging; compare the contract
+ // and retain the hashes of both actual encodings.
+ if(!isDeepStrictEqual(JSON.parse(packagedSchema),valuesSchema))throw new Error('Packaged values schema differs from the prepared contract');
+ receipt.valuesSchemaSHA256=sha(packagedSchema);
+ receipt.preparedValuesSchemaSHA256=lock.valuesSchemaSHA256;
  receipt.ociPreloadArchive={path:imageArchive,sha256:sha(fs.readFileSync(imageArchive)),purpose:'Import into the explicitly owned Kubernetes node containerd before connected deployment; local native tags are intentionally unpublished'};
  fs.writeFileSync(packageReceipt,JSON.stringify(receipt,null,2)+'\n');
 }

@@ -80,10 +80,11 @@ jobs:
           mise exec go@1.27.3 -- node packages/native-dev/prepare.mjs \
             --render-only --connected \
             --go "$(mise where go@1.27.3)/bin/go" --uds "$(command -v uds)"
-      - name: Generate and lint the prepared native values schema
+      - name: Validate the deployable native values contract
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
+          import crypto from 'node:crypto';
           import { execFileSync } from 'node:child_process';
           import yaml from 'js-yaml';
 
@@ -98,16 +99,15 @@ jobs:
             '--flavor', 'upstream', '--set', lock.zarfCreateArguments[setIndex + 1],
             '--cache', `${build}/zarf-cache`, '--tmpdir', `${build}/zarf-tmp`, '--no-color',
           ];
-          const schema = execFileSync('uds', [
-            'zarf', 'dev', 'generate-schema', assembly, ...flags, '--delete-not-found',
-          ], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] });
-          const generatedSchema = JSON.parse(schema);
-          generatedSchema.additionalProperties = false;
-          fs.writeFileSync(`${assembly}/zarf-values.schema.json`, JSON.stringify(generatedSchema, null, 2));
           const definitionPath = `${assembly}/zarf.yaml`;
           const definition = yaml.load(fs.readFileSync(definitionPath, 'utf8'));
-          definition.values.schema = 'zarf-values.schema.json';
-          fs.writeFileSync(definitionPath, yaml.dump(definition, { noRefs: true, lineWidth: 120 }));
+          if (definition.values.schema !== 'zarf-values.schema.json') {
+            throw new Error('Prepared assembly does not declare its deployable values schema');
+          }
+          const schema = fs.readFileSync(`${assembly}/${definition.values.schema}`);
+          if (crypto.createHash('sha256').update(schema).digest('hex') !== lock.valuesSchemaSHA256) {
+            throw new Error('Prepared values schema does not match its build lock');
+          }
           execFileSync('uds', ['zarf', 'dev', 'lint', assembly, ...flags], { stdio: 'inherit' });
           const renderArgs = [
             'zarf', 'dev', 'inspect', 'manifests', assembly, '--flavor', 'upstream',
@@ -130,6 +130,7 @@ jobs:
             } catch (error) {
               const diagnostics = String(error.stderr);
               if (!diagnostics.includes('global.domain: Invalid type')) throw error;
+              console.log('Confirmed the deployable schema rejects an invalid domain type');
               rejected = true;
             }
             if (!rejected) throw new Error('Prepared values schema accepted an invalid domain type');
