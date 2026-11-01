@@ -6,6 +6,9 @@
   "kind": "ValidatingWebhookConfiguration",
   "metadata": {
     "name": "uds-controller-clusterconfig",
+    "annotations": {
+      "admissions.enforcer/disabled": "true"
+    },
     "labels": {
       "app": "uds-controller"
     }
@@ -54,6 +57,9 @@
   "kind": "ValidatingWebhookConfiguration",
   "metadata": {
     "name": "uds-controller-pods",
+    "annotations": {
+      "admissions.enforcer/disabled": "true"
+    },
     "labels": {
       "app": "uds-controller"
     }
@@ -180,6 +186,9 @@
   "kind": "ValidatingWebhookConfiguration",
   "metadata": {
     "name": "uds-controller-resources",
+    "annotations": {
+      "admissions.enforcer/disabled": "true"
+    },
     "labels": {
       "app": "uds-controller"
     }

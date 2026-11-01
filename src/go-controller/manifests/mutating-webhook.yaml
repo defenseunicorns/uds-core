@@ -6,6 +6,9 @@
   "kind": "MutatingWebhookConfiguration",
   "metadata": {
     "name": "uds-controller-waypoint",
+    "annotations": {
+      "admissions.enforcer/disabled": "true"
+    },
     "labels": {
       "app": "uds-controller"
     }
