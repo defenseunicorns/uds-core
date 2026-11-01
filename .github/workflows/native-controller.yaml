@@ -74,6 +74,15 @@ jobs:
       - name: Verify default distribution ownership
         run: node --test src/go-controller/hack/distribution.test.mjs
 
+      - name: Verify host installer packaging and credential inheritance
+        run: |
+          validation_dir=$(mktemp -d)
+          trap 'rm -rf "$validation_dir"' EXIT
+          mise exec go@1.27.3 -- go -C src/go-controller build -o "$validation_dir/core-transition" ./cmd/core-transition
+          UDS_TRANSITION_TEST_CLI="$(command -v uds)" \
+            UDS_TRANSITION_TEST_BINARY="$validation_dir/core-transition" \
+            node --test src/go-controller/hack/host-install.test.mjs
+
       - name: Verify chart and admission contracts
         run: |
           untt src/go-controller/chart

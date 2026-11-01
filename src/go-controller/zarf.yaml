@@ -36,9 +36,12 @@ variables:
   - name: UDS_CONTROLLER_IMAGE
     description: Core-internal controller image resolved by the source build
     default: "###ZARF_PKG_TMPL_NATIVE_CONTROLLER_IMAGE###"
-  - name: UDS_CORE_TRANSITION_DIR
-    description: Core installer internal temporary directory
+  - name: UDS_CORE_TRANSITION_RUN
+    description: Internal path to the helper in Zarf's temporary package directory
     default: ""
+  - name: UDS_CORE_TRANSITION_LINK_OWNED
+    description: Internal ownership marker for the temporary helper discovery link
+    default: "false"
 values:
   files:
     - zarf-values.yaml
@@ -48,35 +51,53 @@ components:
     actions:
       onDeploy:
         before:
-          - cmd: mktemp -d "${TMPDIR:-/tmp}/uds-core-transition.XXXXXXXX"
+          - description: Reset ownership of the temporary helper discovery link
+            cmd: echo false
             setVariables:
-              - name: UDS_CORE_TRANSITION_DIR
+              - name: UDS_CORE_TRANSITION_LINK_OWNED
+          - description: Reserve an empty helper discovery directory without overwriting host files
+            cmd: "mkdir -m 700 .uds-core-transition && echo true"
+            setVariables:
+              - name: UDS_CORE_TRANSITION_LINK_OWNED
         after:
-          - description: Capture the exact installer Kubernetes context for internal transition
-              checks
-            cmd: 'umask 077
-
-              ./zarf tools kubectl config view --raw --flatten --minify > "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/kubeconfig"'
+          - description: Resolve the helper location managed by Zarf
+            cmd: readlink .uds-core-transition/run
+            setVariables:
+              - name: UDS_CORE_TRANSITION_RUN
+          - description: Remove the temporary helper discovery link
+            cmd: "rm .uds-core-transition/run && rmdir .uds-core-transition"
           - description: Require native admission APIs before changing existing Core ownership
-            cmd: '"###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run" preflight'
+            maxTotalSeconds: 300
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" preflight'
+        onFailure:
+          - description: Clean the owned helper discovery link after a failed setup
+            cmd: |
+              if [ "${ZARF_VAR_UDS_CORE_TRANSITION_LINK_OWNED:-false}" = true ]; then
+                rm -f .uds-core-transition/run
+                if [ -d .uds-core-transition ]; then rmdir .uds-core-transition; fi
+              fi
+          - description: Explain forward recovery after an interrupted installation
+            cmd: echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
     files:
       - source: ../../build/controller-tools/linux-amd64
-        target: "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/linux-amd64"
+        target: "###ZARF_TEMP###/core-transition/linux-amd64"
         executable: true
       - source: ../../build/controller-tools/linux-arm64
-        target: "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/linux-arm64"
+        target: "###ZARF_TEMP###/core-transition/linux-arm64"
         executable: true
       - source: ../../build/controller-tools/darwin-amd64
-        target: "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/darwin-amd64"
+        target: "###ZARF_TEMP###/core-transition/darwin-amd64"
         executable: true
       - source: ../../build/controller-tools/darwin-arm64
-        target: "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/darwin-arm64"
+        target: "###ZARF_TEMP###/core-transition/darwin-arm64"
         executable: true
       - source: hack/run-transition.sh
-        target: "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run"
+        target: "###ZARF_TEMP###/core-transition/run"
         executable: true
+        symlinks:
+          - .uds-core-transition/run
       - source: ../../build/controller-tools/admission-contract.json
-        target: "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/admission-contract.json"
+        target: "###ZARF_TEMP###/core-transition/admission-contract.json"
   - name: uds-operator-config
     required: true
     charts:
@@ -95,13 +116,16 @@ components:
           - description: Preserve existing ClusterConfig ownership during the Core namespace
               transition
             maxTotalSeconds: 300
-            cmd: '"###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run" api'
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" api'
           - description: Create the mesh namespace before its bootstrap trust mount
             cmd: "./zarf tools kubectl create namespace istio-system --dry-run=client
               -o yaml | ./zarf tools kubectl apply -f -
 
               ./zarf tools kubectl create namespace monitoring --dry-run=client -o yaml
               | ./zarf tools kubectl apply -f -"
+        onFailure:
+          - description: Explain forward recovery after a failed Core transition
+            cmd: echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
   - name: uds-exemptions
     required: true
     charts:
@@ -114,6 +138,11 @@ components:
         values:
           - sourcePath: .uds-exemptions.uds-exemptions
             targetPath: .
+    actions:
+      onDeploy:
+        onFailure:
+          - description: Explain forward recovery after a failed Core transition
+            cmd: echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
   - name: uds-controller-bootstrap
     required: true
     charts:
@@ -144,7 +173,7 @@ components:
         before:
           - description: Drain the previous Core writer before Go reconciliation starts
             maxTotalSeconds: 300
-            cmd: '"###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run" drain'
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" drain'
         after:
           - description: Wait for Core controller caches and serving identity
             maxTotalSeconds: 180
@@ -152,7 +181,10 @@ components:
               --timeout=150s
           - description: Wait for Core networking and the compiler-owned admission snapshot
             maxTotalSeconds: 300
-            cmd: '"###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run" snapshot'
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" snapshot'
+        onFailure:
+          - description: Explain forward recovery after a failed Core transition
+            cmd: echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
   - name: uds-controller
     required: true
     charts:
@@ -183,9 +215,17 @@ components:
         after:
           - description: Verify the deployed CEL contract and actual API canaries
             maxTotalSeconds: 300
-            cmd: '"###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run" verify'
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" verify'
           - description: Retire only the replaced Core Pepr module
             maxTotalSeconds: 300
-            cmd: '"###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run" retire'
-          - description: Remove the private Core installer tools
-            cmd: test -n "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###" && rm -rf -- "###ZARF_VAR_UDS_CORE_TRANSITION_DIR###"
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" retire'
+        onSuccess:
+          - description: Remove Core helper files after verified retirement
+            cmd: |
+              case "${ZARF_VAR_UDS_CORE_TRANSITION_RUN:-}" in
+                /*/core-transition/run) rm -rf -- "${ZARF_VAR_UDS_CORE_TRANSITION_RUN%/run}" ;;
+                *) echo 'Unexpected Core helper path; refusing cleanup' >&2; exit 1 ;;
+              esac
+        onFailure:
+          - description: Explain forward recovery after a failed Core transition
+            cmd: echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2

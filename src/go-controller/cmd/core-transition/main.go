@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 // core-transition is an internal package installer helper. Runtime cluster access
-// uses the private kubeconfig captured by the installer from its exact context.
+// uses the deployment host's existing Kubernetes authentication context.
 package main
 
 import (
@@ -174,7 +174,7 @@ func main() {
 	flag.StringVar(&contract, "contract", "", "compiled native policy contract")
 	flag.StringVar(&chart, "chart", "", "Core chart path for contract generation")
 	flag.BoolVar(&uds, "uds", false, "CLI is the UDS wrapper")
-	flag.StringVar(&kubeconfig, "kubeconfig", "", "private installer kubeconfig")
+	flag.StringVar(&kubeconfig, "kubeconfig", "", "optional kubeconfig override; otherwise use the same loading rules as Zarf")
 	flag.Parse()
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
 	defer cancel()

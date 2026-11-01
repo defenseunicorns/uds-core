@@ -4,4 +4,4 @@
 set -eu
 case "$(uname -s)" in Linux) host_os=linux ;; Darwin) host_os=darwin ;; *) echo 'Unsupported Core deployment host OS' >&2; exit 1 ;; esac
 case "$(uname -m)" in x86_64|amd64) host_arch=amd64 ;; aarch64|arm64) host_arch=arm64 ;; *) echo 'Unsupported Core deployment host architecture' >&2; exit 1 ;; esac
-"$(dirname "$0")/$host_os-$host_arch" --kubeconfig "$(dirname "$0")/kubeconfig" --phase "$1" --contract "$(dirname "$0")/admission-contract.json"
+exec "$(dirname "$0")/$host_os-$host_arch" --phase "$1" --contract "$(dirname "$0")/admission-contract.json"

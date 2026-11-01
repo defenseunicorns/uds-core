@@ -59,10 +59,11 @@ func apiResource(kind string) (resource, error) {
 	return found, nil
 }
 func (c *cluster) initializeREST(path string) error {
-	if path == "" {
-		return fmt.Errorf("Core installer requires its private captured kubeconfig")
-	}
-	cfg, err := clientcmd.BuildConfigFromFlags("", path)
+	// Match Zarf's loader: KUBECONFIG (including merged files), then the
+	// user's default config, with client-go's in-cluster fallback.
+	loader := clientcmd.NewDefaultClientConfigLoadingRules()
+	loader.ExplicitPath = path
+	cfg, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loader, nil).ClientConfig()
 	if err != nil {
 		return err
 	}

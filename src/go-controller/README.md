@@ -39,7 +39,11 @@ Core performs its own ordered installation:
 6. Verify the actual policy and webhook contracts, serving trust, and server-side admission canaries.
 7. Retire only the replaced Core module and its old configuration. Shared CRDs and namespaces remain available to other modules.
 
-A failed transition keeps the previous admission authority until replacement verification succeeds. It does not automatically restart a previous writer alongside Go. Installation helpers capture the installer's Kubernetes context into a private temporary directory and remove that directory after successful activation.
+A failed transition keeps the previous admission authority until replacement verification succeeds. It does not automatically restart a previous writer alongside Go. Installation helpers use the same existing Kubernetes configuration as Zarf, including merged `KUBECONFIG` files and credential plugins. They do not export credentials. Zarf owns the helper files in its temporary package directory and removes that directory on success or handled failure. A short-lived `.uds-core-transition` discovery link is removed before preflight; installation refuses to overwrite an existing directory with that name.
+
+Deployment hosts must run Linux or macOS on amd64 or arm64, have a writable deployment working directory, and allow execution in Zarf's temporary directory. Set Zarf's `--tmpdir` to an executable filesystem if the default uses `noexec`. Windows deployment hosts are not supported by this helper.
+
+If a transition phase fails, retain the error, correct the failed prerequisite, and rerun the complete package against the same cluster. Do not restart the Pepr watcher after writer handoff. Zarf can roll back a failed chart upgrade, but that does not reverse transition actions. A retry repeats readiness and admission checks before retirement. Forced termination may leave temporary helper files; it cannot leave an exported kubeconfig because none is created.
 
 Core retains Java Keycloak and its existing management contract. The controller uses `CLIENT_SECRET` by default and its exact mesh principal, `cluster.local/ns/uds-system/sa/uds-controller`. Dex is a separate identity-provider proposal and is not required by this controller replacement.
 
