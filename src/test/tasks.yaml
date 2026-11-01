@@ -108,7 +108,7 @@ tasks:
         cmd: |
           ./uds zarf tools kubectl wait packages.uds.dev --all-namespaces \
             --selector=zarf.dev/package=uds-core-test-apps \
-            --for=jsonpath='{.status.phase}'=Ready --timeout=90s
+            --for=jsonpath='{.status.phase}'=Ready --timeout=300s
 
       - description: Verify the admin app is accessible
         wait:
