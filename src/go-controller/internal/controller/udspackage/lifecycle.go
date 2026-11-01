@@ -82,6 +82,9 @@ func (c *PackageController) handleFailure(ctx context.Context, pkg *udsv1alpha1.
 }
 
 func (c *PackageController) handleFinalizer(ctx context.Context, pkg *udsv1alpha1.UDSPackage) error {
+	if helmOwnedControlPlanePackage(pkg) {
+		return c.releaseControlPlaneFinalizer(ctx, pkg)
+	}
 	if !slices.Contains(pkg.Finalizers, packageFinalizer) && !slices.Contains(pkg.Finalizers, legacyPackageFinalizer) {
 		return nil
 	}

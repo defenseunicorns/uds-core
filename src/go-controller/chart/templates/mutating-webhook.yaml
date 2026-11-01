@@ -6,6 +6,8 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   name: uds-controller-waypoint
+  annotations:
+    admissions.enforcer/disabled: "true"
   labels:
     app: uds-controller
 webhooks:

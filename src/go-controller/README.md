@@ -11,6 +11,8 @@ Core's base package installs the Go controller and Kubernetes CEL admission poli
 
 The controller owns the complete Package lifecycle, status, and finalization. Production startup enables every reconciliation phase. Partial phase masks exist only inside focused controller tests.
 
+The Helm-owned `uds-system/uds-controller` Package does not depend on its own process for finalization. Helm removes that internal Package with the control plane, and Kubernetes garbage collection removes its owned namespaced resources. This exception requires the exact Core Helm ownership and no SSO or exposed-service cleanup; application Packages retain their normal finalizers.
+
 Base and derived bundles run two controller replicas by default, preserving the previous admission replica count and `system-node-critical` scheduling priority. Both replicas serve admission from synchronized caches, while one elected leader owns reconciliation. Core deployments can override the replica count without changing application packages.
 
 Controller Pod templates request ambient enrollment directly so Istio captures their traffic from creation. Admission must not depend on the controller later enrolling its own namespace: that changes networking underneath live webhook connections during an upgrade. Custom Pod labels cannot disable this control-plane requirement.
