@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/defenseunicorns/uds-core/src/go-controller/internal/config"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/cabundle"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/reload"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/sso"
@@ -20,115 +19,82 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"log/slog"
 	"reflect"
 	"sigs.k8s.io/yaml"
-	"slices"
-	"strings"
+	"sync"
 	"time"
 )
 
 type Controller struct {
-	client   kubernetes.Interface
-	packages packageQueue
-	factory  informers.SharedInformerFactory
-	queue    workqueue.TypedRateLimitingInterface[string]
+	client        kubernetes.Interface
+	packages      packageQueue
+	inputs        *Inputs
+	queue         workqueue.TypedRateLimitingInterface[string]
+	discoveryWake chan struct{}
+	discoveryMu   sync.Mutex
+	dirty         map[string]bool
 }
 
 type packageQueue interface {
 	RequeueAll()
 	Resync()
 	RequeueNamespace(string)
-	RequeueName(string, string)
+	RequeueOwned(string, string, types.UID)
 	RequeueSSOClients([]string)
 	RequeueUIDs([]types.UID)
 }
 
-func New(client kubernetes.Interface, factory informers.SharedInformerFactory, packages packageQueue) *Controller {
-	c := &Controller{client: client, factory: factory, packages: packages, queue: workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]())}
-	c.watchNamespaceLifecycle(factory.Core().V1().Namespaces().Informer())
-	c.watchSharedSecrets(factory.Core().V1().Secrets().Informer())
-	for _, informer := range []cache.SharedIndexInformer{factory.Core().V1().Nodes().Informer(), factory.Discovery().V1().EndpointSlices().Informer(), factory.Core().V1().Services().Informer(), factory.Core().V1().Secrets().Informer(), factory.Core().V1().ConfigMaps().Informer()} {
-		informer.AddEventHandler(cache.ResourceEventHandlerFuncs{AddFunc: c.changed, UpdateFunc: func(old, obj interface{}) {
+func New(client kubernetes.Interface, inputs *Inputs, packages packageQueue) *Controller {
+	c := &Controller{client: client, inputs: inputs, packages: packages, queue: workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]()), discoveryWake: make(chan struct{}, 1), dirty: map[string]bool{}}
+	c.watchNamespaceLifecycle(inputs.Namespaces)
+	c.watchSharedSecrets(inputs.Authservice)
+	c.watchSharedSecrets(inputs.Blackbox)
+	for _, informer := range []cache.SharedIndexInformer{inputs.Nodes, inputs.Endpoints, inputs.APIService, inputs.Operator, inputs.Identity, inputs.Mesh, inputs.Certificates} {
+		informer.AddEventHandler(cache.ResourceEventHandlerDetailedFuncs{AddFunc: func(obj interface{}, initial bool) {
+			if !initial {
+				c.changed(obj)
+			}
+		}, UpdateFunc: func(old, obj interface{}) {
 			if relevantChange(old, obj) {
-				c.ownedChanged(old)
 				c.changed(obj)
 			}
 		}, DeleteFunc: c.changed})
 	}
-	factory.Core().V1().Pods().Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{AddFunc: c.workloadChanged, UpdateFunc: func(old, obj interface{}) {
-		if relevantChange(old, obj) {
-			c.workloadChanged(obj)
-		}
-	}, DeleteFunc: c.workloadChanged})
-	factory.Networking().V1().NetworkPolicies().Informer().AddEventHandler(c.OwnedHandlers())
+	inputs.NetworkPolicies.AddEventHandler(c.OwnedHandlers())
 	return c
 }
 
-func (c *Controller) ConfigChanged() { c.queue.Add("config"); c.packages.RequeueAll() }
+func (c *Controller) ConfigChanged() {
+	c.queue.Add("config")
+	if c.packages != nil {
+		c.packages.RequeueAll()
+	}
+}
 
 func (c *Controller) changed(obj interface{}) {
 	if tombstone, ok := obj.(cache.DeletedFinalStateUnknown); ok {
 		obj = tombstone.Obj
 	}
 	// Informer stores already contain the new snapshot, including deletions.
-	c.Refresh()
+	if key := discoveryInput(obj); key != "" {
+		c.discoveryMu.Lock()
+		c.dirty[key] = true
+		c.discoveryMu.Unlock()
+		select {
+		case c.discoveryWake <- struct{}{}:
+		default:
+		}
+	}
 	if resource, ok := obj.(*corev1.ConfigMap); ok && resource.Namespace == "istio-system" && resource.Name == "istio" {
 		c.queue.Add("gateway")
 	}
 	if resource, ok := obj.(*corev1.Secret); ok && resource.Namespace == "keycloak" && resource.Name == "keycloak-client-secrets" {
 		sso.InvalidateToken()
 		c.packages.RequeueAll()
-	}
-	switch obj.(type) {
-	case *corev1.Pod, *corev1.Service:
-		c.workloadChanged(obj)
-	}
-	c.ownedChanged(obj)
-}
-
-func (c *Controller) workloadChanged(obj interface{}) {
-	if tombstone, ok := obj.(cache.DeletedFinalStateUnknown); ok {
-		obj = tombstone.Obj
-	}
-	accessor, err := meta.Accessor(obj)
-	if err != nil {
-		return
-	}
-	c.packages.RequeueNamespace(accessor.GetNamespace())
-}
-
-// Refresh computes discoveries from complete informer snapshots. Overrides are
-// kept separate so removing an override immediately restores discovery.
-func (c *Controller) Refresh() {
-	prior := config.Get()
-	nodes := c.factory.Core().V1().Nodes().Informer().GetStore().List()
-	slices := c.factory.Discovery().V1().EndpointSlices().Informer().GetStore().List()
-	service, _, _ := c.factory.Core().V1().Services().Informer().GetStore().GetByKey("default/kubernetes")
-	operator, _, _ := c.factory.Core().V1().Secrets().Informer().GetStore().GetByKey("uds-system/uds-operator-config")
-	certs, _, _ := c.factory.Core().V1().ConfigMaps().Informer().GetStore().GetByKey("uds-system/uds-ca-certs")
-	config.Update(func(cfg *config.Config) {
-		cfg.DiscoveredNodeCIDRs = NodeCIDRs(nodes)
-		cfg.DiscoveredAPICIDRs = EndpointCIDRs(slices)
-		cfg.APIServiceCIDRs = ServiceCIDRs(service)
-		LoadOperatorSecret(cfg, operator)
-		cfg.CABundle.DoDCerts = ""
-		cfg.CABundle.PublicCerts = ""
-		if cm, ok := certs.(*corev1.ConfigMap); ok {
-			cfg.CABundle.DoDCerts = cm.Data["dodCACerts"]
-			cfg.CABundle.PublicCerts = cm.Data["publicCACerts"]
-		}
-	})
-	next := config.Get()
-	if prior.KeycloakClientMode != next.KeycloakClientMode {
-		sso.InvalidateToken()
-	}
-	if !reflect.DeepEqual(prior, next) {
-		c.ConfigChanged()
 	}
 }
 
@@ -153,23 +119,15 @@ func (c *Controller) ownedChanged(obj interface{}) {
 	if c.packages == nil {
 		return
 	}
-	pkg := accessor.GetLabels()["uds/package"]
-	if strings.HasPrefix(pkg, "shared-") {
+	if sharedResource(obj) {
 		c.packages.RequeueAll()
 		return
 	}
-	targets := []string{}
-	if pkg != "" {
-		targets = append(targets, pkg)
-	}
+	// Discovery labels alone cannot invalidate another Package's recovery cache.
 	for _, owner := range accessor.GetOwnerReferences() {
-		if owner.APIVersion == "uds.dev/v1alpha1" && owner.Kind == "Package" && owner.Name != "" {
-			targets = append(targets, owner.Name)
+		if owner.APIVersion == "uds.dev/v1alpha1" && owner.Kind == "Package" && owner.Name != "" && owner.UID != "" {
+			c.packages.RequeueOwned(accessor.GetNamespace(), owner.Name, owner.UID)
 		}
-	}
-	slices.Sort(targets)
-	for _, target := range slices.Compact(targets) {
-		c.packages.RequeueName(accessor.GetNamespace(), target)
 	}
 }
 

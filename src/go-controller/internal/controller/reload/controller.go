@@ -47,7 +47,7 @@ type Controller struct {
 func NewController(client kubernetes.Interface, secrets, configMaps cache.SharedIndexInformer) *Controller {
 	c := &Controller{client: client, queue: workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]()), pending: map[string]request{}, synced: []cache.InformerSynced{secrets.HasSynced, configMaps.HasSynced}}
 	for _, informer := range []cache.SharedIndexInformer{secrets, configMaps} {
-		informer.AddEventHandler(cache.ResourceEventHandlerFuncs{AddFunc: func(obj interface{}) { c.observe(nil, obj) }, UpdateFunc: c.observe, DeleteFunc: c.remove})
+		informer.AddEventHandler(cache.ResourceEventHandlerDetailedFuncs{AddFunc: c.add, UpdateFunc: c.observe, DeleteFunc: c.remove})
 	}
 	return c
 }
@@ -75,7 +75,18 @@ func dataRequest(obj interface{}) (request, bool) {
 	return request{Kind: kind, Namespace: meta.GetNamespace(), Name: meta.GetName(), UID: string(meta.GetUID()), Token: fmt.Sprintf("%x", sha256.Sum256(encoded)), Selector: meta.GetAnnotations()[selectorAnnotation], CleanupComplete: meta.GetAnnotations()[cleanupAnnotation] == "true"}, meta.GetLabels()[reloadLabel] == "true"
 }
 
+// A selector transition arrives as Add without the previous content. A live
+// addition therefore reloads existing consumers conservatively. Initial list
+// replay only cleans legacy fields; restarting all workloads at boot is unsafe.
+func (c *Controller) add(obj interface{}, initial bool) {
+	c.observeChange(nil, obj, !initial)
+}
+
 func (c *Controller) observe(old, obj interface{}) {
+	c.observeChange(old, obj, false)
+}
+
+func (c *Controller) observeChange(old, obj interface{}, added bool) {
 	cur, enabled := dataRequest(obj)
 	if !enabled {
 		return
@@ -83,7 +94,7 @@ func (c *Controller) observe(old, obj interface{}) {
 	prior, _ := dataRequest(old)
 	// First publication may opt in while replacing bootstrap data. Existing
 	// consumers must reload that change even if the old object was unlabelled.
-	changed := old != nil && prior.UID == cur.UID && prior.Token != cur.Token
+	changed := added || (old != nil && prior.UID == cur.UID && prior.Token != cur.Token)
 	if old != nil && !changed && prior.Selector == cur.Selector {
 		return
 	}

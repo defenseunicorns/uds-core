@@ -20,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
-	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	coordinationclient "k8s.io/client-go/kubernetes/typed/coordination/v1"
 	"k8s.io/client-go/rest"
@@ -109,9 +108,9 @@ func (c *Controller) Run(ctx context.Context) error {
 	clusterConfigCtrl := clusterconfig.NewClusterConfigController(udsClient.UdsV1alpha1(),
 		udsInformer.Uds().V1alpha1().ClusterConfig())
 
-	coreFactory := informers.NewSharedInformerFactory(clientset, 0)
-	dependencyCtrl := dependencies.New(clientset, coreFactory, packageCtrl)
-	reloadCtrl := reload.NewController(clientset, coreFactory.Core().V1().Secrets().Informer(), coreFactory.Core().V1().ConfigMaps().Informer())
+	inputs := dependencies.NewInputs(clientset)
+	dependencyCtrl := dependencies.New(clientset, inputs, packageCtrl)
+	reloadCtrl := reload.NewController(clientset, inputs.ReloadSecrets, inputs.ReloadConfigMaps)
 	clusterConfigCtrl.Configure(clientset, dependencyCtrl.ConfigChanged)
 	// Watch owned resources to repair deletion or spec drift independently of
 	// Package generation. Availability retries cover CRDs installed after boot.
@@ -119,11 +118,8 @@ func (c *Controller) Run(ctx context.Context) error {
 		dynamicFactory.ForResource(gvr).Informer().AddEventHandler(dependencyCtrl.OwnedHandlers())
 	}
 	udsInformer.Start(ctx.Done())
-	coreFactory.Start(ctx.Done())
-	for resource, synced := range coreFactory.WaitForCacheSync(ctx.Done()) {
-		if !synced {
-			return fmt.Errorf("core informer %s failed to sync", resource)
-		}
+	if err := inputs.Start(ctx); err != nil {
+		return err
 	}
 	if !cache.WaitForCacheSync(ctx.Done(), udsInformer.Uds().V1alpha1().UDSPackages().Informer().HasSynced, udsInformer.Uds().V1alpha1().ClusterConfig().Informer().HasSynced) {
 		return ctx.Err()
@@ -133,7 +129,7 @@ func (c *Controller) Run(ctx context.Context) error {
 		return fmt.Errorf("load ClusterConfig before admission: %w", err)
 	}
 	clusterconfig.LoadMemory(cfg)
-	dependencyCtrl.Refresh()
+	dependencyCtrl.StartDiscovery(ctx)
 
 	// Exemption store for webhook policy enforcement
 	exemptions := webhook.NewExemptionStore()

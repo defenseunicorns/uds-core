@@ -34,6 +34,9 @@ func (p *packageEvents) RequeueAll()                        { p.record("all") }
 func (p *packageEvents) Resync()                            { p.record("periodic") }
 func (p *packageEvents) RequeueNamespace(namespace string)  { p.record(namespace + "/*") }
 func (p *packageEvents) RequeueName(namespace, name string) { p.record(namespace + "/" + name) }
+func (p *packageEvents) RequeueOwned(namespace, name string, uid types.UID) {
+	p.record(namespace + "/" + name)
+}
 func (p *packageEvents) RequeueSSOClients(ids []string) {
 	for _, id := range ids {
 		p.record("client:" + id)
@@ -54,7 +57,7 @@ func (p *packageEvents) clear() { p.mu.Lock(); defer p.mu.Unlock(); p.keys = nil
 func ownedGateway() *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": "networking.istio.io/v1beta1", "kind": "Gateway",
-		"metadata": map[string]interface{}{"name": "egress", "namespace": "istio-egress-gateway", "uid": "gateway-uid", "resourceVersion": "1", "labels": map[string]interface{}{"uds/package": "shared-sidecar-egress-resource"}},
+		"metadata": map[string]interface{}{"name": "gateway-example", "namespace": "istio-egress-gateway", "uid": "gateway-uid", "resourceVersion": "1", "labels": map[string]interface{}{"uds/package": "shared-egress-resource"}},
 		"spec":     map[string]interface{}{"servers": []interface{}{map[string]interface{}{"port": int64(443)}}},
 	}}
 }
@@ -66,6 +69,7 @@ func TestOwnedResourceMetadataDriftRetainsPreviousTarget(t *testing.T) {
 			ctrl := &Controller{packages: events}
 			old := ownedGateway()
 			old.SetLabels(map[string]string{"uds/package": "previous"})
+			old.SetOwnerReferences([]metav1.OwnerReference{{APIVersion: "uds.dev/v1alpha1", Kind: "Package", Name: "previous", UID: "previous-uid"}})
 			current := old.DeepCopy()
 			current.SetResourceVersion("2")
 			switch change {
@@ -87,8 +91,8 @@ func TestOwnedResourceMetadataDriftRetainsPreviousTarget(t *testing.T) {
 			if len(got) == 0 || got[0] != "istio-egress-gateway/previous" {
 				t.Fatalf("previous Package lost drift repair: %v", got)
 			}
-			if change == "label-reassigned" && got[len(got)-1] != "istio-egress-gateway/next" {
-				t.Fatalf("new Package target lost: %v", got)
+			if change == "label-reassigned" && got[len(got)-1] != "istio-egress-gateway/previous" {
+				t.Fatalf("label reassignment gained Package authority: %v", got)
 			}
 		})
 	}
@@ -208,6 +212,59 @@ func TestMeshMetadataProjectionIncludesOnlyOperatorFields(t *testing.T) {
 		current.Labels[key] = "tampered"
 		if reflect.DeepEqual(meshMetadata(ns), meshMetadata(current)) {
 			t.Fatalf("owned label %s drift ignored", key)
+		}
+	}
+}
+
+func TestSharedRepairRequiresPlatformIdentity(t *testing.T) {
+	for _, change := range []string{"tenant-namespace", "unknown-label", "wrong-name", "wrong-kind", "wrong-api"} {
+		t.Run(change, func(t *testing.T) {
+			obj := ownedGateway()
+			switch change {
+			case "tenant-namespace":
+				obj.SetNamespace("tenant")
+			case "unknown-label":
+				obj.SetLabels(map[string]string{"uds/package": "shared-forged"})
+			case "wrong-name":
+				obj.SetName("unrelated")
+			case "wrong-kind":
+				obj.SetKind("ServiceEntry")
+			case "wrong-api":
+				obj.SetAPIVersion("example.com/v1")
+			}
+			events := &packageEvents{}
+			c := &Controller{packages: events}
+			c.ownedChanged(obj)
+			if got := events.snapshot(); len(got) != 0 {
+				t.Fatalf("untrusted label triggered repair: %v", got)
+			}
+		})
+	}
+	// Label removal still repairs the previously recognized shared resource.
+	events := &packageEvents{}
+	c := &Controller{packages: events}
+	old := ownedGateway()
+	next := old.DeepCopy()
+	next.SetLabels(nil)
+	next.SetResourceVersion("2")
+	c.OwnedHandlers().OnUpdate(old, next)
+	if got := events.snapshot(); !reflect.DeepEqual(got, []string{"all"}) {
+		t.Fatalf("shared drift lost repair: %v", got)
+	}
+	for _, entry := range []struct{ namespace, api, kind, name, label string }{
+		{"istio-egress-ambient", "networking.istio.io/v1beta1", "ServiceEntry", "ambient-se-example", "shared-ambient-egress-resource"},
+		{"istio-egress-ambient", "security.istio.io/v1beta1", "AuthorizationPolicy", "ambient-ap-example", "shared-ambient-egress-resource"},
+		{"istio-egress-ambient", "gateway.networking.k8s.io/v1", "Gateway", "egress-waypoint", "shared-ambient-egress-resource"},
+		{"envoy-default-gateway", "gateway.networking.k8s.io/v1", "Gateway", "envoy-default-gateway", "shared-envoy-gateway-resource"},
+	} {
+		obj := ownedGateway()
+		obj.SetNamespace(entry.namespace)
+		obj.SetAPIVersion(entry.api)
+		obj.SetKind(entry.kind)
+		obj.SetName(entry.name)
+		obj.SetLabels(map[string]string{"uds/package": entry.label})
+		if !sharedResource(obj) {
+			t.Fatalf("real platform resource not recognized: %+v", entry)
 		}
 	}
 }

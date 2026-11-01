@@ -15,7 +15,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	ktesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/cache"
@@ -32,15 +31,15 @@ func TestAuthserviceNamespaceCreationBootstrapsRealConfigAndRetriesDeployment(t 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	client := fake.NewClientset()
-	factory := informers.NewSharedInformerFactory(client, 0)
-	ctrl := New(client, factory, nil)
+	inputs := NewInputs(client)
+	ctrl := New(client, inputs, nil)
 	t.Cleanup(ctrl.queue.ShutDown)
 	ctrl.queue.Add("config")
 	ctrl.processNext(ctx)
 	if ctrl.queue.NumRequeues("config") != 0 {
 		t.Fatal("absent optional Authservice namespace should not retry forever")
 	}
-	informer := factory.Core().V1().Namespaces().Informer()
+	informer := inputs.Namespaces
 	done := make(chan struct{})
 	go func() { informer.Run(ctx.Done()); close(done) }()
 	t.Cleanup(func() { cancel(); <-done })
@@ -88,7 +87,7 @@ func TestAuthserviceNamespaceReplayPreservesRealClientChainsAndIgnoresOthers(t *
 		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "authservice", Namespace: "authservice"}},
 		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "authservice-uds", Namespace: "authservice"}, Data: map[string][]byte{"config.json": []byte(`{"allow_unmatched_requests":false,"chains":[{"name":"real-existing-client"}]}`)}},
 	)
-	ctrl := New(client, informers.NewSharedInformerFactory(client, 0), nil)
+	ctrl := New(client, NewInputs(client), nil)
 	t.Cleanup(ctrl.queue.ShutDown)
 	ctrl.namespaceChanged(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "other"}})
 	if ctrl.queue.Len() != 0 {
@@ -108,7 +107,7 @@ func TestAuthserviceNamespaceReplayPreservesRealClientChainsAndIgnoresOthers(t *
 
 func TestAuthserviceNamespaceBootstrapCannotConcealForbiddenRead(t *testing.T) {
 	client := fake.NewClientset()
-	ctrl := New(client, informers.NewSharedInformerFactory(client, 0), nil)
+	ctrl := New(client, NewInputs(client), nil)
 	t.Cleanup(ctrl.queue.ShutDown)
 	client.PrependReactor("get", "namespaces", func(ktesting.Action) (bool, runtime.Object, error) {
 		return true, nil, errors.New("namespace read forbidden")

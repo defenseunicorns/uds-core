@@ -34,3 +34,16 @@ func TestSharedDependenciesTargetCurrentUIDsAndDurableClientOwners(t *testing.T)
 		t.Fatal("live module owner recovery was skipped")
 	}
 }
+
+func TestOwnedResourceRepairRequiresCurrentPackageUID(t *testing.T) {
+	ctrl, _, _ := resyncFixture(t, 1)
+	pkg := readyPackage("stable-00")
+	ctrl.RequeueOwned(pkg.Namespace, pkg.Name, "stale-uid")
+	if ctrl.queue.Len() != 0 || ctrl.recovery.dirty(pkg.UID) {
+		t.Fatal("stale owner invalidated replacement Package")
+	}
+	ctrl.RequeueOwned(pkg.Namespace, pkg.Name, pkg.UID)
+	if ctrl.queue.Len() != 1 || !ctrl.recovery.dirty(pkg.UID) {
+		t.Fatal("current owner did not receive drift repair")
+	}
+}

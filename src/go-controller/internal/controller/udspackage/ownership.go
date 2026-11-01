@@ -10,6 +10,7 @@ import (
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/store"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/utils"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	"slices"
 	"sort"
 )
@@ -113,4 +114,15 @@ func (c *PackageController) syncWaypointStore(pkg *udstypes.UDSPackage) {
 		}
 	}
 	c.waypointStore.SetForPackage(pkg.Namespace, string(pkg.UID), entries)
+}
+
+// RequeueOwned validates the current Package identity before invalidating its
+// recovery cache. Stale owner references cannot target a replacement Package.
+func (c *PackageController) RequeueOwned(namespace, name string, uid types.UID) {
+	pkg, err := c.packageLister.UDSPackages(namespace).Get(name)
+	if err != nil || uid == "" || pkg.UID != uid {
+		return
+	}
+	c.recovery.invalidate(pkg.UID)
+	c.enqueue(pkg)
 }

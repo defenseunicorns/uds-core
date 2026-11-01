@@ -15,6 +15,10 @@ The Helm-owned `uds-system/uds-controller` Package does not depend on its own pr
 
 Base and derived bundles run two controller replicas by default, preserving the previous admission replica count and `system-node-critical` scheduling priority. Both replicas serve admission from synchronized caches, while one elected leader owns reconciliation. Core deployments can override the replica count without changing application packages.
 
+Each replica watches only named platform Secrets and ConfigMaps plus objects labelled `uds.dev/pod-reload=true`. API discovery watches Nodes, the `default/kubernetes` Service, and its EndpointSlices. Pod events do not trigger Package reconciliation. Discovery updates coalesce before recomputing the changed inputs.
+
+Reload watch startup does not restart existing consumers. An object newly entering the reload selector triggers a conservative reload because the filtered watch cannot supply its previous content. Package-owned resource changes target the current owner UID; shared gateway and egress repair signals require the expected platform namespace, API type, and generated resource identity. Removing ownership labels still repairs the previous owner from the watch's old object.
+
 Controller Pod templates request ambient enrollment directly so Istio captures their traffic from creation. Admission must not depend on the controller later enrolling its own namespace: that changes networking underneath live webhook connections during an upgrade. Custom Pod labels cannot disable this control-plane requirement.
 
 Core installs its declared API egress grant before applying its own isolation policies, so it cannot cut off the writer that creates those policies. Installation waits for the controller's own Package to reach its current `Ready` generation before activating replacement callbacks.
