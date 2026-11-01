@@ -26,6 +26,7 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: uds-controller
+      priorityClassName: system-node-critical
       containers:
         - name: controller
           image: {{ .Values.image.reference | default (printf "%s:%s" .Values.image.repository .Values.image.tag) | quote }}

@@ -11,7 +11,7 @@ Core's base package installs the Go controller and Kubernetes CEL admission poli
 
 The controller owns the complete Package lifecycle, status, and finalization. Production startup enables every reconciliation phase. Partial phase masks exist only inside focused controller tests.
 
-Base and derived bundles run two controller replicas by default, preserving the previous admission replica count. Both replicas serve admission from synchronized caches, while one elected leader owns reconciliation. Core deployments can override the replica count without changing application packages.
+Base and derived bundles run two controller replicas by default, preserving the previous admission replica count and `system-node-critical` scheduling priority. Both replicas serve admission from synchronized caches, while one elected leader owns reconciliation. Core deployments can override the replica count without changing application packages.
 
 Kubernetes evaluates object-local admission checks and defaults. Go handles cluster-dependent admission, topology, advanced custom-resource validation, and compatibility behavior that CEL cannot express. The standard chart uses narrow callbacks so ordinary Pod and Service requests stay in the API server. Both engines resolve exemption authority from the existing protected Exemption resources.
 

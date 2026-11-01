@@ -12,6 +12,9 @@ tests:
       - equal:
           path: spec.replicas
           value: 2
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: system-node-critical
   - it: permits an explicit single-replica development override
     set:
       replicaCount: 1
