@@ -401,10 +401,10 @@ tasks:
           ./uds zarf tools kubectl patch serviceaccount uds-core-ambient-httpbin-waypoint -n authservice-ambient-test-app -p '{"imagePullSecrets": [{"name": "private-registry"}]}'
           ./uds zarf tools kubectl patch serviceaccount uds-core-ambient2-httpbin-waypoint -n authservice-ambient-test-app -p '{"imagePullSecrets": [{"name": "private-registry"}]}'
           ./uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant-package.yaml
+          ./uds zarf tools kubectl wait package ambient-httpbin -n authservice-ambient-test-app --for=condition=Ready --timeout=300s
           ./uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant.yaml
           ./uds zarf tools kubectl rollout status deployment httpbin -n authservice-ambient-test-app --timeout=60s
           ./uds zarf tools kubectl rollout status deployment httpbin2 -n authservice-ambient-test-app --timeout=60s
-          ./uds zarf tools kubectl wait package ambient-httpbin -n authservice-ambient-test-app --for=condition=Ready --timeout=300s
       - task: private-pki:private-pki-tests
       - task: trust-bundle:trust-bundle-tests
 
