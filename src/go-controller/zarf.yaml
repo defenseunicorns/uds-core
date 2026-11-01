@@ -150,7 +150,7 @@ components:
             maxTotalSeconds: 180
             cmd: ./zarf tools kubectl -n uds-system rollout status deployment/uds-controller
               --timeout=150s
-          - description: Wait for the compiler-owned admission snapshot
+          - description: Wait for Core networking and the compiler-owned admission snapshot
             maxTotalSeconds: 300
             cmd: '"###ZARF_VAR_UDS_CORE_TRANSITION_DIR###/run" snapshot'
   - name: uds-controller

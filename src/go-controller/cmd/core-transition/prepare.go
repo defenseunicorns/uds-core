@@ -136,6 +136,12 @@ func (c cluster) snapshot() error {
 		if err != nil {
 			return false, err
 		}
-		return o != nil && get(o, "spec", "valid") == true && len(revision) == 64 && str(cfg, "status", "phase") == "Ready", nil
+		pkg, err := c.get("packages.uds.dev", "uds-system", "uds-controller")
+		if err != nil {
+			return false, err
+		}
+		generation, _ := get(pkg, "metadata", "generation").(float64)
+		coreReady := str(pkg, "metadata", "uid") != "" && generation > 0 && str(pkg, "status", "phase") == "Ready" && get(pkg, "status", "observedGeneration") == generation
+		return o != nil && get(o, "spec", "valid") == true && len(revision) == 64 && str(cfg, "status", "phase") == "Ready" && coreReady, nil
 	})
 }

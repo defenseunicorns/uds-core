@@ -13,6 +13,10 @@ The controller owns the complete Package lifecycle, status, and finalization. Pr
 
 Base and derived bundles run two controller replicas by default, preserving the previous admission replica count and `system-node-critical` scheduling priority. Both replicas serve admission from synchronized caches, while one elected leader owns reconciliation. Core deployments can override the replica count without changing application packages.
 
+Controller Pod templates request ambient enrollment directly so Istio captures their traffic from creation. Admission must not depend on the controller later enrolling its own namespace: that changes networking underneath live webhook connections during an upgrade. Custom Pod labels cannot disable this control-plane requirement.
+
+Core installs its declared API egress grant before applying its own isolation policies, so it cannot cut off the writer that creates those policies. Installation waits for the controller's own Package to reach its current `Ready` generation before activating replacement callbacks.
+
 Kubernetes evaluates object-local admission checks and defaults. Go handles cluster-dependent admission, topology, advanced custom-resource validation, and compatibility behavior that CEL cannot express. The standard chart uses narrow callbacks so ordinary Pod and Service requests stay in the API server. Both engines resolve exemption authority from the existing protected Exemption resources.
 
 The elected controller reconciles networking, Istio resources, Envoy Gateway routes, Keycloak clients, Authservice configuration, monitoring, probes, and CA bundles. Resources retain their Package UID ownership across an operator upgrade. New Packages receive `uds.dev/finalizer`; Go also completes existing `pepr.dev/finalizer` cleanup without requiring an application change.
@@ -28,7 +32,7 @@ Core performs its own ordered installation:
 1. Preserve the existing Core API objects and their UIDs while adopting their Helm ownership into `uds-system`.
 2. Install Core configuration, infrastructure exemptions, Istio, and Gateway API definitions.
 3. Stop and fully drain the previous Core watcher before Go starts reconciling. Other Pepr modules and shared namespaces remain untouched.
-4. Start the backend and wait for its compiler-owned exemption snapshot.
+4. Start the controller with mesh enrollment, then wait for its own Package networking and compiler-owned exemption snapshot.
 5. Register Go callbacks and activate CEL policies.
 6. Verify the actual policy and webhook contracts, serving trust, and server-side admission canaries.
 7. Retire only the replaced Core module and its old configuration. Shared CRDs and namespaces remain available to other modules.

@@ -4,6 +4,9 @@
 {{- if ne .Release.Namespace "uds-system" }}
 {{- fail "The native controller must be installed in uds-system; admission recovery and serving identities use this namespace." }}
 {{- end }}
+{{- if and (hasKey .Values.podLabels "istio.io/dataplane-mode") (ne (index .Values.podLabels "istio.io/dataplane-mode") "ambient") }}
+{{- fail "Core controller Pods require ambient enrollment at creation; istio.io/dataplane-mode cannot be overridden." }}
+{{- end }}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -21,7 +24,8 @@ spec:
     metadata:
       labels:
         app: uds-controller
-        {{- with .Values.podLabels }}
+        istio.io/dataplane-mode: ambient
+        {{- with omit .Values.podLabels "istio.io/dataplane-mode" }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:

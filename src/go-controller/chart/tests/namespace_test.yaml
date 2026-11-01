@@ -1,7 +1,7 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-suite: Native controller namespace boundary
+suite: Core controller deployment invariants
 templates:
   - deployment.yaml
 release:
@@ -15,6 +15,28 @@ tests:
       - equal:
           path: spec.template.spec.priorityClassName
           value: system-node-critical
+      - equal:
+          path: spec.template.metadata.labels["istio.io/dataplane-mode"]
+          value: ambient
+  - it: rejects ambient opt-out for the admission control plane
+    set:
+      podLabels:
+        istio.io/dataplane-mode: none
+    asserts:
+      - failedTemplate:
+          errorMessage: Core controller Pods require ambient enrollment at creation; istio.io/dataplane-mode cannot be overridden.
+  - it: preserves custom labels with the required mesh selection
+    set:
+      podLabels:
+        istio.io/dataplane-mode: ambient
+        probe: preserved
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels["istio.io/dataplane-mode"]
+          value: ambient
+      - equal:
+          path: spec.template.metadata.labels.probe
+          value: preserved
   - it: permits an explicit single-replica development override
     set:
       replicaCount: 1

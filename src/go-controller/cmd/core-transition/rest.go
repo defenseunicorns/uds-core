@@ -36,6 +36,7 @@ func apiResource(kind string) (resource, error) {
 	}
 	add([]string{"customresourcedefinition", "customresourcedefinitions"}, "/apis/apiextensions.k8s.io/v1", "customresourcedefinitions", false)
 	add([]string{"clusterconfig.uds.dev"}, "/apis/uds.dev/v1alpha1", "clusterconfig", false)
+	add([]string{"packages.uds.dev"}, "/apis/uds.dev/v1alpha1", "packages", true)
 	add([]string{"admissionparameters.policy.uds.dev"}, "/apis/policy.uds.dev/v1alpha1", "admissionparameters", true)
 	for _, r := range []string{"validatingadmissionpolicies", "mutatingadmissionpolicies", "validatingadmissionpolicybindings", "mutatingadmissionpolicybindings", "mutatingwebhookconfigurations", "validatingwebhookconfigurations"} {
 		add([]string{r}, "/apis/admissionregistration.k8s.io/v1", r, false)

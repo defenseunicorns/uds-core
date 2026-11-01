@@ -43,6 +43,7 @@ func Reconcile(ctx context.Context, netClient networkingv1client.NetworkingV1Int
 		"generation", generation)
 
 	var policies []*networkingv1.NetworkPolicy
+	var controlAPIPolicies []*networkingv1.NetworkPolicy
 
 	// 1. Default deny-all policy
 	policies = append(policies, defaultDenyAll(namespace))
@@ -76,6 +77,9 @@ func Reconcile(ctx context.Context, netClient networkingv1client.NetworkingV1Int
 		}
 		pol := generatePolicy(namespace, allow, istioMode)
 		policies = append(policies, pol)
+		if allow.Direction == udstypes.Egress && allow.RemoteGenerated != nil && *allow.RemoteGenerated == udstypes.KubeAPI {
+			controlAPIPolicies = append(controlAPIPolicies, pol)
+		}
 	}
 
 	// 5. VirtualService-generated ingress policies (for exposed services)
@@ -165,8 +169,12 @@ func Reconcile(ctx context.Context, netClient networkingv1client.NetworkingV1Int
 	}
 
 	// Apply all policies using server-side apply (patch)
+	applyOrder, err := controlPlaneApplyOrder(pkg, namespace, policies, controlAPIPolicies)
+	if err != nil {
+		return 0, err
+	}
 	desiredNames := map[string]bool{}
-	for _, pol := range policies {
+	for _, pol := range applyOrder {
 		desiredNames[pol.Name] = true
 		existing, err := netClient.NetworkPolicies(namespace).Get(ctx, pol.Name, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
