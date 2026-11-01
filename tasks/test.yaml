@@ -156,6 +156,7 @@ tasks:
     description: "Run uds-core source unit tests"
     actions:
       - cmd: |
+          python3 -B -m unittest discover -s test/helpers -p '*_test.py'
           npm ci
           npm run test:unit
 

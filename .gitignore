@@ -45,4 +45,4 @@ coverage/**
 # Native controller generator and build scratch.
 src/go-controller/.generated/**
 src/go-controller/build/**
-src/go-controller/**/__pycache__/**
+**/__pycache__/**

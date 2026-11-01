@@ -94,6 +94,8 @@ Each flavor uploads a `k0s-node-logs-<flavor>` artifact with container state, K0
 
 Core pipelines include two types of testing. They provide faster feedback on some failures and options for local developer testing.
 
+Upgrade tests first install a released Core baseline. The Legacy baseline deployment retries once only when that released Pepr webhook returns its known transport EOF. Policy denials, other fixture errors, and replacement-controller errors fail normally. Compatibility matrix cases finish independently, so a fixture failure does not cancel unrelated cases. The deployment checks, test assertions, and job deadlines are unchanged.
+
 ### Smoke tests
 
 UDS Core maintains lightweight smoke tests for each application in the platform. These tests live under the `validate` task name in `src/<pkg>/tasks.yaml`. They typically check pod readiness, pod health, and basic endpoint behavior.
