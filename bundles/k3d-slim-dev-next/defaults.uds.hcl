@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables = {
-  uds_controller_replicas = "1"
+  uds_controller_replicas = "2"
   uds_controller_memory_request = "256Mi"
   uds_controller_cpu_request = "200m"
 

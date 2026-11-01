@@ -12,7 +12,7 @@
 global:
   domain: "uds.dev"
 
-# --- base: pepr (bundle pepr var defaults) ---
+# --- base: Core controller (bundle defaults) ---
 uds-controller:
   uds-controller:
     resources:

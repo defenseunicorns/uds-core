@@ -14,6 +14,7 @@ import {
   gatewayHosts,
   containerEnvValue,
   resourceString,
+  resourceNumber,
   resourceStringArray,
   K8sResource,
 } from "./helpers.js";
@@ -63,6 +64,7 @@ beforeAll(async () => {
 describe("standard package values", () => {
   it("Core controller deployment has expected memory request", () => {
     const r = findResource(manifests, "Deployment", "uds-controller", "uds-system");
+    expect(resourceNumber(r, "spec", "replicas")).toBe(2);
     expect(
       resourceString(
         r,

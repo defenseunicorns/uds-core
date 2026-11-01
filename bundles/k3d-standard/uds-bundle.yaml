@@ -58,7 +58,7 @@ packages:
             - name: UDS_CONTROLLER_REPLICAS
               description: "Core controller replica count"
               path: replicaCount
-              default: 1
+              default: 2
             - name: UDS_CONTROLLER_MEMORY_REQUEST
               description: "Memory request for the Core controller"
               path: "resources.requests.memory"

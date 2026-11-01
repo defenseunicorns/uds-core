@@ -11,6 +11,7 @@ import {
   expectNoExcludedValues,
   gatewayHosts,
   resourceString,
+  resourceNumber,
   DOMAIN_SCENARIOS,
   K8sResource,
 } from "./helpers.js";
@@ -150,6 +151,7 @@ beforeAll(async () => {
 describe("base package values", () => {
   it("Core controller deployment has probe label", () => {
     const r = findResource(manifests, "Deployment", "uds-controller", "uds-system");
+    expect(resourceNumber(r, "spec", "replicas")).toBe(2);
     expect(resourceString(r, "spec", "template", "metadata", "labels", "probe")).toBe(
       "PROBE_VISIBLE_CONTROLLER",
     );

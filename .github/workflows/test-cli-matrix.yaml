@@ -33,6 +33,7 @@ jobs:
     name: "Test Upgrade (${{ matrix.mode }}, ${{ matrix.scenario }}, ${{ matrix.flavor }})"
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - mode: legacy
@@ -126,6 +127,7 @@ jobs:
     name: "Test Install (${{ matrix.mode }}, minimum supported, upstream)"
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - mode: legacy

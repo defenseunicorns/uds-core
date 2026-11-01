@@ -3,7 +3,7 @@
 
 logLevel: info
 zarfRegistryAddress: "127.0.0.1:31999"
-replicaCount: 1
+replicaCount: 2
 podLabels: {}
 
 image:

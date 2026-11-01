@@ -7,6 +7,18 @@ templates:
 release:
   namespace: uds-system
 tests:
+  - it: preserves two admission replicas by default
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 2
+  - it: permits an explicit single-replica development override
+    set:
+      replicaCount: 1
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
   - it: should use the protected recovery namespace
     asserts:
       - equal:
