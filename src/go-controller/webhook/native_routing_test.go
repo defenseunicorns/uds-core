@@ -61,7 +61,7 @@ func nativeExpressions(t *testing.T, name string) (map[string]string, []string) 
 
 func evalNative(t *testing.T, expression string, activation map[string]interface{}) interface{} {
 	t.Helper()
-	env, err := cel.NewEnv(cel.Variable("object", cel.DynType), cel.Variable("request", cel.DynType), cel.Variable("params", cel.DynType), cel.Variable("variables", cel.DynType), ext.Strings())
+	env, err := cel.NewEnv(cel.Variable("oldObject", cel.DynType), cel.Variable("object", cel.DynType), cel.Variable("request", cel.DynType), cel.Variable("params", cel.DynType), cel.Variable("variables", cel.DynType), ext.Strings())
 	if err != nil {
 		t.Fatal(err)
 	}

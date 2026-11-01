@@ -282,6 +282,12 @@
             "expression": "variables.containers.exists(c,c.name in ['istio-proxy','istio-init'])"
           }
         ],
+        "matchConditions": [
+          {
+            "name": "owner-checked-waypoint-retirement",
+            "expression": "!(has(request.operation) && request.operation=='UPDATE' && request.resource.group=='' && request.resource.resource in ['pods','services'] && (!has(request.subResource)||request.subResource=='') && request.userInfo.username=='system:serviceaccount:uds-system:uds-controller' && oldObject!=null && object.metadata.uid==oldObject.metadata.uid && object.spec==oldObject.spec && (has(object.metadata.annotations) ? object.metadata.annotations : {})==(has(oldObject.metadata.annotations) ? oldObject.metadata.annotations : {}) && (has(object.metadata.ownerReferences) ? object.metadata.ownerReferences : [])==(has(oldObject.metadata.ownerReferences) ? oldObject.metadata.ownerReferences : []) && (has(object.metadata.finalizers) ? object.metadata.finalizers : [])==(has(oldObject.metadata.finalizers) ? oldObject.metadata.finalizers : []) && 'istio.io/use-waypoint' in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) && (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})['istio.io/use-waypoint']!='' && !('istio.io/use-waypoint' in (has(object.metadata.labels) ? object.metadata.labels : {})) && (has(object.metadata.labels) ? object.metadata.labels : {}).all(k,k in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) && (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k]) && (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}).all(k,k in ['istio.io/use-waypoint','istio.io/ingress-use-waypoint'] || (k in (has(object.metadata.labels) ? object.metadata.labels : {}) && (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k])))"
+          }
+        ],
         "paramKind": {
           "apiVersion": "policy.uds.dev/v1alpha1",
           "kind": "AdmissionParameters"
@@ -371,6 +377,12 @@
           {
             "expression": "params.spec.valid == true",
             "message": "Admission exemption inputs are invalid; repair the protected snapshot"
+          }
+        ],
+        "matchConditions": [
+          {
+            "name": "owner-checked-waypoint-retirement",
+            "expression": "!(has(request.operation) && request.operation=='UPDATE' && request.resource.group=='' && request.resource.resource in ['pods','services'] && (!has(request.subResource)||request.subResource=='') && request.userInfo.username=='system:serviceaccount:uds-system:uds-controller' && oldObject!=null && object.metadata.uid==oldObject.metadata.uid && object.spec==oldObject.spec && (has(object.metadata.annotations) ? object.metadata.annotations : {})==(has(oldObject.metadata.annotations) ? oldObject.metadata.annotations : {}) && (has(object.metadata.ownerReferences) ? object.metadata.ownerReferences : [])==(has(oldObject.metadata.ownerReferences) ? oldObject.metadata.ownerReferences : []) && (has(object.metadata.finalizers) ? object.metadata.finalizers : [])==(has(oldObject.metadata.finalizers) ? oldObject.metadata.finalizers : []) && 'istio.io/use-waypoint' in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) && (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})['istio.io/use-waypoint']!='' && !('istio.io/use-waypoint' in (has(object.metadata.labels) ? object.metadata.labels : {})) && (has(object.metadata.labels) ? object.metadata.labels : {}).all(k,k in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) && (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k]) && (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}).all(k,k in ['istio.io/use-waypoint','istio.io/ingress-use-waypoint'] || (k in (has(object.metadata.labels) ? object.metadata.labels : {}) && (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k])))"
           }
         ],
         "variables": [
@@ -543,6 +555,12 @@
             }
           ]
         },
+        "matchConditions": [
+          {
+            "name": "owner-checked-waypoint-retirement",
+            "expression": "!(has(request.operation) && request.operation=='UPDATE' && request.resource.group=='' && request.resource.resource in ['pods','services'] && (!has(request.subResource)||request.subResource=='') && request.userInfo.username=='system:serviceaccount:uds-system:uds-controller' && oldObject!=null && object.metadata.uid==oldObject.metadata.uid && object.spec==oldObject.spec && (has(object.metadata.annotations) ? object.metadata.annotations : {})==(has(oldObject.metadata.annotations) ? oldObject.metadata.annotations : {}) && (has(object.metadata.ownerReferences) ? object.metadata.ownerReferences : [])==(has(oldObject.metadata.ownerReferences) ? oldObject.metadata.ownerReferences : []) && (has(object.metadata.finalizers) ? object.metadata.finalizers : [])==(has(oldObject.metadata.finalizers) ? oldObject.metadata.finalizers : []) && 'istio.io/use-waypoint' in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) && (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})['istio.io/use-waypoint']!='' && !('istio.io/use-waypoint' in (has(object.metadata.labels) ? object.metadata.labels : {})) && (has(object.metadata.labels) ? object.metadata.labels : {}).all(k,k in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) && (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k]) && (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}).all(k,k in ['istio.io/use-waypoint','istio.io/ingress-use-waypoint'] || (k in (has(object.metadata.labels) ? object.metadata.labels : {}) && (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k])))"
+          }
+        ],
         "variables": [
           {
             "name": "resourceName",
@@ -824,6 +842,12 @@
             }
           ]
         },
+        "matchConditions": [
+          {
+            "name": "owner-checked-waypoint-retirement",
+            "expression": "!(has(request.operation) && request.operation=='UPDATE' && request.resource.group=='' && request.resource.resource in ['pods','services'] && (!has(request.subResource)||request.subResource=='') && request.userInfo.username=='system:serviceaccount:uds-system:uds-controller' && oldObject!=null && object.metadata.uid==oldObject.metadata.uid && object.spec==oldObject.spec && (has(object.metadata.annotations) ? object.metadata.annotations : {})==(has(oldObject.metadata.annotations) ? oldObject.metadata.annotations : {}) && (has(object.metadata.ownerReferences) ? object.metadata.ownerReferences : [])==(has(oldObject.metadata.ownerReferences) ? oldObject.metadata.ownerReferences : []) && (has(object.metadata.finalizers) ? object.metadata.finalizers : [])==(has(oldObject.metadata.finalizers) ? oldObject.metadata.finalizers : []) && 'istio.io/use-waypoint' in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) && (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})['istio.io/use-waypoint']!='' && !('istio.io/use-waypoint' in (has(object.metadata.labels) ? object.metadata.labels : {})) && (has(object.metadata.labels) ? object.metadata.labels : {}).all(k,k in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) && (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k]) && (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}).all(k,k in ['istio.io/use-waypoint','istio.io/ingress-use-waypoint'] || (k in (has(object.metadata.labels) ? object.metadata.labels : {}) && (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k])))"
+          }
+        ],
         "variables": [
           {
             "name": "resourceName",

@@ -15,6 +15,8 @@ Exemptions can be specified by an [`Exemption` CR](/reference/operator-and-crds/
 
 If a resource is exempted, it will be annotated as `uds-core.pepr.dev/uds-core-policies.<POLICY>: exempted`
 
+After exemption revocation, Core can still retire its own waypoint labels from an existing Pod or Service. CEL delegates only an authenticated, spec-preserving label removal to Go, which verifies the live Package owner and recorded route. Creating a noncompliant Service, changing its spec, or editing unrelated metadata still requires the normal policy checks.
+
 ### Mutations
 
 > [!NOTE]

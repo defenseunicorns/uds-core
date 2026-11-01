@@ -78,6 +78,25 @@ func sameUnrelatedLabels(old, current map[string]string) bool {
 	return maps.Equal(before, after)
 }
 
+func trustedWaypointRetirement(req *admissionv1.AdmissionRequest, ws *store.WaypointStore, informers []cache.SharedIndexInformer) bool {
+	var old, current topologyRepairObject
+	if (req.Kind.Kind != "Service" && req.Kind.Kind != "Pod") || json.Unmarshal(req.OldObject.Raw, &old) != nil || json.Unmarshal(req.Object.Raw, &current) != nil {
+		return false
+	}
+	if old.Metadata.Labels["istio.io/use-waypoint"] == "" || current.Metadata.Labels["istio.io/use-waypoint"] != "" ||
+		!maps.Equal(old.Metadata.Annotations, current.Metadata.Annotations) || !reflect.DeepEqual(old.Metadata.Finalizers, current.Metadata.Finalizers) {
+		return false
+	}
+	// The retirement path can only remove labels, never add/change a route or
+	// another label. trustedTopologyRepair also proves the live Package owner.
+	for key, value := range current.Metadata.Labels {
+		if old.Metadata.Labels[key] != value {
+			return false
+		}
+	}
+	return trustedTopologyRepair(req, ws, informers, req.Kind.Kind == "Service")
+}
+
 func authorizedTopologyLabels(pkg topologyPackage, ws *store.WaypointStore, selected, old, current map[string]string, service bool) bool {
 	desired := ""
 	if pkg.Metadata.DeletionTimestamp == nil && (pkg.Spec.Network.ServiceMesh.Mode == "" || pkg.Spec.Network.ServiceMesh.Mode == "ambient") {

@@ -43,8 +43,8 @@ func StartWebhookServer(ctx context.Context, clientset kubernetes.Interface, exe
 	mux.HandleFunc("/readyz", manager.Ready)
 	mux.HandleFunc("/validate-clusterconfig-delete", DenyClusterConfigDeletion())
 	mux.HandleFunc("/validate-resources", ValidateResources(packageInformer))
-	mux.HandleFunc("/validate-pods", ValidatePod(exemptions))
-	mux.HandleFunc("/mutate-pods", MutateNonRootUser(exemptions))
+	mux.HandleFunc("/validate-pods", topologyPolicyHandler(exemptions, false, ws, packageInformer))
+	mux.HandleFunc("/mutate-pods", topologyPolicyHandler(exemptions, true, ws, packageInformer))
 	mux.HandleFunc("/mutate-pod-waypoint", MutatePodWaypoint(ws, packageInformer))
 	mux.HandleFunc("/mutate-service-waypoint", MutateServiceWaypoint(ws, packageInformer))
 

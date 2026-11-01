@@ -13,8 +13,10 @@ import (
 	compiledexemptions "github.com/defenseunicorns/uds-core/src/go-controller/internal/admission/exemptions"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/admission/policies"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/admission/resources"
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/store"
 	admissionv1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/cache"
 )
 
 const (
@@ -31,16 +33,22 @@ const (
 // protected control-plane namespace, trusted-container classification, and
 // native-routed JavaScript-only scopes; the handler always checks all policies.
 func ValidatePod(exemptions *ExemptionStore) http.HandlerFunc {
-	return policyHandler(exemptions, false)
+	return policyHandler(exemptions, false, nil)
 }
 
 // MutateNonRootUser serves defaults and non-authoritative diagnostics. It never
 // treats tenant-provided policy annotations as an authorization grant.
 func MutateNonRootUser(exemptions *ExemptionStore) http.HandlerFunc {
-	return policyHandler(exemptions, true)
+	return policyHandler(exemptions, true, nil)
 }
 
-func policyHandler(exemptions *ExemptionStore, mutate bool) http.HandlerFunc {
+func topologyPolicyHandler(exemptions *ExemptionStore, mutate bool, ws *store.WaypointStore, informer cache.SharedIndexInformer) http.HandlerFunc {
+	return policyHandler(exemptions, mutate, func(req *admissionv1.AdmissionRequest) bool {
+		return trustedWaypointRetirement(req, ws, []cache.SharedIndexInformer{informer})
+	})
+}
+
+func policyHandler(exemptions *ExemptionStore, mutate bool, retirement func(*admissionv1.AdmissionRequest) bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		review, req, err := decodeAdmissionReview(r)
 		if err != nil {
@@ -53,6 +61,10 @@ func policyHandler(exemptions *ExemptionStore, mutate bool) http.HandlerFunc {
 			return
 		}
 		service := req.Kind.Kind == "Service" || req.Resource.Resource == "services"
+		if retirement != nil && retirement(req) {
+			writeAdmissionResponse(w, review, &admissionv1.AdmissionResponse{UID: req.UID, Allowed: true})
+			return
+		}
 		metadata := object.Object("metadata")
 		exempt, revision, snapshotReady := exemptions.MetadataSnapshot(metadata)
 		response := &admissionv1.AdmissionResponse{UID: req.UID, Allowed: true}
