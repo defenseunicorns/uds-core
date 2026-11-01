@@ -15,8 +15,8 @@ import (
 
 func main() {
 	options := controller.DefaultRunOptions()
-	qps := flag.Float64("kube-api-qps", float64(options.KubernetesAPIQPS), "Shared Kubernetes API request budget per second (1-200)")
-	flag.IntVar(&options.KubernetesAPIBurst, "kube-api-burst", options.KubernetesAPIBurst, "Shared Kubernetes API request burst (1-400)")
+	qps := flag.Float64("kube-api-qps", float64(options.KubernetesAPIQPS), "Reconciliation Kubernetes API request budget per second (1-200)")
+	flag.IntVar(&options.KubernetesAPIBurst, "kube-api-burst", options.KubernetesAPIBurst, "Reconciliation Kubernetes API request burst (1-400)")
 	flag.Parse()
 	options.KubernetesAPIQPS = float32(*qps)
 	level := slog.LevelInfo

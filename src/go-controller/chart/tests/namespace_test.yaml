@@ -18,3 +18,12 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: The native controller must be installed in uds-system; admission recovery and serving identities use this namespace.
+  - it: uses the installer's registry address for Istio image validation
+    set:
+      zarfRegistryAddress: registry.example.test:5443
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ZARF_REGISTRY_ADDRESS
+            value: registry.example.test:5443

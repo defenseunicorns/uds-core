@@ -22,6 +22,7 @@ import (
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	coordinationclient "k8s.io/client-go/kubernetes/typed/coordination/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
@@ -45,7 +46,7 @@ func NewController(ctx context.Context) (*Controller, error) {
 }
 
 func (c *Controller) Run(ctx context.Context) error {
-	// Load feature flags (inverse of Pepr)
+	// Every Core reconciliation phase belongs to this controller.
 	flags := featureflags.Load()
 	if err := flags.ValidateOwnership(); err != nil {
 		return err
@@ -67,6 +68,10 @@ func (c *Controller) Run(ctx context.Context) error {
 	clientset, err := kubernetes.NewForConfig(c.config)
 	if err != nil {
 		return fmt.Errorf("Failed to create Kubernetes client: %w", err)
+	}
+	leaseClient, err := coordinationclient.NewForConfig(leadershipClientConfig(c.config))
+	if err != nil {
+		return fmt.Errorf("create controller Lease client: %w", err)
 	}
 
 	dynamicClient, err := dynamic.NewForConfig(c.config)
@@ -178,7 +183,7 @@ func (c *Controller) Run(ctx context.Context) error {
 		return err
 	}
 
-	return runLeader(ctx, clientset, func(leaderCtx context.Context) {
+	return runLeader(ctx, leaseClient, func(leaderCtx context.Context) {
 		health.Leadership(leaderCtx)
 		defer health.Leader(false)
 		var workers sync.WaitGroup

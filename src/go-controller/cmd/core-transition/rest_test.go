@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -170,5 +171,43 @@ func TestPreflightRequiresAllNativeV1APIsBeforeAnyMutation(t *testing.T) {
 		if (err == nil) != complete {
 			t.Fatal("incomplete native authority accepted", complete, err)
 		}
+	}
+}
+
+func TestCanariesWaitForMutationAndNativeValidationCacheConvergence(t *testing.T) {
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			w.Write([]byte(`{"spec":{"revision":"current"}}`))
+			return
+		}
+		if r.URL.Query().Get("dryRun") != "All" {
+			t.Error("canary was persisted")
+		}
+		requests++
+		switch requests {
+		case 1:
+			w.WriteHeader(422)
+			json.NewEncoder(w).Encode(object{"message": "ValidatingAdmissionPolicy 'uds-native-pod-profile' denied request: mutation cache not active"})
+		case 3:
+			w.WriteHeader(422)
+			json.NewEncoder(w).Encode(object{"message": `admission webhook "pepr-uds-core.pepr.dev" denied the request`})
+		case 5:
+			w.WriteHeader(422)
+			json.NewEncoder(w).Encode(object{"message": "ValidatingAdmissionPolicy 'uds-native-pod-profile' denied request: Privilege escalation is disallowed"})
+		default:
+			json.NewEncoder(w).Encode(object{"metadata": object{"annotations": object{"policy.uds.dev/native-mutation-revision": "current"}}, "spec": object{"securityContext": object{"runAsNonRoot": true}}})
+		}
+	}))
+	defer server.Close()
+	c := cluster{ctx: context.Background(), http: server.Client(), server: server.URL}
+	for attempt := 0; attempt < 3; attempt++ {
+		ready, err := c.canaries()
+		if err != nil || ready != (attempt == 2) {
+			t.Fatal("authority accepted too early or cache lag became fatal", attempt, ready, err)
+		}
+	}
+	if canaryCacheConverging(context.DeadlineExceeded) || canaryCacheConverging(errors.New("another module denied the request")) {
+		t.Fatal("unrelated failure treated as Core cache convergence")
 	}
 }

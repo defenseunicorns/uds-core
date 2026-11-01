@@ -34,6 +34,8 @@ spec:
             - {{ printf "--kube-api-qps=%v" .Values.kubernetesAPI.qps | quote }}
             - {{ printf "--kube-api-burst=%v" .Values.kubernetesAPI.burst | quote }}
           env:
+            - name: ZARF_REGISTRY_ADDRESS
+              value: {{ .Values.zarfRegistryAddress | quote }}
             - name: UDS_LOG_LEVEL
               value: {{ .Values.logLevel | quote }}
             - name: POD_NAMESPACE

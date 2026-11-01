@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 logLevel: info
+zarfRegistryAddress: "127.0.0.1:31999"
 replicaCount: 1
 podLabels: {}
 
@@ -11,7 +12,8 @@ image:
   tag: "0.1.0"
   pullPolicy: IfNotPresent
 
-# One bounded request budget shared by typed, dynamic and UDS clients.
+# Reconciliation budget shared by typed, dynamic and UDS clients.
+# Lease heartbeats have a separate fixed 1 QPS / 2 burst budget.
 kubernetesAPI:
   qps: 20
   burst: 40

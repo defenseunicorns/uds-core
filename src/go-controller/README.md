@@ -35,6 +35,8 @@ A failed transition keeps the previous admission authority until replacement ver
 
 Core retains Java Keycloak and its existing management contract. The controller uses `CLIENT_SECRET` by default and its exact mesh principal, `cluster.local/ns/uds-system/sa/uds-controller`. Dex is a separate identity-provider proposal and is not required by this controller replacement.
 
+Typed, dynamic, and UDS reconciliation clients share the configured Kubernetes API budget. Lease heartbeats use a separate fixed budget of 1 request per second with a burst of 2 and a five-second request timeout, so reconciliation bursts cannot starve leadership renewal.
+
 ## Build and tests
 
 Run the controller tests with the pinned compiler and isolated caches:

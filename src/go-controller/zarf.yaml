@@ -122,13 +122,14 @@ components:
         namespace: uds-system
         version: 0.1.0
         localPath: chart
-        valuesFiles:
+        templatedValuesFiles:
           - packaging-bootstrap.yaml
         values:
           - sourcePath: .uds-controller.uds-controller
             targetPath: .
             excludePaths:
               - .uds-controller.uds-controller.image
+              - .uds-controller.uds-controller.zarfRegistryAddress
               - .uds-controller.uds-controller.admission
               - .uds-controller.uds-controller.nativeAdmission
         variables:
@@ -160,13 +161,14 @@ components:
         namespace: uds-system
         version: 0.1.0
         localPath: chart
-        valuesFiles:
+        templatedValuesFiles:
           - packaging-values.yaml
         values:
           - sourcePath: .uds-controller.uds-controller
             targetPath: .
             excludePaths:
               - .uds-controller.uds-controller.image
+              - .uds-controller.uds-controller.zarfRegistryAddress
               - .uds-controller.uds-controller.admission
               - .uds-controller.uds-controller.nativeAdmission
         variables:

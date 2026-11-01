@@ -1,6 +1,9 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+includes:
+  - test-dependencies: ../../tasks/utils.yaml
+
 tasks:
   - name: validate
     actions:
@@ -20,6 +23,7 @@ tasks:
 
   - name: e2e-test
     actions:
+      - task: test-dependencies:prepare-node-test-dependencies
       - description: "Run Envoy Gateway E2E tests"
         cmd: |
           npm ci && npx vitest run "envoy-gateway"

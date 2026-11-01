@@ -101,6 +101,9 @@ func (c cluster) canaries() (bool, error) {
 	raw, _ := json.Marshal(pod)
 	response, err := c.kubectl(raw, "create", "--dry-run=server", "-f", "-", "-o=json")
 	if err != nil {
+		if canaryCacheConverging(err) {
+			return false, nil
+		}
 		return false, err
 	}
 	var admitted object
@@ -119,7 +122,19 @@ func (c cluster) canaries() (bool, error) {
 		return false, nil
 	}
 	if !strings.Contains(err.Error(), "uds-native-pod-profile") {
+		if canaryCacheConverging(err) {
+			return false, nil
+		}
 		return false, fmt.Errorf("native validation canary failed outside the expected CEL policy: %w", err)
 	}
 	return true, nil
+}
+
+func canaryCacheConverging(err error) bool {
+	// Registered resources can precede API-server admission cache activation.
+	// Keep requiring the exact CEL rejection before retiring the old Core module.
+	message := err.Error()
+	return strings.Contains(message, "uds-native-") ||
+		strings.Contains(message, `admission webhook "pepr-uds-core.pepr.dev"`) ||
+		strings.Contains(message, `admission webhook "validate-pods.uds.dev"`)
 }
