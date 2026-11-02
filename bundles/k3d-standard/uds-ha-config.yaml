@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables:
+  uds-k3d-dev:
+    # Use embedded etcd for the HA validation fixture.
+    K3D_EXTRA_ARGS: "--k3s-arg=--cluster-init@server:0"
   core:
     UDS_CONTROLLER_REPLICAS: 2
     # Classification banner E2E test matrix

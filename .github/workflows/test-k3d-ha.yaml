@@ -70,6 +70,9 @@ jobs:
         if: ${{ matrix.test-type == 'upgrade' }}
         run: uds run test-uds-core-ha-upgrade --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
+      - name: Verify embedded etcd HA datastore
+        run: docker exec k3d-uds-server-0 test -d /var/lib/rancher/k3s/server/db/etcd/member
+
       - name: Debug Output
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
