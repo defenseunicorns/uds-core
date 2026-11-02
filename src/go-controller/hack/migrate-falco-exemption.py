@@ -51,24 +51,36 @@ def migration_patch(obj, pattern):
     ] + changes
 
 
+def field_manager(obj):
+    owners = {
+        entry.get("manager")
+        for entry in obj.get("metadata", {}).get("managedFields", [])
+        if "f:exemptions" in entry.get("fieldsV1", {}).get("f:spec", {})
+    }
+    if len(owners) != 1 or not owners.issubset({"helm", "zarf", "uds"}):
+        raise ValueError("Cannot identify the existing Helm field manager; review the exemption manually")
+    return owners.pop()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--uds", default="uds", help="Existing UDS CLI; inherits its Kubernetes context")
     args = parser.parse_args()
     cli = [args.uds, "zarf", "tools", "kubectl"]
     raw = subprocess.check_output(cli + [
-        "get", "exemption", "falco", "-n", "uds-policy-exemptions", "--ignore-not-found", "-o", "json",
+        "get", "exemption", "falco", "-n", "uds-policy-exemptions", "--ignore-not-found", "--show-managed-fields", "-o", "json",
     ], text=True)
     if not raw.strip():
         print("No installed Falco exemption to migrate")
         return
-    patch = migration_patch(json.loads(raw), replacement())
+    obj = json.loads(raw)
+    patch = migration_patch(obj, replacement())
     if not patch:
         print("Falco does not use the historical matcher; no change")
         return
     subprocess.run(cli + [
         "patch", "exemption", "falco", "-n", "uds-policy-exemptions",
-        "--type=json", "-p", json.dumps(patch),
+        "--type=json", "--field-manager=" + field_manager(obj), "-p", json.dumps(patch),
     ], check=True)
     print("Updated only the historical Falco matcher; policy grants and sidekick exclusion are unchanged")
 

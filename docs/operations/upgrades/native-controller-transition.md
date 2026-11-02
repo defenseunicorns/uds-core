@@ -54,7 +54,7 @@ Released Core versions include a Falco exemption with negative lookahead. From a
 python3 src/go-controller/hack/migrate-falco-exemption.py --uds "$(command -v uds)"
 ```
 
-The helper replaces only the historical matcher on the Helm-owned `uds-policy-exemptions/falco` object. It preserves the existing policy list and the falcosidekick exclusion, and uses UID and resource-version preconditions. It refuses customized grants or foreign ownership. It uses your existing Kubernetes context and does not export credentials.
+The helper replaces only the historical matcher on the Helm-owned `uds-policy-exemptions/falco` object. It preserves the policy list, falcosidekick exclusion, and existing Helm field ownership. It uses UID and resource-version preconditions so concurrent changes fail safely. It refuses customized grants or foreign ownership. It uses your existing Kubernetes context and does not export credentials.
 
 The target Falco chart contains the same RE2 expression. Upgrade tests perform this documented remediation before writer handoff; installer preflight still rejects any remaining incompatible matcher. Review and fix other incompatible patterns individually.
 

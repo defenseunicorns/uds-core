@@ -49,6 +49,20 @@ class MigrationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             migration.migration_patch(obj, "replacement")
 
+    def test_existing_helm_field_owner_is_preserved(self):
+        obj = self.fixture()
+        obj["metadata"]["managedFields"] = [
+            {"manager": "helm", "fieldsV1": {"f:spec": {"f:exemptions": {}}}},
+            {"manager": "unrelated", "fieldsV1": {"f:metadata": {}}},
+        ]
+        self.assertEqual(migration.field_manager(obj), "helm")
+        obj["metadata"]["managedFields"][0]["manager"] = "kubectl-patch"
+        with self.assertRaises(ValueError):
+            migration.field_manager(obj)
+        obj["metadata"]["managedFields"] = []
+        with self.assertRaises(ValueError):
+            migration.field_manager(obj)
+
     def test_cli_is_found_on_path_without_a_local_uds_file(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
