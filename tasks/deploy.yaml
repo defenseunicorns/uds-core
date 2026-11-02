@@ -231,7 +231,7 @@ tasks:
     actions:
       - task: resolve-latest-core-release
       - description: "Deploy the latest UDS Core Standard Bundle with UDS CLI Next"
-        cmd: CLI_FEATURES=NextMode=true ./uds bundle deploy oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${LATEST_CORE_TAG} --config ${{ .inputs.configFile }} --skip-signature-verification
+        cmd: CLI_FEATURES=NextMode=true python3 test/helpers/released_baseline.py -- ./uds bundle deploy oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${LATEST_CORE_TAG} --config ${{ .inputs.configFile }} --skip-signature-verification
 
   - name: latest-release-test-resources
     actions:

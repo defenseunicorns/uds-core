@@ -2,7 +2,7 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-"""Prepare the released Legacy fixture, recovering one known admission EOF."""
+"""Prepare the released Core fixture, recovering one known admission EOF."""
 
 import argparse
 import re

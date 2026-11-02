@@ -35,6 +35,11 @@ class ReleasedFixtureTests(unittest.TestCase):
     def test_released_transport_failure_resumes_same_fixture_once(self):
         self.assertEqual(self.run_command('\x1b[91m' + PEPR_EOF + '\x1b[0m'), (0, 2, 1))
 
+    def test_next_released_transport_failure_resumes_same_fixture_once(self):
+        message = PEPR_EOF.replace('ERROR: failed to deploy bundle:',
+                                  'Error: deploying bundle "k3d-core-demo-next": failed to deploy package "core_base":')
+        self.assertEqual(self.run_command(message), (0, 2, 1))
+
     def test_failed_resume_remains_a_failure_without_a_third_attempt(self):
         self.assertEqual(self.run_command(PEPR_EOF, DENIED, 23), (23, 2, 1))
 
