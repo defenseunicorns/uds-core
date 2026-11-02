@@ -27,6 +27,7 @@ func NodeCIDRs(objects []interface{}) []string {
 		if !ok {
 			continue
 		}
+		result = append(result, flannelHostCIDRs(node)...)
 		for _, address := range node.Status.Addresses {
 			if address.Type == corev1.NodeInternalIP {
 				if cidr := hostCIDR(address.Address); cidr != "" {
@@ -37,6 +38,34 @@ func NodeCIDRs(objects []interface{}) []string {
 	}
 	return uniqueCIDRs(result)
 }
+
+// Canal/Flannel sends host-network traffic from the first PodCIDR address.
+// RKE2 uses these exact hosts in its own rke2-flannel-host-networking policy:
+// https://github.com/rancher/rke2/blob/6bbd9cc9dc1c84535ec1ca561fee48434098b893/pkg/controllers/cisnetworkpolicy/controller.go
+// Never grant the PodCIDR range: only the node's reserved tunnel address.
+func flannelHostCIDRs(node *corev1.Node) []string {
+	if node.Annotations["flannel.alpha.coreos.com/public-ip"] == "" {
+		return nil
+	}
+	cidrs := node.Spec.PodCIDRs
+	if len(cidrs) == 0 {
+		cidrs = []string{node.Spec.PodCIDR}
+	}
+	var hosts []string
+	for _, value := range cidrs {
+		prefix, err := netip.ParsePrefix(value)
+		if err != nil || prefix.Bits() == prefix.Addr().BitLen() {
+			continue
+		}
+		address := prefix.Masked().Addr()
+		if address.IsUnspecified() {
+			continue
+		}
+		hosts = append(hosts, netip.PrefixFrom(address, address.BitLen()).String())
+	}
+	return hosts
+}
+
 func EndpointCIDRs(objects []interface{}) []string {
 	var result []string
 	for _, obj := range objects {

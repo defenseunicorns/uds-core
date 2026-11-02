@@ -68,3 +68,33 @@ func TestMissingOrInvalidOperatorModeUsesClientSecret(t *testing.T) {
 		})
 	}
 }
+
+func TestFlannelHostDiscoveryUsesOnlyReservedHostAddresses(t *testing.T) {
+	node := &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{ResourceVersion: "1", Annotations: map[string]string{"flannel.alpha.coreos.com/public-ip": "192.168.3.62"}},
+		Spec:       corev1.NodeSpec{PodCIDR: "10.42.3.0/24", PodCIDRs: []string{"10.42.3.0/24", "fd00:42:3::/64"}},
+		Status:     corev1.NodeStatus{Addresses: []corev1.NodeAddress{{Type: corev1.NodeInternalIP, Address: "192.168.3.62"}}},
+	}
+	want := []string{"10.42.3.0/32", "192.168.3.62/32", "fd00:42:3::/128"}
+	if got := NodeCIDRs([]interface{}{node, node}); !reflect.DeepEqual(got, want) {
+		t.Fatalf("host discovery = %v", got)
+	}
+	next := node.DeepCopy()
+	next.ResourceVersion = "2"
+	next.Spec.PodCIDRs = []string{"10.42.4.0/24"}
+	if !relevantChange(node, next) {
+		t.Fatal("tunnel address change was ignored")
+	}
+	next.Annotations = nil
+	if got := NodeCIDRs([]interface{}{next}); !reflect.DeepEqual(got, []string{"192.168.3.62/32"}) {
+		t.Fatalf("non-Flannel node gained PodCIDR authority: %v", got)
+	}
+	node.Spec.PodCIDRs = nil
+	if got := NodeCIDRs([]interface{}{node}); !reflect.DeepEqual(got, want[:2]) {
+		t.Fatalf("single-stack fallback = %v", got)
+	}
+	node.Spec.PodCIDRs = []string{"bad", "0.0.0.0/0", "::/0", "10.42.3.5/32", "fd00::5/128"}
+	if got := NodeCIDRs([]interface{}{node}); !reflect.DeepEqual(got, []string{"192.168.3.62/32"}) {
+		t.Fatalf("invalid or non-reserved address was granted: %v", got)
+	}
+}

@@ -161,7 +161,7 @@ func relevantChange(old, obj interface{}) bool {
 		return !ok || !reflect.DeepEqual(prior.Spec, next.Spec)
 	case *corev1.Node:
 		prior, ok := old.(*corev1.Node)
-		return !ok || !reflect.DeepEqual(prior.Status.Addresses, next.Status.Addresses)
+		return !ok || !reflect.DeepEqual(prior.Status.Addresses, next.Status.Addresses) || prior.Spec.PodCIDR != next.Spec.PodCIDR || !reflect.DeepEqual(prior.Spec.PodCIDRs, next.Spec.PodCIDRs)
 	case *discoveryv1.EndpointSlice:
 		prior, ok := old.(*discoveryv1.EndpointSlice)
 		return !ok || !reflect.DeepEqual(prior.Endpoints, next.Endpoints)
