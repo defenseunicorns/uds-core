@@ -48,6 +48,8 @@ func TestDrainWaitsForOwnedPodDeletionNotReadiness(t *testing.T) {
 			return []byte("{}"), nil
 		case "get":
 			switch args[2] {
+			case "namespace":
+				return encode(object{"kind": "Namespace", "metadata": object{"name": "pepr-system"}}), nil
 			case "deployment":
 				return encode(o), nil
 			case "replicasets":

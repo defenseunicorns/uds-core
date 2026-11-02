@@ -3,11 +3,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
 	"strings"
+	"time"
 )
 
 func subset(want, have any) bool {
@@ -42,7 +45,7 @@ func subset(want, have any) bool {
 		return reflect.DeepEqual(want, have)
 	}
 }
-func (c cluster) verify(contract string) error {
+func (c cluster) verify(contract string) (result error) {
 	raw, err := os.ReadFile(contract)
 	if err != nil {
 		return err
@@ -57,6 +60,26 @@ func (c cluster) verify(contract string) error {
 		return fmt.Errorf("incomplete Core native admission contract")
 	}
 	if err = c.snapshot(); err != nil {
+		return err
+	}
+	namespace, err := c.createCanaryNamespace()
+	if err != nil {
+		return err
+	}
+	c.canaryNamespace = str(namespace, "metadata", "name")
+	defer func() {
+		// The installer owns this scratch namespace. Allow bounded cleanup even when
+		// verification was canceled; do not revive or extend transition work.
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(c.ctx), 30*time.Second)
+		defer cancel()
+		cleanup := c
+		cleanup.ctx = ctx
+		result = errors.Join(result, cleanup.removeCanaryNamespace(namespace))
+	}()
+	if err := poll(c.ctx, func() (bool, error) {
+		account, err := c.get("serviceaccount", c.canaryNamespace, "default")
+		return account != nil, err
+	}); err != nil {
 		return err
 	}
 	return poll(c.ctx, func() (bool, error) {
@@ -97,7 +120,7 @@ func (c cluster) canaries() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	pod := object{"apiVersion": "v1", "kind": "Pod", "metadata": object{"generateName": "uds-core-admission-probe-", "namespace": "default"}, "spec": object{"containers": []any{object{"name": "probe", "image": "registry.invalid/core-admission-probe:unused"}}}}
+	pod := object{"apiVersion": "v1", "kind": "Pod", "metadata": object{"generateName": "uds-core-admission-probe-", "namespace": c.canaryNamespace}, "spec": object{"containers": []any{object{"name": "probe", "image": "registry.invalid/core-admission-probe:unused"}}}}
 	raw, _ := json.Marshal(pod)
 	response, err := c.kubectl(raw, "create", "--dry-run=server", "-f", "-", "-o=json")
 	if err != nil {

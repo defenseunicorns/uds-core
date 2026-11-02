@@ -5,37 +5,8 @@ package main
 import "fmt"
 
 func (c cluster) adoptAPI() error {
-	for _, name := range []string{"packages.uds.dev", "exemptions.uds.dev", "clusterconfig.uds.dev"} {
-		o, err := c.get("customresourcedefinition", "", name)
-		if err != nil {
-			return err
-		}
-		if o == nil {
-			continue
-		}
-		release := str(o, "metadata", "annotations", "meta.helm.sh/release-name")
-		ns := str(o, "metadata", "annotations", "meta.helm.sh/release-namespace")
-		if release != "uds-cluster-crds" || (ns != "pepr-system" && ns != "uds-system") {
-			return fmt.Errorf("Core API %s belongs to another release; refusing ownership transfer", name)
-		}
-		if ns == "uds-system" {
-			continue
-		}
-		annotations, _ := get(o, "metadata", "annotations").(map[string]any)
-		labels, _ := get(o, "metadata", "labels").(map[string]any)
-		if annotations == nil {
-			annotations = map[string]any{}
-		}
-		if labels == nil {
-			labels = map[string]any{}
-		}
-		annotations["meta.helm.sh/release-namespace"] = "uds-system"
-		labels["app.kubernetes.io/managed-by"] = "Helm"
-		patch := append(preconditions(o), object{"op": "add", "path": "/metadata/annotations", "value": annotations}, object{"op": "add", "path": "/metadata/labels", "value": labels})
-		if err := c.patch("customresourcedefinition", "", name, patch); err != nil {
-			return err
-		}
-	}
+	// CRD ownership belongs exclusively to the implementation-neutral CRD layer,
+	// which can be deployed before base in functional-layer bundles.
 	cfg, err := c.get("clusterconfig.uds.dev", "", "uds-cluster-config")
 	if err != nil {
 		return err
@@ -68,6 +39,10 @@ func ownedBy(o object, kind, uid string) bool {
 	return false
 }
 func (c cluster) drain() error {
+	namespace, err := c.get("namespace", "", "pepr-system")
+	if err != nil || namespace == nil {
+		return err
+	}
 	const name = "pepr-uds-core-watcher"
 	deployment, err := c.get("deployment", "pepr-system", name)
 	if err != nil {

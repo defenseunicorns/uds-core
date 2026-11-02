@@ -13,21 +13,52 @@ components:
         namespace: uds-system
         version: 0.2.0
         localPath: chart
+        # Adopt schemas written by older Helm/kubectl managers without SSA conflicts.
+        serverSideApply: "false"
     actions:
       onDeploy:
         before:
-          - description: Preserve Core CRDs while moving their Helm ownership to the Core
-              namespace
-            cmd: "set -eu\nfor name in packages.uds.dev exemptions.uds.dev clusterconfig.uds.dev;\
-              \ do\n  state=$(./zarf tools kubectl get crd \"$name\" --ignore-not-found\
-              \ -o go-template='{{.metadata.uid}}|{{.metadata.resourceVersion}}|{{index\
-              \ .metadata.annotations \"meta.helm.sh/release-namespace\"}}|{{index .metadata.annotations\
-              \ \"meta.helm.sh/release-name\"}}')\n  [ -n \"$state\" ] || continue\n \
-              \ old_ifs=$IFS; IFS='|'; set -- $state; IFS=$old_ifs\n  [ \"$3\" = uds-system\
-              \ ] && continue\n  if [ \"$3\" != pepr-system ] || [ \"$4\" != uds-cluster-crds\
-              \ ]; then\n    echo \"Core CRD $name is owned by another release\" >&2;\
-              \ exit 1\n  fi\n  ./zarf tools kubectl patch crd \"$name\" --type=json -p\
-              \ \"[{\\\"op\\\":\\\"test\\\",\\\"path\\\":\\\"/metadata/uid\\\",\\\"value\\\
-              \":\\\"$1\\\"},{\\\"op\\\":\\\"test\\\",\\\"path\\\":\\\"/metadata/resourceVersion\\\
-              \",\\\"value\\\":\\\"$2\\\"},{\\\"op\\\":\\\"add\\\",\\\"path\\\":\\\"/metadata/annotations/meta.helm.sh~1release-namespace\\\
-              \",\\\"value\\\":\\\"uds-system\\\"}]\"\ndone"
+          - description: Require Kubernetes 1.36 native admission before adopting Core APIs
+            cmd: |
+              set -eu
+              version=$(./zarf tools kubectl get --raw /version | ./zarf tools yq -r '.gitVersion')
+              numeric=${version#v}
+              major=${numeric%%.*}
+              remainder=${numeric#*.}
+              minor=${remainder%%.*}
+              case "$major:$minor" in
+                *[!0-9:]*|:*|*:) echo "Cannot determine Kubernetes version: $version" >&2; exit 1 ;;
+              esac
+              if [ "$major" -lt 1 ] || { [ "$major" -eq 1 ] && [ "$minor" -lt 36 ]; }; then
+                echo "Core requires Kubernetes 1.36 or newer; server reports $version" >&2; exit 1
+              fi
+              api=$(./zarf tools kubectl get --raw /apis/admissionregistration.k8s.io/v1 | ./zarf tools yq -r '.resources[] | select(.name == "mutatingadmissionpolicies") | .name')
+              test "$api" = mutatingadmissionpolicies
+          - description: Adopt Core CRDs once, preserving object identity and unrelated metadata
+            cmd: |
+              set -eu
+              for name in packages.uds.dev exemptions.uds.dev clusterconfig.uds.dev admissionparameters.policy.uds.dev; do
+                state=$(./zarf tools kubectl get crd "$name" --ignore-not-found -o json)
+                [ -n "$state" ] || continue
+                release=$(printf '%s' "$state" | ./zarf tools yq -r '.metadata.annotations."meta.helm.sh/release-name" // ""')
+                old_namespace=$(printf '%s' "$state" | ./zarf tools yq -r '.metadata.annotations."meta.helm.sh/release-namespace" // ""')
+                case "$release" in
+                  ""|uds-cluster-crds) ;;
+                  uds-controller)
+                    if [ "$name" != admissionparameters.policy.uds.dev ] || [ "$old_namespace" != uds-system ]; then
+                      echo "Core CRD $name belongs to another release" >&2; exit 1
+                    fi ;;
+                  *) echo "Core CRD $name belongs to another release" >&2; exit 1 ;;
+                esac
+                case "$old_namespace" in
+                  ""|pepr-system|uds-system) ;;
+                  *) echo "Core CRD $name belongs to another release namespace" >&2; exit 1 ;;
+                esac
+                patch=$(printf '%s' "$state" | ./zarf tools yq -o=json '[
+                  {"op": "test", "path": "/metadata/uid", "value": .metadata.uid},
+                  {"op": "test", "path": "/metadata/resourceVersion", "value": .metadata.resourceVersion},
+                  {"op": "add", "path": "/metadata/annotations", "value": ((.metadata.annotations // {}) * {"meta.helm.sh/release-name": "uds-cluster-crds", "meta.helm.sh/release-namespace": "uds-system"})},
+                  {"op": "add", "path": "/metadata/labels", "value": ((.metadata.labels // {}) * {"app.kubernetes.io/managed-by": "Helm"})}
+                ]')
+                ./zarf tools kubectl patch crd "$name" --type=json -p "$patch"
+              done

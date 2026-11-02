@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 )
 
@@ -34,6 +35,10 @@ func (c cluster) forgetRelease(release string) error {
 	return nil
 }
 func (c cluster) retire() error {
+	namespace, err := c.get("namespace", "", "pepr-system")
+	if err != nil || namespace == nil {
+		return err
+	}
 	objects, err := c.releaseObjects("module")
 	if err != nil {
 		return err
@@ -49,7 +54,10 @@ func (c cluster) retire() error {
 			}
 			resource := resourceFor(kind)
 			if resource == "" {
-				return fmt.Errorf("unsupported legacy Core resource %s; refusing incomplete cleanup", kind)
+				if phase == "other" {
+					slog.Warn("Retaining unrecognized legacy manifest object; inspect it separately", "kind", kind, "namespace", str(wanted, "metadata", "namespace"), "name", str(wanted, "metadata", "name"))
+				}
+				continue
 			}
 			isCallback := strings.HasSuffix(kind, "WebhookConfiguration")
 			isWorkload := kind == "Deployment"
@@ -108,7 +116,8 @@ func (c cluster) retire() error {
 		}
 		resource := resourceFor(kind)
 		if resource == "" {
-			return fmt.Errorf("unsupported legacy config resource %s", kind)
+			slog.Warn("Retaining unrecognized legacy config object; inspect it separately", "kind", kind, "namespace", str(wanted, "metadata", "namespace"), "name", str(wanted, "metadata", "name"))
+			continue
 		}
 		current, err := c.get(resource, str(wanted, "metadata", "namespace"), str(wanted, "metadata", "name"))
 		if err != nil {

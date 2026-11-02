@@ -6,3 +6,4 @@ name: uds-controller
 description: UDS Core Go Controller
 type: application
 version: 0.1.0
+kubeVersion: ">=1.36.0-0"

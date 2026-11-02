@@ -29,6 +29,7 @@ func apiResource(kind string) (resource, error) {
 			known[n] = resource{prefix, name, ns}
 		}
 	}
+	add([]string{"namespace", "namespaces"}, "/api/v1", "namespaces", false)
 	add([]string{"deployment", "deployments"}, "/apis/apps/v1", "deployments", true)
 	add([]string{"replicaset", "replicasets"}, "/apis/apps/v1", "replicasets", true)
 	for _, entry := range []struct{ singular, plural string }{{"pod", "pods"}, {"service", "services"}, {"secret", "secrets"}, {"configmap", "configmaps"}, {"serviceaccount", "serviceaccounts"}} {
@@ -121,10 +122,10 @@ func (c cluster) restCommand(input []byte, args ...string) ([]byte, error) {
 		if err := json.Unmarshal(input, &obj); err != nil {
 			return nil, err
 		}
-		if str(obj, "kind") != "Pod" || str(obj, "metadata", "namespace") != "default" {
+		if str(obj, "kind") != "Pod" || !strings.HasPrefix(c.canaryNamespace, "uds-core-admission-probe-") || str(obj, "metadata", "namespace") != c.canaryNamespace {
 			return nil, fmt.Errorf("unsupported dry-run canary")
 		}
-		return c.request(http.MethodPost, "/api/v1/namespaces/default/pods?dryRun=All", input, false)
+		return c.request(http.MethodPost, "/api/v1/namespaces/"+url.PathEscape(c.canaryNamespace)+"/pods?dryRun=All", input, false)
 	}
 	if len(args) < 2 {
 		return nil, fmt.Errorf("missing transition API resource")

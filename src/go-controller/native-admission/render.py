@@ -218,10 +218,8 @@ def render():
     ROOT.joinpath("policies.json").write_text(json.dumps(rendered, indent=2) + "\n")
     chart = ROOT.parent.joinpath("chart")
     chart.joinpath("files/native-admission").mkdir(parents=True, exist_ok=True)
-    chart.joinpath("crds").mkdir(exist_ok=True)
     chart.joinpath("files/native-admission/policies.json").write_text(json.dumps(rendered, indent=2) + "\n")
     chart.joinpath("files/native-admission/empty-parameters.json").write_text(ROOT.joinpath("empty-parameters.json").read_text())
-    chart.joinpath("crds/admissionparameters.policy.uds.dev.json").write_text(ROOT.joinpath("parameters-crd.json").read_text())
 
 
 if __name__ == "__main__":

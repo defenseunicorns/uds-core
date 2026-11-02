@@ -36,6 +36,10 @@ test(
         return;
       }
       assert.equal(req.method, "GET");
+      if (req.url === "/version") {
+        res.end(JSON.stringify({ gitVersion: "v1.36.5+k3s1" }));
+        return;
+      }
       assert.equal(req.url, "/apis/admissionregistration.k8s.io/v1");
       res.end(
         JSON.stringify({
@@ -154,8 +158,42 @@ test(
     }
     assert.equal(
       requests.length,
-      3,
+      5,
       "preflight did not use the inherited kubeconfig in each applicable deployment",
     );
   },
 );
+
+test("chart requires Kubernetes 1.36 and the native mutation API", { skip: !cli }, async () => {
+  const chart = path.join(moduleDir, "chart");
+  const render = (version, api = true) =>
+    exec(
+      cli,
+      [
+        "zarf",
+        "tools",
+        "helm",
+        "template",
+        "uds-controller",
+        chart,
+        "--namespace",
+        "uds-system",
+        "--kube-version",
+        version,
+        ...(api
+          ? ["--api-versions", "admissionregistration.k8s.io/v1/MutatingAdmissionPolicy"]
+          : []),
+      ],
+      { maxBuffer: 4 * 1024 * 1024 },
+    );
+  await assert.rejects(render("1.35.9"), error =>
+    /kubeVersion.*1\.36|1\.36.*incompatible/s.test(error.stderr),
+  );
+  await assert.rejects(render("1.36.5", false), error =>
+    /requires.*MutatingAdmissionPolicy/.test(error.stderr),
+  );
+  for (const version of ["1.36.5", "1.37.1"]) {
+    const { stdout } = await render(version);
+    assert.match(stdout, /kind: MutatingAdmissionPolicy/);
+  }
+});

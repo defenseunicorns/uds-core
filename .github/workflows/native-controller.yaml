@@ -81,7 +81,7 @@ jobs:
           mise exec go@1.27.3 -- go -C src/go-controller build -o "$validation_dir/core-transition" ./cmd/core-transition
           UDS_TRANSITION_TEST_CLI="$(command -v uds)" \
             UDS_TRANSITION_TEST_BINARY="$validation_dir/core-transition" \
-            node --test src/go-controller/hack/host-install.test.mjs
+            node --test src/go-controller/hack/host-install.test.mjs src/go-controller/hack/api-adoption.test.mjs
 
       - name: Verify chart and admission contracts
         run: |
@@ -90,9 +90,9 @@ jobs:
           validation_dir=$(mktemp -d)
           trap 'rm -rf "$validation_dir"' EXIT
           uds zarf tools helm template uds-controller src/go-controller/chart \
-            --namespace uds-system --kube-version 1.37.1 --set nativeAdmission.narrowCallbacks=false > "$validation_dir/broad.yaml"
+            --namespace uds-system --api-versions admissionregistration.k8s.io/v1/MutatingAdmissionPolicy --kube-version 1.37.1 --set nativeAdmission.narrowCallbacks=false > "$validation_dir/broad.yaml"
           node src/go-controller/native-admission/check-render.mjs "$validation_dir/broad.yaml"
           uds zarf tools helm template uds-controller src/go-controller/chart \
-            --namespace uds-system --kube-version 1.37.1 \
+            --namespace uds-system --api-versions admissionregistration.k8s.io/v1/MutatingAdmissionPolicy --kube-version 1.37.1 \
             --set nativeAdmission.narrowCallbacks=true > "$validation_dir/narrow.yaml"
           node src/go-controller/native-admission/check-render.mjs "$validation_dir/narrow.yaml" narrow

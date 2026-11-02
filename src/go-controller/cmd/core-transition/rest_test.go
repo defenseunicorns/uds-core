@@ -51,14 +51,14 @@ func TestRESTReadErrorsCannotBecomeAbsentResources(t *testing.T) {
 }
 func TestDryRunCanaryNeverPersistsAWorkload(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" || r.URL.Query().Get("dryRun") != "All" || r.URL.Path != "/api/v1/namespaces/default/pods" {
+		if r.Method != "POST" || r.URL.Query().Get("dryRun") != "All" || r.URL.Path != "/api/v1/namespaces/uds-core-admission-probe-test/pods" {
 			t.Error("canary was not a scoped dry-run", r.URL.String())
 		}
 		w.Write([]byte(`{}`))
 	}))
 	defer server.Close()
-	c := cluster{ctx: context.Background(), http: server.Client(), server: server.URL}
-	_, err := c.kubectl(encode(object{"kind": "Pod", "metadata": object{"namespace": "default"}}), "create", "--dry-run=server", "-f", "-", "-o=json")
+	c := cluster{ctx: context.Background(), http: server.Client(), server: server.URL, canaryNamespace: "uds-core-admission-probe-test"}
+	_, err := c.kubectl(encode(object{"kind": "Pod", "metadata": object{"namespace": "uds-core-admission-probe-test"}}), "create", "--dry-run=server", "-f", "-", "-o=json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,6 +156,10 @@ func TestReleaseSecretListGetsTypeMetaBeforeImmutableDelete(t *testing.T) {
 func TestPreflightRequiresAllNativeV1APIsBeforeAnyMutation(t *testing.T) {
 	for _, complete := range []bool{false, true} {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodGet && r.URL.Path == "/version" {
+				w.Write([]byte(`{"gitVersion":"v1.36.5+k3s1"}`))
+				return
+			}
 			if r.Method != http.MethodGet || r.URL.Path != "/apis/admissionregistration.k8s.io/v1" {
 				t.Error("preflight mutated the cluster", r.Method, r.URL.Path)
 			}
@@ -200,7 +204,7 @@ func TestCanariesWaitForMutationAndNativeValidationCacheConvergence(t *testing.T
 		}
 	}))
 	defer server.Close()
-	c := cluster{ctx: context.Background(), http: server.Client(), server: server.URL}
+	c := cluster{ctx: context.Background(), http: server.Client(), server: server.URL, canaryNamespace: "uds-core-admission-probe-test"}
 	for attempt := 0; attempt < 3; attempt++ {
 		ready, err := c.canaries()
 		if err != nil || ready != (attempt == 2) {
@@ -209,5 +213,28 @@ func TestCanariesWaitForMutationAndNativeValidationCacheConvergence(t *testing.T
 	}
 	if canaryCacheConverging(context.DeadlineExceeded) || canaryCacheConverging(errors.New("another module denied the request")) {
 		t.Fatal("unrelated failure treated as Core cache convergence")
+	}
+}
+
+func TestPreflightRejectsOldOrUnknownVersionBeforeDiscovery(t *testing.T) {
+	for _, version := range []string{"v1.35.9+k3s1", "v1.34.0", "invalid", ""} {
+		t.Run(version, func(t *testing.T) {
+			calls := 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls++
+				if r.Method != "GET" || r.URL.Path != "/version" {
+					t.Error("old server reached a later transition phase")
+				}
+				json.NewEncoder(w).Encode(object{"gitVersion": version})
+			}))
+			defer server.Close()
+			c := cluster{ctx: context.Background(), http: server.Client(), server: server.URL}
+			if err := c.preflight(); err == nil || !strings.Contains(err.Error(), "requires Kubernetes 1.36") {
+				t.Fatal("unclear/missing version rejection", err)
+			}
+			if calls != 1 {
+				t.Fatal("preflight continued after version rejection")
+			}
+		})
 	}
 }

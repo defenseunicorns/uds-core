@@ -1,8 +1,8 @@
 // Copyright 2026 Defense Unicorns
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-// core-transition is an internal package installer helper. Runtime cluster access
-// uses the deployment host's existing Kubernetes authentication context.
+// core-transition runs forward-only installation phases using the deployment
+// host's existing Kubernetes authentication context.
 package main
 
 import (
@@ -16,18 +16,21 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
 type object map[string]any
 
 type cluster struct {
-	ctx     context.Context
-	http    *http.Client
-	server  string
-	zarf    string
-	uds     bool
-	execute func([]byte, ...string) ([]byte, error)
+	ctx             context.Context
+	http            *http.Client
+	server          string
+	zarf            string
+	uds             bool
+	execute         func([]byte, ...string) ([]byte, error)
+	canaryNamespace string
 }
 
 func (c cluster) command(input []byte, tools ...string) ([]byte, error) {
@@ -166,23 +169,27 @@ func poll(ctx context.Context, fn func() (bool, error)) error {
 		}
 	}
 }
-func main() {
+
+// Run executes a bounded transition phase using the caller's cancellation.
+func Run(parent context.Context, args []string) error {
 	var zarf, phase, contract, chart, kubeconfig string
 	var uds bool
-	flag.StringVar(&zarf, "zarf", "./zarf", "embedded Zarf CLI")
-	flag.StringVar(&phase, "phase", "", "internal transition phase")
-	flag.StringVar(&contract, "contract", "", "compiled native policy contract")
-	flag.StringVar(&chart, "chart", "", "Core chart path for contract generation")
-	flag.BoolVar(&uds, "uds", false, "CLI is the UDS wrapper")
-	flag.StringVar(&kubeconfig, "kubeconfig", "", "optional kubeconfig override; otherwise use the same loading rules as Zarf")
-	flag.Parse()
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
+	flags := flag.NewFlagSet("transition", flag.ContinueOnError)
+	flags.StringVar(&zarf, "zarf", "./zarf", "build-time Zarf CLI for contract generation")
+	flags.StringVar(&phase, "phase", "", "internal transition phase")
+	flags.StringVar(&contract, "contract", "", "compiled native policy contract")
+	flags.StringVar(&chart, "chart", "", "Core chart path for contract generation")
+	flags.BoolVar(&uds, "uds", false, "build-time CLI is the UDS wrapper")
+	flags.StringVar(&kubeconfig, "kubeconfig", "", "optional kubeconfig override; otherwise use the same loading rules as Zarf")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(parent, 4*time.Minute)
 	defer cancel()
 	c := cluster{ctx: ctx, zarf: zarf, uds: uds}
 	if phase != "contract" {
 		if err := c.initializeREST(kubeconfig); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 	}
 	var err error
@@ -206,10 +213,7 @@ func main() {
 	default:
 		err = errors.New("unknown transition phase")
 	}
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	return err
 }
 
 func decodeStream(raw []byte) ([]object, error) {
@@ -227,5 +231,14 @@ func decodeStream(raw []byte) ([]object, error) {
 		if len(o) > 0 {
 			out = append(out, o)
 		}
+	}
+}
+
+func main() {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+	if err := Run(ctx, os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }

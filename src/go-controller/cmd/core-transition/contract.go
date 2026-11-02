@@ -16,7 +16,7 @@ import (
 // This file is generated from the actual chart, not a second hand-maintained
 // admission specification. Serving CAs are verified against the live Secret.
 func (c cluster) generateContract(chart, path string) error {
-	rendered, err := c.command(nil, "helm", "template", "uds-controller", chart, "--namespace", "uds-system", "--kube-version", "1.36.1")
+	rendered, err := c.command(nil, "helm", "template", "uds-controller", chart, "--namespace", "uds-system", "--kube-version", "1.36.1", "--api-versions", "admissionregistration.k8s.io/v1/MutatingAdmissionPolicy")
 	if err != nil {
 		return err
 	}

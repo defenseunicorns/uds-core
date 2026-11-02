@@ -1,6 +1,9 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+{{- if not (.Capabilities.APIVersions.Has "admissionregistration.k8s.io/v1/MutatingAdmissionPolicy") }}
+{{- fail "Core requires the admissionregistration.k8s.io/v1 MutatingAdmissionPolicy API (Kubernetes 1.36 or newer). Offline renders must declare this API explicitly." }}
+{{- end }}
 {{- $enabled := eq (include "uds.native.enabled" .) "true" }}
 {{- $registered := eq (include "uds.admission.register" .) "true" }}
 {{- $narrow := eq (include "uds.native.narrow" .) "true" }}
