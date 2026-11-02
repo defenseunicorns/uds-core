@@ -46,7 +46,8 @@ resource "azurerm_postgresql_flexible_server" "psql_server" {
   storage_mb          = 32768
   storage_tier        = "P30"
 
-  sku_name = "GP_Standard_D4s_v3"
+  # Keep the CI database at 4 vCPUs / 16 GiB on the newer compute generation.
+  sku_name = "GP_Standard_D4ds_v5"
   lifecycle {
     ignore_changes = [zone]
   }
