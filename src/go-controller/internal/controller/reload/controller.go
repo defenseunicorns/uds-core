@@ -216,6 +216,14 @@ func (c *Controller) sync(ctx context.Context, cur request) error {
 		}
 		return err
 	}
+	// A preceding reload may already be replacing all selected Pods. Resolve
+	// current workload templates as well so this content change cannot disappear
+	// in the gap between the old Pods terminating and the new Pods being created.
+	consumers, err := controllerConsumers(ctx, c.client, cur.Namespace, cur.Kind, cur.Name, selector)
+	if err != nil {
+		return err
+	}
+	selected = append(selected, consumers...)
 	return ReloadPods(ctx, c.client, cur.Namespace, selected, cur.Kind+" "+cur.Name+" change", cur.Kind+"Changed", cur.Kind+"/"+cur.Name+"/"+cur.UID+"/"+cur.Token)
 }
 
