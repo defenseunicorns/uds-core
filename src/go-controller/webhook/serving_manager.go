@@ -195,12 +195,22 @@ func (m *ServingManager) reconcileRotation(ctx context.Context, secret *corev1.S
 }
 
 func (m *ServingManager) reconcileBundles(ctx context.Context, secret *corev1.Secret, ca []byte) error {
+	plan, err := m.loadRegistrationPlan(ctx, secret)
+	if err != nil {
+		m.registered.Store(false)
+		return err
+	}
+	armed := plan != nil && secret.Annotations[activationOwnerAnnotation] == string(plan.owner.UID)
 	complete := true
-	for _, target := range []struct {
-		name     string
-		mutating bool
-	}{{webhookConfigName, false}, {"uds-controller-pods", false}, {"uds-controller-resources", false}, {"uds-controller-pods", true}, {mutatingWebhookConfigName, true}} {
-		registered, err := reconcileCABundle(ctx, m.client, target.name, target.mutating, ca, secret)
+	for _, target := range registrationTargets {
+		registered, err := reconcileCABundle(ctx, m.client, target.name, target.mutating, ca, secret, plan)
+		if apierrors.IsNotFound(err) && plan != nil && plan.active && armed {
+			if err = m.repairRegistration(ctx, plan, secret, target.name, target.mutating, ca); err != nil {
+				m.registered.Store(false)
+				return err
+			}
+			registered, err = reconcileCABundle(ctx, m.client, target.name, target.mutating, ca, secret, plan)
+		}
 		complete = complete && registered
 		if err != nil && !apierrors.IsNotFound(err) {
 			m.registered.Store(false)
@@ -208,5 +218,13 @@ func (m *ServingManager) reconcileBundles(ctx context.Context, secret *corev1.Se
 		}
 	}
 	m.registered.Store(complete)
+	if plan != nil && plan.active {
+		if complete {
+			return m.activateRegistrationRepair(ctx, plan, secret)
+		}
+		if armed {
+			return fmt.Errorf("activated admission registrations are incomplete")
+		}
+	}
 	return nil
 }

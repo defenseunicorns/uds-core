@@ -197,3 +197,58 @@ test("chart requires Kubernetes 1.36 and the native mutation API", { skip: !cli 
     assert.match(stdout, /kind: MutatingAdmissionPolicy/);
   }
 });
+
+test(
+  "repair plans exactly match both rendered callback profiles and stay inactive at bootstrap",
+  { skip: !cli },
+  async () => {
+    for (const mode of ["bootstrap", "broad", "narrow"]) {
+      const args = [
+        "zarf",
+        "tools",
+        "helm",
+        "template",
+        "uds-controller",
+        path.join(moduleDir, "chart"),
+        "--namespace",
+        "uds-system",
+        "--kube-version",
+        "1.37.1",
+        "--api-versions",
+        "admissionregistration.k8s.io/v1/MutatingAdmissionPolicy",
+      ];
+      if (mode === "bootstrap")
+        args.push(
+          "--set",
+          "admission.register=false,nativeAdmission.enabled=false,nativeAdmission.narrowCallbacks=false",
+        );
+      else args.push("--set", `nativeAdmission.narrowCallbacks=${mode === "narrow"}`);
+      const { stdout } = await exec(cli, args, { maxBuffer: 4 * 1024 * 1024 });
+      const docs = yaml.loadAll(stdout).filter(Boolean);
+      const plan = docs.find(
+        d => d.kind === "ConfigMap" && d.metadata.name === "uds-controller-admission-registration",
+      );
+      assert.equal(plan.apiVersion, "v1");
+      assert.equal(plan.data.active, String(mode !== "bootstrap"));
+      const desired = JSON.parse(plan.data["registrations.json"]).items;
+      assert.equal(desired.length, 5);
+      const registrations = docs.filter(d =>
+        /^(Mutating|Validating)WebhookConfiguration$/.test(d.kind),
+      );
+      if (mode === "bootstrap") assert.equal(registrations.length, 0);
+      else
+        for (const config of registrations) {
+          const expected = desired.find(
+            d => d.kind === config.kind && d.metadata.name === config.metadata.name,
+          );
+          for (const hook of config.webhooks) hook.clientConfig.caBundle = "";
+          assert.deepEqual(
+            expected.webhooks,
+            config.webhooks,
+            `${mode}/${config.metadata.name} repair drift`,
+          );
+          assert.equal(expected.metadata.annotations["admissions.enforcer/disabled"], "true");
+        }
+    }
+  },
+);

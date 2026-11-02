@@ -29,6 +29,10 @@ The elected controller reconciles networking, Istio resources, Envoy Gateway rou
 
 The controller renews its shared serving certificate at two-thirds of its lifetime. It publishes the new and previous CA together before replicas switch certificates, then removes the previous CA after the overlap window. Helm preserves the existing Secret during upgrades so it cannot race runtime rotation. An expired but otherwise valid identity can recover at startup; malformed keys or mismatched identities fail closed. The `uds_native_serving_certificate_days_remaining` gauge reports the active certificate lifetime, and renewal logs warn when fewer than 30 days remain.
 
+Helm publishes the desired webhook definitions in `uds-system/uds-controller-admission-registration`. After observing all five configurations, the controller records activation against the current ClusterRole UID in its serving Secret. Either replica can then recreate a deleted configuration with the current CA bundle, including during certificate overlap. Bootstrap stays inactive until Helm has installed the complete registration set, and a retained Secret cannot activate a new installation's role UID.
+
+Repairs preserve Helm metadata and hand field ownership back to the chart publisher so later upgrades remain possible. Recreated configurations reference the ClusterRole for garbage collection during uninstall. The controller refuses foreign ownership or malformed plans; incomplete activated registrations make admission readiness fail. Kubernetes requires an unrestricted `create` verb for webhook configuration types because RBAC cannot constrain creation by resource name; the repair code accepts only the five chart-defined Core names and local callback endpoints.
+
 Read the [admission contract](native-admission/README.md) for exemption union, JavaScript regex compatibility, revision checks, and controller recovery behavior.
 
 ## Installation and upgrade

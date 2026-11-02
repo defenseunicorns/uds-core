@@ -24,14 +24,14 @@ Every parameterized Pod and Service mutator writes `policy.uds.dev/native-mutati
 
 Narrow registration selects these request shapes:
 
-| Request | Go mutation | Go validation |
-|---|---|---|
-| Ordinary Pod or Service | No | No |
-| Ordinary `uds-system` resource | Complete | Complete |
-| JavaScript-only exemption scope | Complete | Complete |
-| Pod with nonempty `uds/user`, `uds/group`, or `uds/fsgroup` | Complete | Native, unless another Go shape applies |
-| Pod containing `istio-proxy` or `istio-init`, including init and ephemeral containers | Native, unless another Go shape applies | Complete |
-| Diagnostic array containing unknown JSON values, escaped strings, or malformed JSON | Complete | Complete |
+| Request                                                                               | Go mutation                             | Go validation                           |
+| ------------------------------------------------------------------------------------- | --------------------------------------- | --------------------------------------- |
+| Ordinary Pod or Service                                                               | No                                      | No                                      |
+| Ordinary `uds-system` resource                                                        | Complete                                | Complete                                |
+| JavaScript-only exemption scope                                                       | Complete                                | Complete                                |
+| Pod with nonempty `uds/user`, `uds/group`, or `uds/fsgroup`                           | Complete                                | Native, unless another Go shape applies |
+| Pod containing `istio-proxy` or `istio-init`, including init and ephemeral containers | Native, unless another Go shape applies | Complete                                |
+| Diagnostic array containing unknown JSON values, escaped strings, or malformed JSON   | Complete                                | Complete                                |
 
 Native mutation preserves the order and duplicates of diagnostic arrays containing the three known default names, handles JSON whitespace, and appends only absent policy names. Go preserves arbitrary valid JSON array entries and rejects invalid array inputs with the existing mutation error semantics. Its compatibility path decodes validated JSON into data values and calls only built-in JavaScript array and stringify operations, preserving source key order, numeric normalization, Unicode, and string escaping. It never evaluates user programs or Core TypeScript. Tenant-authored routing and exemption markers never replace either evaluator's grant lookup.
 
@@ -71,9 +71,11 @@ During rotation, the manager records the previous authority in the shared Secret
 
 Core's package manages bootstrap and activation internally. The backend starts before admission registration, with mandatory recovery policies already installed. The installer waits for serving readiness and a valid compiler-owned snapshot, then registers complete Go callbacks and activates native admission. It verifies the actual native and Go contracts plus admission canaries before retiring the previous Core callbacks. The previous watcher is fully drained before Go reconciliation begins.
 
+The chart publishes a registration plan from the same templates as its five webhook configurations. Repair activates only after the complete contract is observed, and both the plan and persisted activation are fenced to the current ClusterRole UID. A surviving or restarted replica recreates missing configurations with current overlapping trust. Repaired objects retain Helm ownership and use the ClusterRole as a garbage-collection owner; uninstall or a new role UID cannot reuse the old activation. The installer requires this repair activation before completing verification.
+
 ## Rendering and qualification
 
-`render.py` owns the generated policy manifests, chart policy files, and parameter CRD copy. `bootstrap.py` owns the shared authenticated recovery expressions. `routing.py` owns the static callback routing expressions and generated chart helper. Run the renderer after changing these sources.
+`render.py` owns the generated policy manifests and chart policy files. The canonical AdmissionParameters CRD lives in `src/uds-api/chart/templates/` and upgrades with the API chart. `bootstrap.py` owns the shared authenticated recovery expressions. `routing.py` owns the static callback routing expressions and generated chart helper. Run the renderer after changing these sources.
 
 The frozen upstream suite runs all 1,117 assertions unchanged. Six capture adapters execute 372 tests and record 410 admission cases, plus 1,008 JavaScript regular expression cases, against the current Core source on Node 26.13.0. The Go differential tests check all 1,418 cases and require the expected counts and source revision; they fail if a fixture or adapter is missing.
 

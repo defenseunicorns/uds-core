@@ -232,6 +232,24 @@ rules:
       - patch
       - watch
 
+  # Kubernetes cannot restrict CREATE by resourceNames. The repair path accepts
+  # only the five chart-defined Core registrations and binds them to this role UID.
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - validatingwebhookconfigurations
+      - mutatingwebhookconfigurations
+    verbs:
+      - create
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - clusterroles
+    resourceNames:
+      - uds-controller
+    verbs:
+      - get
+
   # Webhook configurations (for patching caBundle)
   - apiGroups:
       - admissionregistration.k8s.io

@@ -1,7 +1,7 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- if eq (include "uds.admission.register" .) "true" }}
+{{- define "uds.admission.waypointRegistrations" -}}
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
@@ -10,6 +10,7 @@ metadata:
     admissions.enforcer/disabled: "true"
   labels:
     app: uds-controller
+{{ include "uds.admission.lifecycleOwner" . | indent 2 }}
 webhooks:
   - name: pods.waypoint.uds.dev
     matchConditions:
@@ -78,4 +79,8 @@ webhooks:
           - UPDATE
         scope: Namespaced
 
+{{- end }}
+
+{{- if eq (include "uds.admission.register" .) "true" }}
+{{ include "uds.admission.waypointRegistrations" . }}
 {{- end }}

@@ -58,6 +58,16 @@ func (c cluster) servingCAConverged(o object) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	// Installation is not complete until the runtime has armed repair for this
+	// installation's lifecycle owner, including after all callbacks are recreated.
+	role, err := c.get("clusterroles", "", "uds-controller")
+	if err != nil {
+		return false, err
+	}
+	owner := str(role, "metadata", "uid")
+	if owner == "" || str(secret, "metadata", "annotations", "uds.dev/admission-activation-owner") != owner {
+		return false, nil
+	}
 	ca := str(secret, "data", "ca.crt")
 	if ca == "" {
 		return false, nil

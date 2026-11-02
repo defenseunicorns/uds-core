@@ -16,7 +16,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func reconcileCABundle(ctx context.Context, client kubernetes.Interface, name string, mutating bool, ca []byte, secret *corev1.Secret) (bool, error) {
+func reconcileCABundle(ctx context.Context, client kubernetes.Interface, name string, mutating bool, ca []byte, secret *corev1.Secret, plans ...*registrationPlan) (bool, error) {
+	var plan *registrationPlan
+	if len(plans) > 0 {
+		plan = plans[0]
+	}
 	var current [][]byte
 	version := ""
 	expected := expectedCallbacks(name, mutating)
@@ -26,8 +30,24 @@ func reconcileCABundle(ctx context.Context, client kubernetes.Interface, name st
 		if err != nil {
 			return false, err
 		}
+		if plan != nil {
+			if !sameRelease(config, plan.source) {
+				return false, fmt.Errorf("refusing foreign admission registration %s", name)
+			}
+			raw, err := handBackRegistration(config, plan)
+			if err != nil {
+				return false, err
+			}
+			if len(raw) > 0 {
+				config, err = client.AdmissionregistrationV1().MutatingWebhookConfigurations().Patch(ctx, name, types.JSONPatchType, raw, metav1.PatchOptions{})
+				if err != nil {
+					return false, err
+				}
+			}
+			registered = registrationMatchesPlan(config, plan.objects[registrationKey(name, mutating)])
+		}
 		version = config.ResourceVersion
-		registered = len(config.Webhooks) == len(expected)
+		registered = registered && len(config.Webhooks) == len(expected)
 		for _, webhook := range config.Webhooks {
 			current = append(current, webhook.ClientConfig.CABundle)
 			registered = registered && callbackMatches(webhook.Name, webhook.FailurePolicy, webhook.ClientConfig.Service, expected)
@@ -37,8 +57,24 @@ func reconcileCABundle(ctx context.Context, client kubernetes.Interface, name st
 		if err != nil {
 			return false, err
 		}
+		if plan != nil {
+			if !sameRelease(config, plan.source) {
+				return false, fmt.Errorf("refusing foreign admission registration %s", name)
+			}
+			raw, err := handBackRegistration(config, plan)
+			if err != nil {
+				return false, err
+			}
+			if len(raw) > 0 {
+				config, err = client.AdmissionregistrationV1().ValidatingWebhookConfigurations().Patch(ctx, name, types.JSONPatchType, raw, metav1.PatchOptions{})
+				if err != nil {
+					return false, err
+				}
+			}
+			registered = registrationMatchesPlan(config, plan.objects[registrationKey(name, mutating)])
+		}
 		version = config.ResourceVersion
-		registered = len(config.Webhooks) == len(expected)
+		registered = registered && len(config.Webhooks) == len(expected)
 		for _, webhook := range config.Webhooks {
 			current = append(current, webhook.ClientConfig.CABundle)
 			registered = registered && callbackMatches(webhook.Name, webhook.FailurePolicy, webhook.ClientConfig.Service, expected)

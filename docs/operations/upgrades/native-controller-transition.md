@@ -39,7 +39,7 @@ The package carries out these steps:
 2. Install configuration, infrastructure exemptions, and networking prerequisites.
 3. Scale the old Core watcher to zero and wait for its owned Pods to disappear before starting Go reconciliation.
 4. Start the new controller and wait for its current Package generation, networking, and compiled exemption snapshot.
-5. Activate the replacement callbacks and native policies. Verify the installed contract, serving trust, and server-side admission probes in a dedicated scratch namespace.
+5. Activate the replacement callbacks and native policies. Verify the installed contract, serving trust, automatic-repair activation for the current installation, and server-side admission probes in a dedicated scratch namespace.
 6. Remove the replaced Core Pepr resources and release records. Other Pepr modules, shared namespaces, and shared CRDs remain outside retirement scope.
 
 Unknown kinds in historical Core release manifests are retained with a warning rather than blocking verified retirement. Save the installation log and inspect the listed objects separately. Known resources still require matching live ownership before removal.
