@@ -56,7 +56,7 @@ python3 src/go-controller/hack/migrate-falco-exemption.py --uds "$(command -v ud
 
 The helper replaces only the historical matcher on the Helm-owned `uds-policy-exemptions/falco` object. It preserves the policy list, falcosidekick exclusion, and existing Helm field ownership. It uses UID and resource-version preconditions so concurrent changes fail safely. It refuses customized grants or foreign ownership. It uses your existing Kubernetes context and does not export credentials.
 
-The target Falco chart contains the same RE2 expression. Upgrade tests perform this documented remediation before writer handoff; installer preflight still rejects any remaining incompatible matcher. Review and fix other incompatible patterns individually.
+The target Falco chart contains the same RE2 expression. Its configuration chart uses client-side apply across the Legacy/Next transition so managed-field ownership from the remediation does not block the upgrade. Upgrade tests perform this documented remediation before writer handoff; installer preflight still rejects any remaining incompatible matcher. Review and fix other incompatible patterns individually.
 
 See the [RE2 syntax reference](https://github.com/google/re2/wiki/Syntax). Existing invalid patterns encountered after startup do not invalidate all exemptions: the compiler omits only the bad matcher and reports it in Warning Events, error logs, and the snapshot's `policy.uds.dev/invalid-matchers` annotation.
 
