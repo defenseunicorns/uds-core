@@ -21,6 +21,8 @@ Reload watch startup does not restart existing consumers. An object newly enteri
 
 Controller Pod templates request ambient enrollment directly so Istio captures their traffic from creation. Admission must not depend on the controller later enrolling its own namespace: that changes networking underneath live webhook connections during an upgrade. Custom Pod labels cannot disable this control-plane requirement.
 
+Core admits webhook traffic from API/node addresses and from the `kube-system` Konnectivity agent selector used by managed control planes.
+
 Core installs its declared API egress grant before applying its own isolation policies, so it cannot cut off the writer that creates those policies. Installation waits for the controller's own Package to reach its current `Ready` generation before activating replacement callbacks.
 
 Kubernetes evaluates object-local admission checks and defaults. Go handles cluster-dependent admission, topology, advanced custom-resource validation, and compatibility behavior that CEL cannot express. The standard chart uses narrow callbacks so ordinary Pod and Service requests stay in the API server. Both engines resolve exemption authority from the existing protected Exemption resources.
@@ -31,7 +33,7 @@ The controller renews its shared serving certificate at two-thirds of its lifeti
 
 Helm publishes the desired webhook definitions in `uds-system/uds-controller-admission-registration`. After observing all five configurations, the controller records activation against the current ClusterRole UID in its serving Secret. Either replica can then recreate a deleted configuration with the current CA bundle, including during certificate overlap. Bootstrap stays inactive until Helm has installed the complete registration set, and a retained Secret cannot activate a new installation's role UID.
 
-Repairs preserve Helm metadata and hand field ownership back to the chart publisher so later upgrades remain possible. Recreated configurations reference the ClusterRole for garbage collection during uninstall. The controller refuses foreign ownership or malformed plans; incomplete activated registrations make admission readiness fail. Kubernetes requires an unrestricted `create` verb for webhook configuration types because RBAC cannot constrain creation by resource name; the repair code accepts only the five chart-defined Core names and local callback endpoints.
+Repairs preserve Helm metadata and hand field ownership back to the chart publisher so later upgrades remain possible. Webhook configurations, activated native policies, and policy bindings reference the ClusterRole for garbage collection during uninstall or cleanup of a failed activation. The controller refuses foreign ownership or malformed plans; incomplete activated registrations make admission readiness fail. Kubernetes requires an unrestricted `create` verb for webhook configuration types because RBAC cannot constrain creation by resource name; the repair code accepts only the five chart-defined Core names and local callback endpoints.
 
 Read the [admission contract](native-admission/README.md) for exemption union, RE2 matcher semantics, revision checks, and controller recovery behavior.
 

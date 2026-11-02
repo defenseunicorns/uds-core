@@ -67,3 +67,11 @@ spec:
         remoteGenerated: KubeNodes
         port: 9443
         description: Kubernetes control plane webhook source addresses
+      - direction: Ingress
+        selector:
+          app: uds-controller
+        remoteNamespace: kube-system
+        remoteSelector:
+          app: konnectivity-agent
+        port: 9443
+        description: Managed Kubernetes API server tunnel agents

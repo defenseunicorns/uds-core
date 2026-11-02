@@ -16,8 +16,12 @@
 {{- if and $narrow (not $enabled) }}
 {{- fail "nativeAdmission.narrowCallbacks requires qualified nativeAdmission.enabled policies and bindings" }}
 {{- end }}
+{{- $lifecycle := include "uds.admission.lifecycleOwner" . | fromYaml }}
 {{- range (.Files.Get "files/native-admission/policies.json" | fromJson).items }}
 {{- if or $enabled (hasPrefix "uds-native-controller-" .metadata.name) }}
+{{- if $lifecycle.ownerReferences }}
+{{- $_ := set .metadata "ownerReferences" $lifecycle.ownerReferences }}
+{{- end }}
 ---
 {{ toYaml . }}
 {{- end }}
