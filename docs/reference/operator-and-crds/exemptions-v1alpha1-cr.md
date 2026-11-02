@@ -5,12 +5,10 @@ tableOfContents:
 sidebar:
   order: 1.002
 ---
-
 <a id="Exemptions"></a>
 <div style="margin-left: 20px; padding-top: 30px;">
 
 # Exemptions
-
 <table style="width: 100%; table-layout: fixed;">
   <thead>
     <tr>
@@ -29,7 +27,6 @@ sidebar:
 <div style="margin-left: 40px; padding-top: 30px;">
 
 ## Spec
-
 <table style="width: 100%; table-layout: fixed;">
   <thead>
     <tr>
@@ -48,7 +45,6 @@ sidebar:
 <div style="margin-left: 60px; padding-top: 30px;">
 
 ### Exemptions
-
 <table style="width: 100%; table-layout: fixed;">
   <thead>
     <tr>
@@ -67,7 +63,6 @@ sidebar:
 <div style="margin-left: 80px; padding-top: 30px;">
 
 #### Matcher
-
 <table style="width: 100%; table-layout: fixed;">
   <thead>
     <tr>
@@ -77,7 +72,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">namespace</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">name</td><td style="white-space: nowrap;">string</td><td>RE2 regular expression matched as an unanchored search against name, or generateName when name is empty. Empty patterns match every name. Lookaround and backreferences are unsupported. Use (?P<name>...) for named groups. Syntax: https://github.com/google/re2/wiki/Syntax</td></tr><tr><td style="white-space: nowrap;">kind</td><td style="white-space: nowrap;">string (enum):<ul><li><code>pod</code></li><li><code>service</code></li></ul></td><td></td></tr>
+    <tr><td style="white-space: nowrap;">namespace</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">name</td><td style="white-space: nowrap;">string</td><td>RE2 regular expression matched as an unanchored search against name, or generateName when name is empty. Empty patterns match every name. Lookaround and backreferences are unsupported. Use Python-style named groups. Syntax: https://github.com/google/re2/wiki/Syntax</td></tr><tr><td style="white-space: nowrap;">kind</td><td style="white-space: nowrap;">string (enum):<ul><li><code>pod</code></li><li><code>service</code></li></ul></td><td></td></tr>
   </tbody>
 </table>
 </div>

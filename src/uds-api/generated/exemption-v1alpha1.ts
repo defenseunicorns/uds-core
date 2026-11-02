@@ -43,7 +43,7 @@ export interface Matcher {
   /**
    * RE2 regular expression matched as an unanchored search against name, or generateName when
    * name is empty. Empty patterns match every name. Lookaround and backreferences are
-   * unsupported. Use (?P<name>...) for named groups. Syntax:
+   * unsupported. Use Python-style named groups. Syntax:
    * https://github.com/google/re2/wiki/Syntax
    */
   name: string;

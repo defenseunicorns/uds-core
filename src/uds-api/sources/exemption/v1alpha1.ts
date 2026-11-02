@@ -70,7 +70,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                       },
                       name: {
                         description:
-                          "RE2 regular expression matched as an unanchored search against name, or generateName when name is empty. Empty patterns match every name. Lookaround and backreferences are unsupported. Use (?P<name>...) for named groups. Syntax: https://github.com/google/re2/wiki/Syntax",
+                          "RE2 regular expression matched as an unanchored search against name, or generateName when name is empty. Empty patterns match every name. Lookaround and backreferences are unsupported. Use Python-style named groups. Syntax: https://github.com/google/re2/wiki/Syntax",
                         type: "string",
                       },
                       kind: {
