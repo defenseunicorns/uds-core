@@ -146,3 +146,18 @@ func TestServingManagerRepairsFromWatchWithoutSteadyPolling(t *testing.T) {
 		time.Sleep(time.Millisecond)
 	}
 }
+
+func TestServiceValidationDoesNotTrustOrRequireMutationMarkers(t *testing.T) {
+	exemptions := NewExemptionStore()
+	if err := exemptions.Replace(nil, false); err != nil {
+		t.Fatal(err)
+	}
+	for _, kind := range []string{"ClusterIP", "NodePort"} {
+		raw, _ := json.Marshal(map[string]interface{}{"metadata": map[string]interface{}{"name": "app", "namespace": "apps", "annotations": map[string]string{nativeMutationRevisionAnnotation: "stale"}}, "spec": map[string]interface{}{"type": kind}})
+		req := &admissionv1.AdmissionRequest{UID: "service", Namespace: "apps", Kind: metav1.GroupVersionKind{Kind: "Service"}, Resource: metav1.GroupVersionResource{Resource: "services"}, Object: runtime.RawExtension{Raw: raw}}
+		response := invokeReview(t, ValidatePod(exemptions), req)
+		if response.Allowed != (kind == "ClusterIP") {
+			t.Fatal("Service markers influenced policy", kind, response.Result)
+		}
+	}
+}

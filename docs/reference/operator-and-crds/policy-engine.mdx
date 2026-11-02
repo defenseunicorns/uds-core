@@ -17,7 +17,7 @@ If a resource is exempted, it will be annotated as `uds-core.pepr.dev/uds-core-p
 
 After exemption revocation, Core can still retire its own waypoint labels from an existing Pod or Service. CEL delegates only an authenticated, spec-preserving label removal to Go, which verifies the live Package owner and recorded route. Creating a noncompliant Service, changing its spec, or editing unrelated metadata still requires the normal policy checks.
 
-`pods/ephemeralcontainers` updates evaluate current policy, including privileged-container restrictions. They do not compare the Pod's stored mutation revision because Kubernetes discards metadata changes on this subresource. Pod creation and ordinary updates retain the mutation-to-validation revision check.
+`pods/ephemeralcontainers` updates evaluate current policy, including privileged-container restrictions. They do not compare the Pod's stored mutation revision because Kubernetes discards metadata changes on this subresource. Pod creation and ordinary Pod updates retain the mutation-to-validation revision check. Service validation uses the current exemption snapshot directly; its mutation annotations are informational and do not require a revision match.
 
 Only the UDS controller service account can create or update `AdmissionParameters`. Change `Exemption` resources to manage grants. The namespace controller can delete parameters during namespace teardown; other identities cannot delete them through the resource API. The Go webhook exports `uds_admission_decisions_total` with `handler`, `allowed`, and `policy` labels and logs denied requests with their namespace and name.
 

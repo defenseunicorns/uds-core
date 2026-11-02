@@ -19,7 +19,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-const maxAdmissionBodyBytes = 4 << 20
+// Updates carry both oldObject and object, plus the AdmissionReview envelope.
+const maxAdmissionBodyBytes = 8 << 20
 
 const (
 	nativeMutationRevisionAnnotation    = "policy.uds.dev/native-mutation-revision"
@@ -71,7 +72,7 @@ func policyHandler(exemptions *ExemptionStore, mutate bool, retirement func(*adm
 		exempt, revision, snapshotReady := exemptions.MetadataSnapshot(metadata)
 		response := &admissionv1.AdmissionResponse{UID: req.UID, Allowed: true}
 		nativeRevision := metadata.Object("annotations").String(nativeMutationRevisionAnnotation)
-		if req.SubResource != "ephemeralcontainers" && nativeRevision != "" && (!snapshotReady || revision != nativeRevision) {
+		if !service && req.SubResource != "ephemeralcontainers" && nativeRevision != "" && (!snapshotReady || revision != nativeRevision) {
 			response.Allowed = false
 			decisionPolicy(w, "snapshot-revision")
 			response.Result = &metav1.Status{Reason: metav1.StatusReasonConflict, Code: http.StatusConflict, Message: "Admission exemption snapshot changed between native mutation and Go fallback; retry the request"}

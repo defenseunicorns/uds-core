@@ -67,3 +67,27 @@ func TestVectorRootExemptionCannotMixNativeAndGoSnapshots(t *testing.T) {
 		t.Fatal("stale mutation stamp kept a revoked grant")
 	}
 }
+
+func TestRevisionFenceHandlesAbsentSubresourceAndOnlyExemptsDebugUpdates(t *testing.T) {
+	for _, name := range []string{"uds-native-pod-profile", "uds-native-service-profile"} {
+		_, validations := nativeExpressions(t, name)
+		if name == "uds-native-service-profile" {
+			for _, expression := range validations {
+				if strings.Contains(expression, "mutationReady") {
+					t.Fatal("Service validation depends on informational mutation markers")
+				}
+			}
+			continue
+		}
+		expression := validations[len(validations)-2]
+		for _, request := range []map[string]interface{}{{}, {"subResource": ""}, {"subResource": "ephemeralcontainers"}} {
+			for _, ready := range []bool{false, true} {
+				actual := evalNative(t, expression, map[string]interface{}{"request": request, "variables": map[string]interface{}{"mutationReady": ready}})
+				expected := ready || (name == "uds-native-pod-profile" && request["subResource"] == "ephemeralcontainers")
+				if actual != expected {
+					t.Fatalf("%s request=%v ready=%v got=%v", name, request, ready, actual)
+				}
+			}
+		}
+	}
+}

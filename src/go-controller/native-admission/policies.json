@@ -100,7 +100,7 @@
             "message": "Application containers must not use UID/GID 1337 (Istio proxy) unless they are trusted Istio components"
           },
           {
-            "expression": "request.subResource == 'ephemeralcontainers' || variables.mutationReady == true",
+            "expression": "(has(request.subResource) && request.subResource == 'ephemeralcontainers') || variables.mutationReady == true",
             "message": "Admission exemption snapshot changed between mutation and validation; retry the request"
           },
           {
@@ -293,10 +293,6 @@
           {
             "expression": "variables.grantDisallowNodePortServices || (!has(object.spec.type) || object.spec.type != \"NodePort\")",
             "message": "NodePort services are not allowed."
-          },
-          {
-            "expression": "request.subResource == 'ephemeralcontainers' || variables.mutationReady == true",
-            "message": "Admission exemption snapshot changed between mutation and validation; retry the request"
           },
           {
             "expression": "params.spec.valid == true",

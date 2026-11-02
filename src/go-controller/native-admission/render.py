@@ -161,7 +161,10 @@ def render():
         for policy, validation in zip(policies, spec["validations"]):
             delegated = " || variables.codeIdentity" if policy in ["RequireNonRootUser", "RestrictCapabilities", "RestrictIstioUser", "RestrictIstioTrafficOverrides"] else ""
             validation["expression"] = guard(policy, True) + delegated + " || (" + validation["expression"] + ")"
-        spec["validations"].append({"expression": "request.subResource == 'ephemeralcontainers' || variables.mutationReady == true", "message": "Admission exemption snapshot changed between mutation and validation; retry the request"})
+        # Service mutations are informational markers, not security defaults.
+        # Their validation needs only the current grant union, never marker parity.
+        if policies == POD_POLICIES:
+            spec["validations"].append({"expression": "(has(request.subResource) && request.subResource == 'ephemeralcontainers') || variables.mutationReady == true", "message": "Admission exemption snapshot changed between mutation and validation; retry the request"})
         spec["validations"].append({"expression": "params.spec.valid == true", "message": "Admission exemption inputs are invalid; repair the protected snapshot"})
         output += pair(obj["kind"], name, spec, True)
     variables = grant_variables(POD_POLICIES) + diagnostic_variables() + [

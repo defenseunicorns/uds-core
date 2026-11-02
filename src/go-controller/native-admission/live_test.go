@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -214,6 +215,43 @@ func TestLiveNativeAdmission(t *testing.T) {
 				t.Fatal("safe debug container rejected or not mutated", err)
 			}
 		}
+	})
+	t.Run("service apply uses current policy without marker fence", func(t *testing.T) {
+		service := &corev1.Service{TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Service"}, ObjectMeta: metav1.ObjectMeta{GenerateName: "native-service-", Namespace: "native-live"}, Spec: corev1.ServiceSpec{Selector: map[string]string{"app": "unused"}, Ports: []corev1.ServicePort{{Port: 8080, TargetPort: intstr.FromInt32(8080)}}}}
+		created, err := client.CoreV1().Services("native-live").Create(ctx, service, metav1.CreateOptions{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		unstructured.SetNestedField(parameters.Object, "service-after", "spec", "revision")
+		applyLive(t, ctx, compiler, parameterGVR, parameters)
+		// A caller's stale diagnostic stamp carries no authority and must not
+		// make an otherwise compliant Service update unavailable.
+		service.Annotations = map[string]string{"policy.uds.dev/native-mutation-revision": "stale-diagnostic"}
+		service.Name = created.Name
+		service.GenerateName = ""
+		service.Spec.Ports[0].TargetPort = intstr.FromInt32(8081)
+		body, _ := json.Marshal(service)
+		deadline := time.Now().Add(20 * time.Second)
+		for {
+			updated, err := client.CoreV1().Services("native-live").Patch(ctx, service.Name, types.ApplyPatchType, body, metav1.PatchOptions{FieldManager: "native-live", Force: boolPointer(true), DryRun: []string{metav1.DryRunAll}})
+			if err == nil && updated.Annotations["policy.uds.dev/native-mutation-revision"] == "service-after" {
+				break
+			}
+			if err != nil {
+				t.Fatal("Service SSA failed", err)
+			}
+			if time.Now().After(deadline) {
+				t.Fatal("Service SSA never observed current revision", err)
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+		service.Spec.Type = corev1.ServiceTypeNodePort
+		unsafeBody, _ := json.Marshal(service)
+		_, err = client.CoreV1().Services("native-live").Patch(ctx, service.Name, types.ApplyPatchType, unsafeBody, metav1.PatchOptions{FieldManager: "native-live", Force: boolPointer(true), DryRun: []string{metav1.DryRunAll}})
+		if err == nil || !strings.Contains(err.Error(), "NodePort") {
+			t.Fatal("Service policy was bypassed by a stale marker", err)
+		}
+
 	})
 	t.Run("parameter namespace teardown", func(t *testing.T) {
 		ns, err := client.CoreV1().Namespaces().Create(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{GenerateName: "native-teardown-"}}, metav1.CreateOptions{})
