@@ -147,3 +147,15 @@ func TestCancelledLeaseContextImmediatelyRevokesReportedAuthority(t *testing.T) 
 		t.Fatal("cancelled Lease was reported as active while workers drained")
 	}
 }
+
+func TestServingCertificateExpiryMetric(t *testing.T) {
+	days := 29.5
+	h := New(Sources{CertificateDaysRemaining: func() float64 { return days }})
+	if got := values(t, h.registry)["uds_native_serving_certificate_days_remaining"]; got != days {
+		t.Fatalf("expiry metric = %v", got)
+	}
+	days = 365
+	if got := values(t, h.registry)["uds_native_serving_certificate_days_remaining"]; got != days {
+		t.Fatalf("renewal not reflected in expiry metric = %v", got)
+	}
+}

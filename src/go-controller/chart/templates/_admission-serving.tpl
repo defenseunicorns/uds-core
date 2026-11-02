@@ -3,6 +3,9 @@
 
 {{- define "uds.admission.servingData" -}}
 {{- if not (hasKey .Values "_udsControllerServingData") -}}
+{{/* The runtime owns renewal and overlapping CA publication. Reusing the
+     Secret here avoids a second, uncoordinated rotation during Helm upgrade,
+     including when the stored certificate is due for renewal or expired. */}}
 {{- $secret := lookup "v1" "Secret" .Release.Namespace "uds-controller-serving-certificate" -}}
 {{- if $secret -}}
 {{- $ca := index $secret.data "ca.crt" | default (index $secret.data "tls.crt") -}}

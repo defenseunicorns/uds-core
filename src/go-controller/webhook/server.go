@@ -88,6 +88,10 @@ func StartWebhookServer(ctx context.Context, clientset kubernetes.Interface, exe
 }
 
 func generateSelfSignedCert() (tls.Certificate, []byte, error) {
+	return generateSelfSignedCertAt(time.Now())
+}
+
+func generateSelfSignedCertAt(now time.Time) (tls.Certificate, []byte, error) {
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return tls.Certificate{}, nil, fmt.Errorf("generating key: %w", err)
@@ -107,9 +111,10 @@ func generateSelfSignedCert() (tls.Certificate, []byte, error) {
 			"uds-controller.uds-system.svc",
 			"uds-controller.uds-system.svc.cluster.local",
 		},
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().Add(365 * 24 * time.Hour),
-		KeyUsage:              x509.KeyUsageDigitalSignature,
+		NotBefore:             now.Add(-time.Minute),
+		NotAfter:              now.Add(365 * 24 * time.Hour),
+		IsCA:                  true,
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 	}

@@ -16,6 +16,19 @@ type admissionServingState struct {
 
 var admissionState atomic.Pointer[admissionServingState]
 
+// ServingCertificateDaysRemaining reports the active leaf's remaining lifetime.
+func ServingCertificateDaysRemaining() float64 {
+	state := admissionState.Load()
+	if state == nil {
+		return 0
+	}
+	pair := state.manager.certificate.Load()
+	if pair == nil || pair.Leaf == nil {
+		return 0
+	}
+	return pair.Leaf.NotAfter.Sub(state.manager.now()).Hours() / 24
+}
+
 // AdmissionReady reports this replica's actual live HTTPS serving readiness.
 // It does not infer health from the process, Deployment or desired registration.
 func AdmissionReady() bool {

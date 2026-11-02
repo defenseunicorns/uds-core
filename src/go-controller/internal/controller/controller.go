@@ -156,7 +156,7 @@ func (c *Controller) Run(ctx context.Context) error {
 	mutatingPolicies := dynamicFactory.ForResource(schema.GroupVersionResource{Group: "admissionregistration.k8s.io", Version: "v1", Resource: "mutatingadmissionpolicies"}).Informer()
 	validatingBindings := dynamicFactory.ForResource(schema.GroupVersionResource{Group: "admissionregistration.k8s.io", Version: "v1", Resource: "validatingadmissionpolicybindings"}).Informer()
 	mutatingBindings := dynamicFactory.ForResource(schema.GroupVersionResource{Group: "admissionregistration.k8s.io", Version: "v1", Resource: "mutatingadmissionpolicybindings"}).Informer()
-	health := observability.New(observability.Sources{SnapshotCurrent: func(revision string) bool {
+	health := observability.New(observability.Sources{CertificateDaysRemaining: webhook.ServingCertificateDaysRemaining, SnapshotCurrent: func(revision string) bool {
 		_, current, ready := exemptions.MetadataSnapshot(admissionresources.Object{})
 		return ready && current == revision
 	}, CachesReady: func() bool {

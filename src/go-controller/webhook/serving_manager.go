@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -22,6 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/util/retry"
 )
 
 const (
@@ -37,17 +39,19 @@ const (
 // configuration. A rolling rotation publishes overlapping trust before any
 // replica switches its leaf; the old root expires from the bundle afterwards.
 type ServingManager struct {
-	client      kubernetes.Interface
-	certificate atomic.Pointer[tls.Certificate]
-	ready       atomic.Bool
-	registered  atomic.Bool
-	now         func() time.Time
-	mu          sync.Mutex
-	lastCA      []byte
+	client            kubernetes.Interface
+	certificate       atomic.Pointer[tls.Certificate]
+	ready             atomic.Bool
+	registered        atomic.Bool
+	now               func() time.Time
+	mu                sync.Mutex
+	lastCA            []byte
+	lastExpiryWarning time.Time
 }
 
 func newServingManager(ctx context.Context, client kubernetes.Interface) (*ServingManager, error) {
-	secret, err := sharedServingSecret(ctx, client)
+	manager := &ServingManager{client: client, now: time.Now}
+	secret, err := manager.loadServingSecret(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +59,7 @@ func newServingManager(ctx context.Context, client kubernetes.Interface) (*Servi
 	if err != nil {
 		return nil, err
 	}
-	manager := &ServingManager{client: client, now: time.Now, lastCA: ca}
+	manager.lastCA = ca
 	manager.certificate.Store(&pair)
 	return manager, nil
 }
@@ -98,20 +102,31 @@ func (m *ServingManager) Run(ctx context.Context) {
 func (m *ServingManager) Synchronize(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	secret, err := sharedServingSecret(ctx, m.client)
+	// Replicas race on the same Secret and registration resourceVersions. Retry
+	// the complete observation instead of dropping all endpoints for a normal CAS
+	// conflict during renewal. Invalid identities still fail closed below.
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error { return m.synchronize(ctx) })
 	if err != nil {
 		m.ready.Store(false)
+		if errors.Is(err, errInvalidServingIdentity) {
+			m.certificate.Store(nil)
+		}
+	}
+	return err
+}
+
+func (m *ServingManager) synchronize(ctx context.Context) error {
+	secret, err := m.loadServingSecret(ctx)
+	if err != nil {
 		return err
 	}
-	pair, ca, err := decodeServingSecret(secret)
+	pair, ca, err := decodeServingSecretAt(secret, m.now())
 	if err != nil {
-		m.ready.Store(false)
 		m.certificate.Store(nil)
 		return err
 	}
 	secret, err = m.reconcileRotation(ctx, secret, ca)
 	if err != nil {
-		m.ready.Store(false)
 		return err
 	}
 	bundle := append([]byte(nil), ca...)
@@ -122,7 +137,6 @@ func (m *ServingManager) Synchronize(ctx context.Context) error {
 		bundle = append(bundle, previous...)
 	}
 	if err := m.reconcileBundles(ctx, secret, bundle); err != nil {
-		m.ready.Store(false)
 		return err
 	}
 	current := m.certificate.Load()

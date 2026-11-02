@@ -27,6 +27,8 @@ Kubernetes evaluates object-local admission checks and defaults. Go handles clus
 
 The elected controller reconciles networking, Istio resources, Envoy Gateway routes, Keycloak clients, Authservice configuration, monitoring, probes, and CA bundles. Resources retain their Package UID ownership across an operator upgrade. New Packages receive `uds.dev/finalizer`; Go also completes existing `pepr.dev/finalizer` cleanup without requiring an application change.
 
+The controller renews its shared serving certificate at two-thirds of its lifetime. It publishes the new and previous CA together before replicas switch certificates, then removes the previous CA after the overlap window. Helm preserves the existing Secret during upgrades so it cannot race runtime rotation. An expired but otherwise valid identity can recover at startup; malformed keys or mismatched identities fail closed. The `uds_native_serving_certificate_days_remaining` gauge reports the active certificate lifetime, and renewal logs warn when fewer than 30 days remain.
+
 Read the [admission contract](native-admission/README.md) for exemption union, JavaScript regex compatibility, revision checks, and controller recovery behavior.
 
 ## Installation and upgrade

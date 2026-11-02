@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -59,6 +60,10 @@ func sharedServingSecret(ctx context.Context, client kubernetes.Interface) (*cor
 }
 
 func decodeServingSecret(secret *corev1.Secret) (tls.Certificate, []byte, error) {
+	return decodeServingSecretAt(secret, time.Now())
+}
+
+func decodeServingSecretAt(secret *corev1.Secret, now time.Time) (tls.Certificate, []byte, error) {
 	pair, err := tls.X509KeyPair(secret.Data["tls.crt"], secret.Data["tls.key"])
 	if err != nil {
 		return tls.Certificate{}, nil, fmt.Errorf("invalid shared serving certificate: %w", err)
@@ -83,7 +88,7 @@ func decodeServingSecret(secret *corev1.Secret) (tls.Certificate, []byte, error)
 		}
 		intermediates.AddCert(cert)
 	}
-	if _, err := leaf.Verify(x509.VerifyOptions{DNSName: "uds-controller.uds-system.svc", Roots: roots, Intermediates: intermediates}); err != nil {
+	if _, err := leaf.Verify(x509.VerifyOptions{DNSName: "uds-controller.uds-system.svc", Roots: roots, Intermediates: intermediates, CurrentTime: now}); err != nil {
 		return tls.Certificate{}, nil, fmt.Errorf("untrusted shared serving certificate: %w", err)
 	}
 	pair.Leaf = leaf

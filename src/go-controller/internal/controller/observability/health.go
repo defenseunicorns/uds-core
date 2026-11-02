@@ -18,15 +18,16 @@ import (
 )
 
 type Sources struct {
-	CachesReady        func() bool
-	ServingReady       func() bool
-	CallbacksReady     func() bool
-	SnapshotCurrent    func(string) bool
-	Parameters         cache.Store
-	ValidatingPolicies cache.Store
-	MutatingPolicies   cache.Store
-	ValidatingBindings cache.Store
-	MutatingBindings   cache.Store
+	CachesReady              func() bool
+	ServingReady             func() bool
+	CallbacksReady           func() bool
+	SnapshotCurrent          func(string) bool
+	CertificateDaysRemaining func() float64
+	Parameters               cache.Store
+	ValidatingPolicies       cache.Store
+	MutatingPolicies         cache.Store
+	ValidatingBindings       cache.Store
+	MutatingBindings         cache.Store
 }
 
 // Health reports observed capability, never the existence of a Pepr process.
@@ -37,6 +38,7 @@ type Health struct {
 	authority                         atomic.Pointer[leaderAuthority]
 	registry                          *prometheus.Registry
 	admission, reconciliation, native *prometheus.Desc
+	certificateExpiry                 *prometheus.Desc
 	contract                          []nativeExpectation
 }
 type leaderAuthority struct{ ctx context.Context }
@@ -52,6 +54,7 @@ func New(sources Sources) *Health {
 	h.admission = prometheus.NewDesc("uds_native_admission_ready", "Actual live admission listener, synchronized trust/cache and complete callback registration readiness", nil, labels)
 	h.reconciliation = prometheus.NewDesc("uds_native_reconciliation_ready", "This replica has active writing authority and synchronized required caches", nil, labels)
 	h.native = prometheus.NewDesc("uds_native_policies_active", "Exact native policy definitions, current validation type checking, enforcing binding scopes, and the protected compiler snapshot are observed", nil, labels)
+	h.certificateExpiry = prometheus.NewDesc("uds_native_serving_certificate_days_remaining", "Days remaining until the active admission serving certificate expires", nil, labels)
 	h.registry.MustRegister(h)
 	return h
 }
@@ -65,6 +68,7 @@ func (h *Health) Describe(ch chan<- *prometheus.Desc) {
 	ch <- h.admission
 	ch <- h.reconciliation
 	ch <- h.native
+	ch <- h.certificateExpiry
 }
 func (h *Health) Collect(ch chan<- prometheus.Metric) {
 	cacheReady := h.sources.CachesReady != nil && h.sources.CachesReady()
@@ -75,6 +79,9 @@ func (h *Health) Collect(ch chan<- prometheus.Metric) {
 	leading := h.leader.Load() && (authority == nil || authority.ctx.Err() == nil)
 	ch <- prometheus.MustNewConstMetric(h.reconciliation, prometheus.GaugeValue, boolean(cacheReady && leading))
 	ch <- prometheus.MustNewConstMetric(h.native, prometheus.GaugeValue, boolean(cacheReady && h.nativeActive()))
+	if h.sources.CertificateDaysRemaining != nil {
+		ch <- prometheus.MustNewConstMetric(h.certificateExpiry, prometheus.GaugeValue, h.sources.CertificateDaysRemaining())
+	}
 }
 func boolean(value bool) float64 {
 	if value {
