@@ -21,7 +21,7 @@ Load this file before any review or writing pass and apply throughout.
 - Use proper heading hierarchy: H1 -> H2 -> H3. Never skip levels.
 - Do not use `---` horizontal rule dividers between sections. Headings provide sufficient visual separation.
 - Include descriptive alt text for all images.
-- Use relative links for internal references.
+- In published docs, use site-root routes with trailing slashes (for example, `/operations/upgrades/overview/`), not relative source-file paths or `.md`/`.mdx` filenames. Use relative file links in repository-only documentation.
 - Anchor lists with an introductory sentence. Avoid placing a list directly under a heading with no lead-in, except for structural list sections that follow a fixed convention (for example, **Prerequisites** and **Related documentation**), where the section is understood to be a list by convention and a lead-in adds noise.
 - Use second-person ("you") when addressing the reader. Avoid first-person pronouns.
 - Use "airgap" (one word). Use "the airgap" not "airgap environment".
@@ -53,7 +53,7 @@ Load this file before any review or writing pass and apply throughout.
 ## Formatting
 
 - **Bold** for UI elements, emphasis, and step titles in numbered lists.
-- *Italics* sparingly, only for introducing new terms.
+- _Italics_ sparingly, only for introducing new terms.
 - Tables for structured data comparison.
 - Numbered lists for sequential steps.
 - Bullet lists for unordered items.
@@ -63,7 +63,7 @@ Load this file before any review or writing pass and apply throughout.
 Published docs use Astro Starlight components for interactive elements. Import only the components you use:
 
 ```mdx
-import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from "@astrojs/starlight/components";
 ```
 
 - `<Steps>`: wrap numbered step lists for visual styling

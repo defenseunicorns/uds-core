@@ -94,6 +94,6 @@ The absence of the old watcher alone is not proof of a completed transition. The
 
 ## Related documentation
 
-- [Supported distributions](../../concepts/platform/supported-distributions.mdx) describes Kubernetes compatibility.
-- [Configuration changes](configuration-changes.mdx) describes applying bundle overrides.
-- [Policy engine](../../reference/operator-and-crds/policy-engine.mdx) describes admission behavior.
+- [Supported distributions](/concepts/platform/supported-distributions/) describes Kubernetes compatibility.
+- [Configuration changes](/operations/upgrades/configuration-changes/) describes applying bundle overrides.
+- [Policy engine](/reference/operator-and-crds/policy-engine/) describes admission behavior.

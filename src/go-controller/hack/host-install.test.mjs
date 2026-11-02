@@ -182,7 +182,7 @@ test("chart requires Kubernetes 1.36 and the native mutation API", { skip: !cli 
         version,
         ...(api
           ? ["--api-versions", "admissionregistration.k8s.io/v1/MutatingAdmissionPolicy"]
-          : []),
+          : ["--api-versions", "v1/Namespace"]),
       ],
       { maxBuffer: 4 * 1024 * 1024 },
     );
