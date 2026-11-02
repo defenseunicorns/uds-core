@@ -17,5 +17,5 @@ spec:
         name: "^{{ include "keycloak.fullname" . }}-[0-9]+$"
         kind: pod
       title: "Keycloak volume permission migration"
-      description: "Allows the fix-volume-permissions init container to run as root and add the CHOWN capability to migrate persistent volume ownership from uid 2000 (pre-26.6) to uid 1000 during Keycloak upgrades. Gated on `migrations.upgradePermissions` and `Release.IsUpgrade`; defaults to disabled in subsequent releases."
+      description: "Allows the fix-volume-permissions init container to run as root and add the CHOWN capability to migrate persistent volume ownership to the configured Keycloak user and group during upgrades. Enabled only when migrations.upgradePermissions is true and Helm is upgrading the release."
 {{- end }}

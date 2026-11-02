@@ -3,6 +3,8 @@
 
 {{- $domain := .Values.domain }}
 {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
+{{- $runAsUser := .Values.securityContext.runAsUser | default 1000 }}
+{{- $runAsGroup := .Values.securityContext.runAsGroup | default 1000 }}
 
 apiVersion: apps/v1
 kind: StatefulSet
@@ -83,8 +85,6 @@ spec:
               mountPath: /opt/keycloak/data
         {{- end }}
         {{- if and .Release.IsUpgrade .Values.migrations.upgradePermissions (or .Values.devMode .Values.persistence.data.enabled .Values.persistence.themes.enabled .Values.persistence.conf.enabled .Values.persistence.providers.enabled) }}
-        {{- $runtimeUID := .Values.securityContext.runAsUser | default 1000 }}
-        {{- $runtimeGID := .Values.securityContext.runAsGroup | default 1000 }}
         - name: fix-volume-permissions
           image: "{{ .Values.configImage }}"
           command:
@@ -93,16 +93,16 @@ spec:
             - |
               set -eu
               {{- if or .Values.persistence.data.enabled .Values.devMode }}
-              chown -R {{ $runtimeUID }}:{{ $runtimeGID }} /opt/keycloak/data
+              chown -R {{ $runAsUser }}:{{ $runAsGroup }} /opt/keycloak/data
               {{- end }}
               {{- if or .Values.persistence.themes.enabled .Values.devMode }}
-              chown -R {{ $runtimeUID }}:{{ $runtimeGID }} /opt/keycloak/themes
+              chown -R {{ $runAsUser }}:{{ $runAsGroup }} /opt/keycloak/themes
               {{- end }}
               {{- if .Values.persistence.conf.enabled }}
-              chown -R {{ $runtimeUID }}:{{ $runtimeGID }} /opt/keycloak/conf
+              chown -R {{ $runAsUser }}:{{ $runAsGroup }} /opt/keycloak/conf
               {{- end }}
               {{- if .Values.persistence.providers.enabled }}
-              chown -R {{ $runtimeUID }}:{{ $runtimeGID }} /opt/keycloak/providers
+              chown -R {{ $runAsUser }}:{{ $runAsGroup }} /opt/keycloak/providers
               {{- end }}
           securityContext:
             runAsUser: 0

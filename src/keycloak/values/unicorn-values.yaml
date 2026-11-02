@@ -16,5 +16,5 @@ image:
 
 migrations:
   deleteGeneratedTrustStore: true
-  # Migrate persisted files from the previous image identity (1000) on upgrade.
+  # Migrate persisted files owned by UID 1000 on upgrade.
   upgradePermissions: true
