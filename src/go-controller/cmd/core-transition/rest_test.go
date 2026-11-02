@@ -242,3 +242,31 @@ func TestPreflightRejectsOldOrUnknownVersionBeforeDiscovery(t *testing.T) {
 		})
 	}
 }
+
+func TestParameterProtectionCanaryRequiresActualPolicyDenial(t *testing.T) {
+	for _, test := range []struct {
+		name, message    string
+		status           int
+		ready, wantError bool
+	}{
+		{"binding not active", "", 200, false, false},
+		{"unrelated denial", "RBAC denied access", 403, false, true},
+		{"policy enforcing", "ValidatingAdmissionPolicy uds-native-controller-parameters denied request", 403, true, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodPatch || r.URL.Query().Get("dryRun") != "All" || !strings.HasSuffix(r.URL.Path, "/admissionparameters/uds-native-grants") {
+					t.Error("unsafe or incorrectly scoped parameter canary", r.Method, r.URL)
+				}
+				w.WriteHeader(test.status)
+				json.NewEncoder(w).Encode(object{"message": test.message})
+			}))
+			defer server.Close()
+			c := cluster{ctx: context.Background(), http: server.Client(), server: server.URL}
+			ready, err := c.parametersProtected()
+			if ready != test.ready || (err != nil) != test.wantError {
+				t.Fatal(ready, err)
+			}
+		})
+	}
+}

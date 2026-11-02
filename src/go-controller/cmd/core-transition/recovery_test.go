@@ -45,6 +45,14 @@ func testVerificationRecovery(t *testing.T, cancelDuringVerify bool) {
 		case strings.HasSuffix(r.URL.Path, "/replicasets"), r.URL.Path == "/api/v1/namespaces/pepr-system/pods":
 			write(object{"items": []any{}})
 		case strings.HasSuffix(r.URL.Path, "/admissionparameters/uds-native-grants"):
+			if r.Method == http.MethodPatch {
+				if r.URL.Query().Get("dryRun") != "All" {
+					t.Error("parameter canary was persisted")
+				}
+				w.WriteHeader(http.StatusForbidden)
+				json.NewEncoder(w).Encode(object{"message": "ValidatingAdmissionPolicy uds-native-controller-parameters denied request"})
+				return
+			}
 			write(object{"spec": object{"valid": true, "revision": revision}})
 		case strings.HasSuffix(r.URL.Path, "/clusterconfig/uds-cluster-config"):
 			write(object{"status": object{"phase": "Ready"}})
@@ -114,7 +122,7 @@ func testVerificationRecovery(t *testing.T, cancelDuringVerify bool) {
 	dir := t.TempDir()
 	contract := filepath.Join(dir, "contract.json")
 	config := filepath.Join(dir, "kubeconfig")
-	items := make([]object, 27)
+	items := make([]object, expectedAdmissionObjects)
 	for i := range items {
 		items[i] = policy
 	}

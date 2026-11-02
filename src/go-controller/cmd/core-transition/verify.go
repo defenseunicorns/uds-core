@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"reflect"
 	"strings"
@@ -61,7 +62,7 @@ func (c cluster) verify(contract string) (result error) {
 	if err = json.Unmarshal(raw, &list); err != nil {
 		return err
 	}
-	if len(list.Items) != 27 {
+	if len(list.Items) != expectedAdmissionObjects {
 		return fmt.Errorf("incomplete Core native admission contract")
 	}
 	if err = c.snapshot(); err != nil {
@@ -117,6 +118,10 @@ func (c cluster) verify(contract string) (result error) {
 				return false, fmt.Errorf("native policy %s has CEL type warnings", str(desired, "metadata", "name"))
 			}
 		}
+		protected, err := c.parametersProtected()
+		if err != nil || !protected {
+			return false, err
+		}
 		return c.canaries()
 	})
 }
@@ -165,4 +170,17 @@ func canaryCacheConverging(err error) bool {
 	return strings.Contains(message, "uds-native-") ||
 		strings.Contains(message, `admission webhook "pepr-uds-core.pepr.dev"`) ||
 		strings.Contains(message, `admission webhook "validate-pods.uds.dev"`)
+}
+
+// Definition equality and type checking do not prove that the API server's
+// admission binding cache is enforcing yet. Never retire Pepr before this probe.
+func (c cluster) parametersProtected() (bool, error) {
+	_, err := c.request(http.MethodPatch, "/apis/policy.uds.dev/v1alpha1/namespaces/uds-policy-exemptions/admissionparameters/uds-native-grants?dryRun=All", []byte(`[{"op":"replace","path":"/spec/valid","value":false}]`), false)
+	if err == nil {
+		return false, nil
+	}
+	if strings.Contains(err.Error(), "uds-native-controller-parameters") {
+		return true, nil
+	}
+	return false, fmt.Errorf("parameter protection canary failed outside the expected CEL policy: %w", err)
 }

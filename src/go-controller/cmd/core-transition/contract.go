@@ -13,6 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
+const expectedAdmissionObjects = 29
+
 // This file is generated from the actual chart, not a second hand-maintained
 // admission specification. Serving CAs are verified against the live Secret.
 func (c cluster) generateContract(chart, path string) error {
@@ -39,7 +41,7 @@ func (c cluster) generateContract(chart, path string) error {
 			items = append(items, o)
 		}
 	}
-	if len(items) != 29 {
+	if len(items) != expectedAdmissionObjects {
 		return fmt.Errorf("incomplete rendered admission contract: %d", len(items))
 	}
 	raw, err := json.MarshalIndent(object{"items": items}, "", "  ")

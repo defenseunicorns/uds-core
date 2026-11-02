@@ -176,9 +176,21 @@ func TestLiveNativeAdmission(t *testing.T) {
 		}
 	})
 	t.Run("parameter writes protected", func(t *testing.T) {
-		_, err := dc.Resource(parameterGVR).Namespace("uds-policy-exemptions").Patch(ctx, "uds-native-grants", types.MergePatchType, []byte(`{"spec":{"valid":false}}`), metav1.PatchOptions{})
-		if err == nil || !strings.Contains(err.Error(), "Only the UDS controller") {
-			t.Fatal("untrusted parameter write accepted", err)
+		deadline := time.Now().Add(20 * time.Second)
+		for {
+			// TypeChecking status precedes binding activation. Observe an actual
+			// rejection without ever persisting a permissive/invalid snapshot.
+			_, err := dc.Resource(parameterGVR).Namespace("uds-policy-exemptions").Patch(ctx, "uds-native-grants", types.MergePatchType, []byte(`{"spec":{"valid":false}}`), metav1.PatchOptions{DryRun: []string{metav1.DryRunAll}})
+			if err != nil && strings.Contains(err.Error(), "Only the UDS controller") {
+				break
+			}
+			if err != nil {
+				t.Fatal("parameter canary failed outside expected policy", err)
+			}
+			if time.Now().After(deadline) {
+				t.Fatal("parameter protection binding never enforced")
+			}
+			time.Sleep(100 * time.Millisecond)
 		}
 	})
 	t.Run("ephemeral update after revision change", func(t *testing.T) {
