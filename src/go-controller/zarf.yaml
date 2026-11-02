@@ -24,7 +24,7 @@ variables:
     default: "false"
   - name: UDS_LOG_LEVEL
     description: UDS Operator log level
-    default: debug
+    default: info
   - name: AUTHSERVICE_REDIS_URI
     description: UDS Authservice Redis URI
     default: ""
