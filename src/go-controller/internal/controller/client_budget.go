@@ -5,7 +5,6 @@ package controller
 import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
-	"time"
 )
 
 // Use one bounded budget for the controller's typed, dynamic and UDS clients.
@@ -34,6 +33,8 @@ func admissionClientConfig(base *rest.Config) *rest.Config {
 	cfg := rest.CopyConfig(base)
 	cfg.QPS, cfg.Burst = 10, 20
 	cfg.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(cfg.QPS, cfg.Burst)
-	cfg.Timeout = 10 * time.Second
+	// Watches must outlive an individual reconciliation deadline. Serving
+	// initialization and synchronization bound their own request contexts.
+	cfg.Timeout = 0
 	return cfg
 }

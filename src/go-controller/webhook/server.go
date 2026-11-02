@@ -35,7 +35,9 @@ const (
 // ValidatingWebhookConfiguration and MutatingWebhookConfiguration resources, and starts an
 // HTTPS server on port 9443. The server shuts down when ctx is cancelled.
 func StartWebhookServer(ctx context.Context, clientset kubernetes.Interface, exemptions *ExemptionStore, ws *store.WaypointStore, packageInformer cache.SharedIndexInformer) error {
-	manager, err := newServingManager(ctx, clientset)
+	servingCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	manager, err := newServingManager(servingCtx, clientset)
+	cancel()
 	if err != nil {
 		return fmt.Errorf("load admission serving identity: %w", err)
 	}

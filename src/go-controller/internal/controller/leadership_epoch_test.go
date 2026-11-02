@@ -11,7 +11,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/utils/ptr"
 	"testing"
-	"time"
 )
 
 func TestLeadershipLossDrainsWorkersWithoutCancelingAdmission(t *testing.T) {
@@ -62,8 +61,8 @@ func TestLeaseReleasePreservesReplacementLeader(t *testing.T) {
 func TestAdmissionBudgetIndependent(t *testing.T) {
 	base := controllerClientConfig(&rest.Config{})
 	serving := admissionClientConfig(base)
-	if serving.RateLimiter == base.RateLimiter || serving.Timeout != 10*time.Second {
-		t.Fatal("shared/unbounded admission client")
+	if serving.RateLimiter == base.RateLimiter || serving.Timeout != 0 {
+		t.Fatal("admission shares reconciliation budget or imposes a deadline on watch streams")
 	}
 	for base.RateLimiter.TryAccept() {
 	}
