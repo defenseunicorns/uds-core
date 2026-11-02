@@ -74,7 +74,7 @@ func (c *cluster) initializeREST(path string) error {
 	}
 	c.http = client
 	c.server = cfg.Host
-	c.kubeconfig = path
+	c.restConfig = rest.CopyConfig(cfg)
 	return nil
 }
 func (c cluster) request(method, path string, input []byte, ignoreMissing bool) ([]byte, error) {

@@ -3,6 +3,10 @@
 import importlib.util
 from pathlib import Path
 import unittest
+import os
+import subprocess
+import sys
+import tempfile
 
 spec = importlib.util.spec_from_file_location("migration", Path(__file__).with_name("migrate-falco-exemption.py"))
 migration = importlib.util.module_from_spec(spec)
@@ -44,6 +48,22 @@ class MigrationTest(unittest.TestCase):
         obj["spec"]["exemptions"][0]["policies"].append("RestrictHostPorts")
         with self.assertRaises(ValueError):
             migration.migration_patch(obj, "replacement")
+
+    def test_cli_is_found_on_path_without_a_local_uds_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "bin").mkdir()
+            cli = root / "bin" / "uds"
+            # An empty successful get is kubectl's --ignore-not-found behavior.
+            cli.write_text("#!/bin/sh\nexit 0\n")
+            cli.chmod(0o755)
+            env = dict(os.environ, PATH=str(root / "bin") + os.pathsep + os.defpath)
+            result = subprocess.run(
+                [sys.executable, str(Path(migration.__file__).resolve())],
+                cwd=directory, env=env, text=True, capture_output=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("No installed Falco exemption", result.stdout)
 
     def test_repeat_and_custom_patterns_are_unchanged(self):
         for pattern in [migration.replacement(), "my-own-pattern"]:

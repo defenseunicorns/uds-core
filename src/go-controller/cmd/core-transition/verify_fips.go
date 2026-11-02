@@ -24,7 +24,7 @@ func (c cluster) verifyFIPS() error {
 		if str(pod, "status", "phase") != "Running" {
 			return fmt.Errorf("controller pod %s is not running for FIPS verification", str(pod, "metadata", "name"))
 		}
-		raw, err := c.command(nil, "kubectl", "exec", "--namespace", "uds-system", str(pod, "metadata", "name"), "--container", "controller", "--", "/usr/local/bin/uds-controller", "--build-info")
+		raw, err := c.podBuildInfo(str(pod, "metadata", "name"))
 		if err != nil {
 			return fmt.Errorf("controller FIPS self-check: %w", err)
 		}

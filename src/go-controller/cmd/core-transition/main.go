@@ -13,6 +13,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"k8s.io/client-go/rest"
 	"net/http"
 	"os"
 	"os/exec"
@@ -32,15 +33,13 @@ type cluster struct {
 	execute         func([]byte, ...string) ([]byte, error)
 	canaryNamespace string
 	requireFIPS     bool
-	kubeconfig      string
+	restConfig      *rest.Config
+	execPod         func(string) ([]byte, error)
 }
 
 func (c cluster) command(input []byte, tools ...string) ([]byte, error) {
 	if c.execute != nil {
 		return c.execute(input, tools...)
-	}
-	if len(tools) > 0 && tools[0] == "kubectl" && c.kubeconfig != "" {
-		tools = append([]string{"kubectl", "--kubeconfig", c.kubeconfig}, tools[1:]...)
 	}
 	prefix := []string{"tools"}
 	if c.uds {
