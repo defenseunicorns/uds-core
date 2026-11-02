@@ -33,6 +33,8 @@ jobs:
     name: HA Testing
 
     strategy:
+      # Retain independent flavor results when one image or installation fails.
+      fail-fast: false
       matrix:
         flavor: [upstream, registry1, unicorn]
         test-type: [install, upgrade]

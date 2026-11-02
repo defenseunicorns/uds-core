@@ -9,7 +9,7 @@ Date: 2026-11-01
 
 ## Status
 
-Accepted. Unicorn base entitlement and digest qualification remain required before merge.
+Accepted.
 
 ## Context
 
@@ -27,14 +27,14 @@ Preflight checks the version, APIs, and RE2 migration. Installation adopts suppo
 
 Two controller image flavors remain:
 
-| Flavor   | Runtime base                                                                                     | Crypto build                    | Publication                                             |
-| -------- | ------------------------------------------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------- |
-| upstream | Public Chainguard static, pinned by digest                                                       | Static Go, CGO disabled         | ghcr.io/defenseunicorns/uds-core/controller             |
-| unicorn  | Organization-licensed Chainguard static-fips, authenticated qualification and digest pin pending | Static Go with GOFIPS140=v1.0.0 | ghcr.io/defenseunicorns/packages/private/uds/controller |
+| Flavor   | Runtime base                               | Crypto build                                                                           | Publication                                             |
+| -------- | ------------------------------------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| upstream | Public Chainguard static, pinned by digest | Static Go, CGO disabled                                                                | ghcr.io/defenseunicorns/uds-core/controller             |
+| unicorn  | Public Chainguard static, pinned by digest | Licensed Chainguard go-fips compiler, pinned by digest, with its native Go FIPS module | ghcr.io/defenseunicorns/packages/private/uds/controller |
 
-The Go-native FIPS mechanism follows the organization's [artifact-promoter build](https://github.com/defenseunicorns/artifact-promoter/blob/main/Dockerfile). Keycloak uses Java cryptography and is not a Go toolchain precedent. Unicorn binaries inspect crypto/fips140.Enabled() before starting and refuse to run with FIPS disabled. Build receipts record compiler settings, static ELF checks, input hashes, the resolved base digest, and runtime mode. The installer verifies the unicorn self-check in every running controller replica. Webhook TLS retains TLS 1.2 minimum and does not override Go's FIPS suite restrictions.
+The organization licenses Chainguard's go-fips compiler. Unicorn builds use the pinned 1.27.3 compiler image without overriding its FIPS module or enforcement defaults. The organization has no static-fips repository. Following [Chainguard's documented Go FIPS layout](https://images.chainguard.dev/directory/image/go-fips/overview), the statically linked binary runs on the minimal static base; cryptography belongs to the binary, not an alternate runtime library. The PR owner approved this builder/runtime combination after checking the authenticated image catalog.
 
-The private static-fips reference must be qualified with the existing Chainguard identity. No fallback to a non-FIPS unicorn build is allowed. Chainguard's public Go FIPS example uses its static runtime; the exact licensed static-fips entitlement is therefore an explicit merge prerequisite, not an inferred fact.
+Unicorn binaries inspect crypto/fips140.Enabled() before starting and refuse to run with FIPS disabled. Build receipts record the compiler image digest and version, module settings, static ELF checks, input hashes, runtime base digest, and runtime mode. The installer verifies the unicorn self-check in every running controller replica. Webhook TLS retains TLS 1.2 minimum and does not override Go's FIPS suite restrictions.
 
 Registry1 is being retired. Until repository-wide removal lands, registry1 packages carry the upstream controller image and make no controller FIPS or Iron Bank claim.
 

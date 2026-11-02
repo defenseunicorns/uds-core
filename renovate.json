@@ -59,7 +59,7 @@
       "customType": "regex",
       "managerFilePatterns": ["/src/go-controller/image-build\\.toml$/"],
       "matchStrings": [
-        "base = \"(?<depName>[^\"\\s]+):(?<currentValue>[^\"@\\s]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?\""
+        "(?:base|builder) = \"(?<depName>[^\"\\s]+):(?<currentValue>[^\"@\\s]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?\""
       ],
       "datasourceTemplate": "docker"
     }

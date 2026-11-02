@@ -87,6 +87,9 @@ jobs:
           mise exec go@1.27.3 -- bash src/go-controller/hack/update-codegen.sh
           git diff --exit-code -- src/go-controller/api src/go-controller/client
 
+      - name: Test explicit pre-upgrade Falco remediation
+        run: python3 -m unittest discover -s src/go-controller/hack -p test_migrate_falco.py
+
       - name: Verify default distribution ownership
         run: node --test src/go-controller/hack/distribution.test.mjs
 

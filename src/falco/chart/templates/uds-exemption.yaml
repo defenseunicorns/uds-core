@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: uds.dev/v1alpha1
@@ -17,9 +17,12 @@ spec:
         - RestrictVolumeTypes
       matcher:
         namespace: falco
-        name: "falco-(?!falcosidekick-).*" # regex to match falco but not falcosidekick
+        # RE2 expansion of falco-(?!falcosidekick-).*: require a different
+        # character or an earlier end. Preserve the exclusion without lookahead.
+        name: "falco-($|[^f]|f[^a]|fa[^l]|fal[^c]|falc[^o]|falco[^s]|falcos[^i]|falcosi[^d]|falcosid[^e]|falcoside[^k]|falcosidek[^i]|falcosideki[^c]|falcosidekic[^k]|falcosidekick[^-]|f$|fa$|fal$|falc$|falco$|falcos$|falcosi$|falcosid$|falcoside$|falcosidek$|falcosideki$|falcosidekic$|falcosidekick$).*"
       title: "falco"
-      description: "Falco requires elevated privileges and host access for runtime security monitoring.
-          As a security monitoring tool, Falco needs to run with privileged access, use host namespaces,
-          run as root, retain security capabilities, access host filesystems, and use restricted volume types
-          to effectively monitor system calls and detect security threats at the kernel level."
+      description:
+        "Falco requires elevated privileges and host access for runtime security monitoring.
+        As a security monitoring tool, Falco needs to run with privileged access, use host namespaces,
+        run as root, retain security capabilities, access host filesystems, and use restricted volume types
+        to effectively monitor system calls and detect security threats at the kernel level."
