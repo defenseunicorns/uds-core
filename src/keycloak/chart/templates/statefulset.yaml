@@ -3,8 +3,6 @@
 
 {{- $domain := .Values.domain }}
 {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
-{{- $runAsUser := .Values.securityContext.runAsUser | default 1000 }}
-{{- $runAsGroup := .Values.securityContext.runAsGroup | default 1000 }}
 
 apiVersion: apps/v1
 kind: StatefulSet
@@ -93,16 +91,16 @@ spec:
             - |
               set -eu
               {{- if or .Values.persistence.data.enabled .Values.devMode }}
-              chown -R {{ $runAsUser }}:{{ $runAsGroup }} /opt/keycloak/data
+              chown -R 1000:1000 /opt/keycloak/data
               {{- end }}
               {{- if or .Values.persistence.themes.enabled .Values.devMode }}
-              chown -R {{ $runAsUser }}:{{ $runAsGroup }} /opt/keycloak/themes
+              chown -R 1000:1000 /opt/keycloak/themes
               {{- end }}
               {{- if .Values.persistence.conf.enabled }}
-              chown -R {{ $runAsUser }}:{{ $runAsGroup }} /opt/keycloak/conf
+              chown -R 1000:1000 /opt/keycloak/conf
               {{- end }}
               {{- if .Values.persistence.providers.enabled }}
-              chown -R {{ $runAsUser }}:{{ $runAsGroup }} /opt/keycloak/providers
+              chown -R 1000:1000 /opt/keycloak/providers
               {{- end }}
           securityContext:
             runAsUser: 0
