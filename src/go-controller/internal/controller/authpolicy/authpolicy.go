@@ -278,7 +278,11 @@ func buildAllowSource(allow udstypes.Allow, namespace string) map[string]interfa
 		case udstypes.CloudMetadata:
 			cidrs = []string{"169.254.169.254/32"}
 		case udstypes.KubeAPI:
-			cidrs = config.Get().APICIDRs()
+			if allow.Direction == udstypes.Ingress {
+				cidrs = config.Get().APIIngressCIDRs()
+			} else {
+				cidrs = config.Get().APICIDRs()
+			}
 		case udstypes.KubeNodes:
 			cidrs = config.Get().NodeCIDRs()
 		case udstypes.IntraNamespace:

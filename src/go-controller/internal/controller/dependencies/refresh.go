@@ -15,6 +15,11 @@ import (
 
 func discoveryInput(obj interface{}) string {
 	switch v := obj.(type) {
+	case *corev1.Pod:
+		// Filtered watches deliver deletion after a label is removed too.
+		if v.Namespace == config.APITunnelNamespace {
+			return "tunnels"
+		}
 	case *corev1.Node:
 		return "nodes"
 	case *discoveryv1.EndpointSlice:
@@ -41,7 +46,7 @@ func discoveryInput(obj interface{}) string {
 // Initial lists produce one snapshot. Subsequent bursts coalesce, and only the
 // input sets that changed are recomputed. No Kubernetes writes run here.
 func (c *Controller) StartDiscovery(ctx context.Context) <-chan struct{} {
-	c.refresh(map[string]bool{"nodes": true, "endpoints": true, "service": true, "operator": true, "certs": true})
+	c.refresh(map[string]bool{"tunnels": true, "nodes": true, "endpoints": true, "service": true, "operator": true, "certs": true})
 	c.queue.Add("gateway")
 	done := make(chan struct{})
 	go func() {
@@ -74,6 +79,9 @@ func (c *Controller) StartDiscovery(ctx context.Context) <-chan struct{} {
 func (c *Controller) refresh(dirty map[string]bool) {
 	prior := config.Get()
 	config.Update(func(cfg *config.Config) {
+		if dirty["tunnels"] {
+			cfg.APIIngressTunnelCIDRs = APITunnelCIDRs(c.inputs.APITunnels.GetStore().List())
+		}
 		if dirty["nodes"] {
 			cfg.DiscoveredNodeCIDRs = NodeCIDRs(c.inputs.Nodes.GetStore().List())
 		}

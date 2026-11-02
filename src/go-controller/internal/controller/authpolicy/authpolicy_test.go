@@ -27,3 +27,22 @@ func TestGeneratedSourcesKeepExactCIDRsAndNamespaceIdentity(t *testing.T) {
 		t.Fatal("namespace-wide authservice selector not honored")
 	}
 }
+
+func TestAPIIngressAuthorizesUnmeshedTunnelsByExactAddress(t *testing.T) {
+	old := config.Get()
+	t.Cleanup(func() { config.Replace(old) })
+	config.Replace(config.Config{DiscoveredAPICIDRs: []string{"192.0.2.1/32"}, APIIngressTunnelCIDRs: []string{"10.244.0.99/32"}})
+	source := buildAllowSource(udstypes.Allow{Direction: udstypes.Ingress, RemoteGenerated: ptr.To(udstypes.KubeAPI)}, "uds-system")
+	if !reflect.DeepEqual(source["ipBlocks"], []interface{}{"10.244.0.99/32", "192.0.2.1/32"}) || source["namespaces"] != nil || source["principals"] != nil {
+		t.Fatal("API tunnel incorrectly requires a mesh identity", source)
+	}
+	source = buildAllowSource(udstypes.Allow{Direction: udstypes.Egress, RemoteGenerated: ptr.To(udstypes.KubeAPI)}, "uds-system")
+	if !reflect.DeepEqual(source["ipBlocks"], []interface{}{"192.0.2.1/32"}) {
+		t.Fatal("API egress was expanded", source)
+	}
+	config.Update(func(c *config.Config) { c.APIIngressTunnelCIDRs = nil })
+	source = buildAllowSource(udstypes.Allow{Direction: udstypes.Ingress, RemoteGenerated: ptr.To(udstypes.KubeAPI)}, "uds-system")
+	if !reflect.DeepEqual(source["ipBlocks"], []interface{}{"192.0.2.1/32"}) {
+		t.Fatal("deleted tunnel retained authority", source)
+	}
+}

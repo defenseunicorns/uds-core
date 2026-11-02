@@ -85,6 +85,12 @@ func buildPeers(allow udstypes.Allow, istioMode udstypes.Mode) []networkingv1.Ne
 				PodSelector: &metav1.LabelSelector{},
 			})
 		case udstypes.KubeAPI:
+			if allow.Direction == udstypes.Ingress {
+				peers = append(peers, networkingv1.NetworkPolicyPeer{
+					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": config.APITunnelNamespace}},
+					PodSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{"app": config.APITunnelApp}},
+				})
+			}
 			for _, cidr := range config.Get().APICIDRs() {
 				peers = append(peers, networkingv1.NetworkPolicyPeer{IPBlock: &networkingv1.IPBlock{CIDR: cidr}})
 			}

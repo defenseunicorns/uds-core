@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/config"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/cabundle"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/reload"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/sso"
@@ -53,7 +54,7 @@ func New(client kubernetes.Interface, inputs *Inputs, packages packageQueue) *Co
 	c.watchNamespaceLifecycle(inputs.Namespaces)
 	c.watchSharedSecrets(inputs.Authservice)
 	c.watchSharedSecrets(inputs.Blackbox)
-	for _, informer := range []cache.SharedIndexInformer{inputs.Nodes, inputs.Endpoints, inputs.APIService, inputs.Operator, inputs.Identity, inputs.Mesh, inputs.Certificates} {
+	for _, informer := range []cache.SharedIndexInformer{inputs.Nodes, inputs.Endpoints, inputs.APIService, inputs.APITunnels, inputs.Operator, inputs.Identity, inputs.Mesh, inputs.Certificates} {
 		informer.AddEventHandler(cache.ResourceEventHandlerDetailedFuncs{AddFunc: func(obj interface{}, initial bool) {
 			if !initial {
 				c.changed(obj)
@@ -149,6 +150,12 @@ func relevantChange(old, obj interface{}) bool {
 	switch next := obj.(type) {
 	case *corev1.Pod:
 		prior, ok := old.(*corev1.Pod)
+		if !ok {
+			return true
+		}
+		if next.Namespace == config.APITunnelNamespace {
+			return prior.Status.PodIP != next.Status.PodIP || !reflect.DeepEqual(prior.Status.PodIPs, next.Status.PodIPs) || prior.Status.Phase != next.Status.Phase
+		}
 		return !ok || !reflect.DeepEqual(prior.Spec, next.Spec)
 	case *corev1.ConfigMap:
 		prior, ok := old.(*corev1.ConfigMap)

@@ -45,3 +45,31 @@ func TestKubeDiscoveryDoesNotGrantAllAddresses(t *testing.T) {
 		}
 	}
 }
+
+func TestAPIIngressUsesTunnelSelectorWithoutExpandingEgress(t *testing.T) {
+	prior := config.Get()
+	t.Cleanup(func() { config.Replace(prior) })
+	config.Replace(config.Config{DiscoveredAPICIDRs: []string{"192.0.2.1/32"}, APIIngressTunnelCIDRs: []string{"10.244.0.99/32"}})
+	for _, direction := range []udstypes.Direction{udstypes.Ingress, udstypes.Egress} {
+		peers := buildPeers(udstypes.Allow{Direction: direction, RemoteGenerated: ptr.To(udstypes.KubeAPI)}, udstypes.Ambient)
+		selectors := 0
+		for _, peer := range peers {
+			if peer.IPBlock != nil && peer.IPBlock.CIDR != "192.0.2.1/32" {
+				t.Fatal("tunnel IP bypassed the Pod/namespace selector")
+			}
+			if peer.NamespaceSelector != nil {
+				selectors++
+				if peer.NamespaceSelector.MatchLabels["kubernetes.io/metadata.name"] != "kube-system" || peer.PodSelector == nil || peer.PodSelector.MatchLabels["app"] != "konnectivity-agent" {
+					t.Fatalf("unbounded tunnel peer: %+v", peer)
+				}
+			}
+		}
+		expected := 0
+		if direction == udstypes.Ingress {
+			expected = 1
+		}
+		if selectors != expected {
+			t.Fatalf("%s tunnel selectors=%d", direction, selectors)
+		}
+	}
+}

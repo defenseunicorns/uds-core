@@ -12,6 +12,9 @@ import (
 	"sync"
 )
 
+const APITunnelNamespace = "kube-system"
+const APITunnelApp = "konnectivity-agent"
+
 // CABundle holds the cluster CA bundle configuration.
 type CABundle struct {
 	DoDCerts    string
@@ -27,12 +30,13 @@ type CABundle struct {
 // Config holds the in-memory cluster configuration populated from the ClusterConfig CR.
 // Mirrors the Config type in src/pepr/operator/controllers/config/types.ts.
 type Config struct {
-	AllowPublicClients  bool
-	KeycloakClientMode  string
-	AuthserviceRedisUri string
-	DiscoveredAPICIDRs  []string
-	APIServiceCIDRs     []string
-	DiscoveredNodeCIDRs []string
+	AllowPublicClients    bool
+	KeycloakClientMode    string
+	AuthserviceRedisUri   string
+	DiscoveredAPICIDRs    []string
+	APIIngressTunnelCIDRs []string
+	APIServiceCIDRs       []string
+	DiscoveredNodeCIDRs   []string
 	// Domain is the domain all cluster services are exposed on.
 	Domain string
 	// AdminDomain is the domain for admin gateway services.
@@ -59,6 +63,7 @@ func Get() Config {
 	copy := cfg
 	copy.KubeNodeCIDRs = append([]string(nil), cfg.KubeNodeCIDRs...)
 	copy.DiscoveredAPICIDRs = slices.Clone(cfg.DiscoveredAPICIDRs)
+	copy.APIIngressTunnelCIDRs = slices.Clone(cfg.APIIngressTunnelCIDRs)
 	copy.APIServiceCIDRs = slices.Clone(cfg.APIServiceCIDRs)
 	copy.DiscoveredNodeCIDRs = slices.Clone(cfg.DiscoveredNodeCIDRs)
 	return copy
@@ -83,6 +88,15 @@ func (c Config) APICIDRs() []string {
 	sort.Strings(cidrs)
 	return slices.Compact(cidrs)
 }
+
+// APIIngressCIDRs adds only known API proxy sources. API egress stays limited to
+// the API endpoints and Service addresses.
+func (c Config) APIIngressCIDRs() []string {
+	cidrs := append(c.APICIDRs(), c.APIIngressTunnelCIDRs...)
+	sort.Strings(cidrs)
+	return slices.Compact(cidrs)
+}
+
 func (c Config) NodeCIDRs() []string {
 	if len(c.KubeNodeCIDRs) > 0 {
 		return slices.Clone(c.KubeNodeCIDRs)

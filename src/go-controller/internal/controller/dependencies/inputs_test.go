@@ -18,19 +18,26 @@ import (
 func TestDependencyListAndWatchScopes(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	client := fake.NewClientset()
+	proxy := tunnelPod()
+	tenant := proxy.DeepCopy()
+	tenant.Namespace = "tenant"
+	unrelated := proxy.DeepCopy()
+	unrelated.Name = "unrelated"
+	unrelated.Labels["app"] = "other"
+	client := fake.NewClientset(proxy, tenant, unrelated)
 	inputs := NewInputs(client)
 	controller := New(client, inputs, &packageEvents{})
 	defer controller.queue.ShutDown()
 	if err := inputs.Start(ctx); err != nil {
 		t.Fatal(err)
 	}
+	cached := inputs.APITunnels.GetStore().List()
+	if len(cached) != 1 || len(cached[0].(*corev1.Pod).Spec.Containers) != 0 {
+		t.Fatal("tunnel cache retained unrelated Pods or workload contents")
+	}
 	seen := map[string]bool{}
 	for _, action := range client.Actions() {
 		resource := action.GetResource().Resource
-		if resource == "pods" {
-			t.Fatal("dependency factory opened a Pod cache")
-		}
 		var field, label string
 		switch action := action.(type) {
 		case ktesting.ListAction:
@@ -43,6 +50,10 @@ func TestDependencyListAndWatchScopes(t *testing.T) {
 		key := resource + "/" + action.GetNamespace() + "/" + field + "/" + label
 		seen[action.GetVerb()+"/"+key] = true
 		switch resource {
+		case "pods":
+			if action.GetNamespace() != "kube-system" || label != "app=konnectivity-agent" {
+				t.Fatalf("unbounded Pod watch: %s", key)
+			}
 		case "secrets", "configmaps":
 			if label != "uds.dev/pod-reload=true" && (action.GetNamespace() == "" || field == "") {
 				t.Fatalf("unbounded configuration watch: %s", key)
@@ -58,6 +69,7 @@ func TestDependencyListAndWatchScopes(t *testing.T) {
 		}
 	}
 	for _, key := range []string{
+		"pods/kube-system//app=konnectivity-agent",
 		"secrets/uds-system/metadata.name=uds-operator-config/",
 		"secrets/keycloak/metadata.name=keycloak-client-secrets/",
 		"secrets/authservice/metadata.name=authservice-uds/",

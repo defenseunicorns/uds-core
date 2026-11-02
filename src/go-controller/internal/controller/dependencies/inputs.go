@@ -6,6 +6,7 @@ package dependencies
 import (
 	"context"
 	"fmt"
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/config"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -15,8 +16,10 @@ import (
 )
 
 // Inputs separates configuration contents from opt-in reload data and discovery.
-// No Pod informer or unfiltered Secret/ConfigMap informer is constructed.
+// Workload Pods and unfiltered Secrets/ConfigMaps are never cached. The only
+// Pod input is the namespace- and label-scoped API tunnel agent discovery.
 type Inputs struct {
+	APITunnels                                cache.SharedIndexInformer
 	Nodes, Namespaces, Endpoints, APIService  cache.SharedIndexInformer
 	Operator, Identity, Authservice, Blackbox cache.SharedIndexInformer
 	Mesh, Certificates, NetworkPolicies       cache.SharedIndexInformer
@@ -41,6 +44,8 @@ func NewInputs(client kubernetes.Interface) *Inputs {
 	i.Nodes = cluster.Core().V1().Nodes().Informer()
 	i.Namespaces = cluster.Core().V1().Namespaces().Informer()
 	i.Endpoints = factory("default", "", "kubernetes.io/service-name=kubernetes").Discovery().V1().EndpointSlices().Informer()
+	i.APITunnels = factory(config.APITunnelNamespace, "", "app="+config.APITunnelApp).Core().V1().Pods().Informer()
+	_ = i.APITunnels.SetTransform(trimAPITunnelPod)
 	i.APIService = factory("default", "kubernetes", "").Core().V1().Services().Informer()
 	i.Operator = factory("uds-system", "uds-operator-config", "").Core().V1().Secrets().Informer()
 	i.Identity = factory("keycloak", "keycloak-client-secrets", "").Core().V1().Secrets().Informer()

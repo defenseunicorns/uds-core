@@ -15,13 +15,13 @@ The Helm-owned `uds-system/uds-controller` Package does not depend on its own pr
 
 Base and derived bundles run two controller replicas by default, preserving the previous admission replica count and `system-node-critical` scheduling priority. Both replicas serve admission from synchronized caches, while one elected leader owns reconciliation. Core deployments can override the replica count without changing application packages.
 
-Each replica watches only named platform Secrets and ConfigMaps plus objects labelled `uds.dev/pod-reload=true`. API discovery watches Nodes, the `default/kubernetes` Service, and its EndpointSlices. For Flannel nodes, node discovery includes the reserved tunnel address at the start of each PodCIDR as a single-host CIDR, matching RKE2 host networking; it never grants the PodCIDR range. Pod events do not trigger Package reconciliation. Discovery updates coalesce before recomputing the changed inputs.
+Each replica watches only named platform Secrets and ConfigMaps plus objects labelled `uds.dev/pod-reload=true`. API discovery watches Nodes, the `default/kubernetes` Service, its EndpointSlices, and only `kube-system` Pods labelled `app=konnectivity-agent`. The agent cache retains metadata and address status, not workload specifications. For Flannel nodes, node discovery includes the reserved tunnel address at the start of each PodCIDR as a single-host CIDR, matching RKE2 host networking; it never grants the PodCIDR range. Workload Pod events do not trigger Package reconciliation. Discovery updates coalesce before recomputing the changed inputs.
 
 Reload watch startup does not restart existing consumers. An object newly entering the reload selector triggers a conservative reload because the filtered watch cannot supply its previous content. Package-owned resource changes target the current owner UID; shared gateway and egress repair signals require the expected platform namespace, API type, and generated resource identity. Removing ownership labels still repairs the previous owner from the watch's old object.
 
 Controller Pod templates request ambient enrollment directly so Istio captures their traffic from creation. Admission must not depend on the controller later enrolling its own namespace: that changes networking underneath live webhook connections during an upgrade. Custom Pod labels cannot disable this control-plane requirement.
 
-Core admits webhook traffic from API/node addresses and from the `kube-system` Konnectivity agent selector used by managed control planes.
+Core admits webhook traffic from API/node addresses and known Konnectivity agents. Network policies retain the agent namespace and Pod selector; mesh authorization uses the exact discovered agent IPs because unenrolled agents have no authenticated mesh namespace. Agent addresses extend API ingress only, not API egress.
 
 Core installs its declared API egress grant before applying its own isolation policies, so it cannot cut off the writer that creates those policies. Installation waits for the controller's own Package to reach its current `Ready` generation before activating replacement callbacks.
 
