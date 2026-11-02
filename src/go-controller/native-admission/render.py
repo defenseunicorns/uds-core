@@ -5,8 +5,7 @@
 """Render native Core admission; the Go webhook must be present for delegation.
 
 CEL owns simple checks, safe defaults, marker annotations and monitoring defaults.
-Go owns registry/image classification, ECMAScript numeric label conversion, prior
-JSON diagnostic arrays, JavaScript-only regex scopes and advanced CRD validation.
+Go owns registry/image classification, ECMAScript numeric label conversion, advanced CRD validation. Noncanonical diagnostic arrays reset in CEL.
 Delegation never trusts tenant-provided skip annotations or labels.
 """
 import copy
@@ -32,31 +31,20 @@ def exemption(policy):
     return "variables.resourceNamePresent && params.spec.nativeMatchers.exists(m, m.policy == " + json.dumps(policy) + " && m.namespace == request.namespace && variables.resourceName.matches(m.pattern))"
 
 
-def legacy(policy):
-    return "params.spec.legacyScopes.exists(m, m.policy == " + json.dumps(policy) + " && m.namespace == request.namespace)"
-
-
 def grant_variables(policies):
     mutation_revision = "has(object.metadata.annotations) && " + json.dumps(routing.MUTATION_REVISION) + " in object.metadata.annotations && object.metadata.annotations[" + json.dumps(routing.MUTATION_REVISION) + "] == params.spec.revision"
-    return [{"name": "resourceName", "expression": "has(object.metadata.name) && object.metadata.name != '' ? object.metadata.name : (has(object.metadata.generateName) ? object.metadata.generateName : '')"}, {"name": "resourceNamePresent", "expression": "(has(object.metadata.name) && object.metadata.name != '') || has(object.metadata.generateName)"}, {"name": "fallbackReady", "expression": "(" + routing.PRESENT + ") && object.metadata.annotations[" + json.dumps(routing.ANNOTATION) + "] == params.spec.revision"}, {"name": "mutationReady", "expression": mutation_revision}] + [{"name": "grant" + policy, "expression": exemption(policy)} for policy in policies] + [{"name": "legacy" + policy, "expression": legacy(policy)} for policy in policies]
+    return [{"name": "resourceName", "expression": "has(object.metadata.name) && object.metadata.name != '' ? object.metadata.name : (has(object.metadata.generateName) ? object.metadata.generateName : '')"}, {"name": "resourceNamePresent", "expression": "(has(object.metadata.name) && object.metadata.name != '') || has(object.metadata.generateName)"}, {"name": "mutationReady", "expression": mutation_revision}] + [{"name": "grant" + policy, "expression": exemption(policy)} for policy in policies]
 
 
 def guard(policy, validating=False):
-    legacy_expression = "variables.legacy" + policy
-    if validating:
-        legacy_expression = "(" + legacy_expression + " && variables.fallbackReady)"
-    return "variables.grant" + policy + " || " + legacy_expression
+    return "variables.grant" + policy
 
 
 def fallback_marker(policies, pod=False):
-    needs_go = " || ".join("variables.legacy" + policy for policy in policies)
-    if pod:
-        needs_go += " || variables.diagnosticNeedsGo"
+    # Remove obsolete tenant-writable delegation hints; they carry no authority.
     present = "has(object.metadata.annotations) && " + json.dumps(routing.ANNOTATION) + " in object.metadata.annotations"
-    ensure = "!has(object.metadata.annotations) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : []"
-    add = "[JSONPatch{op:'add',path:" + json.dumps(annotation_path(routing.ANNOTATION)) + ",value:params.spec.revision}]"
     remove = "[JSONPatch{op:'remove',path:" + json.dumps(annotation_path(routing.ANNOTATION)) + "}]"
-    return {"patchType": "JSONPatch", "jsonPatch": {"expression": "(" + needs_go + ") ? (" + ensure + ")+" + add + " : ((" + present + ") ? " + remove + " : [])"}}
+    return {"patchType": "JSONPatch", "jsonPatch": {"expression": "(" + present + ") ? " + remove + " : []"}}
 
 
 def mutation_revision():
@@ -76,14 +64,14 @@ def markers(policies):
         present = "has(object.metadata.annotations) && " + json.dumps(key) + " in object.metadata.annotations"
         add = "[JSONPatch{op:'add',path:" + json.dumps(annotation_path(key)) + ",value:'exempted'}]"
         remove = "[JSONPatch{op:'remove',path:" + json.dumps(annotation_path(key)) + "}]"
-        changes.append("(variables.grant" + policy + " ? " + add + " : (!variables.legacy" + policy + " && (" + present + ") ? " + remove + " : []))")
+        changes.append("(variables.grant" + policy + " ? " + add + " : ((" + present + ") ? " + remove + " : []))")
     has_grant = " || ".join("variables.grant" + policy for policy in policies)
     ensure = "(!has(object.metadata.annotations) && (" + has_grant + ") ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])"
     return {"patchType": "JSONPatch", "jsonPatch": {"expression": ensure + "+" + "+".join(changes)}}
 
 
 def defaults(policy):
-    skip = guard(policy) + " || variables.diagnosticNeedsGo || variables.identityLabels"
+    skip = guard(policy) + " || variables.identityLabels"
     if policy == "RequireNonRootUser":
         # parseInt accepts decimal prefixes, hex, whitespace and produces NaN for
         # malformed values. A plain CEL int conversion is not the same contract.
@@ -112,11 +100,11 @@ def diagnostic():
     value = "'['+(" + values + ").map(p,'\"'+p+'\"').join(',')+']'"
     key = "uds-core.pepr.dev/mutated"
     # Native CEL preserves arrays of the three known strings, including order,
-    # duplicates and JSON whitespace. Arbitrary JSON values/escapes go to Go.
-    skip = "variables.diagnosticNeedsGo || variables.identityLabels"
+    # duplicates and JSON whitespace. Other diagnostic values reset to an array.
+    skip = "variables.identityLabels"
     ensure = "!has(object.metadata.annotations) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : []"
     patch = "[JSONPatch{op:'add',path:" + json.dumps(annotation_path(key)) + ",value:" + value + "}]"
-    return {"patchType": "JSONPatch", "jsonPatch": {"expression": "(" + skip + ") || (" + values + ").size()==0 ? [] : (" + ensure + ")+" + patch}}
+    return {"patchType": "JSONPatch", "jsonPatch": {"expression": "(" + skip + ") || (" + values + ").size()==0 && !variables.diagnosticInvalid ? [] : (" + ensure + ")+" + patch}}
 
 
 def diagnostic_variables():
@@ -126,8 +114,8 @@ def diagnostic_variables():
     pattern = "^" + whitespace + "\\[" + whitespace + "(" + token + "(" + whitespace + "," + whitespace + token + ")*)?" + whitespace + "\\]" + whitespace + "$"
     return [
         {"name": "diagnosticText", "expression": "has(object.metadata.annotations) && " + key + " in object.metadata.annotations ? object.metadata.annotations[" + key + "] : ''"},
-        {"name": "diagnosticNeedsGo", "expression": "variables.diagnosticText != '' && !variables.diagnosticText.matches(" + json.dumps(pattern) + ")"},
-        {"name": "priorDiagnostic", "expression": "variables.diagnosticText == '' || variables.diagnosticNeedsGo || variables.diagnosticText.trim().matches('^\\\\[[ \\t\\r\\n]*\\\\]$') ? [] : variables.diagnosticText.trim().substring(1,variables.diagnosticText.trim().size()-1).split(',').map(p,p.trim()).map(p,p.substring(1,p.size()-1))"},
+        {"name": "diagnosticInvalid", "expression": "has(object.metadata.annotations) && " + key + " in object.metadata.annotations && !variables.diagnosticText.matches(" + json.dumps(pattern) + ")"},
+        {"name": "priorDiagnostic", "expression": "variables.diagnosticText == '' || variables.diagnosticInvalid || variables.diagnosticText.trim().matches('^\\\\[[ \\t\\r\\n]*\\\\]$') ? [] : variables.diagnosticText.trim().substring(1,variables.diagnosticText.trim().size()-1).split(',').map(p,p.trim()).map(p,p.substring(1,p.size()-1))"},
     ]
 
 
@@ -173,8 +161,6 @@ def render():
         for policy, validation in zip(policies, spec["validations"]):
             delegated = " || variables.codeIdentity" if policy in ["RequireNonRootUser", "RestrictCapabilities", "RestrictIstioUser", "RestrictIstioTrafficOverrides"] else ""
             validation["expression"] = guard(policy, True) + delegated + " || (" + validation["expression"] + ")"
-        legacy_present = " || ".join("variables.legacy" + policy for policy in policies)
-        spec["validations"].append({"expression": "!(" + legacy_present + ") || variables.fallbackReady", "message": "Legacy exemption evaluation requires the current complete Go admission callback"})
         spec["validations"].append({"expression": "variables.mutationReady == true", "message": "Admission exemption snapshot changed between mutation and validation; retry the request"})
         spec["validations"].append({"expression": "params.spec.valid == true", "message": "Admission exemption inputs are invalid; repair the protected snapshot"})
         output += pair(obj["kind"], name, spec, True)
@@ -202,7 +188,7 @@ def render():
             spec["validations"][15]["expression"] = "variables.contexts.all(x,(!has(x.runAsUser)||x.runAsUser!=1337)&&(!has(x.runAsGroup)||x.runAsGroup!=1337)&&(!has(x.fsGroup)||x.fsGroup!=1337)&&(!has(x.supplementalGroups)||!x.supplementalGroups.exists(g,g==1337)))"
         spec["matchConditions"] = [{"name": "authenticated-controller-recovery", "expression": predicate}]
         output += pair("ValidatingAdmissionPolicy", "uds-native-controller-" + category + "-recovery", spec)
-    recovery_variables = [copy.deepcopy(value) for value in variables if value["name"] in ["containers", "identityLabels", "privilegeDefault", "diagnosticText", "diagnosticNeedsGo", "priorDiagnostic"]]
+    recovery_variables = [copy.deepcopy(value) for value in variables if value["name"] in ["containers", "identityLabels", "privilegeDefault", "diagnosticText", "diagnosticInvalid", "priorDiagnostic"]]
     next(value for value in recovery_variables if value["name"] == "identityLabels")["expression"] = "false"
     recovery_mutations = [copy.deepcopy(value) for value in mutations[2:6]]
     for mutation in recovery_mutations:
@@ -212,7 +198,7 @@ def render():
         # Recovery must always apply safe defaults even with an unsupported
         # diagnostic value; no unavailable Go callback can own those defaults.
         if mutation != recovery_mutations[0]:
-            body["expression"] = body["expression"].replace("variables.diagnosticNeedsGo", "false")
+            body["expression"] = body["expression"].replace("variables.diagnosticInvalid", "false")
     output += pair("MutatingAdmissionPolicy", "uds-native-controller-pod-defaults-recovery", {"failurePolicy": "Fail", "reinvocationPolicy": "IfNeeded", "matchConstraints": rules("", ["pods"]), "matchConditions": [{"name": "authenticated-controller-recovery", "expression": bootstrap.POD}], "variables": recovery_variables, "mutations": recovery_mutations})
     rendered = {"apiVersion": "v1", "kind": "List", "items": output}
     ROOT.joinpath("policies.json").write_text(json.dumps(rendered, indent=2) + "\n")

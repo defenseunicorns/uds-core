@@ -26,5 +26,10 @@ opentofu = "1.13.2"
 # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
 "aqua:defenseunicorns/uds-cli" = "0.40.0"
 
+# renovate: datasource=github-releases depName=sigstore/cosign versioning=semver
+"github:sigstore/cosign" = "3.1.4"
+# renovate: datasource=github-releases depName=anchore/syft versioning=semver
+"github:anchore/syft" = "1.55.0"
+
 [env]
 MISE_USE_VERSIONS_HOST_TRACK = "0"

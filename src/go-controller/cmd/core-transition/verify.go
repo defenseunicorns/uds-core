@@ -46,6 +46,11 @@ func subset(want, have any) bool {
 	}
 }
 func (c cluster) verify(contract string) (result error) {
+	if c.requireFIPS {
+		if err := c.verifyFIPS(); err != nil {
+			return err
+		}
+	}
 	raw, err := os.ReadFile(contract)
 	if err != nil {
 		return err

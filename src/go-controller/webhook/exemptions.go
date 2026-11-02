@@ -7,7 +7,6 @@ import (
 	"fmt"
 	compiledexemptions "github.com/defenseunicorns/uds-core/src/go-controller/internal/admission/exemptions"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/admission/resources"
-	"log/slog"
 	"regexp"
 	"sync"
 
@@ -17,10 +16,9 @@ import (
 
 // ExemptionMatcher matches pods by namespace (exact) and name (regex).
 type ExemptionMatcher struct {
-	Namespace     string
-	Name          *regexp.Regexp
-	LegacyPattern string
-	Owner         string
+	Namespace string
+	Name      *regexp.Regexp
+	Owner     string
 }
 
 // ExemptionStore holds in-memory exemptions indexed by policy name.
@@ -31,36 +29,25 @@ type ExemptionStore struct {
 	revision string
 }
 
-// Replace atomically replaces a complete trusted informer snapshot. Invalid
-// input revokes all grants instead of leaving an older authorization active.
+// Replace compiles each matcher once and atomically installs the valid grants.
+// A historical invalid regex degrades only that matcher, identically to CEL.
 func (s *ExemptionStore) Replace(objects []*unstructured.Unstructured, allowAll bool) error {
 	parameters, err := compiledexemptions.Compile(objects, allowAll)
-	replacement := NewExemptionStore()
+	data := make(map[string][]ExemptionMatcher)
 	if err == nil {
-		for _, object := range objects {
-			owner, entries, parseErr := ParseExemptionEntries(object.Object)
-			if parseErr != nil {
-				err = parseErr
-				break
-			}
-			if setErr := replacement.Set(owner, entries); setErr != nil {
-				err = setErr
-				break
-			}
+		for _, matcher := range parameters.NativeMatchers {
+			data[matcher.Policy] = append(data[matcher.Policy], ExemptionMatcher{Namespace: matcher.Namespace, Name: matcher.Compiled, Owner: matcher.Owner})
 		}
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if err != nil {
-		s.data = make(map[string][]ExemptionMatcher)
-		s.ready = false
-		s.revision = "invalid-input"
-		return err
-	}
-	s.data = replacement.data
-	s.ready = true
+	s.data = data
+	s.ready = err == nil
 	s.revision = parameters.Revision
-	return nil
+	if err != nil {
+		s.revision = "invalid-input"
+	}
+	return err
 }
 
 func (s *ExemptionStore) Ready() bool {
@@ -78,10 +65,13 @@ func NewExemptionStore() *ExemptionStore {
 
 // Set replaces all matchers for a given owner across all policies, then adds the new ones.
 func (s *ExemptionStore) Set(owner string, entries []ExemptionEntry) error {
-	for _, entry := range entries {
-		if err := compiledexemptions.ValidatePattern(entry.Name); err != nil {
+	expressions := make([]*regexp.Regexp, len(entries))
+	for index, entry := range entries {
+		expression, err := regexp.Compile(entry.Name)
+		if err != nil {
 			return fmt.Errorf("invalid exemption %s: %w", owner, err)
 		}
+		expressions[index] = expression
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -99,20 +89,12 @@ func (s *ExemptionStore) Set(owner string, entries []ExemptionEntry) error {
 	}
 
 	// Add new entries
-	for _, entry := range entries {
-		var nameRe *regexp.Regexp
-		legacyPattern := ""
-		if compiledexemptions.IsNativePattern(entry.Name) {
-			nameRe, _ = regexp.Compile(entry.Name)
-		} else {
-			legacyPattern = entry.Name
-		}
+	for index, entry := range entries {
 		for _, policy := range entry.Policies {
 			s.data[policy] = append(s.data[policy], ExemptionMatcher{
-				Namespace:     entry.Namespace,
-				Name:          nameRe,
-				LegacyPattern: legacyPattern,
-				Owner:         owner,
+				Namespace: entry.Namespace,
+				Name:      expressions[index],
+				Owner:     owner,
 			})
 		}
 	}
@@ -192,16 +174,7 @@ func (s *ExemptionStore) snapshotEvaluator(namespace, resourceName, generateName
 			if m.Name != nil && m.Name.MatchString(name) {
 				return true
 			}
-			if m.Name == nil {
-				matched, err := compiledexemptions.MatchLegacy(m.LegacyPattern, name)
-				if err != nil {
-					slog.Error("Exemption evaluation failed", "owner", m.Owner, "error", err)
-					continue
-				}
-				if matched {
-					return true
-				}
-			}
+
 		}
 		return false
 	}, revision, ready

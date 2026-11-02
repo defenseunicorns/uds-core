@@ -40,6 +40,12 @@ test(
         res.end(JSON.stringify({ gitVersion: "v1.36.5+k3s1" }));
         return;
       }
+      if (req.url === "/apis/uds.dev/v1alpha1/exemptions?limit=500") {
+        res.end(
+          JSON.stringify({ apiVersion: "uds.dev/v1alpha1", kind: "ExemptionList", items: [] }),
+        );
+        return;
+      }
       assert.equal(req.url, "/apis/admissionregistration.k8s.io/v1");
       res.end(
         JSON.stringify({
@@ -158,7 +164,7 @@ test(
     }
     assert.equal(
       requests.length,
-      5,
+      7,
       "preflight did not use the inherited kubeconfig in each applicable deployment",
     );
   },

@@ -5,7 +5,7 @@ name: K0s Testing
 
 on:
   schedule:
-    - cron: "0 0 * * *"  # Every day at midnight UTC
+    - cron: "0 0 * * *" # Every day at midnight UTC
   pull_request:
     # Milestoning triggers release-please PRs, which GitHub Actions does not trigger on creation.
     types: [milestoned, labeled, opened, reopened, synchronize]
@@ -68,6 +68,11 @@ jobs:
           registry1Username: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
+
+      - name: Prepare source controller artifacts
+        uses: ./.github/actions/build-controller
+        with:
+          flavor: ${{ matrix.flavor }}
 
       - name: Setup K0s
         run: uds run -f tasks/setup.yaml k0s-test-cluster --no-progress

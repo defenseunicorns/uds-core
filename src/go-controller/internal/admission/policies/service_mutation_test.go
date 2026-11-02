@@ -23,7 +23,14 @@ func TestServiceMarkersDoNotParsePodMutationDiagnostics(t *testing.T) {
 	if len(patches) != 1 || patches[0].Path != "/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowNodePortServices" || patches[0].Value != "exempted" {
 		t.Fatalf("Service exemption marker changed: %v", patches)
 	}
-	if _, err := Mutate(object, false, func(string) bool { return false }); err == nil {
-		t.Fatal("Pod admission silently ignored malformed diagnostics")
+	patches, err = Mutate(object, false, func(string) bool { return true })
+	if err != nil {
+		t.Fatal(err)
 	}
+	for _, patch := range patches {
+		if patch.Path == "/metadata/annotations/uds-core.pepr.dev~1mutated" && patch.Value == "[]" {
+			return
+		}
+	}
+	t.Fatalf("malformed diagnostics were not reset: %+v", patches)
 }

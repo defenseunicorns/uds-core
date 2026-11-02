@@ -1,0 +1,23 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+name: Build source controller for integration tests
+description: Build explicitly before package creation and supply local artifact overrides.
+inputs:
+  flavor:
+    default: upstream
+    description: Package flavor; registry1 temporarily uses the upstream controller.
+runs:
+  using: composite
+  steps:
+    - name: Build and verify the source controller
+      shell: bash
+      env:
+        PACKAGE_FLAVOR: ${{ inputs.flavor }}
+      run: |
+        flavor="$PACKAGE_FLAVOR"
+        if [ "$flavor" = registry1 ]; then flavor=upstream; fi
+        arch=$(go env GOHOSTARCH)
+        image=$(bash src/go-controller/hack/image-ci.sh "$flavor" "$arch" "ci-$GITHUB_SHA")
+        python3 src/go-controller/hack/build-tools.py --output build/controller-tools
+        echo "CONTROLLER_IMAGE=$image" >> "$GITHUB_ENV"
+        echo "CONTROLLER_TOOLS_DIR=$GITHUB_WORKSPACE/build/controller-tools" >> "$GITHUB_ENV"

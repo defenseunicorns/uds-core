@@ -23,8 +23,8 @@ for field, empty in [('annotations', '{}'), ('ownerReferences', '[]'), ('finaliz
 RETIREMENT += f" && 'istio.io/use-waypoint' in {OLD_LABELS} && {OLD_LABELS}['istio.io/use-waypoint']!='' && !('istio.io/use-waypoint' in {NEW_LABELS})"
 RETIREMENT += f" && {NEW_LABELS}.all(k,k in {OLD_LABELS} && {NEW_LABELS}[k]=={OLD_LABELS}[k])"
 RETIREMENT += f" && {OLD_LABELS}.all(k,k in ['istio.io/use-waypoint','istio.io/ingress-use-waypoint'] || (k in {NEW_LABELS} && {NEW_LABELS}[k]=={OLD_LABELS}[k]))"
-VALIDATE = "request.namespace == 'uds-system' || (" + PRESENT + ") || (" + CODE_IDENTITY + ") || (" + RETIREMENT + ")"
-MUTATE = "request.namespace == 'uds-system' || (" + PRESENT + ") || (request.resource.resource == 'pods' && (" + IDENTITY + ")) || (" + RETIREMENT + ")"
+VALIDATE = "request.namespace == 'uds-system' || (" + CODE_IDENTITY + ") || (" + RETIREMENT + ")"
+MUTATE = "request.namespace == 'uds-system' || (request.resource.resource == 'pods' && (" + IDENTITY + ")) || (" + RETIREMENT + ")"
 
 
 def render():

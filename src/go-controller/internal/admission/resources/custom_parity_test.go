@@ -42,7 +42,7 @@ func TestPinnedCustomResourceValidatorParity(t *testing.T) {
 			if (message == "") != test.Allowed {
 				t.Fatalf("decision differs: Go %q, reference %q", message, test.Message)
 			}
-			// OpenSSL and Go X.509, and V8 and Goja, report parser details using
+			// OpenSSL and Go X.509, and JavaScript and RE2, report parser details using
 			// their own error text. The resource/pattern/index diagnosis is stable.
 			if strings.Contains(test.Message, "Invalid certificate at index") {
 				if !strings.HasPrefix(message, "Validation failed: ClusterConfig: Invalid certificate at index 0:") {
@@ -51,7 +51,7 @@ func TestPinnedCustomResourceValidatorParity(t *testing.T) {
 				return
 			}
 			if strings.HasPrefix(test.Message, "Invalid regular expression pattern") {
-				if !strings.HasPrefix(message, "Invalid regular expression pattern )^falco-pod*:") {
+				if !strings.Contains(message, "matcher[0]") || !strings.Contains(message, "is not a valid RE2 expression") {
 					t.Fatal(message)
 				}
 				return

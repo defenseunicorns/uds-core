@@ -5,10 +5,26 @@
       "draft": false,
       "changelog-path": "CHANGELOG.md",
       "changelog-sections": [
-        { "type": "feat", "section": "Features", "hidden": false },
-        { "type": "fix", "section": "Bug Fixes", "hidden": false },
-        { "type": "chore", "section": "Miscellaneous", "hidden": false },
-        { "type": "docs", "section": "Documentation", "hidden": false }
+        {
+          "type": "feat",
+          "section": "Features",
+          "hidden": false
+        },
+        {
+          "type": "fix",
+          "section": "Bug Fixes",
+          "hidden": false
+        },
+        {
+          "type": "chore",
+          "section": "Miscellaneous",
+          "hidden": false
+        },
+        {
+          "type": "docs",
+          "section": "Documentation",
+          "hidden": false
+        }
       ],
       "bump-minor-pre-major": true,
       "versioning": "always-bump-minor",
@@ -34,7 +50,10 @@
         ".github/bundles/eks/bundle.uds.hcl",
         ".github/bundles/aks/bundle.uds.hcl",
         "tasks/deploy.yaml",
-        "tasks/publish.yaml"
+        "tasks/publish.yaml",
+        "src/go-controller/zarf.yaml",
+        "src/go-controller/values/upstream.yaml",
+        "src/go-controller/values/unicorn.yaml"
       ]
     }
   }

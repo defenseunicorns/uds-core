@@ -98,12 +98,12 @@ func TestNativeStaticCallbackRouting(t *testing.T) {
 		{"ordinary Pod stays native", "app", "pods", nil, false, false},
 		{"ordinary Service stays native", "app", "services", nil, false, false},
 		{"protected namespace complete fallback", "uds-system", "pods", nil, true, true},
-		{"forged routing asks more enforcement", "app", "pods", func(o map[string]interface{}) {
+		{"obsolete routing has no effect", "app", "pods", func(o map[string]interface{}) {
 			o["metadata"].(map[string]interface{})["annotations"] = map[string]interface{}{routing["annotation"]: "forged"}
-		}, true, true},
-		{"stale Service routing asks more enforcement", "app", "services", func(o map[string]interface{}) {
+		}, false, false},
+		{"stale Service routing has no effect", "app", "services", func(o map[string]interface{}) {
 			o["metadata"].(map[string]interface{})["annotations"] = map[string]interface{}{routing["annotation"]: "stale"}
-		}, true, true},
+		}, false, false},
 		{"empty routing cannot delegate", "app", "pods", func(o map[string]interface{}) {
 			o["metadata"].(map[string]interface{})["annotations"] = map[string]interface{}{routing["annotation"]: ""}
 		}, false, false},
@@ -145,33 +145,24 @@ func TestNativeStaticCallbackRouting(t *testing.T) {
 	}
 }
 
-func TestNativeLegacyRevisionBarrier(t *testing.T) {
-	expressions, _ := nativeExpressions(t, "uds-native-pod-profile")
-	for _, marker := range []string{"", "stale", "current"} {
-		t.Run(marker, func(t *testing.T) {
-			variables := map[string]interface{}{}
-			activation := map[string]interface{}{"object": map[string]interface{}{"metadata": map[string]interface{}{"annotations": map[string]interface{}{"policy.uds.dev/native-fallback": marker}}}, "params": map[string]interface{}{"spec": map[string]interface{}{"revision": "current"}}, "variables": variables}
-			variables["fallbackReady"] = evalNative(t, expressions["fallbackReady"], activation)
-			for name := range expressions {
-				if strings.HasPrefix(name, "legacy") {
-					variables[name] = name == "legacyDisallowPrivileged"
-				}
-			}
-			if got := evalNative(t, expressions["validation:Legacy exemption evaluation requires the current complete Go admission callback"], activation); got != (marker == "current") {
-				t.Fatalf("legacy delegation with %q got %v", marker, got)
-			}
-		})
+func TestNativeHasNoLegacyDelegation(t *testing.T) {
+	raw, err := os.ReadFile("../native-admission/policies.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(raw), "legacyScopes") || strings.Contains(string(raw), "fallbackReady") {
+		t.Fatal("obsolete regex delegation remains")
 	}
 }
 
 func TestNativeDiagnosticCompatibility(t *testing.T) {
 	expressions, _ := nativeExpressions(t, "uds-native-defaults-profile")
 	cases := []struct {
-		text       string
-		goRequired bool
-		values     []string
+		text    string
+		invalid bool
+		values  []string
 	}{
-		{"", false, []string{}},
+		{"", true, []string{}},
 		{"[]", false, []string{}},
 		{" [ \t\r\n ] ", false, []string{}},
 		{`["drop-all-capabilities","disallow-privileged","drop-all-capabilities"]`, false, []string{"drop-all-capabilities", "disallow-privileged", "drop-all-capabilities"}},
@@ -187,13 +178,13 @@ func TestNativeDiagnosticCompatibility(t *testing.T) {
 		t.Run(test.text, func(t *testing.T) {
 			variables := map[string]interface{}{}
 			activation := map[string]interface{}{"object": map[string]interface{}{"metadata": map[string]interface{}{"annotations": map[string]interface{}{"uds-core.pepr.dev/mutated": test.text}}}, "variables": variables}
-			for _, name := range []string{"diagnosticText", "diagnosticNeedsGo", "priorDiagnostic"} {
+			for _, name := range []string{"diagnosticText", "diagnosticInvalid", "priorDiagnostic"} {
 				variables[name] = evalNative(t, expressions[name], activation)
 			}
-			if variables["diagnosticNeedsGo"] != test.goRequired {
-				t.Fatalf("Go required: got %v want %t", variables["diagnosticNeedsGo"], test.goRequired)
+			if variables["diagnosticInvalid"] != test.invalid {
+				t.Fatalf("Invalid diagnostic: got %v want %t", variables["diagnosticInvalid"], test.invalid)
 			}
-			if !test.goRequired {
+			if !test.invalid {
 				raw, _ := json.Marshal(variables["priorDiagnostic"])
 				want, _ := json.Marshal(test.values)
 				if string(raw) != string(want) {
@@ -213,7 +204,7 @@ func TestNativeDiagnosticOutputMatchesCompleteGo(t *testing.T) {
 		t.Fatal("generated diagnostic value is absent")
 	}
 	valueExpression := patch[start+len("value:") : end]
-	for _, annotation := range []string{"", "[]", " [\r\n] ", `["drop-all-capabilities","disallow-privileged","drop-all-capabilities"]`, ` [ "require-non-root-user" ] `} {
+	for _, annotation := range []string{"", "[]", " [\r\n] ", `["drop-all-capabilities","disallow-privileged","drop-all-capabilities"]`, ` [ "require-non-root-user" ] `, "null", "[1]", "{bad}"} {
 		for _, alreadyDefaulted := range []bool{false, true} {
 			t.Run(annotation, func(t *testing.T) {
 				container := map[string]interface{}{"name": "app"}
@@ -223,10 +214,10 @@ func TestNativeDiagnosticOutputMatchesCompleteGo(t *testing.T) {
 				object := map[string]interface{}{"metadata": map[string]interface{}{"annotations": map[string]interface{}{"uds-core.pepr.dev/mutated": annotation}}, "spec": map[string]interface{}{"containers": []interface{}{container}}}
 				variables := map[string]interface{}{"privilegeDefault": !alreadyDefaulted, "identityLabels": false}
 				for _, policy := range []string{"DisallowPrivileged", "RequireNonRootUser", "DropAllCapabilities"} {
-					variables["grant"+policy], variables["legacy"+policy] = false, false
+					variables["grant"+policy] = false
 				}
 				activation := map[string]interface{}{"object": object, "variables": variables}
-				for _, name := range []string{"diagnosticText", "diagnosticNeedsGo", "priorDiagnostic"} {
+				for _, name := range []string{"diagnosticText", "diagnosticInvalid", "priorDiagnostic"} {
 					variables[name] = evalNative(t, expressions[name], activation)
 				}
 				native := evalNative(t, valueExpression, activation)

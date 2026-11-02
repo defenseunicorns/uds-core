@@ -65,13 +65,13 @@ func ValidateExemption(object Object, allowAll bool) string {
 			}
 		}
 	}
-	for _, entry := range entries {
+	for index, entry := range entries {
 		pattern := entry.Object("matcher").String("name")
 		if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
 			return fmt.Sprintf("Invalid matcher name %q: please remove the leading and trailing slashes", pattern)
 		}
 		if err := exemptions.ValidatePattern(pattern); err != nil {
-			return fmt.Sprintf("Invalid regular expression pattern %s: %s", pattern, err)
+			return fmt.Sprintf("Exemption %s/%s matcher[%d] pattern %q is not a valid RE2 expression: %s; syntax: %s", metadata.String("namespace"), metadata.String("name"), index, pattern, err, exemptions.RE2Syntax)
 		}
 	}
 	return ""

@@ -33,6 +33,9 @@ func (c cluster) generateContract(chart, path string) error {
 		}
 		kind := str(o, "kind")
 		if strings.HasSuffix(kind, "AdmissionPolicy") || strings.HasSuffix(kind, "AdmissionPolicyBinding") || strings.HasSuffix(kind, "WebhookConfiguration") {
+			if strings.HasSuffix(kind, "WebhookConfiguration") {
+				stripServingCA(o)
+			}
 			items = append(items, o)
 		}
 	}

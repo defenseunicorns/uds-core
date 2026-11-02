@@ -67,7 +67,13 @@ func values(t *testing.T, registry *prometheus.Registry) map[string]float64 {
 	out := map[string]float64{}
 	for _, family := range series {
 		out[family.GetName()] = family.Metric[0].GetGauge().GetValue()
-		if family.Metric[0].Label[0].GetValue() != "go-native" {
+		found := false
+		for _, label := range family.Metric[0].Label {
+			if label.GetName() == "implementation" && label.GetValue() == "go-native" {
+				found = true
+			}
+		}
+		if !found {
 			t.Fatal("implementation label missing")
 		}
 	}
@@ -77,7 +83,7 @@ func values(t *testing.T, registry *prometheus.Registry) map[string]float64 {
 func TestLiveCapabilityLossReportsZero(t *testing.T) {
 	h, ready, serving, registered := healthy(t)
 	for name, value := range values(t, h.registry) {
-		if value != 1 {
+		if name != "uds_controller_fips_enabled" && value != 1 {
 			t.Fatal(name, value)
 		}
 	}

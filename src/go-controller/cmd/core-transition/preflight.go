@@ -48,5 +48,5 @@ func (c cluster) preflight() error {
 			return fmt.Errorf("Core requires native admission v1 APIs (Kubernetes 1.36 or newer); missing %s; the existing operator has not been stopped", name)
 		}
 	}
-	return nil
+	return c.preflightExemptions()
 }

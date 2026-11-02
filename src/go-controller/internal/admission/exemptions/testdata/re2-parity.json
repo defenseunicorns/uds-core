@@ -1,0 +1,274 @@
+{
+  "cases": [
+    {
+      "pattern": "prometheus",
+      "name": "kube-prometheus-stack-operator",
+      "generateName": "",
+      "matched": true
+    },
+    {
+      "pattern": "prometheus",
+      "name": "prometheus",
+      "generateName": "",
+      "matched": true
+    },
+    {
+      "pattern": "prometheus",
+      "name": "job-123",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "prometheus",
+      "name": "",
+      "generateName": "task-",
+      "matched": false
+    },
+    {
+      "pattern": "prometheus",
+      "name": "",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "^prometheus$",
+      "name": "kube-prometheus-stack-operator",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "^prometheus$",
+      "name": "prometheus",
+      "generateName": "",
+      "matched": true
+    },
+    {
+      "pattern": "^prometheus$",
+      "name": "job-123",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "^prometheus$",
+      "name": "",
+      "generateName": "task-",
+      "matched": false
+    },
+    {
+      "pattern": "^prometheus$",
+      "name": "",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "^job-.*",
+      "name": "kube-prometheus-stack-operator",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "^job-.*",
+      "name": "prometheus",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "^job-.*",
+      "name": "job-123",
+      "generateName": "",
+      "matched": true
+    },
+    {
+      "pattern": "^job-.*",
+      "name": "",
+      "generateName": "task-",
+      "matched": false
+    },
+    {
+      "pattern": "^job-.*",
+      "name": "",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "worker$",
+      "name": "kube-prometheus-stack-operator",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "worker$",
+      "name": "prometheus",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "worker$",
+      "name": "job-123",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "worker$",
+      "name": "",
+      "generateName": "task-",
+      "matched": false
+    },
+    {
+      "pattern": "worker$",
+      "name": "",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "\\d+",
+      "name": "kube-prometheus-stack-operator",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "\\d+",
+      "name": "prometheus",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "\\d+",
+      "name": "job-123",
+      "generateName": "",
+      "matched": true
+    },
+    {
+      "pattern": "\\d+",
+      "name": "",
+      "generateName": "task-",
+      "matched": false
+    },
+    {
+      "pattern": "\\d+",
+      "name": "",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "\\w+",
+      "name": "kube-prometheus-stack-operator",
+      "generateName": "",
+      "matched": true
+    },
+    {
+      "pattern": "\\w+",
+      "name": "prometheus",
+      "generateName": "",
+      "matched": true
+    },
+    {
+      "pattern": "\\w+",
+      "name": "job-123",
+      "generateName": "",
+      "matched": true
+    },
+    {
+      "pattern": "\\w+",
+      "name": "",
+      "generateName": "task-",
+      "matched": true
+    },
+    {
+      "pattern": "\\w+",
+      "name": "",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "\\s",
+      "name": "kube-prometheus-stack-operator",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "\\s",
+      "name": "prometheus",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "\\s",
+      "name": "job-123",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "\\s",
+      "name": "",
+      "generateName": "task-",
+      "matched": false
+    },
+    {
+      "pattern": "\\s",
+      "name": "",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "",
+      "name": "kube-prometheus-stack-operator",
+      "generateName": "",
+      "matched": true
+    },
+    {
+      "pattern": "",
+      "name": "prometheus",
+      "generateName": "",
+      "matched": true
+    },
+    {
+      "pattern": "",
+      "name": "job-123",
+      "generateName": "",
+      "matched": true
+    },
+    {
+      "pattern": "",
+      "name": "",
+      "generateName": "task-",
+      "matched": true
+    },
+    {
+      "pattern": "",
+      "name": "",
+      "generateName": "",
+      "matched": true
+    },
+    {
+      "pattern": "(job|task)-[0-9]+",
+      "name": "kube-prometheus-stack-operator",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "(job|task)-[0-9]+",
+      "name": "prometheus",
+      "generateName": "",
+      "matched": false
+    },
+    {
+      "pattern": "(job|task)-[0-9]+",
+      "name": "job-123",
+      "generateName": "",
+      "matched": true
+    },
+    {
+      "pattern": "(job|task)-[0-9]+",
+      "name": "",
+      "generateName": "task-",
+      "matched": false
+    },
+    {
+      "pattern": "(job|task)-[0-9]+",
+      "name": "",
+      "generateName": "",
+      "matched": false
+    }
+  ]
+}

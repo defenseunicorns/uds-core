@@ -71,6 +71,12 @@ jobs:
         with:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Prepare source controller artifacts
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/build-controller
+        with:
+          flavor: upstream
+
       - name: Deploy K3d + Latest UDS Core Slim Bundle
         if: ${{ github.event_name != 'pull_request' }}
         run: |

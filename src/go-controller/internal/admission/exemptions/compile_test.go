@@ -5,7 +5,6 @@ package exemptions
 
 import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"reflect"
 	"testing"
 )
 
@@ -19,27 +18,6 @@ func grant(uid, namespace, pattern, kind, policy string) *unstructured.Unstructu
 	}}
 }
 
-func TestLegacyRevisionTracksPatternsAndRetainedOwners(t *testing.T) {
-	first := grant("a", ProtectedNamespace, "(?<=job-)worker", "pod", "RequireNonRootUser")
-	second := grant("b", ProtectedNamespace, "(?<=job-)worker", "pod", "RequireNonRootUser")
-	compile := func(objects ...*unstructured.Unstructured) Parameters {
-		t.Helper()
-		parameters, err := Compile(objects, false)
-		if err != nil {
-			t.Fatal(err)
-		}
-		return parameters
-	}
-	both, reordered, retained := compile(first, second), compile(second, first), compile(second)
-	if both.Revision != reordered.Revision || both.Revision == retained.Revision || !reflect.DeepEqual(both.LegacyScopes, retained.LegacyScopes) {
-		t.Fatal("legacy OR-union revision ignored owner revocation or depended on input order")
-	}
-	changed := compile(grant("b", ProtectedNamespace, "(?<=task-)worker", "pod", "RequireNonRootUser"))
-	if changed.Revision == retained.Revision || !reflect.DeepEqual(changed.LegacyScopes, retained.LegacyScopes) {
-		t.Fatal("legacy expression changed without a new authority revision")
-	}
-}
-
 func TestCompileUnionAndRevocation(t *testing.T) {
 	first := grant("a", ProtectedNamespace, "^one-.*$", "pod", "DisallowPrivileged")
 	second := grant("b", ProtectedNamespace, "^two-.*$", "pod", "DisallowPrivileged")
@@ -47,7 +25,7 @@ func TestCompileUnionAndRevocation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(before.NativeMatchers) != 2 || len(before.LegacyScopes) != 0 {
+	if len(before.NativeMatchers) != 2 {
 		t.Fatal("grants did not form a native union")
 	}
 	after, err := Compile([]*unstructured.Unstructured{second}, false)
@@ -63,15 +41,38 @@ func TestCompileUnionAndRevocation(t *testing.T) {
 	}
 }
 
-func TestCompilePreservesLegacyRegexBoundary(t *testing.T) {
-	for _, pattern := range []string{"(?<=job-)worker", `(job)-\1`, `\p{L}+`} {
-		compiled, err := Compile([]*unstructured.Unstructured{grant("a", ProtectedNamespace, pattern, "pod", "RequireNonRootUser")}, false)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(compiled.NativeMatchers) != 0 || len(compiled.LegacyScopes) != 1 {
-			t.Fatalf("%q was silently reinterpreted as native", pattern)
-		}
+func TestCompileDegradesOnlyInvalidMatcher(t *testing.T) {
+	good := grant("good", ProtectedNamespace, "prometheus", "pod", "RequireNonRootUser")
+	bad := grant("bad", ProtectedNamespace, "(?<=job-)worker", "pod", "RequireNonRootUser")
+	entries, _, _ := unstructured.NestedSlice(good.Object, "spec", "exemptions")
+	invalid, _, _ := unstructured.NestedSlice(bad.Object, "spec", "exemptions")
+	entries = append(entries, invalid...)
+	_ = unstructured.SetNestedSlice(good.Object, entries, "spec", "exemptions")
+	result, err := Compile([]*unstructured.Unstructured{good}, false)
+	if err != nil || !result.Valid || len(result.NativeMatchers) != 1 || len(result.InvalidMatchers) != 1 {
+		t.Fatalf("snapshot = %+v, %v", result, err)
+	}
+	if result.InvalidMatchers[0].Index != 1 || result.InvalidMatchers[0].Name != "good" {
+		t.Fatal("missing offending matcher identity")
+	}
+	if !result.NativeMatchers[0].Compiled.MatchString("kube-prometheus-stack-operator") {
+		t.Fatal("matcher acquired implicit anchors")
+	}
+}
+func TestCompileSharesExpressionAcrossPolicies(t *testing.T) {
+	object := grant("a", ProtectedNamespace, "", "pod", "DisallowPrivileged")
+	entries, _, _ := unstructured.NestedSlice(object.Object, "spec", "exemptions")
+	entries[0].(map[string]interface{})["policies"] = []interface{}{"DisallowPrivileged", "RequireNonRootUser"}
+	_ = unstructured.SetNestedSlice(object.Object, entries, "spec", "exemptions")
+	result, err := Compile([]*unstructured.Unstructured{object}, false)
+	if err != nil || len(result.NativeMatchers) != 2 {
+		t.Fatalf("%+v %v", result, err)
+	}
+	if result.NativeMatchers[0].Compiled != result.NativeMatchers[1].Compiled {
+		t.Fatal("compiled per policy instead of per matcher")
+	}
+	if !result.NativeMatchers[0].Compiled.MatchString("") {
+		t.Fatal("empty pattern must match everything")
 	}
 }
 
@@ -79,7 +80,6 @@ func TestCompileTrustKindAndMalformedInput(t *testing.T) {
 	for _, object := range []*unstructured.Unstructured{
 		grant("a", "tenant", ".*", "pod", "DisallowPrivileged"),
 		grant("a", ProtectedNamespace, ".*", "service", "DisallowPrivileged"),
-		grant("a", ProtectedNamespace, "[", "pod", "DisallowPrivileged"),
 		grant("a", ProtectedNamespace, ".*", "pod", "Unknown"),
 	} {
 		if _, err := Compile([]*unstructured.Unstructured{object}, false); err == nil {
@@ -87,7 +87,7 @@ func TestCompileTrustKindAndMalformedInput(t *testing.T) {
 		}
 	}
 	empty, err := Compile(nil, false)
-	if err != nil || empty.NativeMatchers == nil || empty.LegacyScopes == nil {
+	if err != nil || empty.NativeMatchers == nil {
 		t.Fatal("empty snapshot must remain an explicit enforcing input")
 	}
 }

@@ -25,9 +25,7 @@
           "description": "Policy exemptions"
         }
       },
-      "required": [
-        "exemptions"
-      ],
+      "required": ["exemptions"],
       "title": "Spec"
     },
     "ExemptionElement": {
@@ -54,10 +52,7 @@
           "description": "title to give the exemption for reporting purposes"
         }
       },
-      "required": [
-        "matcher",
-        "policies"
-      ],
+      "required": ["matcher", "policies"],
       "title": "ExemptionElement"
     },
     "Matcher": {
@@ -68,25 +63,20 @@
           "$ref": "#/definitions/Kind"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "RE2 regular expression matched as an unanchored search against name, or generateName when\nname is empty. Empty patterns match every name. Lookaround and backreferences are\nunsupported. Use (?P<name>...) for named groups. Syntax:\nhttps://github.com/google/re2/wiki/Syntax"
         },
         "namespace": {
           "type": "string"
         }
       },
-      "required": [
-        "name",
-        "namespace"
-      ],
+      "required": ["name", "namespace"],
       "title": "Matcher",
       "description": "Resource to exempt (Regex allowed for name)"
     },
     "Kind": {
       "type": "string",
-      "enum": [
-        "pod",
-        "service"
-      ],
+      "enum": ["pod", "service"],
       "title": "Kind"
     },
     "Policy": {

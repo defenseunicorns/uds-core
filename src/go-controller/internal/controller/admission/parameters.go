@@ -81,11 +81,11 @@ func (c *Compiler) Publish(ctx context.Context) error {
 		// Revoke stale authority even when a new input cannot be compiled.
 		// Bindings reject this explicitly invalid snapshot; an error must not
 		// leave an older exemption revision active indefinitely.
-		parameters = compiled.Parameters{NativeMatchers: []compiled.Matcher{}, LegacyScopes: []compiled.LegacyScope{}, Revision: "invalid-input", Valid: false, AllowAllNamespaces: config.Get().AllowAllNSExemptions}
+		parameters = compiled.Parameters{NativeMatchers: []compiled.Matcher{}, Revision: "invalid-input", Valid: false, AllowAllNamespaces: config.Get().AllowAllNSExemptions}
 	}
 	// Server-side apply replaces the entire union owned by this one compiler.
 	// Empty is a real enforcing snapshot; absence is never treated as a grant.
-	body := map[string]interface{}{"apiVersion": "policy.uds.dev/v1alpha1", "kind": "AdmissionParameters", "metadata": map[string]interface{}{"name": "uds-native-grants", "namespace": compiled.ProtectedNamespace}, "spec": parameters}
+	body := map[string]interface{}{"apiVersion": "policy.uds.dev/v1alpha1", "kind": "AdmissionParameters", "metadata": map[string]interface{}{"name": "uds-native-grants", "namespace": compiled.ProtectedNamespace, "annotations": map[string]interface{}{"policy.uds.dev/invalid-matchers": invalidMatcherAnnotation(parameters.InvalidMatchers)}}, "spec": parameters}
 	raw, err := json.Marshal(body)
 	if err != nil {
 		return err
@@ -94,6 +94,9 @@ func (c *Compiler) Publish(ctx context.Context) error {
 	_, err = c.client.Resource(parameterGVR).Namespace(compiled.ProtectedNamespace).Patch(ctx, "uds-native-grants", types.ApplyPatchType, raw, metav1.PatchOptions{FieldManager: "uds-native-admission-compiler", Force: &force})
 	if err != nil {
 		return fmt.Errorf("publish native admission input: %w", err)
+	}
+	if compileErr == nil {
+		return c.reportInvalidMatchers(ctx, parameters.InvalidMatchers)
 	}
 	return compileErr
 }

@@ -5,6 +5,7 @@ Thank you for your interest in contributing to Defense Unicorns UDS Core! This d
 ## How You Can Contribute
 
 We appreciate contributions in several forms:
+
 - **Report Issues or Bugs**: If you encounter a problem, feel free to open a [GitHub issue](https://github.com/defenseunicorns/uds-core/issues/new?template=bug_report.md). Include details on your environment, how to reproduce the bug, and any relevant logs or screenshots. This helps us improve UDS Core’s stability.
 - **Suggest Enhancements**: Have an idea for a new feature or an improvement? You can [open an issue](https://github.com/defenseunicorns/uds-core/issues/new?template=feature_request.md) to propose it. For significant feature ideas, please start with an issue only to gather feedback before spending time on code. This ensures the idea aligns with our project goals and roadmap, which is primarily driven by internal needs (we’ll evaluate suggestions for alignment).
 - **Submit Code Changes (Pull Requests)**: You can contribute fixes, minor enhancements, or even new features via pull requests (PRs). We especially welcome contributions that fix bugs or improve performance/stability. If you plan to work on something, it’s a good idea to open an issue first to ensure you are aligned with the maintainers.
@@ -153,6 +154,7 @@ We apply these principles to all User Stories and contributions:
 ### Submitting a Pull Request
 
 When opening a pull request make sure to follow the below guidelines to ensure there aren't delays in reviews of your contribution:
+
 - Ensure that the title of the PR follows [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/) syntax. Typically PRs will fall into the categories of `fix:` (bug fixes), `feat:` (new features), `chore:` (dependency/other updates), or `docs:` (documentation changes).
 - Update the PR description adding a summary of changes, linking related issues, and noting the type of change. If appropriate, also make sure to fill out the "Steps to Validate" section noting how you tested your change, as well as any test coverage you added.
 - Ensure all CI checks pass, and make any necessary changes if they do not. See the note below if you are an external contributor (changes from a fork outside of the `defenseunicorns` GitHub organization).
@@ -170,3 +172,20 @@ When opening a pull request make sure to follow the below guidelines to ensure t
 **License Notice**: UDS Core is dual licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) and the Defense Unicorns Commercial License (see [LICENSING.md](./LICENSING.md) for details). By contributing to this project, you agree that your contributions will be released under the same license. If you’re not comfortable with that (for example, if your employer has restrictions), please consult the necessary parties before submitting code. We do not require a separate Contributor License Agreement (CLA) at this time; contributions are accepted under this license via the act of contributing.
 
 **Support and Contact**: If you have questions about the contribution process or need guidance on something, you can open a GitHub issue. Because we’re not running a dedicated community forum or chat for UDS Core, the best way to get help is through the repository’s issue tracker. We’ll do our best to respond in a reasonable time. Remember that maintainers are likely juggling multiple responsibilities, so please be patient.
+
+## Native controller images
+
+Ordinary Zarf package creation downloads the controller image and host transition helpers from published releases. It does not require Go, Docker, or buildx. Upstream uses the public Chainguard static image; unicorn requires organization registry access and a FIPS-enabled controller. Registry1 temporarily uses the upstream controller while that flavor is retired.
+
+To develop the controller, use the Go version in mise.toml and go.mod, Python 3.11 or newer, Docker with buildx, and the pinned UDS CLI. Build explicitly before packaging:
+
+```bash
+python3 src/go-controller/hack/build-image.py --flavor upstream --architecture amd64 --tag dev --output build/controller/upstream/amd64
+python3 src/go-controller/hack/build-tools.py --output build/controller-tools
+CONTROLLER_IMAGE=ghcr.io/defenseunicorns/uds-core/controller:dev-amd64 \
+  CONTROLLER_TOOLS_DIR="$PWD/build/controller-tools" uds run slim-dev
+```
+
+Use the architecture of your development cluster. The override changes a temporary packaging copy, not your checkout or deployment variables. Integration workflows use the same explicit source-build path.
+
+The frozen Pepr oracle runs only on manual workflow dispatch and requires Python 3.12 or newer for safe archive extraction. Current controller behavior is qualified by Go unit/race tests, CEL differential tests, and end-to-end installs/upgrades. RE2 matching and diagnostic canonicalization intentionally differ from historical JavaScript-only behavior.

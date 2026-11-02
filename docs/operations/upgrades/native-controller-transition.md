@@ -31,6 +31,25 @@ Review the controller chart values when migrating overrides. Pepr-specific field
 
 The host helper uses the same Kubernetes configuration as Zarf, including `KUBECONFIG` and credential plugins. It does not copy administrator credentials. Deployment hosts support Linux and macOS on amd64 and arm64, require a writable working directory, and must permit execution in Zarf's temporary directory. Use Zarf's `--tmpdir` option if the default temporary mount uses `noexec`.
 
+## Migrate exemption patterns before writer handoff
+
+`Exemption.spec.exemptions[].matcher.name` now uses RE2. This is an intentional minor breaking change. The installer checks every existing `Exemption` before draining Pepr and reports the namespace, exemption name, matcher index, and incompatible pattern. Fix every reported pattern while Pepr still runs, then rerun the package.
+
+Matching remains an unanchored search. Use `^` and `$` only when you need a whole-name match. An empty pattern continues to match every name in the specified namespace. If `name` is empty, matching uses `generateName`.
+
+Review patterns using these features:
+
+| Feature                            | Migration                                                                                                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Lookahead or lookbehind            | Rewrite using separate matchers or a broader pattern. Matchers combine with OR; they cannot reproduce every negative lookaround. Review the resulting grant scope. |
+| Backreferences such as `(app)-\\1` | Spell out the repetition, for example `app-app`.                                                                                                                   |
+| `\\d`, `\\w`, `\\s`                | Supported.                                                                                                                                                         |
+| Named groups                       | Use `(?P<name>...)` for portable RE2 syntax. Go also accepts `(?<name>...)`; names do not affect exemption matching.                                               |
+
+See the [RE2 syntax reference](https://github.com/google/re2/wiki/Syntax). Existing invalid patterns encountered after startup do not invalidate all exemptions: the compiler omits only the bad matcher and reports it in Warning Events, error logs, and the snapshot's `policy.uds.dev/invalid-matchers` annotation.
+
+The tenant-writable `uds-core.pepr.dev/mutated` diagnostic annotation now resets malformed or unknown content to a canonical array of mutation names. It does not grant exemptions.
+
 ## Installation sequence
 
 The package carries out these steps:

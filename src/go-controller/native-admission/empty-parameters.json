@@ -10,7 +10,6 @@
   },
   "spec": {
     "nativeMatchers": [],
-    "legacyScopes": [],
     "revision": "bootstrap-empty",
     "valid": true,
     "allowAllNamespaces": false

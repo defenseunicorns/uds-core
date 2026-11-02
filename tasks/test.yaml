@@ -22,7 +22,6 @@ tasks:
   - name: base
     description: "Build and test the base layer"
     actions:
-      - task: create:controller-build
       - task: setup:k3d-test-cluster
       - cmd: ./uds run -f tasks/test.yaml single-layer --set FLAVOR=${FLAVOR} --set=layer=base
 

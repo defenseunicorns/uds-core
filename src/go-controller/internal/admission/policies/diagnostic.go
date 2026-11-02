@@ -5,70 +5,42 @@ package policies
 
 import (
 	"encoding/json"
-	"fmt"
 	"regexp"
-
-	"github.com/dop251/goja"
 )
 
 var knownDiagnostics = regexp.MustCompile(`^[ \t\r\n]*\[[ \t\r\n]*("(disallow-privileged|require-non-root-user|drop-all-capabilities)"([ \t\r\n]*,[ \t\r\n]*"(disallow-privileged|require-non-root-user|drop-all-capabilities)")*)?[ \t\r\n]*\][ \t\r\n]*$`)
 
-type mutationDiagnostics struct {
-	known []string
-	vm    *goja.Runtime
-	array *goja.Object
-}
+type mutationDiagnostics struct{ known []string }
 
 func parseDiagnostics(text string) (*mutationDiagnostics, error) {
-	if text == "" {
-		text = "[]"
+	d := &mutationDiagnostics{known: []string{}}
+	if !knownDiagnostics.MatchString(text) {
+		return d, nil
 	}
-	diagnostic := &mutationDiagnostics{known: []string{}}
-	if knownDiagnostics.MatchString(text) {
-		return diagnostic, json.Unmarshal([]byte(text), &diagnostic.known)
+	var values []string
+	if json.Unmarshal([]byte(text), &values) != nil || values == nil {
+		return d, nil
 	}
-	// Construct validated JSON data and call only built-in array/stringify
-	// operations. No user program, Core TypeScript, or callbacks execute.
-	diagnostic.vm = goja.New()
-	value, err := decodeDiagnosticJSON(diagnostic.vm, text)
-	if err != nil || goja.IsNull(value) || goja.IsUndefined(value) || value.ToObject(diagnostic.vm).ClassName() != "Array" {
-		return nil, fmt.Errorf("invalid %s annotation: expected JSON array", mutationAnnotation)
-	}
-	diagnostic.array = value.ToObject(diagnostic.vm)
-	return diagnostic, nil
-}
-
-func (d *mutationDiagnostics) add(value string) {
-	if d.vm == nil {
-		for _, existing := range d.known {
-			if existing == value {
-				return
-			}
+	for _, value := range values {
+		switch value {
+		case "disallow-privileged", "require-non-root-user", "drop-all-capabilities":
+		default:
+			return d, nil
 		}
-		d.known = append(d.known, value)
-		return
 	}
-	includes, _ := goja.AssertFunction(d.array.Get("includes"))
-	present, _ := includes(d.array, d.vm.ToValue(value))
-	if !present.ToBoolean() {
-		push, _ := goja.AssertFunction(d.array.Get("push"))
-		_, _ = push(d.array, d.vm.ToValue(value))
-	}
+	d.known = values
+	return d, nil
 }
-
-func (d *mutationDiagnostics) length() int {
-	if d.vm == nil {
-		return len(d.known)
+func (d *mutationDiagnostics) add(value string) {
+	for _, existing := range d.known {
+		if existing == value {
+			return
+		}
 	}
-	return int(d.array.Get("length").ToInteger())
+	d.known = append(d.known, value)
 }
-
+func (d *mutationDiagnostics) length() int { return len(d.known) }
 func (d *mutationDiagnostics) text() string {
-	if d.vm == nil {
-		raw, _ := json.Marshal(d.known)
-		return string(raw)
-	}
-	stringify, _ := goja.AssertFunction(d.vm.Get("JSON").ToObject(d.vm).Get("stringify"))
-	value, _ := stringify(goja.Undefined(), d.array)
-	return value.String()
+	raw, _ := json.Marshal(d.known)
+	return string(raw)
 }

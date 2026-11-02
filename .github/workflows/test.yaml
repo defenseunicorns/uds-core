@@ -74,6 +74,11 @@ jobs:
           registry1Password: ${{ (inputs.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (inputs.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
 
+      - name: Prepare source controller artifacts
+        uses: ./.github/actions/build-controller
+        with:
+          flavor: ${{ inputs.flavor }}
+
       - name: Test a single layer package
         # Guard against portal+registry1 since workflow_dispatch and workflow_call triggers bypass matrix excludes
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' && !(inputs.package == 'portal' && inputs.flavor == 'registry1') }}
@@ -90,6 +95,16 @@ jobs:
       - name: Test UDS Core values deploy equivalency
         if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
         run: uds run test:uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --with k3s_version=${{ inputs.k3s_version }} --no-progress
+
+      - name: Verify every unicorn controller replica reports FIPS mode
+        if: inputs.flavor == 'unicorn' && (inputs.package == 'all' || inputs.package == 'base')
+        run: |
+          pods=$(uds zarf tools kubectl -n uds-system get pods -l app=uds-controller -o name)
+          test -n "$pods"
+          for pod in $pods; do
+            uds zarf tools kubectl -n uds-system exec "$pod" -c controller -- /usr/local/bin/uds-controller --build-info |
+              jq -e '.Flavor == "unicorn" and .FIPSEnabled == true and (.GOFIPS140 | startswith("v1.0.0"))'
+          done
 
       - name: Debug Output
         if: ${{ always() }}

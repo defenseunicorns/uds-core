@@ -160,6 +160,10 @@ func TestPreflightRequiresAllNativeV1APIsBeforeAnyMutation(t *testing.T) {
 				w.Write([]byte(`{"gitVersion":"v1.36.5+k3s1"}`))
 				return
 			}
+			if r.Method == http.MethodGet && r.URL.Path == "/apis/uds.dev/v1alpha1/exemptions" {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
 			if r.Method != http.MethodGet || r.URL.Path != "/apis/admissionregistration.k8s.io/v1" {
 				t.Error("preflight mutated the cluster", r.Method, r.URL.Path)
 			}

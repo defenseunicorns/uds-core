@@ -18,7 +18,6 @@ CORPORA = {
     'internal/admission/policies/testdata/core-diagnostic-parity.json': 40,
     'internal/admission/resources/testdata/custom-resource-parity.json': 17,
     'internal/admission/resources/testdata/package-parity.json': 140,
-    'internal/admission/exemptions/testdata/javascript-regex-parity.json': 1008,
     'webhook/testdata/exemption-name-parity.json': 21,
     'webhook/testdata/core-waypoint-parity.json': 10,
 }
@@ -63,7 +62,6 @@ def main():
     captured = json.loads((args.output / 'capture.json').read_text())
     if not captured.get('success') or captured['numTotalTests'] != 372 or captured['numPassedTests'] != 372:
         raise ValueError('Incomplete source differential capture')
-    run(['node', str(capture / 'capture-regex-parity.mjs')], source, args.output / 'regex.log')
     for relative, count in CORPORA.items():
         actual = json.loads((module / relative).read_text())
         expected = json.loads((ROOT / 'src/go-controller' / relative).read_text())

@@ -96,8 +96,6 @@ async function renderManifestsUncached(pkg: string, opts?: RenderOptions): Promi
       "upstream",
       "--kube-version",
       "1.37.1",
-      "--create-set",
-      "NATIVE_CONTROLLER_IMAGE=uds-core-controller:render-test",
       "--values",
       `packages/${pkg}/zarf-values.yaml`,
     ];

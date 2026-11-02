@@ -31,11 +31,16 @@ type cluster struct {
 	uds             bool
 	execute         func([]byte, ...string) ([]byte, error)
 	canaryNamespace string
+	requireFIPS     bool
+	kubeconfig      string
 }
 
 func (c cluster) command(input []byte, tools ...string) ([]byte, error) {
 	if c.execute != nil {
 		return c.execute(input, tools...)
+	}
+	if len(tools) > 0 && tools[0] == "kubectl" && c.kubeconfig != "" {
+		tools = append([]string{"kubectl", "--kubeconfig", c.kubeconfig}, tools[1:]...)
 	}
 	prefix := []string{"tools"}
 	if c.uds {
@@ -181,12 +186,13 @@ func Run(parent context.Context, args []string) error {
 	flags.StringVar(&chart, "chart", "", "Core chart path for contract generation")
 	flags.BoolVar(&uds, "uds", false, "build-time CLI is the UDS wrapper")
 	flags.StringVar(&kubeconfig, "kubeconfig", "", "optional kubeconfig override; otherwise use the same loading rules as Zarf")
+	requireFIPS := flags.Bool("require-fips", false, "Require the running unicorn controller FIPS self-check")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
 	ctx, cancel := context.WithTimeout(parent, 4*time.Minute)
 	defer cancel()
-	c := cluster{ctx: ctx, zarf: zarf, uds: uds}
+	c := cluster{ctx: ctx, zarf: zarf, uds: uds, requireFIPS: *requireFIPS}
 	if phase != "contract" {
 		if err := c.initializeREST(kubeconfig); err != nil {
 			return err

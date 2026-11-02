@@ -23,30 +23,17 @@
         "schema": {
           "openAPIV3Schema": {
             "type": "object",
-            "required": [
-              "spec"
-            ],
+            "required": ["spec"],
             "properties": {
               "spec": {
                 "type": "object",
-                "required": [
-                  "nativeMatchers",
-                  "legacyScopes",
-                  "revision",
-                  "valid",
-                  "allowAllNamespaces"
-                ],
+                "required": ["nativeMatchers", "revision", "valid", "allowAllNamespaces"],
                 "properties": {
                   "nativeMatchers": {
                     "type": "array",
                     "items": {
                       "type": "object",
-                      "required": [
-                        "policy",
-                        "namespace",
-                        "pattern",
-                        "owner"
-                      ],
+                      "required": ["policy", "namespace", "pattern", "owner"],
                       "properties": {
                         "policy": {
                           "type": "string"
@@ -58,24 +45,6 @@
                           "type": "string"
                         },
                         "owner": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  "legacyScopes": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "policy",
-                        "namespace"
-                      ],
-                      "properties": {
-                        "policy": {
-                          "type": "string"
-                        },
-                        "namespace": {
                           "type": "string"
                         }
                       }

@@ -145,7 +145,7 @@ func Mutate(object resources.Object, service bool, exempt func(string) bool) ([]
 			patches = append(patches, drop...)
 			mutated.add("drop-all-capabilities")
 		}
-		if mutated.length() > 0 {
+		if mutated.length() > 0 || annotations.Has(mutationAnnotation) {
 			updatedAnnotations[mutationAnnotation] = mutated.text()
 		}
 	}

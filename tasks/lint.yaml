@@ -61,7 +61,7 @@ tasks:
               continue
             fi
             echo "Linting packages/${pkg}"
-            if ! uds zarf dev lint "packages/${pkg}" --flavor upstream --set NATIVE_CONTROLLER_IMAGE=docker.io/library/uds-core-controller:lint; then
+            if ! uds zarf dev lint "packages/${pkg}" --flavor upstream; then
               echo "ERROR: values lint failed for packages/${pkg}"
               exit 1
             fi
@@ -99,7 +99,7 @@ tasks:
             echo "Generating packages/${pkg}/zarf-values.schema.json"
             # Write to a temp file and move on success so a failed/flaky generate never truncates a committed schema.
             tmp=$(mktemp)
-            if ! uds zarf dev generate-schema "packages/${pkg}" --flavor upstream --delete-not-found --set NATIVE_CONTROLLER_IMAGE=uds-core-controller:schema > "$tmp"; then
+            if ! uds zarf dev generate-schema "packages/${pkg}" --flavor upstream --delete-not-found > "$tmp"; then
               rm -f "$tmp"
               echo "ERROR: values schema generation failed for packages/${pkg}"
               exit 1

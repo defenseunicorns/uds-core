@@ -1,60 +1,96 @@
 // Copyright 2026 Defense Unicorns
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
-
 package exemptions
 
 import (
 	"encoding/json"
+	"github.com/google/cel-go/cel"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"os"
-	"regexp"
 	"testing"
 )
 
-func TestJavaScriptRegexDifferential(t *testing.T) {
-	raw, err := os.ReadFile("testdata/javascript-regex-parity.json")
+func TestRE2PublishedMatcherDifferential(t *testing.T) {
+	raw, err := os.ReadFile("testdata/re2-parity.json")
 	if err != nil {
 		t.Fatal(err)
 	}
 	var fixture struct {
-		SourceRevision, Runtime string
-		Cases                   []struct {
-			Pattern, Name                  string
-			Valid, Matched, KubernetesName bool
+		Cases []struct {
+			Pattern, Name, GenerateName string
+			Matched                     bool
 		}
 	}
 	if err := json.Unmarshal(raw, &fixture); err != nil {
 		t.Fatal(err)
 	}
-	if fixture.SourceRevision != "129d6e4a1928ce2b10ba6c5c8b5a0e7350f4053c" || len(fixture.Cases) != 1008 {
-		t.Fatal("missing pinned differential corpus")
+	raw, err = os.ReadFile("../../../native-admission/policies.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var policies struct {
+		Items []struct {
+			Metadata struct{ Name string }
+			Spec     struct {
+				Variables []struct{ Name, Expression string }
+			}
+		}
+	}
+	if err := json.Unmarshal(raw, &policies); err != nil {
+		t.Fatal(err)
+	}
+	expressions := map[string]string{}
+	for _, policy := range policies.Items {
+		if policy.Metadata.Name == "uds-native-pod-profile" {
+			for _, variable := range policy.Spec.Variables {
+				expressions[variable.Name] = variable.Expression
+			}
+		}
+	}
+	env, err := cel.NewEnv(cel.Variable("object", cel.DynType), cel.Variable("variables", cel.DynType), cel.Variable("params", cel.DynType), cel.Variable("request", cel.DynType))
+	if err != nil {
+		t.Fatal(err)
 	}
 	for _, test := range fixture.Cases {
-		t.Run(test.Pattern+"/"+test.Name, func(t *testing.T) {
-			err := ValidatePattern(test.Pattern)
-			if (err == nil) != test.Valid {
-				t.Fatalf("constructor differs from %s: %v, expected valid=%t", fixture.Runtime, err, test.Valid)
+		t.Run(test.Pattern+"/"+test.Name+"/"+test.GenerateName, func(t *testing.T) {
+			result, err := Compile([]*unstructured.Unstructured{grant("a", ProtectedNamespace, test.Pattern, "pod", "DisallowPrivileged")}, false)
+			if err != nil || len(result.NativeMatchers) != 1 {
+				t.Fatalf("%+v %v", result, err)
 			}
-			if !test.Valid {
-				return
+			name := test.Name
+			if name == "" {
+				name = test.GenerateName
 			}
-			matched, err := MatchLegacy(test.Pattern, test.Name)
-			if err != nil {
-				t.Fatal(err)
+			goMatched := result.NativeMatchers[0].Compiled.MatchString(name)
+			if goMatched != test.Matched {
+				t.Fatal("RE2 changed captured JavaScript search semantics")
 			}
-			if matched != test.Matched {
-				t.Errorf("legacy match differs: got %t expected %t", matched, test.Matched)
+			variables := map[string]interface{}{}
+			parameters, _ := json.Marshal(result)
+			var spec map[string]interface{}
+			_ = json.Unmarshal(parameters, &spec)
+			activation := map[string]interface{}{
+				"object":  map[string]interface{}{"metadata": map[string]interface{}{"name": test.Name, "generateName": test.GenerateName}},
+				"request": map[string]interface{}{"namespace": "app"},
+				"params":  map[string]interface{}{"spec": spec}, "variables": variables,
 			}
-			// Kubernetes resource names are ASCII DNS names. Native RE2 is
-			// qualified at that exact boundary, while JS fallback covers the
-			// complete corpus, including JS code-unit and escape semantics.
-			if test.KubernetesName && IsNativePattern(test.Pattern) {
-				compiled, err := regexp.Compile(test.Pattern)
+			for _, key := range []string{"resourceName", "resourceNamePresent", "grantDisallowPrivileged"} {
+				ast, issues := env.Compile(expressions[key])
+				if issues.Err() != nil {
+					t.Fatal(issues.Err())
+				}
+				program, err := env.Program(ast)
 				if err != nil {
 					t.Fatal(err)
 				}
-				if compiled.MatchString(test.Name) != test.Matched {
-					t.Fatal("native subset changed JavaScript matching")
+				value, _, err := program.Eval(activation)
+				if err != nil {
+					t.Fatal(err)
 				}
+				variables[key] = value.Value()
+			}
+			if variables["grantDisallowPrivileged"] != goMatched {
+				t.Fatalf("Go %v CEL %v", goMatched, variables["grantDisallowPrivileged"])
 			}
 		})
 	}

@@ -33,11 +33,11 @@ Helm publishes the desired webhook definitions in `uds-system/uds-controller-adm
 
 Repairs preserve Helm metadata and hand field ownership back to the chart publisher so later upgrades remain possible. Recreated configurations reference the ClusterRole for garbage collection during uninstall. The controller refuses foreign ownership or malformed plans; incomplete activated registrations make admission readiness fail. Kubernetes requires an unrestricted `create` verb for webhook configuration types because RBAC cannot constrain creation by resource name; the repair code accepts only the five chart-defined Core names and local callback endpoints.
 
-Read the [admission contract](native-admission/README.md) for exemption union, JavaScript regex compatibility, revision checks, and controller recovery behavior.
+Read the [admission contract](native-admission/README.md) for exemption union, RE2 matcher semantics, revision checks, and controller recovery behavior.
 
 ## Installation and upgrade
 
-The regular Core package build creates the static controller image from Go 1.27.3 and records its actual compiler inputs and binary digest. The package contains the image and internal installation helpers for Linux and macOS deployment hosts. No Pepr build, Node controller, or TypeScript module participates in the deployed operator.
+CI builds and signs flavor-specific controller images and publishes host helpers before release packages. Ordinary package creation consumes those published artifacts without invoking Go or Docker. Compiler receipts retain the actual source inputs, binary digest, and FIPS mode. The package contains the image and internal installation helpers for Linux and macOS deployment hosts. No Pepr build, Node controller, or TypeScript module participates in the deployed operator.
 
 Core performs its own ordered installation:
 
@@ -74,7 +74,7 @@ Build the normal base package from the repository root:
 uds run -f tasks/create.yaml single-layer --with layer=base
 ```
 
-The source test workflow also exports the pinned pre-replacement revision into an external test directory and executes its original assertions. This frozen compatibility oracle does not add Pepr to Core's dependency graph or runtime. Go differential tests and the existing API/browser integration suites validate the replacement behavior.
+Manual workflow dispatch can export the pinned pre-replacement revision into an external test directory and execute its original assertions. This frozen compatibility oracle does not add Pepr to Core's dependency graph or runtime. Go differential tests and the existing API/browser integration suites validate the replacement behavior.
 
 ## API generation
 

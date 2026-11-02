@@ -12,17 +12,15 @@ variables:
   - name: ADMIN_DOMAIN
     description: Domain for admin services, defaults to `admin.DOMAIN`
   - name: CA_BUNDLE_CERTS
-    description: Base64 encoded CA certs (bundle) in PEM format that UDS Core will inherently
-      trust. At a minimum this must at least include your Domain CA Cert if using Private
-      PKI for your UDS Core Deployment
+    description:
+      Base64 encoded CA certs (bundle) in PEM format that UDS Core will inherently trust. At a minimum this must
+      at least include your Domain CA Cert if using Private PKI for your UDS Core Deployment
     default: ""
   - name: CA_BUNDLE_INCLUDE_DOD_CERTS
-    description: Whether to include DoD root and intermediate certificates in the cluster
-      CA bundle
+    description: Whether to include DoD root and intermediate certificates in the cluster CA bundle
     default: "false"
   - name: CA_BUNDLE_INCLUDE_PUBLIC_CERTS
-    description: Whether to include public root and intermediate certificates in the
-      cluster CA bundle
+    description: Whether to include public root and intermediate certificates in the cluster CA bundle
     default: "false"
   - name: UDS_LOG_LEVEL
     description: UDS Operator log level
@@ -33,9 +31,6 @@ variables:
   - name: ALLOW_ALL_NS_EXEMPTIONS
     description: Whether to allow exemptions to be created in all namespaces
     default: "false"
-  - name: UDS_CONTROLLER_IMAGE
-    description: Core-internal controller image resolved by the source build
-    default: "###ZARF_PKG_TMPL_NATIVE_CONTROLLER_IMAGE###"
   - name: UDS_CORE_TRANSITION_RUN
     description: Internal path to the helper in Zarf's temporary package directory
     default: ""
@@ -56,7 +51,7 @@ components:
             setVariables:
               - name: UDS_CORE_TRANSITION_LINK_OWNED
           - description: Reserve an empty helper discovery directory without overwriting host files
-            cmd: "mkdir -m 700 .uds-core-transition && echo true"
+            cmd: mkdir -m 700 .uds-core-transition && echo true
             setVariables:
               - name: UDS_CORE_TRANSITION_LINK_OWNED
         after:
@@ -65,30 +60,38 @@ components:
             setVariables:
               - name: UDS_CORE_TRANSITION_RUN
           - description: Remove the temporary helper discovery link
-            cmd: "rm .uds-core-transition/run && rmdir .uds-core-transition"
+            cmd: rm .uds-core-transition/run && rmdir .uds-core-transition
           - description: Require native admission APIs before changing existing Core ownership
             maxTotalSeconds: 300
             cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" preflight'
         onFailure:
           - description: Clean the owned helper discovery link after a failed setup
-            cmd: |
-              if [ "${ZARF_VAR_UDS_CORE_TRANSITION_LINK_OWNED:-false}" = true ]; then
-                rm -f .uds-core-transition/run
-                if [ -d .uds-core-transition ]; then rmdir .uds-core-transition; fi
-              fi
+            cmd:
+              "if [ \"${ZARF_VAR_UDS_CORE_TRANSITION_LINK_OWNED:-false}\" = true ]; then\n  rm -f .uds-core-transition/run\n\
+              \  if [ -d .uds-core-transition ]; then rmdir .uds-core-transition; fi\nfi\n"
           - description: Explain forward recovery after an interrupted installation
-            cmd: echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
+            cmd:
+              echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After
+              writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
     files:
-      - source: ../../build/controller-tools/linux-amd64
+      # x-release-please-start-version
+      - source: https://github.com/defenseunicorns/uds-core/releases/download/v1.16.0/core-transition-linux-amd64
+        # x-release-please-end
         target: "###ZARF_TEMP###/core-transition/linux-amd64"
         executable: true
-      - source: ../../build/controller-tools/linux-arm64
+      # x-release-please-start-version
+      - source: https://github.com/defenseunicorns/uds-core/releases/download/v1.16.0/core-transition-linux-arm64
+        # x-release-please-end
         target: "###ZARF_TEMP###/core-transition/linux-arm64"
         executable: true
-      - source: ../../build/controller-tools/darwin-amd64
+      # x-release-please-start-version
+      - source: https://github.com/defenseunicorns/uds-core/releases/download/v1.16.0/core-transition-darwin-amd64
+        # x-release-please-end
         target: "###ZARF_TEMP###/core-transition/darwin-amd64"
         executable: true
-      - source: ../../build/controller-tools/darwin-arm64
+      # x-release-please-start-version
+      - source: https://github.com/defenseunicorns/uds-core/releases/download/v1.16.0/core-transition-darwin-arm64
+        # x-release-please-end
         target: "###ZARF_TEMP###/core-transition/darwin-arm64"
         executable: true
       - source: hack/run-transition.sh
@@ -96,7 +99,7 @@ components:
         executable: true
         symlinks:
           - .uds-core-transition/run
-      - source: ../../build/controller-tools/admission-contract.json
+      - source: native-admission/admission-contract.json
         target: "###ZARF_TEMP###/core-transition/admission-contract.json"
   - name: uds-operator-config
     required: true
@@ -113,19 +116,20 @@ components:
     actions:
       onDeploy:
         before:
-          - description: Preserve existing ClusterConfig ownership during the Core namespace
-              transition
+          - description: Preserve existing ClusterConfig ownership during the Core namespace transition
             maxTotalSeconds: 300
             cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" api'
           - description: Create the mesh namespace before its bootstrap trust mount
-            cmd: "./zarf tools kubectl create namespace istio-system --dry-run=client
-              -o yaml | ./zarf tools kubectl apply -f -
+            cmd:
+              "./zarf tools kubectl create namespace istio-system --dry-run=client -o yaml | ./zarf tools kubectl apply -f
+              -
 
-              ./zarf tools kubectl create namespace monitoring --dry-run=client -o yaml
-              | ./zarf tools kubectl apply -f -"
+              ./zarf tools kubectl create namespace monitoring --dry-run=client -o yaml | ./zarf tools kubectl apply -f -"
         onFailure:
           - description: Explain forward recovery after a failed Core transition
-            cmd: echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
+            cmd:
+              echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After
+              writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
   - name: uds-exemptions
     required: true
     charts:
@@ -142,7 +146,9 @@ components:
       onDeploy:
         onFailure:
           - description: Explain forward recovery after a failed Core transition
-            cmd: echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
+            cmd:
+              echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After
+              writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
   - name: uds-controller-bootstrap
     required: true
     charts:
@@ -162,12 +168,14 @@ components:
               - .uds-controller.uds-controller.admission
               - .uds-controller.uds-controller.nativeAdmission
         variables:
-          - name: UDS_CONTROLLER_IMAGE
-            path: image.reference
           - name: UDS_LOG_LEVEL
             path: logLevel
+        valuesFiles:
+          - values/upstream.yaml
     images:
-      - "###ZARF_PKG_TMPL_NATIVE_CONTROLLER_IMAGE###"
+      # x-release-please-start-version
+      - ghcr.io/defenseunicorns/uds-core/controller:1.16.0
+    # x-release-please-end
     actions:
       onDeploy:
         before:
@@ -177,14 +185,111 @@ components:
         after:
           - description: Wait for Core controller caches and serving identity
             maxTotalSeconds: 180
-            cmd: ./zarf tools kubectl -n uds-system rollout status deployment/uds-controller
-              --timeout=150s
+            cmd: ./zarf tools kubectl -n uds-system rollout status deployment/uds-controller --timeout=150s
           - description: Wait for Core networking and the compiler-owned admission snapshot
             maxTotalSeconds: 300
             cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" snapshot'
         onFailure:
           - description: Explain forward recovery after a failed Core transition
-            cmd: echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
+            cmd:
+              echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After
+              writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
+    only:
+      flavor: upstream
+  - name: uds-controller-bootstrap
+    required: true
+    charts:
+      - name: uds-controller
+        releaseName: uds-controller
+        namespace: uds-system
+        version: 0.1.0
+        localPath: chart
+        templatedValuesFiles:
+          - packaging-bootstrap.yaml
+        values:
+          - sourcePath: .uds-controller.uds-controller
+            targetPath: .
+            excludePaths:
+              - .uds-controller.uds-controller.image
+              - .uds-controller.uds-controller.zarfRegistryAddress
+              - .uds-controller.uds-controller.admission
+              - .uds-controller.uds-controller.nativeAdmission
+        variables:
+          - name: UDS_LOG_LEVEL
+            path: logLevel
+        valuesFiles:
+          - values/upstream.yaml
+    images:
+      # x-release-please-start-version
+      - ghcr.io/defenseunicorns/uds-core/controller:1.16.0
+    # x-release-please-end
+    actions:
+      onDeploy:
+        before:
+          - description: Drain the previous Core writer before Go reconciliation starts
+            maxTotalSeconds: 300
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" drain'
+        after:
+          - description: Wait for Core controller caches and serving identity
+            maxTotalSeconds: 180
+            cmd: ./zarf tools kubectl -n uds-system rollout status deployment/uds-controller --timeout=150s
+          - description: Wait for Core networking and the compiler-owned admission snapshot
+            maxTotalSeconds: 300
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" snapshot'
+        onFailure:
+          - description: Explain forward recovery after a failed Core transition
+            cmd:
+              echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After
+              writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
+    only:
+      flavor: registry1
+  - name: uds-controller-bootstrap
+    required: true
+    charts:
+      - name: uds-controller
+        releaseName: uds-controller
+        namespace: uds-system
+        version: 0.1.0
+        localPath: chart
+        templatedValuesFiles:
+          - packaging-bootstrap.yaml
+        values:
+          - sourcePath: .uds-controller.uds-controller
+            targetPath: .
+            excludePaths:
+              - .uds-controller.uds-controller.image
+              - .uds-controller.uds-controller.zarfRegistryAddress
+              - .uds-controller.uds-controller.admission
+              - .uds-controller.uds-controller.nativeAdmission
+        variables:
+          - name: UDS_LOG_LEVEL
+            path: logLevel
+        valuesFiles:
+          - values/unicorn.yaml
+    images:
+      # x-release-please-start-version
+      - ghcr.io/defenseunicorns/packages/private/uds/controller:1.16.0
+    # x-release-please-end
+    actions:
+      onDeploy:
+        before:
+          - description: Drain the previous Core writer before Go reconciliation starts
+            maxTotalSeconds: 300
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" drain'
+        after:
+          - description: Wait for Core controller caches and serving identity
+            maxTotalSeconds: 180
+            cmd: ./zarf tools kubectl -n uds-system rollout status deployment/uds-controller --timeout=150s
+          - description: Wait for Core networking and the compiler-owned admission snapshot
+            maxTotalSeconds: 300
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" snapshot'
+        onFailure:
+          - description: Explain forward recovery after a failed Core transition
+            cmd:
+              echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After
+              writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
+    only:
+      flavor: unicorn
   - name: uds-controller
     required: true
     charts:
@@ -204,12 +309,14 @@ components:
               - .uds-controller.uds-controller.admission
               - .uds-controller.uds-controller.nativeAdmission
         variables:
-          - name: UDS_CONTROLLER_IMAGE
-            path: image.reference
           - name: UDS_LOG_LEVEL
             path: logLevel
+        valuesFiles:
+          - values/upstream.yaml
     images:
-      - "###ZARF_PKG_TMPL_NATIVE_CONTROLLER_IMAGE###"
+      # x-release-please-start-version
+      - ghcr.io/defenseunicorns/uds-core/controller:1.16.0
+    # x-release-please-end
     actions:
       onDeploy:
         after:
@@ -221,11 +328,109 @@ components:
             cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" retire'
         onSuccess:
           - description: Remove Core helper files after verified retirement
-            cmd: |
-              case "${ZARF_VAR_UDS_CORE_TRANSITION_RUN:-}" in
-                /*/core-transition/run) rm -rf -- "${ZARF_VAR_UDS_CORE_TRANSITION_RUN%/run}" ;;
-                *) echo 'Unexpected Core helper path; refusing cleanup' >&2; exit 1 ;;
-              esac
+            cmd:
+              "case \"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:-}\" in\n  /*/core-transition/run) rm -rf -- \"${ZARF_VAR_UDS_CORE_TRANSITION_RUN%/run}\"\
+              \ ;;\n  *) echo 'Unexpected Core helper path; refusing cleanup' >&2; exit 1 ;;\nesac\n"
         onFailure:
           - description: Explain forward recovery after a failed Core transition
-            cmd: echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
+            cmd:
+              echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After
+              writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
+    only:
+      flavor: upstream
+  - name: uds-controller
+    required: true
+    charts:
+      - name: uds-controller
+        releaseName: uds-controller
+        namespace: uds-system
+        version: 0.1.0
+        localPath: chart
+        templatedValuesFiles:
+          - packaging-values.yaml
+        values:
+          - sourcePath: .uds-controller.uds-controller
+            targetPath: .
+            excludePaths:
+              - .uds-controller.uds-controller.image
+              - .uds-controller.uds-controller.zarfRegistryAddress
+              - .uds-controller.uds-controller.admission
+              - .uds-controller.uds-controller.nativeAdmission
+        variables:
+          - name: UDS_LOG_LEVEL
+            path: logLevel
+        valuesFiles:
+          - values/upstream.yaml
+    images:
+      # x-release-please-start-version
+      - ghcr.io/defenseunicorns/uds-core/controller:1.16.0
+    # x-release-please-end
+    actions:
+      onDeploy:
+        after:
+          - description: Verify the deployed CEL contract and actual API canaries
+            maxTotalSeconds: 300
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" verify'
+          - description: Retire only the replaced Core Pepr module
+            maxTotalSeconds: 300
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" retire'
+        onSuccess:
+          - description: Remove Core helper files after verified retirement
+            cmd:
+              "case \"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:-}\" in\n  /*/core-transition/run) rm -rf -- \"${ZARF_VAR_UDS_CORE_TRANSITION_RUN%/run}\"\
+              \ ;;\n  *) echo 'Unexpected Core helper path; refusing cleanup' >&2; exit 1 ;;\nesac\n"
+        onFailure:
+          - description: Explain forward recovery after a failed Core transition
+            cmd:
+              echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After
+              writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
+    only:
+      flavor: registry1
+  - name: uds-controller
+    required: true
+    charts:
+      - name: uds-controller
+        releaseName: uds-controller
+        namespace: uds-system
+        version: 0.1.0
+        localPath: chart
+        templatedValuesFiles:
+          - packaging-values.yaml
+        values:
+          - sourcePath: .uds-controller.uds-controller
+            targetPath: .
+            excludePaths:
+              - .uds-controller.uds-controller.image
+              - .uds-controller.uds-controller.zarfRegistryAddress
+              - .uds-controller.uds-controller.admission
+              - .uds-controller.uds-controller.nativeAdmission
+        variables:
+          - name: UDS_LOG_LEVEL
+            path: logLevel
+        valuesFiles:
+          - values/unicorn.yaml
+    images:
+      # x-release-please-start-version
+      - ghcr.io/defenseunicorns/packages/private/uds/controller:1.16.0
+    # x-release-please-end
+    actions:
+      onDeploy:
+        after:
+          - description: Verify the deployed CEL contract and actual API canaries
+            maxTotalSeconds: 300
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" verify --require-fips'
+          - description: Retire only the replaced Core Pepr module
+            maxTotalSeconds: 300
+            cmd: '"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:?}" retire --require-fips'
+        onSuccess:
+          - description: Remove Core helper files after verified retirement
+            cmd:
+              "case \"${ZARF_VAR_UDS_CORE_TRANSITION_RUN:-}\" in\n  /*/core-transition/run) rm -rf -- \"${ZARF_VAR_UDS_CORE_TRANSITION_RUN%/run}\"\
+              \ ;;\n  *) echo 'Unexpected Core helper path; refusing cleanup' >&2; exit 1 ;;\nesac\n"
+        onFailure:
+          - description: Explain forward recovery after a failed Core transition
+            cmd:
+              echo 'Core installation failed. Correct the reported error and rerun the package against the same cluster. After
+              writer handoff, recovery continues with Go; do not restart the Pepr watcher.' >&2
+    only:
+      flavor: unicorn

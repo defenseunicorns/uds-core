@@ -194,11 +194,6 @@ tasks:
         default: "true"
         description: "Whether to create the shim bundle or not (base layer only)"
     actions:
-      # Note: Maru does not support `or` for this conditional task so we just duplicate it for each case
-      - task: controller-build
-        if: ${{ eq .inputs.layer "standard" }}
-      - task: controller-build
-        if: ${{ eq .inputs.layer "base" }}
       - description: "Create build output directory"
         cmd: "mkdir -p build"
       - description: "Create the UDS Core Zarf Package"
@@ -207,9 +202,8 @@ tasks:
           linux: bash
         cmd: |
           create_package() {
-            ZARF_CONFIG="./zarf-config.yaml" ./uds zarf package create \
+            ZARF_CONFIG="./zarf-config.yaml" bash src/go-controller/hack/package-create.sh \
               "packages/${{ .inputs.layer }}" \
-              --set "NATIVE_CONTROLLER_IMAGE=${NATIVE_CONTROLLER_IMAGE}" \
               --confirm \
               --architecture="${ZARF_ARCHITECTURE}" \
               --flavor "${FLAVOR}" \
@@ -234,17 +228,3 @@ tasks:
           else
             echo "Skipping base-shim bundle creation."
           fi
-
-  - name: controller-build
-    description: Build the Core controller image from the pinned Go toolchain
-    actions:
-      - description: Build and record the Core runtime image
-        cmd: |
-          set -eu
-          architecture="${ZARF_ARCHITECTURE:-${UDS_ARCH:-}}"
-          if [ -z "$architecture" ]; then
-            architecture=$(go env GOHOSTARCH)
-          fi
-          python3 src/go-controller/hack/build-image.py --architecture "$architecture" --output "build/controller/$architecture"
-        setVariables:
-          - name: NATIVE_CONTROLLER_IMAGE
