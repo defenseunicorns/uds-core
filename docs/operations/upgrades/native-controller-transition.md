@@ -73,6 +73,8 @@ The package carries out these steps:
 5. Activate the replacement callbacks and native policies. Verify the installed contract, serving trust, automatic-repair activation for the current installation, and server-side admission probes in a dedicated scratch namespace.
 6. Remove the replaced Core Pepr resources and release records. Other Pepr modules, shared namespaces, and shared CRDs remain outside retirement scope.
 
+A newly started API server can temporarily reject native-policy requests while discovery of the `AdmissionParameters` CRD catches up. Kubernetes tracks this [discovery delay](https://github.com/kubernetes/kubernetes/issues/124237). The installer retries transient policy errors and requires successful mutation and denial probes before retirement. During a managed control-plane rollout, application requests can encounter the same temporary denials. Allow the control plane to stabilize before retrying a failed deployment; inspect API-server discovery and controller logs if errors persist.
+
 Unknown kinds in historical Core release manifests are retained with a warning rather than blocking verified retirement. Save the installation log and inspect the listed objects separately. Known resources still require matching live ownership before removal.
 
 ## Recover a failed transition
@@ -105,7 +107,7 @@ Choose the recovery action from the failed phase:
 
 Zarf may roll back a failed chart upgrade. That chart rollback does not reverse the external writer handoff or restore Pepr. Inspect the actual cluster state and use the forward-recovery sequence above. Do not delete application Packages or CRDs to force progress.
 
-Handled verification failures remove the owned scratch namespace with a UID precondition, including bounded cleanup after cancellation. A forcibly killed installer can leave an empty scratch namespace. List candidates with the following command and inspect them before removing any abandoned namespace:
+On success or a handled verification failure, the helper requests deletion of its scratch namespace with a UID precondition, including bounded API calls after cancellation. Kubernetes finishes namespace garbage collection asynchronously. An accepted delete does not block a verified installation while unrelated discovery or finalization is pending. A namespace shown as `Terminating` already has deletion requested. A forcibly killed installer can leave an undeleted scratch namespace. List candidates with the following command and inspect them before removing any abandoned namespace:
 
 ```bash
 uds zarf tools kubectl get namespaces -l app.kubernetes.io/managed-by=uds-core-transition
