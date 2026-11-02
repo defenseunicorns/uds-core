@@ -13,7 +13,8 @@ image:
   pullPolicy: IfNotPresent
 
 # Reconciliation budget shared by typed, dynamic and UDS clients.
-# Lease heartbeats have a separate fixed 1 QPS / 2 burst budget.
+# Lease heartbeats use a separate 1 QPS / 2 burst budget.
+# Admission maintenance uses a separate 10 QPS / 20 burst budget.
 kubernetesAPI:
   qps: 20
   burst: 40
@@ -24,7 +25,7 @@ admission:
   register: true
 
 # Native policies require Kubernetes 1.36 or newer and the complete Go webhook.
-# The compiler owns the protected grant union after the first empty bootstrap.
+# The compiler exclusively creates and updates the protected grant union.
 nativeAdmission:
   enabled: true
   # Core activates CEL first and routes only contextual/compatibility work to Go.

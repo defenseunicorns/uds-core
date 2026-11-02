@@ -81,6 +81,11 @@ jobs:
         run: |
           python3 src/go-controller/hack/reference-tests.py --output "$RUNNER_TEMP/core-compatibility-reference"
 
+      - name: Verify generated native policies
+        run: |
+          python3 src/go-controller/native-admission/render.py
+          git diff --exit-code -- src/go-controller/native-admission src/go-controller/chart/files/native-admission
+
       - name: Verify generated API and clients
         run: |
           mise exec go@1.27.3 -- node src/go-controller/hack/generate-api.mjs
@@ -118,3 +123,36 @@ jobs:
             --namespace uds-system --api-versions admissionregistration.k8s.io/v1/MutatingAdmissionPolicy --kube-version 1.37.1 \
             --set nativeAdmission.narrowCallbacks=true > "$validation_dir/narrow.yaml"
           node src/go-controller/native-admission/check-render.mjs "$validation_dir/narrow.yaml" narrow
+
+  native-admission-live:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        kubernetes: [v1.36.5-k3s1, v1.37.1-k3s1]
+    env:
+      GOWORK: "off"
+      GOTOOLCHAIN: local
+      GOFLAGS: -buildvcs=false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up repository tools
+        uses: ./.github/actions/setup-tools
+      - name: Create disposable native admission cluster
+        run: |
+          k3d cluster create native-admission --image rancher/k3s:${{ matrix.kubernetes }} --no-lb --wait
+          umask 077
+          k3d kubeconfig get native-admission > "$RUNNER_TEMP/native-admission.kubeconfig"
+      - name: Execute native policies and compare Go mutation
+        env:
+          UDS_NATIVE_TEST_KUBECONFIG: ${{ runner.temp }}/native-admission.kubeconfig
+        run: go -C src/go-controller test ./native-admission -run TestLiveNativeAdmission -v -count=1
+      - name: Remove disposable cluster
+        if: always()
+        run: |
+          k3d cluster delete native-admission
+          rm -f "$RUNNER_TEMP/native-admission.kubeconfig"

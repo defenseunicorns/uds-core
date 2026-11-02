@@ -5,6 +5,8 @@ package udspackage
 
 import (
 	"context"
+	corev1 "k8s.io/api/core/v1"
+	"time"
 
 	"errors"
 	"fmt"
@@ -39,6 +41,9 @@ func (c *PackageController) shouldSkip(pkg *udsv1alpha1.UDSPackage) bool {
 }
 
 func (c *PackageController) handleFailure(ctx context.Context, pkg *udsv1alpha1.UDSPackage, reconcileErr error, epoch uint64) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	retryAttempt := int64(0)
 	if pkg.Status.RetryAttempt != nil {
 		retryAttempt = *pkg.Status.RetryAttempt
@@ -46,6 +51,7 @@ func (c *PackageController) handleFailure(ctx context.Context, pkg *udsv1alpha1.
 
 	if retryAttempt < 4 {
 		nextRetry := retryAttempt + 1
+		c.warningEvent(ctx, pkg, "ReconciliationRetry", fmt.Sprintf("Reconciliation attempt %d failed; retrying with exponential backoff: %v", nextRetry, reconcileErr))
 		c.logger.Error("Reconciliation failed, retrying",
 			"package", pkg.Name,
 			"namespace", pkg.Namespace,
@@ -54,7 +60,7 @@ func (c *PackageController) handleFailure(ctx context.Context, pkg *udsv1alpha1.
 		)
 
 		pkg.Status.Phase = ptr.To(udsv1alpha1.PhaseRetrying)
-		pkg.Status.Conditions = readinessConditions(false)
+		pkg.Status.Conditions = readinessConditions(false, pkg.Status.Conditions...)
 		pkg.Status.RetryAttempt = &nextRetry
 		_, err := c.udsClient.UDSPackages(pkg.Namespace).UpdateStatus(ctx, pkg, metav1.UpdateOptions{})
 		if err != nil {
@@ -69,9 +75,10 @@ func (c *PackageController) handleFailure(ctx context.Context, pkg *udsv1alpha1.
 		"namespace", pkg.Namespace,
 		"error", reconcileErr,
 	)
+	c.warningEvent(ctx, pkg, "ReconciliationFailed", fmt.Sprintf("Reconciliation failed after five attempts: %v", reconcileErr))
 	zero := int64(0)
 	pkg.Status.Phase = ptr.To(udsv1alpha1.PhaseFailed)
-	pkg.Status.Conditions = readinessConditions(false)
+	pkg.Status.Conditions = readinessConditions(false, pkg.Status.Conditions...)
 	pkg.Status.ObservedGeneration = &pkg.Generation
 	pkg.Status.RetryAttempt = &zero
 	_, err := c.udsClient.UDSPackages(pkg.Namespace).UpdateStatus(ctx, pkg, metav1.UpdateOptions{})
@@ -199,18 +206,25 @@ func removeFinalizer(finalizers []string, name string) []string {
 	return result
 }
 
-func readinessConditions(ready bool) []udsv1alpha1.Condition {
+func readinessConditions(ready bool, prior ...udsv1alpha1.Condition) []udsv1alpha1.Condition {
 	status := udsv1alpha1.ConditionFalse
 	message := "The package is not ready for use."
 	if ready {
 		status = udsv1alpha1.ConditionTrue
 		message = "The package is ready for use."
 	}
+	transition := metav1.Now()
+	for _, old := range prior {
+		if old.Type == "Ready" && old.Status == status {
+			transition = old.LastTransitionTime
+			break
+		}
+	}
 	return []udsv1alpha1.Condition{
 		{
 			Type:               "Ready",
 			Status:             status,
-			LastTransitionTime: metav1.Now(),
+			LastTransitionTime: transition,
 			Message:            message,
 			Reason:             "ReconciliationComplete",
 		},
@@ -221,4 +235,21 @@ func isIdentityDeployed(ctx context.Context, pkgClient udsv1alpha1client.UdsV1al
 	// Check if the keycloak Package CR exists in the keycloak namespace
 	_, err := pkgClient.UDSPackages("keycloak").Get(ctx, "keycloak", metav1.GetOptions{})
 	return err == nil
+}
+
+func (c *PackageController) warningEvent(ctx context.Context, pkg *udsv1alpha1.UDSPackage, reason, message string) {
+	if c.kubeClient == nil {
+		return
+	}
+	// Event delivery is diagnostic and must not prevent status/retry progress.
+	eventCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	if len(message) > 4096 {
+		message = message[:4096]
+	}
+	now := metav1.Now()
+	_, err := c.kubeClient.CoreV1().Events(pkg.Namespace).Create(eventCtx, &corev1.Event{ObjectMeta: metav1.ObjectMeta{GenerateName: pkg.Name + "-", Namespace: pkg.Namespace}, Type: corev1.EventTypeWarning, Reason: reason, Message: message, InvolvedObject: corev1.ObjectReference{APIVersion: "uds.dev/v1alpha1", Kind: "Package", Namespace: pkg.Namespace, Name: pkg.Name, UID: pkg.UID}, FirstTimestamp: now, LastTimestamp: now, Count: 1, Source: corev1.EventSource{Component: "uds-controller"}}, metav1.CreateOptions{})
+	if err != nil {
+		c.logger.Warn("Could not publish Package Event", "namespace", pkg.Namespace, "name", pkg.Name, "error", err)
+	}
 }

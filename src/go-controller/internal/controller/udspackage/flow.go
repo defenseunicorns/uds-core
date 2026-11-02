@@ -241,7 +241,7 @@ func (c *PackageController) reconcilePackageFlow(ctx context.Context, pkg *udsv1
 
 	pkg.Status = udsv1alpha1.PackageStatus{
 		Phase:                    ptr.To(udsv1alpha1.PhaseReady),
-		Conditions:               readinessConditions(true),
+		Conditions:               readinessConditions(true, pkg.Status.Conditions...),
 		ObservedGeneration:       &pkg.Generation,
 		MeshMode:                 &istioMode,
 		SsoClients:               ssoClientNames,

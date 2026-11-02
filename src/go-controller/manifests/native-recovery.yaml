@@ -295,6 +295,42 @@
     },
     {
       "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-controller-parameters"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                "policy.uds.dev"
+              ],
+              "apiVersions": [
+                "v1alpha1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE",
+                "DELETE"
+              ],
+              "resources": [
+                "admissionparameters"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "request.userInfo.username == 'system:serviceaccount:uds-system:uds-controller' || (request.operation == 'DELETE' && request.userInfo.username == 'system:serviceaccount:kube-system:namespace-controller')",
+            "message": "Only the UDS controller may write AdmissionParameters; edit Exemptions to change policy grants"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
       "kind": "ValidatingAdmissionPolicyBinding",
       "metadata": {
         "name": "uds-native-controller-pod-recovery"
@@ -348,6 +384,20 @@
           "objectSelector": {}
         },
         "policyName": "uds-native-controller-service-recovery",
+        "validationActions": [
+          "Deny"
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-controller-parameters"
+      },
+      "spec": {
+        "matchResources": {},
+        "policyName": "uds-native-controller-parameters",
         "validationActions": [
           "Deny"
         ]

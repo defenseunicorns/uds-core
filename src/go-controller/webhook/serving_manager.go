@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"sync"
@@ -47,6 +46,7 @@ type ServingManager struct {
 	mu                sync.Mutex
 	lastCA            []byte
 	lastExpiryWarning time.Time
+	nextSync          time.Time
 }
 
 func newServingManager(ctx context.Context, client kubernetes.Interface) (*ServingManager, error) {
@@ -78,25 +78,6 @@ func (m *ServingManager) Ready(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-}
-
-func (m *ServingManager) Run(ctx context.Context) {
-	ticker := time.NewTicker(2 * time.Second)
-	defer ticker.Stop()
-	for {
-		syncCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		err := m.Synchronize(syncCtx)
-		cancel()
-		if err != nil && ctx.Err() == nil {
-			slog.Error("Admission certificate trust reconciliation failed", "error", err)
-		}
-		select {
-		case <-ctx.Done():
-			m.ready.Store(false)
-			return
-		case <-ticker.C:
-		}
-	}
 }
 
 func (m *ServingManager) Synchronize(ctx context.Context) error {
@@ -133,6 +114,13 @@ func (m *ServingManager) synchronize(ctx context.Context) error {
 	previous, _ := base64.StdEncoding.DecodeString(secret.Annotations[previousCAAnnotation])
 	overlapUntil, _ := strconv.ParseInt(secret.Annotations[overlapUntilAnnotation], 10, 64)
 	serveAfter, _ := strconv.ParseInt(secret.Annotations[serveAfterAnnotation], 10, 64)
+	m.nextSync = time.Time{}
+	if m.now().Unix() < overlapUntil {
+		m.nextSync = time.Unix(overlapUntil, 0)
+	}
+	if m.now().Unix() < serveAfter {
+		m.nextSync = time.Unix(serveAfter, 0)
+	}
 	if len(previous) > 0 && m.now().Unix() < overlapUntil {
 		bundle = append(bundle, previous...)
 	}

@@ -31,6 +31,15 @@ spec:
     spec:
       serviceAccountName: uds-controller
       priorityClassName: system-node-critical
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: uds-controller
       containers:
         - name: controller
           image: {{ .Values.image.reference | default (printf "%s:%s" .Values.image.repository .Values.image.tag) | quote }}
@@ -65,6 +74,22 @@ spec:
               scheme: HTTPS
             initialDelaySeconds: 1
             periodSeconds: 2
+          startupProbe:
+            httpGet:
+              path: /livez
+              port: webhook
+              scheme: HTTPS
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: webhook
+              scheme: HTTPS
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           securityContext:

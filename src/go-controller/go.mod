@@ -6,6 +6,7 @@ require (
 	github.com/google/cel-go v0.26.0
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.23.2
+	golang.org/x/sync v0.24.0
 	gopkg.in/evanphx/json-patch.v4 v4.13.0
 	k8s.io/api v0.35.3
 	k8s.io/apimachinery v0.35.3
@@ -53,7 +54,6 @@ require (
 	golang.org/x/mod v0.41.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
-	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/term v0.47.0 // indirect
 	golang.org/x/text v0.43.0 // indirect

@@ -40,18 +40,24 @@ func StartWebhookServer(ctx context.Context, clientset kubernetes.Interface, exe
 		return fmt.Errorf("load admission serving identity: %w", err)
 	}
 	mux := http.NewServeMux()
+	register := func(path string, handler http.HandlerFunc) { mux.HandleFunc(path, observeDecisions(path, handler)) }
 	mux.HandleFunc("/readyz", manager.Ready)
-	mux.HandleFunc("/validate-clusterconfig-delete", DenyClusterConfigDeletion())
-	mux.HandleFunc("/validate-resources", ValidateResources(packageInformer))
-	mux.HandleFunc("/validate-pods", topologyPolicyHandler(exemptions, false, ws, packageInformer))
-	mux.HandleFunc("/mutate-pods", topologyPolicyHandler(exemptions, true, ws, packageInformer))
-	mux.HandleFunc("/mutate-pod-waypoint", MutatePodWaypoint(ws, packageInformer))
-	mux.HandleFunc("/mutate-service-waypoint", MutateServiceWaypoint(ws, packageInformer))
+	mux.HandleFunc("/livez", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
+	register("/validate-clusterconfig-delete", DenyClusterConfigDeletion())
+	register("/validate-resources", ValidateResources(packageInformer))
+	register("/validate-pods", topologyPolicyHandler(exemptions, false, ws, packageInformer))
+	register("/mutate-pods", topologyPolicyHandler(exemptions, true, ws, packageInformer))
+	register("/mutate-pod-waypoint", MutatePodWaypoint(ws, packageInformer))
+	register("/mutate-service-waypoint", MutateServiceWaypoint(ws, packageInformer))
 
 	server := &http.Server{
-		Addr:        webhookPort,
-		Handler:     fenceAdmissions(ctx, mux),
-		BaseContext: func(net.Listener) context.Context { return ctx },
+		Addr:              webhookPort,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		Handler:           fenceAdmissions(ctx, mux),
+		BaseContext:       func(net.Listener) context.Context { return ctx },
 		TLSConfig: &tls.Config{
 			GetCertificate: manager.GetCertificate,
 			MinVersion:     tls.VersionTLS12,

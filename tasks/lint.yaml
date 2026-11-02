@@ -27,6 +27,8 @@ tasks:
         task: values-lint
       - description: yaml lint
         cmd: yamllint . -c .yamllint --no-warnings
+      - description: Go formatting, analysis, module hygiene, and vulnerabilities
+        task: go-check
       - description: codespell lint
         cmd: codespell
       - description: Ensure addlicense is installed
@@ -236,3 +238,19 @@ tasks:
             echo "OK: K3s matrix and documented Kubernetes versions match CI configuration"
           fi
           exit $FAILED
+
+  - name: go-check
+    description: Check the native controller on every lint run
+    actions:
+      - cmd: |
+          set -eu
+          export GOWORK=off GOTOOLCHAIN=local
+          unformatted=$(gofmt -l src/go-controller)
+          if [ -n "$unformatted" ]; then
+            echo "$unformatted"
+            exit 1
+          fi
+          go -C src/go-controller vet ./...
+          go -C src/go-controller mod tidy -diff
+          # renovate: datasource=go depName=golang.org/x/vuln
+          go -C src/go-controller run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...

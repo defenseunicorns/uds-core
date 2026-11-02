@@ -13,6 +13,7 @@ import (
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/cabundle"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/reload"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/sso"
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/workerqueue"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -185,33 +186,34 @@ func relevantChange(old, obj interface{}) bool {
 }
 
 func (c *Controller) Run(ctx context.Context) {
-	defer c.queue.ShutDown()
 	c.queue.Add("config")
-	done := make(chan struct{})
 	go func() {
-		defer close(done)
-		for c.processNext(ctx) {
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				c.packages.Resync()
+			}
 		}
 	}()
-	ticker := time.NewTicker(5 * time.Minute)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			c.queue.ShutDown()
-			<-done
-			return
-		case <-ticker.C:
-			c.packages.Resync()
-		}
-	}
+	workerqueue.Run(ctx, c.queue, 1, c.processNext)
 }
+
 func (c *Controller) processNext(ctx context.Context) bool {
-	key, shutdown := c.queue.Get()
+	key, shutdown := workerqueue.Get(ctx, c.queue)
 	if shutdown {
 		return false
 	}
 	defer c.queue.Done(key)
+	// Cancellation is a writer handoff, not a completed or exhausted request.
+	defer func() {
+		if ctx.Err() != nil {
+			c.queue.Add(key)
+		}
+	}()
 	var err error
 	if key == "gateway" {
 		err = c.reloadGateways(ctx)
@@ -261,3 +263,6 @@ func (c *Controller) reloadGateways(ctx context.Context) error {
 	}
 	return nil
 }
+
+// Shutdown releases queue timers after all leadership epochs have stopped.
+func (c *Controller) Shutdown() { c.queue.ShutDown() }

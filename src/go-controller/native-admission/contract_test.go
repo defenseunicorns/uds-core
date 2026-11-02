@@ -18,7 +18,7 @@ func TestEmbeddedRuntimeContractIsTheDeployedChartContract(t *testing.T) {
 		t.Fatal("runtime policy authority differs from the deployed chart artifact")
 	}
 	first, err := Contract()
-	if err != nil || len(first) != 22 {
+	if err != nil || len(first) != 24 {
 		t.Fatal("incomplete native policy and binding contract", len(first), err)
 	}
 	first[0].Spec["failurePolicy"] = "Ignore"

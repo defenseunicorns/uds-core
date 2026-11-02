@@ -26,9 +26,3 @@
 {{ toYaml . }}
 {{- end }}
 {{- end }}
-{{- if $enabled }}
-{{- if not (lookup "policy.uds.dev/v1alpha1" "AdmissionParameters" "uds-policy-exemptions" "uds-native-grants") }}
----
-{{ .Files.Get "files/native-admission/empty-parameters.json" }}
-{{- end }}
-{{- end }}

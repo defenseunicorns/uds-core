@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/workerqueue"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -119,27 +120,25 @@ func (c *Controller) remove(obj interface{}) {
 }
 
 func (c *Controller) Run(ctx context.Context) {
-	defer c.queue.ShutDown()
 	if !cache.WaitForCacheSync(ctx.Done(), c.synced...) {
 		return
 	}
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		for c.processNext(ctx) {
-		}
-	}()
-	<-ctx.Done()
-	c.queue.ShutDown()
-	<-done
+
+	workerqueue.Run(ctx, c.queue, 1, c.processNext)
 }
 
 func (c *Controller) processNext(ctx context.Context) bool {
-	key, shutdown := c.queue.Get()
+	key, shutdown := workerqueue.Get(ctx, c.queue)
 	if shutdown {
 		return false
 	}
 	defer c.queue.Done(key)
+	// Cancellation is a writer handoff, not a completed or exhausted request.
+	defer func() {
+		if ctx.Err() != nil {
+			c.queue.Add(key)
+		}
+	}()
 	c.mu.Lock()
 	cur, exists := c.pending[key]
 	c.mu.Unlock()
@@ -237,3 +236,6 @@ func GatewayTopologyChanged(old, cur map[string]interface{}) bool {
 	}
 	return false
 }
+
+// Shutdown releases queue timers after all leadership epochs have stopped.
+func (c *Controller) Shutdown() { c.queue.ShutDown() }

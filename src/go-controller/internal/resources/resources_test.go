@@ -4,7 +4,9 @@ package resources
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -50,6 +52,52 @@ func TestOwnedApplyCannotAdoptAnotherPackageUID(t *testing.T) {
 	for _, action := range client.Actions() {
 		if action.GetVerb() == "patch" {
 			t.Fatal("foreign resource mutated before ownership rejection")
+		}
+	}
+}
+
+func TestOwnedApplyRetriesStatusConflictAndRechecksOwner(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "example.dev", Version: "v1", Resource: "widgets"}
+	for _, reassigned := range []bool{false, true} {
+		existing := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "example.dev/v1", "kind": "Widget", "metadata": map[string]interface{}{"name": "widget", "namespace": "apps"}}}
+		existing.SetResourceVersion("1")
+		existing.SetOwnerReferences([]metav1.OwnerReference{{APIVersion: "uds.dev/v1alpha1", Kind: "Package", Name: "app", UID: "owner"}})
+		desired := existing.DeepCopy()
+		desired.SetResourceVersion("")
+		client := fake.NewSimpleDynamicClient(runtime.NewScheme(), existing)
+		patches := 0
+		client.PrependReactor("patch", "widgets", func(a ktesting.Action) (bool, runtime.Object, error) {
+			patches++
+			var body unstructured.Unstructured
+			if err := json.Unmarshal(a.(ktesting.PatchAction).GetPatch(), &body); err != nil {
+				t.Fatal(err)
+			}
+			if patches == 1 {
+				updated := existing.DeepCopy()
+				updated.SetResourceVersion("2")
+				if reassigned {
+					refs := updated.GetOwnerReferences()
+					refs[0].UID = "other"
+					updated.SetOwnerReferences(refs)
+				}
+				client.Tracker().Update(gvr, updated, "apps")
+				return true, nil, apierrors.NewConflict(gvr.GroupResource(), "widget", errors.New("concurrent status update"))
+			}
+			if body.GetResourceVersion() != "2" {
+				t.Fatal("did not reobserve latest resourceVersion")
+			}
+			return true, &body, nil
+		})
+		err := ServerSideApply(context.Background(), client, gvr, desired)
+		if reassigned {
+			if err == nil || patches != 1 {
+				t.Fatal("overwrote new owner", patches, err)
+			}
+		} else if err != nil || patches != 2 {
+			t.Fatal("status race did not recover", patches, err)
+		}
+		if desired.GetResourceVersion() != "" {
+			t.Fatal("apply mutated caller object")
 		}
 	}
 }

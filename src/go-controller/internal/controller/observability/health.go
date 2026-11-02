@@ -5,6 +5,7 @@ package observability
 import (
 	"context"
 	"fmt"
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/admission/decisionmetrics"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/buildinfo"
 	"log/slog"
 	"net"
@@ -57,7 +58,7 @@ func New(sources Sources) *Health {
 	h.native = prometheus.NewDesc("uds_native_policies_active", "Exact native policy definitions, current validation type checking, enforcing binding scopes, and the protected compiler snapshot are observed", nil, labels)
 	h.certificateExpiry = prometheus.NewDesc("uds_native_serving_certificate_days_remaining", "Days remaining until the active admission serving certificate expires", nil, labels)
 	h.registry.MustRegister(prometheus.NewGaugeFunc(prometheus.GaugeOpts{Name: "uds_controller_fips_enabled", Help: "Whether this controller process has FIPS mode enabled", ConstLabels: prometheus.Labels{"flavor": buildinfo.Flavor, "implementation": "go-native"}}, func() float64 { return boolean(buildinfo.Current().FIPSEnabled) }))
-	h.registry.MustRegister(h)
+	h.registry.MustRegister(h, decisionmetrics.Decisions)
 	return h
 }
 

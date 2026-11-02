@@ -27,7 +27,7 @@ tests:
       matchMany: true
     asserts:
       - hasDocuments:
-          count: 22
+          count: 24
           filterAware: true
       - equal:
           path: metadata.ownerReferences

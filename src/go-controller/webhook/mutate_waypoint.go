@@ -42,7 +42,7 @@ func MutatePodWaypoint(ws *store.WaypointStore, packages ...cache.SharedIndexInf
 		var obj rawObject
 		if err := json.Unmarshal(req.Object.Raw, &obj); err != nil {
 			slog.Error("Failed to unmarshal pod object", "error", err)
-			writeAdmissionAllow(w, review, req)
+			writeTopologyRetry(w, review, req, err)
 			return
 		}
 
@@ -94,7 +94,7 @@ func MutateServiceWaypoint(ws *store.WaypointStore, packages ...cache.SharedInde
 		var obj rawObject
 		if err := json.Unmarshal(req.Object.Raw, &obj); err != nil {
 			slog.Error("Failed to unmarshal service object", "error", err)
-			writeAdmissionAllow(w, review, req)
+			writeTopologyRetry(w, review, req, err)
 			return
 		}
 
@@ -174,7 +174,7 @@ func writeAdmissionPatch(w http.ResponseWriter, review *admissionv1.AdmissionRev
 	patchBytes, err := json.Marshal(patch)
 	if err != nil {
 		slog.Error("Failed to marshal patch", "error", err)
-		writeAdmissionAllow(w, review, req)
+		writeTopologyRetry(w, review, req, err)
 		return
 	}
 

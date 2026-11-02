@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/util/retry"
 	"log/slog"
 
 	"strings"
@@ -176,29 +177,36 @@ func Reconcile(ctx context.Context, netClient networkingv1client.NetworkingV1Int
 	desiredNames := map[string]bool{}
 	for _, pol := range applyOrder {
 		desiredNames[pol.Name] = true
-		existing, err := netClient.NetworkPolicies(namespace).Get(ctx, pol.Name, metav1.GetOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			return 0, err
-		}
-		if err == nil {
-			for _, owner := range existing.OwnerReferences {
-				if owner.Kind == "Package" && owner.UID != pkg.UID {
-					return 0, fmt.Errorf("NetworkPolicy %s belongs to another Package UID", pol.Name)
-				}
+		err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+			if err := ctx.Err(); err != nil {
+				return err
 			}
-			pol.ResourceVersion = existing.ResourceVersion
-		}
-		data, err := json.Marshal(pol)
-		if err != nil {
-			return 0, fmt.Errorf("marshal network policy %s: %w", pol.Name, err)
-		}
-		_, err = netClient.NetworkPolicies(namespace).Patch(ctx, pol.Name, types.ApplyPatchType, data, metav1.PatchOptions{
-			FieldManager: "uds-controller",
-			Force:        boolPtr(true),
+			existing, err := netClient.NetworkPolicies(namespace).Get(ctx, pol.Name, metav1.GetOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				return err
+			}
+			if err == nil {
+				for _, owner := range existing.OwnerReferences {
+					if owner.Kind == "Package" && owner.UID != pkg.UID {
+						return fmt.Errorf("NetworkPolicy %s belongs to another Package UID", pol.Name)
+					}
+				}
+				pol.ResourceVersion = existing.ResourceVersion
+			}
+			data, err := json.Marshal(pol)
+			if err != nil {
+				return fmt.Errorf("marshal network policy %s: %w", pol.Name, err)
+			}
+			_, err = netClient.NetworkPolicies(namespace).Patch(ctx, pol.Name, types.ApplyPatchType, data, metav1.PatchOptions{
+				FieldManager: "uds-controller",
+				Force:        boolPtr(true),
+			})
+			return err
 		})
 		if err != nil {
 			return 0, fmt.Errorf("apply network policy %s: %w", pol.Name, err)
 		}
+
 		slog.Debug("Applied NetworkPolicy", "name", pol.Name, "namespace", namespace)
 	}
 

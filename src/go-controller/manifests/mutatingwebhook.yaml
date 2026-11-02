@@ -26,6 +26,7 @@
         "v1"
       ],
       "sideEffects": "None",
+      "timeoutSeconds": 10,
       "failurePolicy": "Fail",
       "matchPolicy": "Equivalent",
       "reinvocationPolicy": "IfNeeded",
@@ -85,6 +86,7 @@
         "v1"
       ],
       "sideEffects": "None",
+      "timeoutSeconds": 10,
       "failurePolicy": "Fail",
       "matchPolicy": "Equivalent",
       "reinvocationPolicy": "IfNeeded",

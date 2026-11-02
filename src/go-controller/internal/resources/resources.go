@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/util/retry"
 )
 
 // Clients holds the Kubernetes clients used by resource operations.
@@ -30,6 +31,17 @@ type Clients struct {
 // ServerSideApply applies the given unstructured resource using server-side apply
 // with force=true, similar to K8s(...).Apply(..., {force: true}) in Pepr.
 func ServerSideApply(ctx context.Context, client dynamic.Interface, gvr schema.GroupVersionResource, obj *unstructured.Unstructured) error {
+	// Preserve the ownership CAS: a status update may race, but an ownership
+	// change must never be overwritten. Re-observe and revalidate on conflict.
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		return applyOwned(ctx, client, gvr, obj.DeepCopy())
+	})
+}
+
+func applyOwned(ctx context.Context, client dynamic.Interface, gvr schema.GroupVersionResource, obj *unstructured.Unstructured) error {
 	slog.Debug("Server-side apply",
 		"resource", gvr.Resource, "group", gvr.Group,
 		"name", obj.GetName(), "namespace", obj.GetNamespace())

@@ -6,6 +6,7 @@ package istio
 import (
 	"context"
 	"fmt"
+	"golang.org/x/sync/semaphore"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/ptr"
@@ -58,6 +59,10 @@ func ReconcileEgress(ctx context.Context, client dynamic.Interface, pkg *udstype
 	return ReconcileEgressWithClients(ctx, client, nil, pkg, namespace, packageLister)
 }
 func ReconcileEgressWithClients(ctx context.Context, client dynamic.Interface, kubeClient kubernetes.Interface, pkg *udstypes.UDSPackage, namespace string, packageLister udsv1alpha1lister.UDSPackageLister) error {
+	if err := aggregateWriter.Acquire(ctx, 1); err != nil {
+		return err
+	}
+	defer aggregateWriter.Release(1)
 	allPackages, err := packageLister.List(labels.Everything())
 	if err != nil {
 		return err
@@ -258,3 +263,6 @@ func reconcileLocalEgress(ctx context.Context, client dynamic.Interface, pkg *ud
 
 // reconcileAmbientEgress rebuilds shared ambient egress resources from ALL ambient packages.
 // It creates a ServiceEntry + AuthorizationPolicy per external host in istio-egress-ambient.
+
+// Only the cross-Package aggregate phase requires serialization.
+var aggregateWriter = semaphore.NewWeighted(1)

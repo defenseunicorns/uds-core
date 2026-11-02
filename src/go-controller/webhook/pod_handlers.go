@@ -19,6 +19,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+const maxAdmissionBodyBytes = 4 << 20
+
 const (
 	nativeMutationRevisionAnnotation    = "policy.uds.dev/native-mutation-revision"
 	policyRequireNonRootUser            = "RequireNonRootUser"
@@ -31,7 +33,7 @@ const (
 // ValidatePod serves the complete fallback contract for Pods and Services. Broad
 // registration first qualifies parity. Narrow registration invokes it for the
 // protected control-plane namespace, trusted-container classification, and
-// native-routed JavaScript-only scopes; the handler always checks all policies.
+// waypoint retirement; the handler always checks all policies.
 func ValidatePod(exemptions *ExemptionStore) http.HandlerFunc {
 	return policyHandler(exemptions, false, nil)
 }
@@ -69,8 +71,9 @@ func policyHandler(exemptions *ExemptionStore, mutate bool, retirement func(*adm
 		exempt, revision, snapshotReady := exemptions.MetadataSnapshot(metadata)
 		response := &admissionv1.AdmissionResponse{UID: req.UID, Allowed: true}
 		nativeRevision := metadata.Object("annotations").String(nativeMutationRevisionAnnotation)
-		if nativeRevision != "" && (!snapshotReady || revision != nativeRevision) {
+		if req.SubResource != "ephemeralcontainers" && nativeRevision != "" && (!snapshotReady || revision != nativeRevision) {
 			response.Allowed = false
+			decisionPolicy(w, "snapshot-revision")
 			response.Result = &metav1.Status{Reason: metav1.StatusReasonConflict, Code: http.StatusConflict, Message: "Admission exemption snapshot changed between native mutation and Go fallback; retry the request"}
 			writeAdmissionResponse(w, review, response)
 			return
@@ -96,6 +99,7 @@ func policyHandler(exemptions *ExemptionStore, mutate bool, retirement func(*adm
 					continue
 				}
 				if message := policies.Validate(policy, object); message != "" {
+					decisionPolicy(w, policy)
 					response.Allowed = false
 					response.Result = &metav1.Status{Message: message}
 					break
@@ -133,11 +137,14 @@ func admissionObject(req *admissionv1.AdmissionRequest) (resources.Object, error
 
 // decodeAdmissionReview reads and deserializes an AdmissionReview from the request.
 func decodeAdmissionReview(r *http.Request) (*admissionv1.AdmissionReview, *admissionv1.AdmissionRequest, error) {
-	body, err := io.ReadAll(r.Body)
+	body, err := io.ReadAll(io.LimitReader(r.Body, maxAdmissionBodyBytes+1))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read body: %w", err)
 	}
 
+	if len(body) > maxAdmissionBodyBytes {
+		return nil, nil, fmt.Errorf("admission request exceeds %d bytes", maxAdmissionBodyBytes)
+	}
 	review := &admissionv1.AdmissionReview{}
 	if _, _, err := codecs.UniversalDeserializer().Decode(body, nil, review); err != nil {
 		return nil, nil, fmt.Errorf("failed to deserialize request: %w", err)
@@ -152,6 +159,7 @@ func decodeAdmissionReview(r *http.Request) (*admissionv1.AdmissionReview, *admi
 
 // writeAdmissionResponse serializes and writes the AdmissionReview response.
 func writeAdmissionResponse(w http.ResponseWriter, review *admissionv1.AdmissionReview, response *admissionv1.AdmissionResponse) {
+	recordDecision(w, review.Request, response)
 	review.Response = response
 	review.Request = nil
 

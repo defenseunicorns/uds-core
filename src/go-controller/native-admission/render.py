@@ -161,7 +161,7 @@ def render():
         for policy, validation in zip(policies, spec["validations"]):
             delegated = " || variables.codeIdentity" if policy in ["RequireNonRootUser", "RestrictCapabilities", "RestrictIstioUser", "RestrictIstioTrafficOverrides"] else ""
             validation["expression"] = guard(policy, True) + delegated + " || (" + validation["expression"] + ")"
-        spec["validations"].append({"expression": "variables.mutationReady == true", "message": "Admission exemption snapshot changed between mutation and validation; retry the request"})
+        spec["validations"].append({"expression": "request.subResource == 'ephemeralcontainers' || variables.mutationReady == true", "message": "Admission exemption snapshot changed between mutation and validation; retry the request"})
         spec["validations"].append({"expression": "params.spec.valid == true", "message": "Admission exemption inputs are invalid; repair the protected snapshot"})
         output += pair(obj["kind"], name, spec, True)
     variables = grant_variables(POD_POLICIES) + diagnostic_variables() + [
@@ -200,6 +200,15 @@ def render():
         if mutation != recovery_mutations[0]:
             body["expression"] = body["expression"].replace("variables.diagnosticInvalid", "false")
     output += pair("MutatingAdmissionPolicy", "uds-native-controller-pod-defaults-recovery", {"failurePolicy": "Fail", "reinvocationPolicy": "IfNeeded", "matchConstraints": rules("", ["pods"]), "matchConditions": [{"name": "authenticated-controller-recovery", "expression": bootstrap.POD}], "variables": recovery_variables, "mutations": recovery_mutations})
+    # Installed during bootstrap, before the compiler's first publication. Helm
+    # never seeds this authority; namespace-controller may delete it on teardown.
+    protection = pair("ValidatingAdmissionPolicy", "uds-native-controller-parameters", {
+        "failurePolicy": "Fail",
+        "matchConstraints": rules("policy.uds.dev", ["admissionparameters"], ["CREATE", "UPDATE", "DELETE"]),
+        "validations": [{"expression": "request.userInfo.username == 'system:serviceaccount:uds-system:uds-controller' || (request.operation == 'DELETE' && request.userInfo.username == 'system:serviceaccount:kube-system:namespace-controller')", "message": "Only the UDS controller may write AdmissionParameters; edit Exemptions to change policy grants"}]
+    })
+    protection[1]["spec"]["matchResources"] = {}
+    output += protection
     rendered = {"apiVersion": "v1", "kind": "List", "items": output}
     ROOT.joinpath("policies.json").write_text(json.dumps(rendered, indent=2) + "\n")
     chart = ROOT.parent.joinpath("chart")

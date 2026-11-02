@@ -172,13 +172,22 @@ func (c *Controller) Run(ctx context.Context) error {
 	rebuildExemptions()
 	slog.Info("Exemption cache synced")
 
-	if err := webhook.StartWebhookServer(ctx, clientset, exemptions, ws, rawPackageInformer); err != nil {
+	admissionClient, err := kubernetes.NewForConfig(admissionClientConfig(c.config))
+	if err != nil {
+		return fmt.Errorf("create admission client: %w", err)
+	}
+	if err := webhook.StartWebhookServer(ctx, admissionClient, exemptions, ws, rawPackageInformer); err != nil {
 		return fmt.Errorf("Failed to start webhook server: %w", err)
 	}
 	if err := health.Serve(ctx, ":9090"); err != nil {
 		return err
 	}
 
+	defer packageCtrl.Shutdown()
+	defer clusterConfigCtrl.Shutdown()
+	defer dependencyCtrl.Shutdown()
+	defer reloadCtrl.Shutdown()
+	defer admissionCompiler.Shutdown()
 	return runLeader(ctx, leaseClient, func(leaderCtx context.Context) {
 		health.Leadership(leaderCtx)
 		defer health.Leader(false)

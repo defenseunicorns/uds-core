@@ -48,8 +48,13 @@ tasks:
         cmd: |
           command -v addlicense
           addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -c "Defense Unicorns" src/uds-api/sources src/uds-api/generated src/uds-api/chart/templates
+      - task: gen-native
       - task: gen-docs
       - cmd: npm run format
+  - name: gen-native
+    description: Generate CEL, standalone registrations, and the installer admission contract
+    actions:
+      - cmd: sh src/go-controller/hack/generate-native.sh
   - name: gen-docs
     actions:
       - cmd: "set -eu\nworkdir=$(mktemp -d)\ntrap 'rm -rf \"$workdir\"' EXIT\nfor crd\

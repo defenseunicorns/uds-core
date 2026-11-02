@@ -10,6 +10,7 @@ import (
 	udslister "github.com/defenseunicorns/uds-core/src/go-controller/client/listers/uds/v1alpha1"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/resources"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/utils"
+	"golang.org/x/sync/semaphore"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -33,6 +34,10 @@ type listener struct {
 }
 
 func Reconcile(ctx context.Context, client dynamic.Interface, kubeClient kubernetes.Interface, pkg *udstypes.UDSPackage, lister udslister.UDSPackageLister) error {
+	if err := aggregateWriter.Acquire(ctx, 1); err != nil {
+		return err
+	}
+	defer aggregateWriter.Release(1)
 	desired := map[string]bool{}
 	for _, entry := range pkg.Spec.GetExpose() {
 		if pkg.DeletionTimestamp != nil || entry.Protocol == nil || *entry.Protocol != udstypes.ExposeUDP {
@@ -135,3 +140,6 @@ func defaultListeners(packages []*udstypes.UDSPackage) ([]interface{}, error) {
 	}
 	return result, nil
 }
+
+// Only the cross-Package aggregate phase requires serialization.
+var aggregateWriter = semaphore.NewWeighted(1)

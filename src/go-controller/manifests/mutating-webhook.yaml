@@ -26,6 +26,7 @@
         "v1"
       ],
       "sideEffects": "None",
+      "timeoutSeconds": 10,
       "failurePolicy": "Fail",
       "matchPolicy": "Equivalent",
       "namespaceSelector": {
@@ -79,6 +80,7 @@
         "v1"
       ],
       "sideEffects": "None",
+      "timeoutSeconds": 10,
       "failurePolicy": "Fail",
       "matchPolicy": "Equivalent",
       "namespaceSelector": {

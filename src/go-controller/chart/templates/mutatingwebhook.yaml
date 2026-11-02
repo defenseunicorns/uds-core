@@ -23,6 +23,7 @@ webhooks:
     admissionReviewVersions:
       - v1
     sideEffects: None
+    timeoutSeconds: 10
     failurePolicy: Fail
     matchPolicy: Equivalent
     reinvocationPolicy: IfNeeded
@@ -66,6 +67,7 @@ webhooks:
     admissionReviewVersions:
       - v1
     sideEffects: None
+    timeoutSeconds: 10
     failurePolicy: Fail
     matchPolicy: Equivalent
     reinvocationPolicy: IfNeeded

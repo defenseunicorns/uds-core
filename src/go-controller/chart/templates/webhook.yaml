@@ -16,6 +16,7 @@ webhooks:
     admissionReviewVersions:
       - v1
     sideEffects: None
+    timeoutSeconds: 10
     failurePolicy: Fail
     matchPolicy: Exact
     clientConfig:
@@ -57,6 +58,7 @@ webhooks:
     admissionReviewVersions:
       - v1
     sideEffects: None
+    timeoutSeconds: 10
     failurePolicy: Fail
     matchPolicy: Equivalent
     clientConfig:
@@ -99,6 +101,7 @@ webhooks:
     admissionReviewVersions:
       - v1
     sideEffects: None
+    timeoutSeconds: 10
     failurePolicy: Fail
     matchPolicy: Equivalent
     clientConfig:

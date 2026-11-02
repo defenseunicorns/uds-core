@@ -204,11 +204,15 @@ rules:
       - patch
       - watch
 
+  # Exemptions are compiler inputs, never controller-authored resources.
+  - apiGroups: ["uds.dev"]
+    resources: ["exemptions"]
+    verbs: ["get", "list", "watch"]
+
   # UDS custom resources
   - apiGroups:
       - uds.dev
     resources:
-      - exemptions
       - packages
       - packages/status
       - clusterconfig
@@ -249,6 +253,8 @@ rules:
       - uds-controller
     verbs:
       - get
+      - list
+      - watch
 
   # Webhook configurations (for patching caBundle)
   - apiGroups:
@@ -262,6 +268,7 @@ rules:
       - uds-controller-pods
     verbs:
       - get
+      - list
       - patch
       - watch
 
@@ -274,6 +281,8 @@ rules:
       - uds-controller-waypoint
     verbs:
       - get
+      - list
+      - watch
       - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1

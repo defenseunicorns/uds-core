@@ -5,6 +5,7 @@ package udspackage
 
 import (
 	"context"
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/workerqueue"
 
 	"fmt"
 	"log/slog"
@@ -12,12 +13,9 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	"sync"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -46,10 +44,10 @@ type PackageController struct {
 	packageLister       udsv1alpha1lister.UDSPackageLister
 	packageListerSynced cache.InformerSynced
 
-	flags         featureflags.Flags
-	recovery      *recoveryState
-	waypointStore *store.WaypointStore
-	reconcileMu   sync.Mutex
+	flags          featureflags.Flags
+	recovery       *recoveryState
+	waypointStore  *store.WaypointStore
+	namespaceLocks namespaceLocks
 }
 
 // NewController creates a new PackageController.
@@ -58,7 +56,7 @@ func NewController(udsClient udsv1alpha1client.UdsV1alpha1Interface,
 	dynamicClient dynamic.Interface, flags featureflags.Flags, ws *store.WaypointStore) *PackageController {
 	ctrl := &PackageController{
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.NewTypedItemExponentialFailureRateLimiter[string](time.Second, 30*time.Second),
+			packageRetryLimiter(),
 			workqueue.TypedRateLimitingQueueConfig[string]{Name: "package"},
 		),
 		logger: slog.Default(),
@@ -161,42 +159,25 @@ func (c *PackageController) enqueue(pkg *udsv1alpha1.UDSPackage) {
 
 // Run starts the workqueue processing loop.
 func (c *PackageController) Run(ctx context.Context, workers int) {
-	defer utilruntime.HandleCrash()
-
-	c.logger.Info("Starting package controller")
-
-	var wg sync.WaitGroup
-	defer func() {
-		c.logger.Info("Shutting down controller", "controller", "deployment")
-		c.queue.ShutDown()
-		wg.Wait()
-	}()
-
 	if !cache.WaitForNamedCacheSync("package", ctx.Done(), c.packageListerSynced) {
 		return
 	}
-
-	for i := 0; i < workers; i++ {
-		wg.Go(func() {
-			wait.UntilWithContext(ctx, c.worker, time.Second)
-		})
-	}
-	<-ctx.Done()
-}
-
-// worker runs a worker thread that just dequeues items, processes them, and marks them done.
-// It enforces that the syncHandler is never invoked concurrently with the same key.
-func (c *PackageController) worker(ctx context.Context) {
-	for c.processNext(ctx) {
-	}
+	c.RequeueAll()
+	workerqueue.Run(ctx, c.queue, workers, c.processNext)
 }
 
 func (c *PackageController) processNext(ctx context.Context) bool {
-	key, shutdown := c.queue.Get()
+	key, shutdown := workerqueue.Get(ctx, c.queue)
 	if shutdown {
 		return false
 	}
 	defer c.queue.Done(key)
+	// Cancellation is a writer handoff, not a completed or exhausted request.
+	defer func() {
+		if ctx.Err() != nil {
+			c.queue.Add(key)
+		}
+	}()
 	c.logger.Info("Package dequeued", "key", key, "queueDepth", c.queue.Len())
 
 	err := c.syncHandler(ctx, key)
@@ -210,15 +191,17 @@ func (c *PackageController) processNext(ctx context.Context) bool {
 }
 
 func (c *PackageController) syncHandler(ctx context.Context, key string) error {
-	queuedAt := time.Now()
-	c.reconcileMu.Lock()
-	defer c.reconcileMu.Unlock()
-	c.logger.Info("Package writing authority acquired", "key", key, "serializationWaitSeconds", time.Since(queuedAt).Seconds())
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		c.logger.Error("Failed to split meta namespace cache key", "key", key, "error", err)
 		return err
 	}
+
+	unlock, err := c.namespaceLocks.acquire(ctx, namespace)
+	if err != nil {
+		return err
+	}
+	defer unlock()
 
 	sharedPkg, err := c.udsClient.UDSPackages(namespace).Get(ctx, name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
@@ -228,7 +211,7 @@ func (c *PackageController) syncHandler(ctx context.Context, key string) error {
 		return err
 	}
 
-	// Deep-copy otherwise we are mutating our cache.
+	// Own the status journal for this reconciliation attempt.
 	pkg := sharedPkg.DeepCopy()
 
 	// Check for deletion
@@ -273,7 +256,7 @@ func (c *PackageController) reconcile(ctx context.Context, pkg *udsv1alpha1.UDSP
 	}
 
 	pkg.Status.Phase = ptr.To(udsv1alpha1.PhasePending)
-	pkg.Status.Conditions = readinessConditions(false)
+	pkg.Status.Conditions = readinessConditions(false, pkg.Status.Conditions...)
 	// Journal prospective external clients before the first side effect. The union
 	// survives failed attempts, crashes, and deletion before Ready is published.
 	if c.flags.SSO || c.flags.IstioInjection {
@@ -296,4 +279,11 @@ func (c *PackageController) reconcile(ctx context.Context, pkg *udsv1alpha1.UDSP
 
 	c.recovery.complete(pkg.UID, epoch)
 	return nil
+}
+
+// Shutdown releases queue timers after all leadership epochs have stopped.
+func (c *PackageController) Shutdown() { c.queue.ShutDown() }
+
+func packageRetryLimiter() workqueue.TypedRateLimiter[string] {
+	return workqueue.NewTypedItemExponentialFailureRateLimiter[string](8*time.Second, 64*time.Second)
 }

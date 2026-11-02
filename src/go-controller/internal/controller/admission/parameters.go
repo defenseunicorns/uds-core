@@ -9,6 +9,7 @@ import (
 	"fmt"
 	compiled "github.com/defenseunicorns/uds-core/src/go-controller/internal/admission/exemptions"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/config"
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/workerqueue"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -37,28 +38,25 @@ func NewCompiler(client dynamic.Interface, informer cache.SharedIndexInformer) *
 func (c *Compiler) Enqueue() { c.queue.Add("snapshot") }
 
 func (c *Compiler) Run(ctx context.Context) {
-	defer c.queue.ShutDown()
 	if !cache.WaitForCacheSync(ctx.Done(), c.informer.HasSynced) {
 		return
 	}
-	c.queue.Add("snapshot")
-	stopped := make(chan struct{})
-	go func() {
-		defer close(stopped)
-		for c.next(ctx) {
-		}
-	}()
-	<-ctx.Done()
-	c.queue.ShutDown()
-	<-stopped
+	c.Enqueue()
+	workerqueue.Run(ctx, c.queue, 1, c.next)
 }
 
 func (c *Compiler) next(ctx context.Context) bool {
-	key, stopped := c.queue.Get()
+	key, stopped := workerqueue.Get(ctx, c.queue)
 	if stopped {
 		return false
 	}
 	defer c.queue.Done(key)
+	// Cancellation is a writer handoff, not a completed or exhausted request.
+	defer func() {
+		if ctx.Err() != nil {
+			c.queue.Add(key)
+		}
+	}()
 	if err := c.Publish(ctx); err != nil {
 		slog.Error("Native admission input compilation failed", "error", err)
 		c.queue.AddRateLimited(key)
@@ -100,3 +98,6 @@ func (c *Compiler) Publish(ctx context.Context) error {
 	}
 	return compileErr
 }
+
+// Shutdown releases queue timers after all leadership epochs have stopped.
+func (c *Compiler) Shutdown() { c.queue.ShutDown() }

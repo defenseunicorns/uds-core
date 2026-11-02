@@ -39,7 +39,7 @@ func (c cluster) generateContract(chart, path string) error {
 			items = append(items, o)
 		}
 	}
-	if len(items) != 27 {
+	if len(items) != 29 {
 		return fmt.Errorf("incomplete rendered admission contract: %d", len(items))
 	}
 	raw, err := json.MarshalIndent(object{"items": items}, "", "  ")
