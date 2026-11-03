@@ -39,22 +39,10 @@ export default defineConfig({
           exclude: [
             "trust-bundle/**",
             "**/network.spec.ts",
-            "keycloak-par.integration.spec.ts",
             ...(skipIntegration ? ["**/*integration*"] : []),
             ...(skipFleetAdmin ? ["**/keycloak-fleet-admin.spec.ts"] : []),
           ],
           sequence: { groupOrder: 1 },
-        },
-      },
-      {
-        extends: true,
-        test: {
-          name: "keycloak-par",
-          globals: true,
-          environment: "node",
-          include: skipIntegration ? [] : ["keycloak-par.integration.spec.ts"],
-          // The PAR opt-in test restarts Keycloak, so run it after the other SSO tests.
-          sequence: { groupOrder: 2 },
         },
       },
     ],
