@@ -7,7 +7,7 @@ import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { domain, flavor, fullCore } from "./uds.config";
 
-// Asserts the classification-banner EnvoyFilter injected its CSS-only viewport frame.
+// Asserts the classification-banner EnvoyFilter injected its default viewport frame.
 // The Lua filter previously called response_handle:body() on bodyless 3xx redirects, which
 // hung the gateway response until the client disconnected. A page that loads at all with the
 // banner present therefore also proves the redirect path no longer stalls.
@@ -69,6 +69,52 @@ async function expectBanner(page: Page, text: string, addFooter = true) {
   expect(layout.inlineScripts).toBe(0);
 }
 
+async function expectCssOnlyBanner(page: Page, text: string) {
+  await expect(page.locator("#classification-banner-viewport-layout")).toBeAttached();
+  await expect(
+    page.locator(
+      "#classification-banner-top, #classification-banner-bottom, #classification-page-content",
+    ),
+  ).toHaveCount(0);
+  await expect(page.locator("body")).toHaveCSS("margin-top", "24px");
+
+  // Portal's app.html has one unadorned div directly under body. A banner wrapper
+  // or any other injected body element changes this structure.
+  const bodyChildren = await page.locator("body").evaluate(body =>
+    Array.from(body.children, child => ({
+      tagName: child.tagName,
+      attributes: child.attributes.length,
+    })),
+  );
+  expect(bodyChildren).toEqual([{ tagName: "DIV", attributes: 0 }]);
+  await expect(
+    page.locator("body > div").getByRole("heading", { name: "Your Apps" }),
+  ).toBeVisible();
+
+  const markings = await page.evaluate(() =>
+    (["::before", "::after"] as const).map(pseudo => {
+      const style = getComputedStyle(document.documentElement, pseudo);
+      return {
+        content: style.content,
+        display: style.display,
+        height: style.height,
+        position: style.position,
+        edge: pseudo === "::before" ? style.top : style.bottom,
+        visibility: style.visibility,
+      };
+    }),
+  );
+  const expectedMarking = {
+    content: `"${text}"`,
+    display: "flex",
+    height: "24px",
+    position: "fixed",
+    edge: "0px",
+    visibility: "visible",
+  };
+  expect(markings).toEqual([expectedMarking, expectedMarking]);
+}
+
 test("sso selects the path-specific classification banner", async ({ page }) => {
   await page.goto(`https://sso.${domain}/realms/uds/account`);
   await expectBanner(page, "SAMPLE BANNER");
@@ -81,11 +127,12 @@ test("grafana selects the host classification banner without a footer", async ({
   await expectBanner(page, "UNKNOWN", false);
 });
 
-test("portal selects the host classification banner", async ({ page }) => {
+test("portal displays the host CSS-only banner", async ({ page }) => {
   test.skip(
     !fullCore || flavor === "registry1",
     "Portal is not present in registry1 flavor deploys",
   );
   await page.goto(`https://portal.${domain}/`);
-  await expectBanner(page, "UNCLASSIFIED");
+  await expect(page.getByRole("heading", { name: "Your Apps" })).toBeVisible();
+  await expectCssOnlyBanner(page, "UNCLASSIFIED");
 });
