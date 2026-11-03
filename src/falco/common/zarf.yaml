@@ -23,7 +23,7 @@ components:
             targetPath: .
       - name: falco
         url: https://falcosecurity.github.io/charts
-        version: 9.2.1
+        version: 9.2.2
         namespace: falco
         valuesFiles:
           - ../values/values.yaml
