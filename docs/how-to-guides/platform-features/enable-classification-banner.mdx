@@ -86,6 +86,10 @@ The `classificationBanners` array configures one or more banners. UDS Core conti
    > [!NOTE]
    > When multiple entries match the same host, UDS Core selects the longest matching path prefix. A host-only entry acts as the fallback when no path prefix matches. Path matching excludes the query string.
 
+   > [!NOTE]
+   > If you set `cssOnly: true`, UDS Core renders the classification markings with an inline `<style>` element. A Content Security Policy (CSP) that blocks inline styles can prevent the markings from appearing.
+
+
 2. **Create and deploy your bundle**
 
    ```bash
