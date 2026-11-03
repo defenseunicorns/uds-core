@@ -11,40 +11,26 @@ const gateways = [
   ["tenant", "https://sso.uds.dev"],
   ["admin", "https://keycloak.admin.uds.dev"],
 ] as const;
-const keycloakApi = "security.istio.io";
-const policyName = "keycloak-block-admin-access-from-public-gateway";
+const statefulSetName = "keycloak";
 const namespace = "keycloak";
-const parRulePath = "/realms/{*}/protocol/openid-connect/ext/par/{**}";
+const parDisabledArgument = "--feature-par=disabled";
 const realmDiscoveryPath = (realm: string) => `/realms/${realm}/.well-known/openid-configuration`;
 
 const kubeConfig = new k8s.KubeConfig();
 kubeConfig.loadFromDefault();
-const customObjects = kubeConfig.makeApiClient(k8s.CustomObjectsApi);
+const apps = kubeConfig.makeApiClient(k8s.AppsV1Api);
 
-type PolicyRule = {
-  to?: { operation?: { paths?: string[] } }[];
-};
-
-type AuthorizationPolicy = {
-  spec?: { action?: string; rules?: PolicyRule[] };
-};
-
-async function getPolicy(): Promise<AuthorizationPolicy> {
-  return (await customObjects.getNamespacedCustomObject({
-    group: keycloakApi,
-    version: "v1",
+async function getStatefulSet(): Promise<k8s.V1StatefulSet> {
+  return apps.readNamespacedStatefulSet({
     namespace,
-    plural: "authorizationpolicies",
-    name: policyName,
-  })) as AuthorizationPolicy;
+    name: statefulSetName,
+  });
 }
 
-function findParRule(rules: PolicyRule[] = []): { index: number; rule: PolicyRule } {
-  const index = rules.findIndex(rule =>
-    rule.to?.some(to => to.operation?.paths?.includes(parRulePath)),
-  );
-  expect(index, "PAR deny rule").toBeGreaterThanOrEqual(0);
-  return { index, rule: rules[index] };
+function findParArgument(args: string[] = []): number {
+  const index = args.indexOf(parDisabledArgument);
+  expect(index, "PAR feature disablement").toBeGreaterThanOrEqual(0);
+  return index;
 }
 
 async function getParEndpoint(origin: string, realm: string): Promise<string> {
@@ -79,18 +65,16 @@ async function pollStatus(endpoint: string, status: number): Promise<Response> {
   );
 }
 
-async function patchRule(operation: "remove" | "add", index: number, rule?: PolicyRule) {
+async function patchFeatureArgument(operation: "remove" | "add", index: number) {
+  const path = `/spec/template/spec/containers/0/args/${index}`;
   const patch = [
     operation === "remove"
-      ? { op: "remove", path: `/spec/rules/${index}` }
-      : { op: "add", path: `/spec/rules/${index}`, value: rule },
+      ? { op: "remove", path }
+      : { op: "add", path, value: parDisabledArgument },
   ];
-  await customObjects.patchNamespacedCustomObject({
-    group: keycloakApi,
-    version: "v1",
+  await apps.patchNamespacedStatefulSet({
     namespace,
-    plural: "authorizationpolicies",
-    name: policyName,
+    name: statefulSetName,
     body: patch,
   });
 }
@@ -99,20 +83,19 @@ describe
   .skipIf(process.env.SKIP_INTEGRATION === "true")
   .sequential("integration - Keycloak PAR access", { timeout: 300_000 }, () => {
     beforeAll(async () => {
-      const policy = await getPolicy();
-      expect(policy.spec?.action).toBe("DENY");
-      findParRule(policy.spec?.rules);
+      const statefulSet = await getStatefulSet();
+      findParArgument(statefulSet.spec?.template.spec?.containers[0].args);
     });
 
     it.each(gateways)("denies PAR variants through the %s gateway", async (_name, origin) => {
       const endpoint = await getParEndpoint(origin, "uds");
-      await pollStatus(endpoint, 403);
+      await pollStatus(endpoint, 404);
       const paths = [
-        ["bare endpoint", endpoint, 403],
-        ["trailing slash", `${endpoint}/`, 403],
-        ["query string", `${endpoint}?client_id=par-access-integration-test`, 403],
-        ["literal final semicolon", `${endpoint};probe=1`, 403],
-        ["encoded final semicolon", `${endpoint}%3Bprobe=1`, 403],
+        ["bare endpoint", endpoint, 404],
+        ["trailing slash", `${endpoint}/`, 404],
+        ["query string", `${endpoint}?client_id=par-access-integration-test`, 404],
+        ["literal final semicolon", `${endpoint};probe=1`, 400],
+        ["encoded final semicolon", `${endpoint}%3Bprobe=1`, 404],
         ["literal non-final semicolon", endpoint.replace("/request", ";probe=1/request"), 400],
         ["encoded non-final semicolon", endpoint.replace("/request", "%3Bprobe=1/request"), 404],
       ] as const;
@@ -120,22 +103,19 @@ describe
       for (const [description, path, expectedStatus] of paths) {
         const response = await postPar(path);
         expect(response.status, description).toBe(expectedStatus);
-        if (expectedStatus === 403) {
-          expect(await response.text(), description).toContain("RBAC: access denied");
-        }
       }
     });
 
     it("denies PAR for the master realm through the admin gateway", async () => {
       const endpoint = await getParEndpoint(gateways[1][1], "master");
-      expect((await postPar(endpoint)).status).toBe(403);
+      expect((await postPar(endpoint)).status).toBe(404);
     });
 
-    it("allows PAR responses through both gateways when the rule is removed, then restores denial", async () => {
-      const policy = await getPolicy();
-      const { index, rule } = findParRule(policy.spec?.rules);
+    it("allows PAR responses through both gateways when the feature is enabled, then restores disablement", async () => {
+      const statefulSet = await getStatefulSet();
+      const index = findParArgument(statefulSet.spec?.template.spec?.containers[0].args);
       try {
-        await patchRule("remove", index);
+        await patchFeatureArgument("remove", index);
 
         for (const [, origin] of gateways) {
           const endpoint = await getParEndpoint(origin, "uds");
@@ -145,16 +125,15 @@ describe
           });
         }
       } finally {
-        const latestPolicy = await getPolicy();
-        const parRuleExists = latestPolicy.spec?.rules?.some(rule =>
-          rule.to?.some(to => to.operation?.paths?.includes(parRulePath)),
-        );
-        if (!parRuleExists) {
-          await patchRule("add", index, rule);
+        const latestStatefulSet = await getStatefulSet();
+        const parDisabled =
+          latestStatefulSet.spec?.template.spec?.containers[0].args?.includes(parDisabledArgument);
+        if (!parDisabled) {
+          await patchFeatureArgument("add", index);
         }
         for (const [, origin] of gateways) {
           const endpoint = await getParEndpoint(origin, "uds");
-          await pollStatus(endpoint, 403);
+          await pollStatus(endpoint, 404);
         }
       }
     });

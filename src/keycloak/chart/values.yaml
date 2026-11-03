@@ -36,7 +36,7 @@ adminApiAllowedPrincipals: []
 # Should only be disabled if this is incorrectly blocking paths you expect to be allowed
 pathParameterProtection: true
 
-# Allow Pushed Authorization Requests (PAR) through the Keycloak waypoint.
+# Allow Keycloak's Pushed Authorization Requests (PAR) feature.
 allowPushedAuthorizationRequests: false
 
 # The primary Keycloak realm

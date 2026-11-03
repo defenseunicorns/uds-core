@@ -159,6 +159,9 @@ spec:
             - "--import-realm"
             # @lulaStart e7a920f8-e6e2-4a97-80a0-edda1fab0f8b
             - "--features=fips{{ with .Values.features.additional }},{{ join "," . }}{{ end }}"
+            {{- if not .Values.allowPushedAuthorizationRequests }}
+            - "--feature-par=disabled"
+            {{- end }}
             - "--fips-mode=strict"
             # @lulaEnd e7a920f8-e6e2-4a97-80a0-edda1fab0f8b
             {{- if .Values.truststorePaths }}
