@@ -1,9 +1,9 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
   - istio: ../../src/istio/tasks.yaml
-  - pepr: ../../src/pepr/tasks.yaml
+  - controller: ../../src/go-controller/tasks.yaml
 
 tasks:
   - name: validate
@@ -15,4 +15,4 @@ tasks:
       - task: istio:validate
         with:
           validate_passthrough: ${{ .inputs.validate_passthrough }}
-      - task: pepr:validate
+      - task: controller:validate

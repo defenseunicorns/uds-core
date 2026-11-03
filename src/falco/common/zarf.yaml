@@ -16,6 +16,8 @@ components:
         namespace: falco
         version: 0.1.0
         localPath: ../chart
+        # The pre-upgrade RE2 patch must survive Zarf/UDS field-manager changes.
+        serverSideApply: "false"
         valuesFiles:
           - ../chart/values.yaml
         values:

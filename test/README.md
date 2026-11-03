@@ -1,83 +1,54 @@
-# UDS Core Testing Guide
+# UDS Core testing guide
 
-This guide explains how UDS Core approaches testing, the types of tests used, where they live, and how to run them—both locally and in CI. It is intended for developers contributing to UDS Core.
+Core ships the Go operator and native admission policies in base and every derived distribution. Tests validate the same default installation used by applications.
 
----
+## Source checks
 
-## Testing Philosophy
+Run the Go unit, differential, lifecycle, and admission tests from the repository root:
 
-UDS Core maintains a clear distinction between:
+```bash
+npm run test:unit
+go -C src/go-controller vet ./...
+node --test src/go-controller/hack/distribution.test.mjs
+```
 
-- **Unit Tests**: Fast, isolated, colocated with the code they test. No cluster or external dependencies required.
-- **Non-Unit Tests**: All other tests (integration, e2e, journey, system, etc.) that require a cluster, multiple components, or end-to-end flows. These are grouped in the `test/` directory.
+The frozen pre-replacement suite runs outside the checkout as a compatibility oracle. It does not supply production dependencies:
 
-This separation ensures clarity, fast feedback for code changes, and scalable test management.
+```bash
+npm run test:reference -- --output /absolute/new/evidence-directory
+```
 
----
+Run the chart and values assertions through the repository tasks:
 
-## Test Locations
+```bash
+uds run -f tasks/lint.yaml helm-unittest
+uds run -f tasks/test.yaml values-tests
+```
 
-- **Unit Tests**:
-  - Located directly next to the code in `src/pepr/**` (e.g., `src/pepr/foo/foo.spec.ts`).
-  - Only test the logic of the module, using mocks as needed.
+## Cluster and browser checks
 
-- **Non-Unit Tests**:
-  - Located in the `test/` directory.
-  - Includes integration, e2e, journey, and system tests.
-  - Subdirectories may include:
-    - `test/playwright/` — Browser-driven E2E tests
-    - `test/vitest/` — Cluster-level integration/system tests
+The existing suites under `test/vitest/` validate policy mutation, rejection, exemptions, networking, identity, monitoring, reload, and resource lifecycle. `test/playwright/` validates rendered application flows. Both exercise the regular installed Core without an operator selector.
 
----
+With an isolated test cluster selected, run the complete task to create fixtures and execute both suites:
 
-## How Tests Are Run
+```bash
+uds run -f tasks/test.yaml e2e-tests
+```
 
-### Unit Tests
+For a focused run against prepared fixtures, execute the suite from its package directory:
 
-- **Via UDS Task (CI & Local):**
-  - Run the `validate` task for Pepr:
-    ```sh
-    uds run -f src/pepr/tasks.yaml validate
-    ```
-  - This runs `npx vitest src/pepr` and executes all unit tests colocated in `src/pepr`.
+```bash
+cd test/vitest
+npm ci
+npx vitest run
+```
 
-- **Directly with Vitest (Local):**
-  - From the root of the repo:
-    ```sh
-    npx vitest run
-    ```
-  - The root `vitest.config.js` is configured to only include unit tests in `src/pepr` and to exclude tests in `test/`.
+Run browser checks from their package directory:
 
-### Non-Unit Tests (`test/` directory)
+```bash
+cd test/playwright
+npm ci
+npx playwright test
+```
 
-- **Via UDS Task (CI & Local):**
-  - Run the `e2e-tests` task:
-    ```sh
-    uds run -f tasks/test.yaml e2e-tests
-    ```
-  - This will run all tests in the `test/` directory.
-
-- **Directly with Vitest (Local):**
-  - From within the `test/vitest` directory:
-    ```sh
-    npx vitest run
-    ```
-  - This runs only the vitest tests.
-
-- **Directly with Playwright (Local):**
-  - From within the `test/playwright` directory:
-    ```sh
-    npx playwright test
-    ```
-  - This runs all playwright tests.
-
-### Running Individual Test Files
-
-- **Vitest (Unit or Integration):**
-  ```sh
-  npx vitest run path/to/file.spec.ts
-  ```
-- **Playwright:**
-  ```sh
-  npx playwright test path/to/file.test.ts
-  ```
+Preserve suite assertions, retries, and deadlines when changing the implementation. Target the owning resource's events or the Core controller in `uds-system` when diagnosing failures.

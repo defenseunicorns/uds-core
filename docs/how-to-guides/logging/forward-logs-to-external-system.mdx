@@ -35,7 +35,7 @@ Vector supports many destination types beyond S3. This guide uses S3 as a concre
 
 1. **Add a Vector sink via bundle overrides**
 
-   The example below forwards only Keycloak and Pepr logs to an S3 bucket. It adds a custom source that collects logs from the `keycloak` and `pepr-system` namespaces, then ships them to S3 using IRSA authentication with GZIP compression.
+   The example below forwards only Keycloak and operator logs to an S3 bucket. It adds a custom source that collects logs from the `keycloak` and `uds-system` namespaces, then ships them to S3 using IRSA authentication with GZIP compression.
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -49,13 +49,13 @@ Vector supports many destination types beyond S3. This guide uses S3 as a concre
          vector:
            vector:
              values:
-               # Add a separate log source that only collects from the keycloak and pepr-system namespaces.
+               # Add a separate log source that only collects from the keycloak and uds-system namespaces.
                # This lets you forward only these logs to your external system instead of everything.
                # The "extra_namespace_label_selector" filters by Kubernetes namespace labels.
                - path: customConfig.sources.filtered_logs
                  value:
                    type: "kubernetes_logs"
-                   extra_namespace_label_selector: "kubernetes.io/metadata.name in (keycloak,pepr-system)"
+                   extra_namespace_label_selector: "kubernetes.io/metadata.name in (keycloak,uds-system)"
                    oldest_first: true
                # Static sink configuration: structure that stays the same across environments.
                # Only bucket, region, and credentials change per environment (set via variables below).

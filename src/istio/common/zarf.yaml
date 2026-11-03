@@ -19,7 +19,7 @@ components:
     required: true
     charts:
       - name: base
-        url: https://blob.istio.io/istio-release/charts
+        url: oci://ghcr.io/istio/release/charts/base
         version: 1.31.2
         namespace: istio-system
         # Istio's webhooks currently will cause SSA conflicts - https://github.com/istio/istio/issues/59487
@@ -33,7 +33,7 @@ components:
               - .istio-controlplane.base.global.hub
               - .istio-controlplane.base.global.tag
       - name: istiod
-        url: https://blob.istio.io/istio-release/charts
+        url: oci://ghcr.io/istio/release/charts/istiod
         version: 1.31.2
         namespace: istio-system
         valuesFiles:
@@ -68,7 +68,7 @@ components:
           - sourcePath: .istio-controlplane.uds-global-istio-config
             targetPath: .
       - name: cni
-        url: https://blob.istio.io/istio-release/charts
+        url: oci://ghcr.io/istio/release/charts/cni
         version: 1.31.2
         namespace: istio-system
         valuesFiles:
@@ -81,7 +81,7 @@ components:
               - .istio-controlplane.cni.global.hub
               - .istio-controlplane.cni.global.tag
       - name: ztunnel
-        url: https://blob.istio.io/istio-release/charts
+        url: oci://ghcr.io/istio/release/charts/ztunnel
         version: 1.31.2
         namespace: istio-system
         valuesFiles:
@@ -130,43 +130,6 @@ components:
               fi
             setVariables:
               - name: CNI_BIN_DIR
-        after:
-          - description: "Ensure Istio Ambient is enabled for Pepr"
-            cmd: |
-              # This is a duplicate of the action in src/pepr/zarf.yaml, just to ensure the labels are still correct after Istio installs
-              echo "Setting Ambient mode for pepr-system..."
-              ./zarf tools kubectl label namespace pepr-system "istio.io/dataplane-mode"="ambient" --overwrite
-
-              echo "Disabling istio-injection on pepr-system..."
-              ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
-
-          - description: "Wait for Pepr Ambient enrollment"
-            maxTotalSeconds: 60
-            wait:
-              cluster:
-                kind: pod
-                name: app=pepr-uds-core,pepr.dev/controller=admission
-                namespace: pepr-system
-                condition: '{.metadata.annotations.ambient\.istio\.io/redirection}=enabled'
-
-          - description: "Verify Pepr admission readiness"
-            maxTotalSeconds: 30
-            maxRetries: 10
-            cmd: |
-              ./zarf tools kubectl create \
-                --request-timeout=5s \
-                --dry-run=server \
-                -o name \
-                -f - <<'EOF'
-              apiVersion: v1
-              kind: Service
-              metadata:
-                generateName: pepr-admission-probe-
-                namespace: default
-              spec:
-                ports:
-                  - port: 443
-              EOF
 
   - name: gateway-api-crds
     required: true

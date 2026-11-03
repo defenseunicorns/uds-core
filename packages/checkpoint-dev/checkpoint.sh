@@ -27,9 +27,11 @@ EOF
 
 # Clean up the source node on success or failure; the snapshot keeps its taint.
 cleanup() {
-  docker unpause "$CONTAINER_ID" 2>/dev/null || true
+  if [ "$(docker inspect --format '{{.State.Paused}}' "$CONTAINER_ID" 2>/dev/null)" = true ]; then
+    docker unpause "$CONTAINER_ID" >/dev/null || true
+  fi
   docker exec "$CONTAINER_ID" kubectl taint node "$K3S_CONTAINER" \
-    node.cloudprovider.kubernetes.io/uninitialized- >/dev/null || true
+    node.cloudprovider.kubernetes.io/uninitialized- >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -53,7 +55,13 @@ echo "Pausing container ${K3S_CONTAINER} ..."
 docker pause "$CONTAINER_ID"
 
 echo "Committing container ${K3S_CONTAINER} ..."
-docker commit "$CONTAINER_ID" "$IMAGE_NAME" >/dev/null
+# Keep our explicit pause across the image commit and both volume copies.
+# Docker's default commit pause/unpause cycle can resume an already paused node.
+docker commit --pause=false "$CONTAINER_ID" "$IMAGE_NAME" >/dev/null
+if [ "$(docker inspect --format '{{.State.Paused}}' "$CONTAINER_ID")" != true ]; then
+  echo "error: source node resumed before checkpoint volume capture" >&2
+  exit 1
+fi
 
 echo "Streaming k3s volume ..."
 docker cp "${K3S_CONTAINER}:/var/lib/rancher/k3s/." - > k3s_data.tar

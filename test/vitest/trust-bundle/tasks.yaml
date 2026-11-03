@@ -1,10 +1,14 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+includes:
+  - test-dependencies: ../../../tasks/utils.yaml
 
 tasks:
   - name: trust-bundle-tests
     description: "Run vitest Trust Bundle Tests"
     actions:
+      - task: test-dependencies:prepare-node-test-dependencies
       - description: "Apply Trust Bundle test manifests"
         dir: test/vitest/trust-bundle
         cmd: |

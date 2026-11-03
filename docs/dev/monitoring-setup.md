@@ -20,7 +20,7 @@ The Prometheus operator mutates ServiceMonitor/PodMonitor resources to remove TL
 <details>
 <summary>Istio Sidecar Mode [LEGACY]</summary>
 
-UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this via a default scrapeClass in prometheus to add the istio certs. When a monitor needs to be exempt from that tlsConfig a mutation is performed to leverage a plain scrape class without istio certs.
+The UDS Operator to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this via a default scrapeClass in prometheus to add the istio certs. When a monitor needs to be exempt from that tlsConfig a mutation is performed to leverage a plain scrape class without istio certs.
 
 > [!NOTE]  
 > The setup described below is the current setup that was designed to handle complexities of Istio sidecars with metrics. With ongoing work to move to Istio ambient this setup should be significantly simplified.
@@ -29,12 +29,12 @@ UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints
 
 Generally it is beneficial to use service and pod monitor resources from existing helm charts where possible as these may have more advanced configuration and options. The UDS monitoring setup ensures that all monitoring resources use a default [`scrapeClass`](https://github.com/prometheus-operator/prometheus-operator/blob/v0.75.1/Documentation/api.md#monitoring.coreos.com/v1.ScrapeClass) configured in Prometheus to handle the necessary `tlsConfig` setup for metrics to work in STRICT Istio mTLS environments (the `scheme` is also mutated to `https` on individual monitor endpoints, see [this doc](https://istio.io/latest/docs/ops/integrations/prometheus/#tls-settings) for details). This setup is the default configuration but individual monitors can opt out of this config in 3 different ways:
 
-1. If the service or pod monitor targets namespaces that are not Istio injected (ex: `kube-system`), Pepr will detect this and mutate these monitors to use an `exempt` scrape class that does not have the Istio certs. Assumptions are made about STRICT mTLS here for simplicity, based on the `istio-injection` namespace label. Without making these assumptions we would need to query `PeerAuthentication` resources or another resource to determine the exact workload mTLS posture.
+1. If the service or pod monitor targets namespaces that are not Istio injected (ex: `kube-system`), the operator detects this and mutate these monitors to use an `exempt` scrape class that does not have the Istio certs. Assumptions are made about STRICT mTLS here for simplicity, based on the `istio-injection` namespace label. Without making these assumptions we would need to query `PeerAuthentication` resources or another resource to determine the exact workload mTLS posture.
 1. Individual monitors can explicitly set the `exempt` scrape class to opt out of the Istio certificate configuration. This should typically only be done if your service exposes metrics on a PERMISSIVE mTLS port.
-1. If setting a `scrapeClass` is not an option due to lack of configuration in a helm chart, or for other reasons, monitors can use the `uds/skip-mutate` annotation (with any value) to have Pepr mutate the `exempt` scrape class onto the monitor.
+1. If setting a `scrapeClass` is not an option due to lack of configuration in a helm chart, or for other reasons, monitors can use the `uds/skip-mutate` annotation (with any value) to have the operator mutate the `exempt` scrape class onto the monitor.
 
 > [!NOTE]  
-> There is a deprecated functionality in Pepr that will mutate `tlsConfig` onto individual service monitors, rather than using the scrape class approach. This has been kept in the current code temporarily to prevent any metrics downtime during the switch to `scrapeClass`. In a future release this behavior will be removed to reduce the complexity of the setup and required mutations.
+> There is a deprecated operator functionality that will mutate `tlsConfig` onto individual service monitors, rather than using the scrape class approach. This has been kept in the current code temporarily to prevent any metrics downtime during the switch to `scrapeClass`. In a future release this behavior will be removed to reduce the complexity of the setup and required mutations.
 
 ## Notes on Alternative Approaches
 

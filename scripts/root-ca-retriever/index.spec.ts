@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -498,7 +498,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: uds-ca-certs
-  namespace: pepr-system
+  namespace: uds-system
 data:
   dodCACerts: old-dod-base64
   publicCACerts: old-public-base64
@@ -531,7 +531,7 @@ data:
       expect(parsedYaml.apiVersion).toBe("v1");
       expect(parsedYaml.kind).toBe("ConfigMap");
       expect(parsedYaml.metadata.name).toBe("uds-ca-certs");
-      expect(parsedYaml.metadata.namespace).toBe("pepr-system");
+      expect(parsedYaml.metadata.namespace).toBe("uds-system");
 
       // Verify the certificates were base64 encoded and updated correctly
       const expectedDoDBase64 = Buffer.from(

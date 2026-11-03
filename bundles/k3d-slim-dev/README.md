@@ -4,7 +4,7 @@ This bundle is a trimmed-down version of [UDS Core](../k3d-standard/README.md) b
 
 - [Istio](https://istio.io/) - Service Mesh
 - [KeyCloak](https://www.keycloak.org/) - Identity & Access Management
-- [Pepr](https://pepr.dev) - UDS policy engine & operator
+- UDS Core Go operator and Kubernetes CEL admission policies
 
 The k3d uds-dev-stack provides:
 

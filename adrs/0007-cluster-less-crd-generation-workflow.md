@@ -69,3 +69,7 @@ The implementation will focus on enhancing existing `uds-core` development patte
 2. **JSON Schema Only**: Rejected because YAML manifests are the standard artifact for Kubernetes users and GitOps tools.
 3. **Cluster Simulation (Kwok)**: Using a lightweight cluster simulation tool like **Kwok** was considered to speed up the existing cluster-dependent generation process. While this significantly reduces generation time (sub-2 seconds) compared to full clusters, it was rejected because it still requires an external binary dependency and does not fundamentally solve the "Missing Manifests" problem or the need for a runtime API during build steps. The chosen approach provides the same speed benefits without any external runtime requirements.
 
+
+## Core controller replacement
+
+Core now keeps schema sources in `src/uds-api/sources/` and generated CRDs in `src/uds-api/chart/templates/`. The implementation-neutral API chart supplies base and all derived variants. `src/go-controller/tasks.yaml` owns generation of TypeScript, JSON Schema, Go API/client, and reference documentation artifacts. The Go controller and CEL admission policies consume these APIs without changing application package manifests. Helm remains the only CRD registration path.

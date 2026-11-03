@@ -24,7 +24,7 @@ Every layer is published as an individual OCI Zarf package. All layers except `c
 | Layer | What it provides | Dependencies |
 |---|---|---|
 | [core-crds](https://github.com/defenseunicorns/uds-core/tree/main/packages/crds) | Standalone UDS CRDs (Package, Exemption, ClusterConfig) | None |
-| [core-base](https://github.com/defenseunicorns/uds-core/tree/main/packages/base) | Istio, UDS Operator, Pepr Policy Engine | None (foundation for all other layers) |
+| [core-base](https://github.com/defenseunicorns/uds-core/tree/main/packages/base) | Istio, UDS Operator, Admission policies | None (foundation for all other layers) |
 | [core-identity-authorization](https://github.com/defenseunicorns/uds-core/tree/main/packages/identity-authorization) | Keycloak + Authservice (SSO) | Base |
 | [core-metrics-server](https://github.com/defenseunicorns/uds-core/tree/main/packages/metrics-server) | Kubernetes Metrics Server | Base |
 | [core-runtime-security](https://github.com/defenseunicorns/uds-core/tree/main/packages/runtime-security) | Falco + Falcosidekick | Base |

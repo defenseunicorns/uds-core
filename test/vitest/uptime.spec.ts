@@ -106,9 +106,9 @@ describe("Uptime Recording Rules", { timeout: 210000 }, () => {
     "uds:admin_ingressgateway:up",
     "uds:ztunnel:up",
     "uds:tenant_ingressgateway:up",
-    // Base - Pepr
-    "uds:pepr_admission:up",
-    "uds:pepr_watcher:up",
+    // Base - Core control plane
+    'uds:admission:up{implementation="go-native",uds_layer="base",uds_component="admission"}',
+    'uds:reconciliation:up{implementation="go-native",uds_layer="base",uds_component="reconciliation"}',
     // Identity & Authorization
     "uds:keycloak:up",
     "uds:keycloak_waypoint:up",

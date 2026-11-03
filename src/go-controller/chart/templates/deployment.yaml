@@ -1,0 +1,109 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if ne .Release.Namespace "uds-system" }}
+{{- fail "The native controller must be installed in uds-system; admission recovery and serving identities use this namespace." }}
+{{- end }}
+{{- if and (hasKey .Values.podLabels "istio.io/dataplane-mode") (ne (index .Values.podLabels "istio.io/dataplane-mode") "ambient") }}
+{{- fail "Core controller Pods require ambient enrollment at creation; istio.io/dataplane-mode cannot be overridden." }}
+{{- end }}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uds-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: uds-controller
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: uds-controller
+  template:
+    metadata:
+      labels:
+        app: uds-controller
+        istio.io/dataplane-mode: ambient
+        {{- with omit .Values.podLabels "istio.io/dataplane-mode" }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: uds-controller
+      priorityClassName: system-node-critical
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: uds-controller
+      containers:
+        - name: controller
+          image: {{ .Values.image.reference | default (printf "%s:%s" .Values.image.repository .Values.image.tag) | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - {{ printf "--kube-api-qps=%v" .Values.kubernetesAPI.qps | quote }}
+            - {{ printf "--kube-api-burst=%v" .Values.kubernetesAPI.burst | quote }}
+          env:
+            - name: ZARF_REGISTRY_ADDRESS
+              value: {{ .Values.zarfRegistryAddress | quote }}
+            - name: UDS_LOG_LEVEL
+              value: {{ .Values.logLevel | quote }}
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          volumeMounts:
+            - name: keycloak-identity
+              mountPath: /var/run/secrets/keycloak
+              readOnly: true
+          ports:
+            - name: webhook
+              containerPort: 9443
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: webhook
+              scheme: HTTPS
+            initialDelaySeconds: 1
+            periodSeconds: 2
+          startupProbe:
+            httpGet:
+              path: /livez
+              port: webhook
+              scheme: HTTPS
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: webhook
+              scheme: HTTPS
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: keycloak-identity
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  audience: http://keycloak-http.keycloak.svc.cluster.local/realms/uds
+                  expirationSeconds: 3600

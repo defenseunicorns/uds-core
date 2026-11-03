@@ -4,7 +4,7 @@
  */
 
 import * as k8s from "@kubernetes/client-node";
-import { K8s, kind } from "pepr";
+import { K8s, kind } from "../../src/uds-api";
 import * as net from "net";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
@@ -12,7 +12,7 @@ import { fetchWithTimeout } from "./helpers/fetch";
 import { execInPod, waitForPodReady } from "./helpers/k8s";
 import { getAdminToken } from "./helpers/keycloak";
 import { pollUntilSuccess } from "./helpers/polling";
-import { Direction, UDSPackage } from "../../src/pepr/operator/crd";
+import { Direction, UDSPackage } from "../../src/uds-api";
 
 vi.setConfig({ hookTimeout: 180000, testTimeout: 180000 });
 

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { K8s, kind } from "pepr";
+import { K8s, kind } from "../../src/uds-api";
 import { beforeAll, describe, expect, it } from "vitest";
-import { UDSPackage } from "../../src/pepr/operator/crd";
+import { UDSPackage } from "../../src/uds-api";
 import { getAdminToken } from "./helpers/keycloak";
 
 const CLIENT_ID = "uds-core-admin-grafana";

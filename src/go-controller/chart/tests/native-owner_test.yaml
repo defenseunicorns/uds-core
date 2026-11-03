@@ -1,0 +1,39 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+suite: Native admission installation ownership
+templates:
+  - native-admission.yaml
+release:
+  namespace: uds-system
+kubernetesProvider:
+  scheme:
+    rbac.authorization.k8s.io/v1/ClusterRole:
+      gvr:
+        group: rbac.authorization.k8s.io
+        version: v1
+        resource: clusterroles
+      namespaced: false
+  objects:
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: uds-controller
+        uid: installation-uid
+tests:
+  - it: binds all activated policies and bindings to this installation
+    documentSelector:
+      path: apiVersion
+      value: admissionregistration.k8s.io/v1
+      matchMany: true
+    asserts:
+      - hasDocuments:
+          count: 24
+          filterAware: true
+      - equal:
+          path: metadata.ownerReferences
+          value:
+            - apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRole
+              name: uds-controller
+              uid: installation-uid
+              controller: true

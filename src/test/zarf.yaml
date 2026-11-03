@@ -32,6 +32,14 @@ components:
   # Deploy package CRs
   - name: test-app-packages
     required: true
+    actions:
+      onDeploy:
+        after:
+          - description: Wait for declared test Packages before admitting dependent workloads
+            cmd: |
+              ./zarf tools kubectl wait packages.uds.dev --all-namespaces \
+                --selector=zarf.dev/package=uds-core-test-apps \
+                --for=jsonpath='{.status.phase}'=Ready --timeout=300s
     manifests:
       - name: test-app-packages
         files:

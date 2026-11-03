@@ -1,0 +1,41 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+logLevel: info
+zarfRegistryAddress: "127.0.0.1:31999"
+replicaCount: 2
+podLabels: {}
+
+image:
+  reference: ""
+  repository: ghcr.io/defenseunicorns/uds-core/controller
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+# Reconciliation budget shared by typed, dynamic and UDS clients.
+# Lease heartbeats use a separate 1 QPS / 2 burst budget.
+# Admission maintenance uses a separate 10 QPS / 20 burst budget.
+kubernetesAPI:
+  qps: 20
+  burst: 40
+
+# Cold bootstrap may start the backend before registering its callbacks.
+# Native activation requires registered complete Go callbacks.
+admission:
+  register: true
+
+# Native policies require Kubernetes 1.36 or newer and the complete Go webhook.
+# The compiler exclusively creates and updates the protected grant union.
+nativeAdmission:
+  enabled: true
+  # Core activates CEL first and routes only contextual/compatibility work to Go.
+  # The internal bootstrap phase keeps both registrations disabled until ready.
+  narrowCallbacks: true
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "1"

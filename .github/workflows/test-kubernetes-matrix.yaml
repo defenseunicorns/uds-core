@@ -13,6 +13,9 @@ on:
       - "release/**"
     paths:
       - ".github/workflows/test-kubernetes-matrix.yaml"
+      - "src/go-controller/**"
+      - "src/uds-api/**"
+      - "packages/base/**"
 
 concurrency:
   group: test-kubernetes-matrix-${{ github.ref }}
@@ -31,7 +34,6 @@ jobs:
       fail-fast: false
       matrix:
         k3s_version:
-          - v1.35.9+k3s1
           - v1.36.5+k3s1
         flavor:
           - upstream

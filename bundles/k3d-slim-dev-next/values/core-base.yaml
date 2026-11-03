@@ -1,18 +1,13 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-pepr-uds-core:
-  module:
-    watcher:
-      resources:
-        requests:
-          memory: "{{ .vars.pepr_watcher_memory_request }}"
-          cpu: "{{ .vars.pepr_watcher_cpu_request }}"
-    admission:
-      resources:
-        requests:
-          memory: "{{ .vars.pepr_admission_memory_request }}"
-          cpu: "{{ .vars.pepr_admission_cpu_request }}"
+uds-controller:
+  uds-controller:
+    replicaCount: {{ .vars.uds_controller_replicas }}
+    resources:
+      requests:
+        memory: "{{ .vars.uds_controller_memory_request }}"
+        cpu: "{{ .vars.uds_controller_cpu_request }}"
 
 istio-controlplane:
   cni:

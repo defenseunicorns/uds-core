@@ -24,7 +24,7 @@ export default defineConfig({
           name: "network",
           globals: true,
           environment: "node",
-          include: ["network.spec.ts", "pepr-policies/network.spec.ts"],
+          include: ["network.spec.ts", "policies/network.spec.ts"],
           exclude: ["trust-bundle/**"],
           sequence: { groupOrder: 0 },
         },

@@ -24,6 +24,7 @@ tasks:
         default: "true"
 
     actions:
+      - task: utils:prepare-node-test-dependencies
       - description: "Run Test Apps E2E tests"
         task: create-deploy
         with:
@@ -103,6 +104,12 @@ tasks:
             uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm
           fi
 
+      - description: Wait for the test application's declared Package resources
+        cmd: |
+          ./uds zarf tools kubectl wait packages.uds.dev --all-namespaces \
+            --selector=zarf.dev/package=uds-core-test-apps \
+            --for=jsonpath='{.status.phase}'=Ready --timeout=300s
+
       - description: Verify the admin app is accessible
         wait:
           network:
@@ -138,14 +145,19 @@ tasks:
             address: demo-8081.uds.dev
             code: 200
 
-      - description: Fetch the passthrough gateway IP address
-        if: ${{ eq .inputs.validate_passthrough "true" }}
-        maxRetries: 5
-        task: utils:passthrough-gw-ip
       - description: Verify the passthrough app is accessible
         if: ${{ eq .inputs.validate_passthrough "true" }}
         maxRetries: 5
-        cmd: curl --fail --silent --show-error --insecure --resolve "passthrough-test.uds.dev:443:$PASSTHROUGH_GW_IP" https://passthrough-test.uds.dev/
+        cmd: |
+          set -eu
+          gateway_ip=$(./uds zarf tools kubectl get service -n istio-passthrough-gateway passthrough-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          if [ -z "$gateway_ip" ]; then
+            gateway_hostname=$(./uds zarf tools kubectl get service -n istio-passthrough-gateway passthrough-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            test -n "$gateway_hostname"
+            gateway_ip=$(dig +short "$gateway_hostname" | head -n1)
+          fi
+          test -n "$gateway_ip"
+          curl --fail --silent --show-error --insecure --resolve "passthrough-test.uds.dev:443:$gateway_ip" https://passthrough-test.uds.dev/
 
       # Check standard sidecar authservice protection
       - task: check-authservice-protection
@@ -232,7 +244,7 @@ tasks:
           else
             echo "UDS Package CRD is not installed; skipping UDP test Package cleanup."
           fi
-      - description: Wait for Pepr to remove the shared UDP Gateway
+      - description: Wait for Core to remove the shared UDP Gateway
         cmd: |
           set -e
           if uds zarf tools kubectl get crd gateways.gateway.networking.k8s.io >/dev/null 2>&1; then

@@ -1,0 +1,939 @@
+{
+  "package": {
+    "fields": {
+      "UDSPackage": {
+        "spec": {
+          "name": "Spec",
+          "type": "Spec"
+        },
+        "status": {
+          "name": "Status",
+          "type": "PackageStatus"
+        }
+      },
+      "UDSPackageList": {
+        "items": {
+          "name": "Items",
+          "type": "[]UDSPackage"
+        }
+      },
+      "Spec": {
+        "caBundle": {
+          "name": "CABundle",
+          "type": "*CABundle"
+        },
+        "monitor": {
+          "name": "Monitor",
+          "type": "[]Monitor"
+        },
+        "network": {
+          "name": "Network",
+          "type": "*Network"
+        },
+        "sso": {
+          "name": "Sso",
+          "type": "[]Sso"
+        }
+      },
+      "CABundle": {
+        "configMap": {
+          "name": "ConfigMap",
+          "type": "*ConfigMap"
+        }
+      },
+      "ConfigMap": {
+        "annotations": {
+          "name": "Annotations",
+          "type": "map[string]string"
+        },
+        "key": {
+          "name": "Key",
+          "type": "*string"
+        },
+        "labels": {
+          "name": "Labels",
+          "type": "map[string]string"
+        },
+        "name": {
+          "name": "Name",
+          "type": "*string"
+        }
+      },
+      "Monitor": {
+        "authorization": {
+          "name": "Authorization",
+          "type": "*Authorization"
+        },
+        "description": {
+          "name": "Description",
+          "type": "*string"
+        },
+        "fallbackScrapeProtocol": {
+          "name": "FallbackScrapeProtocol",
+          "type": "*FallbackScrapeProtocol"
+        },
+        "kind": {
+          "name": "Kind",
+          "type": "*MonitorKind"
+        },
+        "path": {
+          "name": "Path",
+          "type": "*string"
+        },
+        "podSelector": {
+          "name": "PodSelector",
+          "type": "map[string]string"
+        },
+        "portName": {
+          "name": "PortName",
+          "type": "string"
+        },
+        "selector": {
+          "name": "Selector",
+          "type": "map[string]string"
+        },
+        "targetPort": {
+          "name": "TargetPort",
+          "type": "float64"
+        }
+      },
+      "Authorization": {
+        "credentials": {
+          "name": "Credentials",
+          "type": "Credentials"
+        },
+        "type": {
+          "name": "Type",
+          "type": "*string"
+        }
+      },
+      "Credentials": {
+        "key": {
+          "name": "Key",
+          "type": "string"
+        },
+        "name": {
+          "name": "Name",
+          "type": "*string"
+        },
+        "optional": {
+          "name": "Optional",
+          "type": "*bool"
+        }
+      },
+      "Network": {
+        "allow": {
+          "name": "Allow",
+          "type": "[]Allow"
+        },
+        "expose": {
+          "name": "Expose",
+          "type": "[]Expose"
+        },
+        "serviceMesh": {
+          "name": "ServiceMesh",
+          "type": "*ServiceMesh"
+        }
+      },
+      "Allow": {
+        "description": {
+          "name": "Description",
+          "type": "*string"
+        },
+        "direction": {
+          "name": "Direction",
+          "type": "Direction"
+        },
+        "labels": {
+          "name": "Labels",
+          "type": "map[string]string"
+        },
+        "podLabels": {
+          "name": "PodLabels",
+          "type": "map[string]string"
+        },
+        "port": {
+          "name": "Port",
+          "type": "*float64"
+        },
+        "ports": {
+          "name": "Ports",
+          "type": "[]float64"
+        },
+        "remoteCidr": {
+          "name": "RemoteCIDR",
+          "type": "*string"
+        },
+        "remoteGenerated": {
+          "name": "RemoteGenerated",
+          "type": "*RemoteGenerated"
+        },
+        "remoteHost": {
+          "name": "RemoteHost",
+          "type": "*string"
+        },
+        "remoteNamespace": {
+          "name": "RemoteNamespace",
+          "type": "*string"
+        },
+        "remotePodLabels": {
+          "name": "RemotePodLabels",
+          "type": "map[string]string"
+        },
+        "remoteProtocol": {
+          "name": "RemoteProtocol",
+          "type": "*RemoteProtocol"
+        },
+        "remoteSelector": {
+          "name": "RemoteSelector",
+          "type": "map[string]string"
+        },
+        "remoteServiceAccount": {
+          "name": "RemoteServiceAccount",
+          "type": "*string"
+        },
+        "selector": {
+          "name": "Selector",
+          "type": "map[string]string"
+        },
+        "serviceAccount": {
+          "name": "ServiceAccount",
+          "type": "*string"
+        }
+      },
+      "Expose": {
+        "advancedHTTP": {
+          "name": "AdvancedHTTP",
+          "type": "*AdvancedHTTP"
+        },
+        "description": {
+          "name": "Description",
+          "type": "*string"
+        },
+        "domain": {
+          "name": "Domain",
+          "type": "*string"
+        },
+        "gateway": {
+          "name": "Gateway",
+          "type": "*string"
+        },
+        "host": {
+          "name": "Host",
+          "type": "string"
+        },
+        "match": {
+          "name": "Match",
+          "type": "[]ExposeMatch"
+        },
+        "podLabels": {
+          "name": "PodLabels",
+          "type": "map[string]string"
+        },
+        "port": {
+          "name": "Port",
+          "type": "*float64"
+        },
+        "selector": {
+          "name": "Selector",
+          "type": "map[string]string"
+        },
+        "service": {
+          "name": "Service",
+          "type": "*string"
+        },
+        "targetPort": {
+          "name": "TargetPort",
+          "type": "*float64"
+        },
+        "uptime": {
+          "name": "Uptime",
+          "type": "*Uptime"
+        }
+      },
+      "AdvancedHTTP": {
+        "corsPolicy": {
+          "name": "CorsPolicy",
+          "type": "*CorsPolicy"
+        },
+        "directResponse": {
+          "name": "DirectResponse",
+          "type": "*DirectResponse"
+        },
+        "headers": {
+          "name": "Headers",
+          "type": "*Headers"
+        },
+        "match": {
+          "name": "Match",
+          "type": "[]AdvancedHTTPMatch"
+        },
+        "redirect": {
+          "name": "Redirect",
+          "type": "*Redirect"
+        },
+        "retries": {
+          "name": "Retries",
+          "type": "*Retries"
+        },
+        "rewrite": {
+          "name": "Rewrite",
+          "type": "*Rewrite"
+        },
+        "timeout": {
+          "name": "Timeout",
+          "type": "*string"
+        }
+      },
+      "CorsPolicy": {
+        "allowCredentials": {
+          "name": "AllowCredentials",
+          "type": "*bool"
+        },
+        "allowHeaders": {
+          "name": "AllowHeaders",
+          "type": "[]string"
+        },
+        "allowMethods": {
+          "name": "AllowMethods",
+          "type": "[]string"
+        },
+        "allowOrigin": {
+          "name": "AllowOrigin",
+          "type": "[]string"
+        },
+        "allowOrigins": {
+          "name": "AllowOrigins",
+          "type": "[]AllowOrigin"
+        },
+        "exposeHeaders": {
+          "name": "ExposeHeaders",
+          "type": "[]string"
+        },
+        "maxAge": {
+          "name": "MaxAge",
+          "type": "*string"
+        },
+        "unmatchedPreflights": {
+          "name": "UnmatchedPreflights",
+          "type": "*UnmatchedPreflights"
+        }
+      },
+      "AllowOrigin": {
+        "exact": {
+          "name": "Exact",
+          "type": "*string"
+        },
+        "prefix": {
+          "name": "Prefix",
+          "type": "*string"
+        },
+        "regex": {
+          "name": "Regex",
+          "type": "*string"
+        }
+      },
+      "DirectResponse": {
+        "body": {
+          "name": "Body",
+          "type": "*Body"
+        },
+        "status": {
+          "name": "Status",
+          "type": "int64"
+        }
+      },
+      "Body": {
+        "bytes": {
+          "name": "Bytes",
+          "type": "*string"
+        },
+        "string": {
+          "name": "String",
+          "type": "*string"
+        }
+      },
+      "Headers": {
+        "request": {
+          "name": "Request",
+          "type": "*HeaderOp"
+        },
+        "response": {
+          "name": "Response",
+          "type": "*HeaderOp"
+        }
+      },
+      "HeaderOp": {
+        "add": {
+          "name": "Add",
+          "type": "map[string]string"
+        },
+        "remove": {
+          "name": "Remove",
+          "type": "[]string"
+        },
+        "set": {
+          "name": "Set",
+          "type": "map[string]string"
+        }
+      },
+      "AdvancedHTTPMatch": {
+        "ignoreUriCase": {
+          "name": "IgnoreURICase",
+          "type": "*bool"
+        },
+        "method": {
+          "name": "Method",
+          "type": "*StringMatch"
+        },
+        "name": {
+          "name": "Name",
+          "type": "*string"
+        },
+        "queryParams": {
+          "name": "QueryParams",
+          "type": "map[string]StringMatch"
+        },
+        "uri": {
+          "name": "URI",
+          "type": "*StringMatch"
+        }
+      },
+      "StringMatch": {
+        "exact": {
+          "name": "Exact",
+          "type": "*string"
+        },
+        "prefix": {
+          "name": "Prefix",
+          "type": "*string"
+        },
+        "regex": {
+          "name": "Regex",
+          "type": "*string"
+        }
+      },
+      "ExposeMatch": {
+        "ignoreUriCase": {
+          "name": "IgnoreURICase",
+          "type": "*bool"
+        },
+        "method": {
+          "name": "Method",
+          "type": "*StringMatch"
+        },
+        "name": {
+          "name": "Name",
+          "type": "*string"
+        },
+        "queryParams": {
+          "name": "QueryParams",
+          "type": "map[string]StringMatch"
+        },
+        "uri": {
+          "name": "URI",
+          "type": "*StringMatch"
+        }
+      },
+      "Redirect": {
+        "authority": {
+          "name": "Authority",
+          "type": "*string"
+        },
+        "derivePort": {
+          "name": "DerivePort",
+          "type": "*DerivePort"
+        },
+        "port": {
+          "name": "Port",
+          "type": "*int64"
+        },
+        "redirectCode": {
+          "name": "RedirectCode",
+          "type": "*int64"
+        },
+        "scheme": {
+          "name": "Scheme",
+          "type": "*string"
+        },
+        "uri": {
+          "name": "URI",
+          "type": "*string"
+        }
+      },
+      "Retries": {
+        "attempts": {
+          "name": "Attempts",
+          "type": "*int64"
+        },
+        "backoff": {
+          "name": "Backoff",
+          "type": "*string"
+        },
+        "perTryTimeout": {
+          "name": "PerTryTimeout",
+          "type": "*string"
+        },
+        "retryIgnorePreviousHosts": {
+          "name": "RetryIgnorePreviousHosts",
+          "type": "*bool"
+        },
+        "retryOn": {
+          "name": "RetryOn",
+          "type": "*string"
+        },
+        "retryRemoteLocalities": {
+          "name": "RetryRemoteLocalities",
+          "type": "*bool"
+        }
+      },
+      "Rewrite": {
+        "authority": {
+          "name": "Authority",
+          "type": "*string"
+        },
+        "uri": {
+          "name": "URI",
+          "type": "*string"
+        },
+        "uriRegexRewrite": {
+          "name": "URIRegexRewrite",
+          "type": "*URIRegexRewrite"
+        }
+      },
+      "URIRegexRewrite": {
+        "match": {
+          "name": "Match",
+          "type": "*string"
+        },
+        "rewrite": {
+          "name": "Rewrite",
+          "type": "*string"
+        }
+      },
+      "Uptime": {
+        "checks": {
+          "name": "Checks",
+          "type": "*Checks"
+        }
+      },
+      "Checks": {
+        "paths": {
+          "name": "Paths",
+          "type": "[]string"
+        }
+      },
+      "ServiceMesh": {
+        "mode": {
+          "name": "Mode",
+          "type": "*Mode"
+        }
+      },
+      "Sso": {
+        "adminUrl": {
+          "name": "AdminURL",
+          "type": "*string"
+        },
+        "alwaysDisplayInConsole": {
+          "name": "AlwaysDisplayInConsole",
+          "type": "*bool"
+        },
+        "attributes": {
+          "name": "Attributes",
+          "type": "map[string]string"
+        },
+        "baseUrl": {
+          "name": "BaseURL",
+          "type": "*string"
+        },
+        "clientAuthenticatorType": {
+          "name": "ClientAuthenticatorType",
+          "type": "*ClientAuthenticatorType"
+        },
+        "clientId": {
+          "name": "ClientID",
+          "type": "string"
+        },
+        "defaultClientScopes": {
+          "name": "DefaultClientScopes",
+          "type": "[]string"
+        },
+        "description": {
+          "name": "Description",
+          "type": "*string"
+        },
+        "enableAuthserviceSelector": {
+          "name": "EnableAuthserviceSelector",
+          "type": "map[string]string"
+        },
+        "enabled": {
+          "name": "Enabled",
+          "type": "*bool"
+        },
+        "groups": {
+          "name": "Groups",
+          "type": "*Groups"
+        },
+        "name": {
+          "name": "Name",
+          "type": "string"
+        },
+        "protocol": {
+          "name": "Protocol",
+          "type": "*Protocol"
+        },
+        "protocolMappers": {
+          "name": "ProtocolMappers",
+          "type": "[]ProtocolMapper"
+        },
+        "publicClient": {
+          "name": "PublicClient",
+          "type": "*bool"
+        },
+        "redirectUris": {
+          "name": "RedirectUris",
+          "type": "[]string"
+        },
+        "rootUrl": {
+          "name": "RootURL",
+          "type": "*string"
+        },
+        "secret": {
+          "name": "Secret",
+          "type": "*string"
+        },
+        "secretAnnotations": {
+          "name": "SecretAnnotations",
+          "type": "map[string]string"
+        },
+        "secretConfig": {
+          "name": "SecretConfig",
+          "type": "*SecretConfig"
+        },
+        "secretLabels": {
+          "name": "SecretLabels",
+          "type": "map[string]string"
+        },
+        "secretName": {
+          "name": "SecretName",
+          "type": "*string"
+        },
+        "secretTemplate": {
+          "name": "SecretTemplate",
+          "type": "map[string]string"
+        },
+        "serviceAccountsEnabled": {
+          "name": "ServiceAccountsEnabled",
+          "type": "*bool"
+        },
+        "standardFlowEnabled": {
+          "name": "StandardFlowEnabled",
+          "type": "*bool"
+        },
+        "webOrigins": {
+          "name": "WebOrigins",
+          "type": "[]string"
+        }
+      },
+      "Groups": {
+        "anyOf": {
+          "name": "AnyOf",
+          "type": "[]string"
+        }
+      },
+      "ProtocolMapper": {
+        "config": {
+          "name": "Config",
+          "type": "map[string]string"
+        },
+        "consentRequired": {
+          "name": "ConsentRequired",
+          "type": "*bool"
+        },
+        "name": {
+          "name": "Name",
+          "type": "string"
+        },
+        "protocol": {
+          "name": "Protocol",
+          "type": "Protocol"
+        },
+        "protocolMapper": {
+          "name": "ProtocolMapper",
+          "type": "string"
+        }
+      },
+      "SecretConfig": {
+        "annotations": {
+          "name": "Annotations",
+          "type": "map[string]string"
+        },
+        "labels": {
+          "name": "Labels",
+          "type": "map[string]string"
+        },
+        "name": {
+          "name": "Name",
+          "type": "*string"
+        },
+        "template": {
+          "name": "Template",
+          "type": "map[string]string"
+        }
+      },
+      "PackageStatus": {
+        "authorizationPolicyCount": {
+          "name": "AuthorizationPolicyCount",
+          "type": "*int64"
+        },
+        "authserviceClients": {
+          "name": "AuthserviceClients",
+          "type": "[]AuthserviceClient"
+        },
+        "conditions": {
+          "name": "Conditions",
+          "type": "[]Condition"
+        },
+        "endpoints": {
+          "name": "Endpoints",
+          "type": "[]string"
+        },
+        "meshMode": {
+          "name": "MeshMode",
+          "type": "*Mode"
+        },
+        "monitors": {
+          "name": "Monitors",
+          "type": "[]string"
+        },
+        "networkPolicyCount": {
+          "name": "NetworkPolicyCount",
+          "type": "*int64"
+        },
+        "observedGeneration": {
+          "name": "ObservedGeneration",
+          "type": "*int64"
+        },
+        "phase": {
+          "name": "Phase",
+          "type": "*Phase"
+        },
+        "probes": {
+          "name": "Probes",
+          "type": "[]string"
+        },
+        "retryAttempt": {
+          "name": "RetryAttempt",
+          "type": "*int64"
+        },
+        "ssoClients": {
+          "name": "SsoClients",
+          "type": "[]string"
+        }
+      },
+      "AuthserviceClient": {
+        "clientId": {
+          "name": "ClientID",
+          "type": "string"
+        },
+        "selector": {
+          "name": "Selector",
+          "type": "map[string]string"
+        }
+      },
+      "Condition": {
+        "message": {
+          "name": "Message",
+          "type": "string"
+        },
+        "observedGeneration": {
+          "name": "ObservedGeneration",
+          "type": "*int64"
+        },
+        "reason": {
+          "name": "Reason",
+          "type": "string"
+        },
+        "status": {
+          "name": "Status",
+          "type": "StatusEnum"
+        },
+        "type": {
+          "name": "Type",
+          "type": "string"
+        }
+      }
+    },
+    "enums": {
+      "FallbackScrapeProtocol": {
+        "OpenMetricsText0.0.1": "OpenMetricsText001",
+        "OpenMetricsText1.0.0": "OpenMetricsText100",
+        "PrometheusProto": "PrometheusProto",
+        "PrometheusText0.0.4": "PrometheusText004",
+        "PrometheusText1.0.0": "PrometheusText100"
+      },
+      "MonitorKind": {
+        "PodMonitor": "PodMonitor",
+        "ServiceMonitor": "ServiceMonitor"
+      },
+      "Direction": {
+        "Egress": "Egress",
+        "Ingress": "Ingress"
+      },
+      "RemoteGenerated": {
+        "Anywhere": "Anywhere",
+        "CloudMetadata": "CloudMetadata",
+        "IntraNamespace": "IntraNamespace",
+        "KubeAPI": "KubeAPI",
+        "KubeNodes": "KubeNodes"
+      },
+      "RemoteProtocol": {
+        "HTTP": "HTTP",
+        "TLS": "TLS"
+      },
+      "UnmatchedPreflights": {
+        "FORWARD": "Forward",
+        "IGNORE": "Ignore",
+        "UNSPECIFIED": "Unspecified"
+      },
+      "DerivePort": {
+        "FROM_PROTOCOL_DEFAULT": "FromProtocolDefault",
+        "FROM_REQUEST_PORT": "FromRequestPort"
+      },
+      "Mode": {
+        "ambient": "Ambient",
+        "sidecar": "Sidecar"
+      },
+      "ClientAuthenticatorType": {
+        "client-jwt": "ClientJwt",
+        "client-secret": "ClientSecret"
+      },
+      "Protocol": {
+        "openid-connect": "OpenidConnect",
+        "saml": "Saml"
+      },
+      "StatusEnum": {
+        "False": "ConditionFalse",
+        "True": "ConditionTrue",
+        "Unknown": "ConditionUnknown"
+      },
+      "Phase": {
+        "Failed": "PhaseFailed",
+        "Pending": "PhasePending",
+        "Ready": "PhaseReady",
+        "RemovalFailed": "PhaseRemovalFailed",
+        "Removing": "PhaseRemoving",
+        "Retrying": "PhaseRetrying"
+      }
+    }
+  },
+  "clusterconfig": {
+    "fields": {
+      "ClusterConfig": {
+        "spec": {
+          "name": "Spec",
+          "type": "ClusterConfigSpec"
+        },
+        "status": {
+          "name": "Status",
+          "type": "ClusterConfigStatus"
+        }
+      },
+      "ClusterConfigList": {
+        "items": {
+          "name": "Items",
+          "type": "[]ClusterConfig"
+        }
+      },
+      "ClusterConfigSpec": {
+        "attributes": {
+          "name": "Attributes",
+          "type": "*ClusterConfigAttributes"
+        },
+        "networking": {
+          "name": "Networking",
+          "type": "*ClusterConfigNetworking"
+        },
+        "caBundle": {
+          "name": "CABundle",
+          "type": "*ClusterConfigCABundle"
+        },
+        "expose": {
+          "name": "Expose",
+          "type": "ClusterConfigExpose"
+        },
+        "policy": {
+          "name": "Policy",
+          "type": "ClusterConfigPolicy"
+        }
+      },
+      "ClusterConfigAttributes": {
+        "clusterName": {
+          "name": "ClusterName",
+          "type": "*string"
+        },
+        "tags": {
+          "name": "Tags",
+          "type": "[]string"
+        }
+      },
+      "ClusterConfigNetworking": {
+        "kubeApiCIDR": {
+          "name": "KubeApiCIDR",
+          "type": "*string"
+        },
+        "kubeNodeCIDRs": {
+          "name": "KubeNodeCIDRs",
+          "type": "[]string"
+        }
+      },
+      "ClusterConfigCABundle": {
+        "certs": {
+          "name": "Certs",
+          "type": "*string"
+        },
+        "includeDoDCerts": {
+          "name": "IncludeDoDCerts",
+          "type": "*bool"
+        },
+        "includePublicCerts": {
+          "name": "IncludePublicCerts",
+          "type": "*bool"
+        }
+      },
+      "ClusterConfigExpose": {
+        "domain": {
+          "name": "Domain",
+          "type": "string"
+        },
+        "adminDomain": {
+          "name": "AdminDomain",
+          "type": "*string"
+        }
+      },
+      "ClusterConfigPolicy": {
+        "allowAllNsExemptions": {
+          "name": "AllowAllNsExemptions",
+          "type": "bool"
+        }
+      },
+      "ClusterConfigStatus": {
+        "phase": {
+          "name": "Phase",
+          "type": "*ConfigPhase"
+        },
+        "observedGeneration": {
+          "name": "ObservedGeneration",
+          "type": "*int64"
+        }
+      }
+    },
+    "enums": {
+      "ConfigPhase": {
+        "Pending": "ConfigPhasePending",
+        "Ready": "ConfigPhaseReady",
+        "Failed": "ConfigPhaseFailed"
+      }
+    }
+  }
+}

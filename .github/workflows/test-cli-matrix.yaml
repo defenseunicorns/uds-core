@@ -33,6 +33,7 @@ jobs:
     name: "Test Upgrade (${{ matrix.mode }}, ${{ matrix.scenario }}, ${{ matrix.flavor }})"
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - mode: legacy
@@ -66,6 +67,11 @@ jobs:
         uses: ./.github/actions/setup
         with:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare source controller artifacts
+        uses: ./.github/actions/build-controller
+        with:
+          flavor: upstream
 
       - name: Install CLI for install phase
         uses: defenseunicorns/setup-uds@d6add59d4c2ca789ed7c92741e91bd340b4e950b # v1.0.2
@@ -126,6 +132,7 @@ jobs:
     name: "Test Install (${{ matrix.mode }}, minimum supported, upstream)"
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - mode: legacy
@@ -143,6 +150,11 @@ jobs:
         uses: ./.github/actions/setup
         with:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare source controller artifacts
+        uses: ./.github/actions/build-controller
+        with:
+          flavor: upstream
 
       - name: Install minimum supported CLI
         uses: defenseunicorns/setup-uds@d6add59d4c2ca789ed7c92741e91bd340b4e950b # v1.0.2

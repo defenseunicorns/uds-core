@@ -150,11 +150,10 @@ describe("Loki Tests", () => {
   });
 
   test("Validate pod logs from vector are present in Loki", async () => {
+    const operatorLogSelector =
+      '{namespace="uds-system", app="uds-controller", job="uds-system/uds-controller", collector="vector"}';
     const data = await pollUntilSuccess(
-      () =>
-        queryLogs(
-          '{namespace="pepr-system", app="pepr-uds-core", job="pepr-system/pepr-uds-core", collector="vector"}',
-        ),
+      () => queryLogs(operatorLogSelector),
       result => result.status === "success" && result.data.result.length > 0,
       "Vector pod logs to be available in Loki",
       60000,

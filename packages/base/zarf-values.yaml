@@ -9,9 +9,9 @@ global:
   # Empty falls back to the ADMIN_DOMAIN variable, then admin.<domain>.
   adminDomain: ""
 
-# --- pepr ---
-pepr-uds-core:
-  module: {}
+# --- Core operator ---
+uds-controller:
+  uds-controller: {}
 uds-operator-config:
   uds-operator-config: {}
 

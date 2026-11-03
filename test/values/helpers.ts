@@ -94,6 +94,8 @@ async function renderManifestsUncached(pkg: string, opts?: RenderOptions): Promi
       `packages/${pkg}`,
       "--flavor",
       "upstream",
+      "--kube-version",
+      "1.37.1",
       "--values",
       `packages/${pkg}/zarf-values.yaml`,
     ];

@@ -296,7 +296,7 @@ If your application expects credentials in a specific format (JSON config file, 
    > `client.session.idle.timeout` must be less than or equal to the realm-level `SSO_SESSION_IDLE_TIMEOUT` (default 600 s). A client timeout longer than the realm timeout has no effect. See [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/).
 
    > [!NOTE]
-   > Any attribute not in the supported list will be rejected by the operator with an "unsupported attribute" error. The full list is validated in [package-validator.ts](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/operator/crd/validators/package-validator.ts).
+   > Any attribute not in the supported list will be rejected by the operator with an "unsupported attribute" error. The full list is validated in [Package validator](https://github.com/defenseunicorns/uds-core/tree/main/src/go-controller/internal/admission/resources).
 
 5. **Deploy the `Package` CR**
 
@@ -379,7 +379,7 @@ uds zarf tools kubectl get secret -n my-app sso-client-my-app -o jsonpath='{.dat
 **Solution:** Check the UDS Operator logs for errors:
 
 ```bash
-uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=50 | grep <client-id>
+uds zarf tools kubectl logs -n uds-system -l app=uds-controller --tail=50 | grep <client-id>
 ```
 
 If you specified `secretConfig.name`, the secret uses that name instead of the default `sso-client-<clientId>`.

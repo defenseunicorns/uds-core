@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: UDSBundle
@@ -19,16 +19,12 @@ packages:
       - istio-passthrough-gateway
       - istio-egress-gateway
     overrides:
-      pepr-uds-core:
-        module:
+      uds-controller:
+        uds-controller:
           values:
-            - path: "watcher.resources.requests.memory"
-              value: "64Mi"
-            - path: "admission.resources.requests.memory"
-              value: "64Mi"
-            - path: "watcher.resources.requests.cpu"
-              value: "100m"
-            - path: "admission.resources.requests.cpu"
+            - path: "resources.requests.memory"
+              value: "256Mi"
+            - path: "resources.requests.cpu"
               value: "100m"
       istio-controlplane:
         istiod:

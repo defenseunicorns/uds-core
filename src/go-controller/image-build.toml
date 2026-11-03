@@ -1,0 +1,17 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+[upstream]
+# renovate: datasource=docker depName=cgr.dev/chainguard/static
+base = "cgr.dev/chainguard/static:latest@sha256:fc42af33e643f20d08baf03cddcc1c02ba57052dfb02edb0d79f3fc47bcea8d9"
+repository = "ghcr.io/defenseunicorns/uds-core/controller"
+goFIPS140 = "off"
+
+[unicorn]
+# FIPS cryptography is in the binary; static contains no alternate crypto runtime.
+# renovate: datasource=docker depName=cgr.dev/chainguard/static
+base = "cgr.dev/chainguard/static:latest@sha256:fc42af33e643f20d08baf03cddcc1c02ba57052dfb02edb0d79f3fc47bcea8d9"
+# renovate: datasource=docker depName=cgr.dev/defenseunicorns.com/go-fips
+builder = "cgr.dev/defenseunicorns.com/go-fips:1.27.3@sha256:69d4fef1e5a0ec7bfa6418385e7c389a3fd72a218ce2d37aee9edcf53248417f"
+repository = "ghcr.io/defenseunicorns/packages/private/uds/controller"
+goFIPS140 = "v1.0.0"

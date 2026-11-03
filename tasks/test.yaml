@@ -22,7 +22,6 @@ tasks:
   - name: base
     description: "Build and test the base layer"
     actions:
-      - task: create:pepr-build
       - task: setup:k3d-test-cluster
       - cmd: ./uds run -f tasks/test.yaml single-layer --set FLAVOR=${FLAVOR} --set=layer=base
 
@@ -64,10 +63,13 @@ tasks:
       validate_passthrough:
         description: Whether to validate the passthrough gateway.
         default: "true"
-    # loop through each src/* package and run the validate.yaml task
+    # Validate the components installed by the standard Core distribution.
     actions:
       - cmd: |
           for package in $(ls src); do
+            case "$package" in
+              uds-api|dev-identity) continue ;;
+            esac
             if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
               if [ ${package} = "istio" ]; then
                 ./uds run -f src/${package}/tasks.yaml validate --no-progress --with validate_passthrough=${{ .inputs.validate_passthrough }}
@@ -110,6 +112,7 @@ tasks:
         default: "false"
     # Run each e2e test type from the e2e folder
     actions:
+      - task: util:prepare-node-test-dependencies
       - description: "Setup the Doug User for testing"
         task: common-setup:keycloak-user
         with:
@@ -152,6 +155,7 @@ tasks:
     description: "Run uds-core source unit tests"
     actions:
       - cmd: |
+          python3 -B -m unittest discover -s test/helpers -p '*_test.py'
           npm ci
           npm run test:unit
 
@@ -160,7 +164,6 @@ tasks:
     actions:
       - cmd: |
           npm ci
-          npx pepr build -z chart
           npx vitest run test/values/ --hookTimeout=350000
 
   - name: uds-core
@@ -328,6 +331,8 @@ tasks:
         default: "bundles/k3d-standard-next/config-upgrade.uds.hcl"
     description: "Upgrade phase only: builds and deploys current branch over an existing installation with UDS CLI Next. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
     actions:
+      - description: Apply the documented RE2 remediation while the released Pepr controller still runs
+        cmd: python3 src/go-controller/hack/migrate-falco-exemption.py --uds "$(command -v uds)"
       - task: create:k3d-standard-bundle-next
         with:
           create_options: "--skip-sbom"
@@ -350,6 +355,8 @@ tasks:
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
     description: "Upgrade phase only with UDS CLI Legacy: builds and deploys current branch over an existing installation. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
     actions:
+      - description: Apply the documented RE2 remediation while the released Pepr controller still runs
+        cmd: python3 src/go-controller/hack/migrate-falco-exemption.py --uds "$(command -v uds)"
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
@@ -397,10 +404,10 @@ tasks:
           ./uds zarf tools kubectl patch serviceaccount uds-core-ambient-httpbin-waypoint -n authservice-ambient-test-app -p '{"imagePullSecrets": [{"name": "private-registry"}]}'
           ./uds zarf tools kubectl patch serviceaccount uds-core-ambient2-httpbin-waypoint -n authservice-ambient-test-app -p '{"imagePullSecrets": [{"name": "private-registry"}]}'
           ./uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant-package.yaml
+          ./uds zarf tools kubectl wait package ambient-httpbin -n authservice-ambient-test-app --for=condition=Ready --timeout=300s
           ./uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant.yaml
           ./uds zarf tools kubectl rollout status deployment httpbin -n authservice-ambient-test-app --timeout=60s
           ./uds zarf tools kubectl rollout status deployment httpbin2 -n authservice-ambient-test-app --timeout=60s
-          ./uds zarf tools kubectl wait package ambient-httpbin -n authservice-ambient-test-app --for=condition=Ready --timeout=300s
       - task: private-pki:private-pki-tests
       - task: trust-bundle:trust-bundle-tests
 

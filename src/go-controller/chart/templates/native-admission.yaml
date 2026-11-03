@@ -1,0 +1,28 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{/* Offline Zarf inspection exposes API versions, not resource kinds. The chart
+     kubeVersion still enforces the floor there. Live Helm discovery includes
+     v1/Namespace and must also include the GA mutation API. */}}
+{{- if and (.Capabilities.APIVersions.Has "v1/Namespace") (not (.Capabilities.APIVersions.Has "admissionregistration.k8s.io/v1/MutatingAdmissionPolicy")) }}
+{{- fail "Core requires the admissionregistration.k8s.io/v1 MutatingAdmissionPolicy API (Kubernetes 1.36 or newer). Enable the native admission API on the cluster." }}
+{{- end }}
+{{- $enabled := eq (include "uds.native.enabled" .) "true" }}
+{{- $registered := eq (include "uds.admission.register" .) "true" }}
+{{- $narrow := eq (include "uds.native.narrow" .) "true" }}
+{{- if and $enabled (not $registered) }}
+{{- fail "Native admission activation requires complete Go webhook registration" }}
+{{- end }}
+{{- if and $narrow (not $enabled) }}
+{{- fail "nativeAdmission.narrowCallbacks requires qualified nativeAdmission.enabled policies and bindings" }}
+{{- end }}
+{{- $lifecycle := include "uds.admission.lifecycleOwner" . | fromYaml }}
+{{- range (.Files.Get "files/native-admission/policies.json" | fromJson).items }}
+{{- if or $enabled (hasPrefix "uds-native-controller-" .metadata.name) }}
+{{- if $lifecycle.ownerReferences }}
+{{- $_ := set .metadata "ownerReferences" $lifecycle.ownerReferences }}
+{{- end }}
+---
+{{ toYaml . }}
+{{- end }}
+{{- end }}

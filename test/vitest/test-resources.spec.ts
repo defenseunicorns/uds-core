@@ -1,10 +1,10 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { describe, expect, test, vi } from "vitest";
-import { K8s, kind } from "pepr";
+import { K8s, kind } from "../../src/uds-api";
 
 vi.setConfig({ testTimeout: 30000 });
 

@@ -21,4 +21,4 @@ components:
   - name: uds-crds
     required: true
     import:
-      path: ../../src/pepr
+      path: ../../src/uds-api

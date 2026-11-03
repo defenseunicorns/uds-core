@@ -1,0 +1,8 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# renovate: datasource=docker depName=ghcr.io/defenseunicorns/packages/private/uds/controller
+image:
+  # x-release-please-start-version
+  reference: ghcr.io/defenseunicorns/packages/private/uds/controller:1.16.0
+  # x-release-please-end

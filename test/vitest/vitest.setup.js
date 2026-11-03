@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { K8s, kind } from "pepr";
+import { K8s, kind } from "kubernetes-fluent-client";
 
 export async function setup(project) {
   // The root project owns the shared namespace. Child projects inherit this

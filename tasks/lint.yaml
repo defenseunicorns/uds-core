@@ -18,17 +18,17 @@ tasks:
   - name: check
     description: "Run linting checks"
     actions:
-      - description: install pepr deps
+      - description: Install locked source tooling
         cmd: npm ci
       - task: remote:renovate
       - description: "Format check"
         cmd: npm run format:check
-      - description: Build the Pepr module for values lint
-        task: build-pepr
       - description: Lint packages that expose Zarf values
         task: values-lint
       - description: yaml lint
         cmd: yamllint . -c .yamllint --no-warnings
+      - description: Go formatting, analysis, module hygiene, and vulnerabilities
+        task: go-check
       - description: codespell lint
         cmd: codespell
       - description: Ensure addlicense is installed
@@ -68,26 +68,10 @@ tasks:
               exit 1
             fi
           done
-  - name: install-pepr-deps
-    description: "Install Pepr dependencies"
+  - name: install-schema-tools
+    description: Install locked schema and test tooling
     actions:
-      - cmd: npm ci
-
-  - name: build-pepr
-    description: "Build the Pepr module required by values checks"
-    inputs:
-      package:
-        description: "Optional values-bearing package being checked"
-        default: ""
-    actions:
-      - description: Build the Pepr module when required
-        cmd: |
-          package="${{ .inputs.package }}"
-          if [ -z "$package" ] || [ "$package" = "base" ] || [ "$package" = "standard" ]; then
-            npx pepr build -z chart
-          else
-            echo "Skipping Pepr build for packages/${package}"
-          fi
+      - cmd: npm ci --ignore-scripts
 
   - name: values-generate
     description: "Regenerate each values-bearing package's zarf-values.schema.json from its package definition"
@@ -96,10 +80,7 @@ tasks:
         description: "Optional values-bearing package to regenerate"
         default: ""
     actions:
-      - task: install-pepr-deps
-      - task: build-pepr
-        with:
-          package: "${{ .inputs.package }}"
+      - task: install-schema-tools
       - description: "Regenerate each package's values schema"
         shell:
           darwin: bash
@@ -257,3 +238,19 @@ tasks:
             echo "OK: K3s matrix and documented Kubernetes versions match CI configuration"
           fi
           exit $FAILED
+
+  - name: go-check
+    description: Check the native controller on every lint run
+    actions:
+      - cmd: |
+          set -eu
+          export GOWORK=off GOTOOLCHAIN=local
+          unformatted=$(gofmt -l src/go-controller)
+          if [ -n "$unformatted" ]; then
+            echo "$unformatted"
+            exit 1
+          fi
+          go -C src/go-controller vet ./...
+          go -C src/go-controller mod tidy -diff
+          # renovate: datasource=go depName=golang.org/x/vuln
+          go -C src/go-controller run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...

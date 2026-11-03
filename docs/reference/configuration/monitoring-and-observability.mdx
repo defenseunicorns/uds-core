@@ -55,7 +55,7 @@ overrides:
 
 UDS Core ships Prometheus recording rules that track the availability of core infrastructure components. These produce `uds:<component>:up` metrics (1 = available, 0 = unavailable) and require no user configuration. Rules are organized by layer:
 
-- **base**: Istiod, Istio CNI, ztunnel, admin and tenant ingress gateways, Pepr admission and watcher
+- **base**: Istiod, Istio CNI, ztunnel, admin and tenant ingress gateways, Core controller and admission policies
 - **monitoring**: Prometheus, Alertmanager, Blackbox Exporter, Kube State Metrics, Prometheus Operator, Node Exporter, Grafana, Grafana endpoint (probe-derived)
 - **logging**: Loki backend, write, read, and gateway, Vector
 - **identity-authorization**: Keycloak, Keycloak Waypoint, Authservice, Keycloak SSO endpoint (probe-derived), Keycloak admin endpoint (probe-derived)

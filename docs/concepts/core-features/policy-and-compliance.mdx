@@ -1,15 +1,15 @@
 ---
 title: Policy & Compliance
-description: How UDS Core uses Pepr admission webhooks to enforce security policies through automatic mutation and validation of Kubernetes resources.
+description: How UDS Core uses CEL policies and Go admission handlers to enforce security policies through automatic mutation and validation of Kubernetes resources.
 sidebar:
   order: 2.007
 ---
 
-UDS Core enforces secure and compliant workload behavior through [Pepr](https://docs.pepr.dev/), a Kubernetes controller that runs as admission webhooks. Every resource submitted to the cluster passes through Pepr before being persisted, giving the platform a consistent, centralized place to enforce policy.
+UDS Core enforces secure and compliant workload behavior through Kubernetes CEL admission policies and Go admission handlers. The API server applies object-local rules and defaults; Go handles checks that require cluster state or compatibility behavior. Core installs and activates both as part of its base package. Application packages use the same Core APIs without selecting an operator implementation.
 
 ## How policies work
 
-Pepr evaluates two types of policies against incoming resources:
+UDS Core evaluates two types of policies against incoming resources:
 
 | Policy type | What it does | Example |
 |---|---|---|

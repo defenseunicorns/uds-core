@@ -11,6 +11,13 @@ variables:
     default: "false"
 
 tasks:
+  - name: prepare-node-test-dependencies
+    description: Install locked API test tooling independently of the Core runtime build
+    actions:
+      - cmd: npm ci
+      - cmd: npm ci
+        dir: test/vitest
+
   - name: determine-repo
     actions:
       - description: "Determine repository for the given flavor/type of release"

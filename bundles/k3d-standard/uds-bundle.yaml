@@ -52,24 +52,20 @@ packages:
       - envoy-gateway
       - envoy-default-gateway
     overrides:
-      pepr-uds-core:
-        module:
+      uds-controller:
+        uds-controller:
           variables:
-            - name: PEPR_WATCHER_MEMORY_REQUEST
-              description: "Memory requests for the pepr watcher pod"
-              path: "watcher.resources.requests.memory"
+            - name: UDS_CONTROLLER_REPLICAS
+              description: "Core controller replica count"
+              path: replicaCount
+              default: 2
+            - name: UDS_CONTROLLER_MEMORY_REQUEST
+              description: "Memory request for the Core controller"
+              path: "resources.requests.memory"
               default: "256Mi"
-            - name: PEPR_ADMISSION_MEMORY_REQUEST
-              description: "Memory requests for the pepr admission pods"
-              path: "admission.resources.requests.memory"
-              default: "256Mi"
-            - name: PEPR_WATCHER_CPU_REQUEST
-              description: "CPU requests for the pepr watcher pod"
-              path: "watcher.resources.requests.cpu"
-              default: "200m"
-            - name: PEPR_ADMISSION_CPU_REQUEST
-              description: "CPU requests for the pepr admission pods"
-              path: "admission.resources.requests.cpu"
+            - name: UDS_CONTROLLER_CPU_REQUEST
+              description: "CPU request for the Core controller"
+              path: "resources.requests.cpu"
               default: "200m"
       loki:
         loki:

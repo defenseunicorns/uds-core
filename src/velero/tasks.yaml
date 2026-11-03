@@ -131,26 +131,23 @@ tasks:
         shell:
           linux: bash
         cmd: |
-          CHART_DIR="src/velero/chart/templates"
-          BASE_URL="https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-${VELERO_CRD_VERSION}/charts/velero/crds"
+          set -euo pipefail
+          CHART_DIR="src/velero/chart/templates/crds"
+          workdir=$(mktemp -d)
+          trap 'rm -rf "$workdir"' EXIT
 
-          echo "Updating Velero CRDs to version ${VELERO_CRD_VERSION}"
-
-          # Fetch list of CRD files from GitHub API
-          echo "Fetching CRD list from upstream..."
-          CRD_FILES=$(curl -sSL "https://api.github.com/repos/vmware-tanzu/helm-charts/contents/charts/velero/crds?ref=velero-${VELERO_CRD_VERSION}" | uds zarf tools yq '.[].name')
-
-          if [ -z "$CRD_FILES" ]; then
-            echo "Error: Could not fetch CRD list from upstream"
-            exit 1
-          fi
-
-          # Download each CRD
-          for crd_file in $CRD_FILES; do
-            echo "Downloading ${crd_file}"
-            curl -sSL "${BASE_URL}/${crd_file}" -o "${CHART_DIR}/crds/${crd_file}"
+          # Consume the exact chart distributed by Core, without GitHub API listing.
+          uds zarf tools helm pull velero --repo https://vmware-tanzu.github.io/helm-charts \
+            --version "${VELERO_CRD_VERSION}" --destination "$workdir"
+          tar -xzf "$workdir/velero-${VELERO_CRD_VERSION}.tgz" -C "$workdir" velero/crds
+          mkdir -p "$CHART_DIR"
+          for crd_file in "$workdir/velero/crds"/*.yaml; do
+            if [ ! -f "$crd_file" ]; then
+              echo "Pinned Velero chart contains no CRDs" >&2
+              exit 1
+            fi
+            cp "$crd_file" "$CHART_DIR/$(basename "$crd_file")"
           done
-
-          echo "Successfully updated $(echo "$CRD_FILES" | wc -w) CRDs"
+          echo "Updated Velero CRDs from chart ${VELERO_CRD_VERSION}"
       - description: "Add License Headers to CRDs"
         task: common-setup:fix-license

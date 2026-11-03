@@ -12,15 +12,15 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['**/*.spec.ts'],
-    exclude: ['test/vitest/**', 'scripts/**', 'uds-docs/**'],
+    exclude: ['test/vitest/**', 'scripts/**', 'uds-docs/**', 'src/go-controller/native-admission/reference/**'],
     testTimeout: 300_000,
     hookTimeout: 300_000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
       all: isCi,
-      include: ['src/pepr/**'],
-      exclude: ['**/docs-gen/**', '**/crd/generated/**', '**/crd/sources/**', 'uds-docs/**'],
+      include: ['src/uds-api/**'],
+      exclude: ['**/docs-gen/**', '**/crd/generated/**', '**/crd/sources/**', 'uds-docs/**', 'src/go-controller/native-admission/reference/**'],
     },
   },
 });

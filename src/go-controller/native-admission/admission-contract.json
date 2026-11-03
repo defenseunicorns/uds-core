@@ -1,0 +1,1937 @@
+{
+  "items": [
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingWebhookConfiguration",
+      "metadata": {
+        "annotations": {
+          "admissions.enforcer/disabled": "true"
+        },
+        "labels": {
+          "app": "uds-controller"
+        },
+        "name": "uds-controller-waypoint"
+      },
+      "webhooks": [
+        {
+          "admissionReviewVersions": [
+            "v1"
+          ],
+          "clientConfig": {
+            "service": {
+              "name": "uds-controller",
+              "namespace": "uds-system",
+              "path": "/mutate-pod-waypoint",
+              "port": 443
+            }
+          },
+          "failurePolicy": "Fail",
+          "matchConditions": [
+            {
+              "expression": "!( (request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='pods' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 has(object.spec.serviceAccountName) \u0026\u0026 object.spec.serviceAccountName=='uds-controller' \u0026\u0026 ((has(object.metadata.name) \u0026\u0026 object.metadata.name.startsWith('uds-controller-')) || (has(object.metadata.generateName) \u0026\u0026 object.metadata.generateName.startsWith('uds-controller-'))) \u0026\u0026 has(object.metadata.ownerReferences) \u0026\u0026 object.metadata.ownerReferences.exists(r,r.apiVersion=='apps/v1' \u0026\u0026 r.kind=='ReplicaSet' \u0026\u0026 r.name.startsWith('uds-controller-') \u0026\u0026 has(r.controller) \u0026\u0026 r.controller) \u0026\u0026 object.spec.containers.size()==1 \u0026\u0026 object.spec.containers[0].name=='controller' \u0026\u0026 (!has(object.metadata.labels)||!['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels \u0026\u0026 object.metadata.labels[k]!='')) \u0026\u0026 (!has(object.spec.initContainers)||object.spec.initContainers.size()==0) \u0026\u0026 (!has(object.spec.ephemeralContainers)||object.spec.ephemeralContainers.size()==0)) || (request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='services' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 object.metadata.name=='uds-controller' \u0026\u0026 has(object.spec.type) \u0026\u0026 object.spec.type=='ClusterIP' \u0026\u0026 object.spec.ports.size()==1 \u0026\u0026 object.spec.ports[0].port==443 \u0026\u0026 object.spec.ports[0].targetPort==9443) )",
+              "name": "authenticated-controller-recovery"
+            }
+          ],
+          "matchPolicy": "Equivalent",
+          "name": "pods.waypoint.uds.dev",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "istio.io/dataplane-mode",
+                "operator": "In",
+                "values": [
+                  "ambient"
+                ]
+              }
+            ]
+          },
+          "rules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods"
+              ],
+              "scope": "Namespaced"
+            }
+          ],
+          "sideEffects": "None",
+          "timeoutSeconds": 10
+        },
+        {
+          "admissionReviewVersions": [
+            "v1"
+          ],
+          "clientConfig": {
+            "service": {
+              "name": "uds-controller",
+              "namespace": "uds-system",
+              "path": "/mutate-service-waypoint",
+              "port": 443
+            }
+          },
+          "failurePolicy": "Fail",
+          "matchConditions": [
+            {
+              "expression": "!( (request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='pods' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 has(object.spec.serviceAccountName) \u0026\u0026 object.spec.serviceAccountName=='uds-controller' \u0026\u0026 ((has(object.metadata.name) \u0026\u0026 object.metadata.name.startsWith('uds-controller-')) || (has(object.metadata.generateName) \u0026\u0026 object.metadata.generateName.startsWith('uds-controller-'))) \u0026\u0026 has(object.metadata.ownerReferences) \u0026\u0026 object.metadata.ownerReferences.exists(r,r.apiVersion=='apps/v1' \u0026\u0026 r.kind=='ReplicaSet' \u0026\u0026 r.name.startsWith('uds-controller-') \u0026\u0026 has(r.controller) \u0026\u0026 r.controller) \u0026\u0026 object.spec.containers.size()==1 \u0026\u0026 object.spec.containers[0].name=='controller' \u0026\u0026 (!has(object.metadata.labels)||!['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels \u0026\u0026 object.metadata.labels[k]!='')) \u0026\u0026 (!has(object.spec.initContainers)||object.spec.initContainers.size()==0) \u0026\u0026 (!has(object.spec.ephemeralContainers)||object.spec.ephemeralContainers.size()==0)) || (request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='services' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 object.metadata.name=='uds-controller' \u0026\u0026 has(object.spec.type) \u0026\u0026 object.spec.type=='ClusterIP' \u0026\u0026 object.spec.ports.size()==1 \u0026\u0026 object.spec.ports[0].port==443 \u0026\u0026 object.spec.ports[0].targetPort==9443) )",
+              "name": "authenticated-controller-recovery"
+            }
+          ],
+          "matchPolicy": "Equivalent",
+          "name": "services.waypoint.uds.dev",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "istio.io/dataplane-mode",
+                "operator": "In",
+                "values": [
+                  "ambient"
+                ]
+              }
+            ]
+          },
+          "rules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "services"
+              ],
+              "scope": "Namespaced"
+            }
+          ],
+          "sideEffects": "None",
+          "timeoutSeconds": 10
+        }
+      ]
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingWebhookConfiguration",
+      "metadata": {
+        "annotations": {
+          "admissions.enforcer/disabled": "true"
+        },
+        "labels": {
+          "app": "uds-controller"
+        },
+        "name": "uds-controller-pods"
+      },
+      "webhooks": [
+        {
+          "admissionReviewVersions": [
+            "v1"
+          ],
+          "clientConfig": {
+            "service": {
+              "name": "uds-controller",
+              "namespace": "uds-system",
+              "path": "/mutate-pods",
+              "port": 443
+            }
+          },
+          "failurePolicy": "Fail",
+          "matchConditions": [
+            {
+              "expression": "!( (request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='pods' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 has(object.spec.serviceAccountName) \u0026\u0026 object.spec.serviceAccountName=='uds-controller' \u0026\u0026 ((has(object.metadata.name) \u0026\u0026 object.metadata.name.startsWith('uds-controller-')) || (has(object.metadata.generateName) \u0026\u0026 object.metadata.generateName.startsWith('uds-controller-'))) \u0026\u0026 has(object.metadata.ownerReferences) \u0026\u0026 object.metadata.ownerReferences.exists(r,r.apiVersion=='apps/v1' \u0026\u0026 r.kind=='ReplicaSet' \u0026\u0026 r.name.startsWith('uds-controller-') \u0026\u0026 has(r.controller) \u0026\u0026 r.controller) \u0026\u0026 object.spec.containers.size()==1 \u0026\u0026 object.spec.containers[0].name=='controller' \u0026\u0026 (!has(object.metadata.labels)||!['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels \u0026\u0026 object.metadata.labels[k]!='')) \u0026\u0026 (!has(object.spec.initContainers)||object.spec.initContainers.size()==0) \u0026\u0026 (!has(object.spec.ephemeralContainers)||object.spec.ephemeralContainers.size()==0)) || (request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='services' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 object.metadata.name=='uds-controller' \u0026\u0026 has(object.spec.type) \u0026\u0026 object.spec.type=='ClusterIP' \u0026\u0026 object.spec.ports.size()==1 \u0026\u0026 object.spec.ports[0].port==443 \u0026\u0026 object.spec.ports[0].targetPort==9443) )",
+              "name": "authenticated-controller-recovery"
+            },
+            {
+              "expression": "request.namespace == 'uds-system' || (request.resource.resource == 'pods' \u0026\u0026 (has(object.metadata.labels) \u0026\u0026 ['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels \u0026\u0026 object.metadata.labels[k]!=''))) || (has(request.operation) \u0026\u0026 request.operation=='UPDATE' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource in ['pods','services'] \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 request.userInfo.username=='system:serviceaccount:uds-system:uds-controller' \u0026\u0026 oldObject!=null \u0026\u0026 object.metadata.uid==oldObject.metadata.uid \u0026\u0026 object.spec==oldObject.spec \u0026\u0026 (has(object.metadata.annotations) ? object.metadata.annotations : {})==(has(oldObject.metadata.annotations) ? oldObject.metadata.annotations : {}) \u0026\u0026 (has(object.metadata.ownerReferences) ? object.metadata.ownerReferences : [])==(has(oldObject.metadata.ownerReferences) ? oldObject.metadata.ownerReferences : []) \u0026\u0026 (has(object.metadata.finalizers) ? object.metadata.finalizers : [])==(has(oldObject.metadata.finalizers) ? oldObject.metadata.finalizers : []) \u0026\u0026 'istio.io/use-waypoint' in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})['istio.io/use-waypoint']!='' \u0026\u0026 !('istio.io/use-waypoint' in (has(object.metadata.labels) ? object.metadata.labels : {})) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {}).all(k,k in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k]) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}).all(k,k in ['istio.io/use-waypoint','istio.io/ingress-use-waypoint'] || (k in (has(object.metadata.labels) ? object.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k])))",
+              "name": "native-requires-go"
+            }
+          ],
+          "matchPolicy": "Equivalent",
+          "name": "mutate-pods.uds.dev",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "istio-system",
+                  "zarf"
+                ]
+              }
+            ]
+          },
+          "reinvocationPolicy": "IfNeeded",
+          "rules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods",
+                "pods/ephemeralcontainers",
+                "services"
+              ],
+              "scope": "Namespaced"
+            }
+          ],
+          "sideEffects": "None",
+          "timeoutSeconds": 10
+        },
+        {
+          "admissionReviewVersions": [
+            "v1"
+          ],
+          "clientConfig": {
+            "service": {
+              "name": "uds-controller",
+              "namespace": "uds-system",
+              "path": "/mutate-pods",
+              "port": 443
+            }
+          },
+          "failurePolicy": "Fail",
+          "matchConditions": [
+            {
+              "expression": "!( (request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='pods' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 has(object.spec.serviceAccountName) \u0026\u0026 object.spec.serviceAccountName=='uds-controller' \u0026\u0026 ((has(object.metadata.name) \u0026\u0026 object.metadata.name.startsWith('uds-controller-')) || (has(object.metadata.generateName) \u0026\u0026 object.metadata.generateName.startsWith('uds-controller-'))) \u0026\u0026 has(object.metadata.ownerReferences) \u0026\u0026 object.metadata.ownerReferences.exists(r,r.apiVersion=='apps/v1' \u0026\u0026 r.kind=='ReplicaSet' \u0026\u0026 r.name.startsWith('uds-controller-') \u0026\u0026 has(r.controller) \u0026\u0026 r.controller) \u0026\u0026 object.spec.containers.size()==1 \u0026\u0026 object.spec.containers[0].name=='controller' \u0026\u0026 (!has(object.metadata.labels)||!['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels \u0026\u0026 object.metadata.labels[k]!='')) \u0026\u0026 (!has(object.spec.initContainers)||object.spec.initContainers.size()==0) \u0026\u0026 (!has(object.spec.ephemeralContainers)||object.spec.ephemeralContainers.size()==0)) || (request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='services' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 object.metadata.name=='uds-controller' \u0026\u0026 has(object.spec.type) \u0026\u0026 object.spec.type=='ClusterIP' \u0026\u0026 object.spec.ports.size()==1 \u0026\u0026 object.spec.ports[0].port==443 \u0026\u0026 object.spec.ports[0].targetPort==9443) )",
+              "name": "authenticated-controller-recovery"
+            },
+            {
+              "expression": "request.namespace == 'uds-system' || (request.resource.resource == 'pods' \u0026\u0026 (has(object.metadata.labels) \u0026\u0026 ['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels \u0026\u0026 object.metadata.labels[k]!=''))) || (has(request.operation) \u0026\u0026 request.operation=='UPDATE' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource in ['pods','services'] \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 request.userInfo.username=='system:serviceaccount:uds-system:uds-controller' \u0026\u0026 oldObject!=null \u0026\u0026 object.metadata.uid==oldObject.metadata.uid \u0026\u0026 object.spec==oldObject.spec \u0026\u0026 (has(object.metadata.annotations) ? object.metadata.annotations : {})==(has(oldObject.metadata.annotations) ? oldObject.metadata.annotations : {}) \u0026\u0026 (has(object.metadata.ownerReferences) ? object.metadata.ownerReferences : [])==(has(oldObject.metadata.ownerReferences) ? oldObject.metadata.ownerReferences : []) \u0026\u0026 (has(object.metadata.finalizers) ? object.metadata.finalizers : [])==(has(oldObject.metadata.finalizers) ? oldObject.metadata.finalizers : []) \u0026\u0026 'istio.io/use-waypoint' in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})['istio.io/use-waypoint']!='' \u0026\u0026 !('istio.io/use-waypoint' in (has(object.metadata.labels) ? object.metadata.labels : {})) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {}).all(k,k in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k]) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}).all(k,k in ['istio.io/use-waypoint','istio.io/ingress-use-waypoint'] || (k in (has(object.metadata.labels) ? object.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k])))",
+              "name": "native-requires-go"
+            }
+          ],
+          "matchPolicy": "Equivalent",
+          "name": "mutate-pods-istio-system.uds.dev",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "In",
+                "values": [
+                  "istio-system"
+                ]
+              }
+            ]
+          },
+          "reinvocationPolicy": "IfNeeded",
+          "rules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods",
+                "pods/ephemeralcontainers",
+                "services"
+              ],
+              "scope": "Namespaced"
+            }
+          ],
+          "sideEffects": "None",
+          "timeoutSeconds": 10
+        }
+      ]
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingWebhookConfiguration",
+      "metadata": {
+        "annotations": {
+          "admissions.enforcer/disabled": "true"
+        },
+        "labels": {
+          "app": "uds-controller"
+        },
+        "name": "uds-controller-clusterconfig"
+      },
+      "webhooks": [
+        {
+          "admissionReviewVersions": [
+            "v1"
+          ],
+          "clientConfig": {
+            "service": {
+              "name": "uds-controller",
+              "namespace": "uds-system",
+              "path": "/validate-clusterconfig-delete",
+              "port": 443
+            }
+          },
+          "failurePolicy": "Fail",
+          "matchPolicy": "Exact",
+          "name": "clusterconfig.uds.dev",
+          "rules": [
+            {
+              "apiGroups": [
+                "uds.dev"
+              ],
+              "apiVersions": [
+                "*"
+              ],
+              "operations": [
+                "DELETE"
+              ],
+              "resources": [
+                "clusterconfig"
+              ],
+              "scope": "Cluster"
+            }
+          ],
+          "sideEffects": "None",
+          "timeoutSeconds": 10
+        }
+      ]
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingWebhookConfiguration",
+      "metadata": {
+        "annotations": {
+          "admissions.enforcer/disabled": "true"
+        },
+        "labels": {
+          "app": "uds-controller"
+        },
+        "name": "uds-controller-pods"
+      },
+      "webhooks": [
+        {
+          "admissionReviewVersions": [
+            "v1"
+          ],
+          "clientConfig": {
+            "service": {
+              "name": "uds-controller",
+              "namespace": "uds-system",
+              "path": "/validate-pods",
+              "port": 443
+            }
+          },
+          "failurePolicy": "Fail",
+          "matchConditions": [
+            {
+              "expression": "!( (request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='pods' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 has(object.spec.serviceAccountName) \u0026\u0026 object.spec.serviceAccountName=='uds-controller' \u0026\u0026 ((has(object.metadata.name) \u0026\u0026 object.metadata.name.startsWith('uds-controller-')) || (has(object.metadata.generateName) \u0026\u0026 object.metadata.generateName.startsWith('uds-controller-'))) \u0026\u0026 has(object.metadata.ownerReferences) \u0026\u0026 object.metadata.ownerReferences.exists(r,r.apiVersion=='apps/v1' \u0026\u0026 r.kind=='ReplicaSet' \u0026\u0026 r.name.startsWith('uds-controller-') \u0026\u0026 has(r.controller) \u0026\u0026 r.controller) \u0026\u0026 object.spec.containers.size()==1 \u0026\u0026 object.spec.containers[0].name=='controller' \u0026\u0026 (!has(object.metadata.labels)||!['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels \u0026\u0026 object.metadata.labels[k]!='')) \u0026\u0026 (!has(object.spec.initContainers)||object.spec.initContainers.size()==0) \u0026\u0026 (!has(object.spec.ephemeralContainers)||object.spec.ephemeralContainers.size()==0)) || (request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='services' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 object.metadata.name=='uds-controller' \u0026\u0026 has(object.spec.type) \u0026\u0026 object.spec.type=='ClusterIP' \u0026\u0026 object.spec.ports.size()==1 \u0026\u0026 object.spec.ports[0].port==443 \u0026\u0026 object.spec.ports[0].targetPort==9443) )",
+              "name": "authenticated-controller-recovery"
+            },
+            {
+              "expression": "request.namespace == 'uds-system' || (request.resource.resource == 'pods' \u0026\u0026 (object.spec.containers + (has(object.spec.initContainers) ? object.spec.initContainers : []) + (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers : [])).exists(c,c.name in ['istio-proxy','istio-init'])) || (has(request.operation) \u0026\u0026 request.operation=='UPDATE' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource in ['pods','services'] \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 request.userInfo.username=='system:serviceaccount:uds-system:uds-controller' \u0026\u0026 oldObject!=null \u0026\u0026 object.metadata.uid==oldObject.metadata.uid \u0026\u0026 object.spec==oldObject.spec \u0026\u0026 (has(object.metadata.annotations) ? object.metadata.annotations : {})==(has(oldObject.metadata.annotations) ? oldObject.metadata.annotations : {}) \u0026\u0026 (has(object.metadata.ownerReferences) ? object.metadata.ownerReferences : [])==(has(oldObject.metadata.ownerReferences) ? oldObject.metadata.ownerReferences : []) \u0026\u0026 (has(object.metadata.finalizers) ? object.metadata.finalizers : [])==(has(oldObject.metadata.finalizers) ? oldObject.metadata.finalizers : []) \u0026\u0026 'istio.io/use-waypoint' in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})['istio.io/use-waypoint']!='' \u0026\u0026 !('istio.io/use-waypoint' in (has(object.metadata.labels) ? object.metadata.labels : {})) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {}).all(k,k in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k]) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}).all(k,k in ['istio.io/use-waypoint','istio.io/ingress-use-waypoint'] || (k in (has(object.metadata.labels) ? object.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k])))",
+              "name": "native-requires-go"
+            }
+          ],
+          "matchPolicy": "Equivalent",
+          "name": "validate-pods.uds.dev",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "istio-system",
+                  "zarf"
+                ]
+              }
+            ]
+          },
+          "rules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods",
+                "pods/ephemeralcontainers",
+                "services"
+              ],
+              "scope": "Namespaced"
+            }
+          ],
+          "sideEffects": "None",
+          "timeoutSeconds": 10
+        },
+        {
+          "admissionReviewVersions": [
+            "v1"
+          ],
+          "clientConfig": {
+            "service": {
+              "name": "uds-controller",
+              "namespace": "uds-system",
+              "path": "/validate-pods",
+              "port": 443
+            }
+          },
+          "failurePolicy": "Fail",
+          "matchConditions": [
+            {
+              "expression": "!( (request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='pods' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 has(object.spec.serviceAccountName) \u0026\u0026 object.spec.serviceAccountName=='uds-controller' \u0026\u0026 ((has(object.metadata.name) \u0026\u0026 object.metadata.name.startsWith('uds-controller-')) || (has(object.metadata.generateName) \u0026\u0026 object.metadata.generateName.startsWith('uds-controller-'))) \u0026\u0026 has(object.metadata.ownerReferences) \u0026\u0026 object.metadata.ownerReferences.exists(r,r.apiVersion=='apps/v1' \u0026\u0026 r.kind=='ReplicaSet' \u0026\u0026 r.name.startsWith('uds-controller-') \u0026\u0026 has(r.controller) \u0026\u0026 r.controller) \u0026\u0026 object.spec.containers.size()==1 \u0026\u0026 object.spec.containers[0].name=='controller' \u0026\u0026 (!has(object.metadata.labels)||!['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels \u0026\u0026 object.metadata.labels[k]!='')) \u0026\u0026 (!has(object.spec.initContainers)||object.spec.initContainers.size()==0) \u0026\u0026 (!has(object.spec.ephemeralContainers)||object.spec.ephemeralContainers.size()==0)) || (request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='services' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 object.metadata.name=='uds-controller' \u0026\u0026 has(object.spec.type) \u0026\u0026 object.spec.type=='ClusterIP' \u0026\u0026 object.spec.ports.size()==1 \u0026\u0026 object.spec.ports[0].port==443 \u0026\u0026 object.spec.ports[0].targetPort==9443) )",
+              "name": "authenticated-controller-recovery"
+            },
+            {
+              "expression": "request.namespace == 'uds-system' || (request.resource.resource == 'pods' \u0026\u0026 (object.spec.containers + (has(object.spec.initContainers) ? object.spec.initContainers : []) + (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers : [])).exists(c,c.name in ['istio-proxy','istio-init'])) || (has(request.operation) \u0026\u0026 request.operation=='UPDATE' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource in ['pods','services'] \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 request.userInfo.username=='system:serviceaccount:uds-system:uds-controller' \u0026\u0026 oldObject!=null \u0026\u0026 object.metadata.uid==oldObject.metadata.uid \u0026\u0026 object.spec==oldObject.spec \u0026\u0026 (has(object.metadata.annotations) ? object.metadata.annotations : {})==(has(oldObject.metadata.annotations) ? oldObject.metadata.annotations : {}) \u0026\u0026 (has(object.metadata.ownerReferences) ? object.metadata.ownerReferences : [])==(has(oldObject.metadata.ownerReferences) ? oldObject.metadata.ownerReferences : []) \u0026\u0026 (has(object.metadata.finalizers) ? object.metadata.finalizers : [])==(has(oldObject.metadata.finalizers) ? oldObject.metadata.finalizers : []) \u0026\u0026 'istio.io/use-waypoint' in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})['istio.io/use-waypoint']!='' \u0026\u0026 !('istio.io/use-waypoint' in (has(object.metadata.labels) ? object.metadata.labels : {})) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {}).all(k,k in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k]) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}).all(k,k in ['istio.io/use-waypoint','istio.io/ingress-use-waypoint'] || (k in (has(object.metadata.labels) ? object.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k])))",
+              "name": "native-requires-go"
+            }
+          ],
+          "matchPolicy": "Equivalent",
+          "name": "validate-pods-istio-system.uds.dev",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "In",
+                "values": [
+                  "istio-system"
+                ]
+              }
+            ]
+          },
+          "rules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods",
+                "pods/ephemeralcontainers",
+                "services"
+              ],
+              "scope": "Namespaced"
+            }
+          ],
+          "sideEffects": "None",
+          "timeoutSeconds": 10
+        }
+      ]
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingWebhookConfiguration",
+      "metadata": {
+        "annotations": {
+          "admissions.enforcer/disabled": "true"
+        },
+        "labels": {
+          "app": "uds-controller"
+        },
+        "name": "uds-controller-resources"
+      },
+      "webhooks": [
+        {
+          "admissionReviewVersions": [
+            "v1"
+          ],
+          "clientConfig": {
+            "service": {
+              "name": "uds-controller",
+              "namespace": "uds-system",
+              "path": "/validate-resources",
+              "port": 443
+            }
+          },
+          "failurePolicy": "Fail",
+          "matchPolicy": "Equivalent",
+          "name": "validate-resources.uds.dev",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "istio-system",
+                  "zarf"
+                ]
+              }
+            ]
+          },
+          "rules": [
+            {
+              "apiGroups": [
+                "uds.dev"
+              ],
+              "apiVersions": [
+                "v1alpha1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "packages",
+                "exemptions",
+                "clusterconfig"
+              ]
+            }
+          ],
+          "sideEffects": "None",
+          "timeoutSeconds": 10
+        },
+        {
+          "admissionReviewVersions": [
+            "v1"
+          ],
+          "clientConfig": {
+            "service": {
+              "name": "uds-controller",
+              "namespace": "uds-system",
+              "path": "/validate-resources",
+              "port": 443
+            }
+          },
+          "failurePolicy": "Fail",
+          "matchPolicy": "Equivalent",
+          "name": "validate-resources-istio-system.uds.dev",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "In",
+                "values": [
+                  "istio-system"
+                ]
+              }
+            ]
+          },
+          "rules": [
+            {
+              "apiGroups": [
+                "uds.dev"
+              ],
+              "apiVersions": [
+                "v1alpha1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "packages",
+                "exemptions"
+              ],
+              "scope": "Namespaced"
+            }
+          ],
+          "sideEffects": "None",
+          "timeoutSeconds": 10
+        }
+      ]
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-defaults-profile"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConditions": [
+          {
+            "expression": "!(has(request.operation) \u0026\u0026 request.operation=='UPDATE' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource in ['pods','services'] \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 request.userInfo.username=='system:serviceaccount:uds-system:uds-controller' \u0026\u0026 oldObject!=null \u0026\u0026 object.metadata.uid==oldObject.metadata.uid \u0026\u0026 object.spec==oldObject.spec \u0026\u0026 (has(object.metadata.annotations) ? object.metadata.annotations : {})==(has(oldObject.metadata.annotations) ? oldObject.metadata.annotations : {}) \u0026\u0026 (has(object.metadata.ownerReferences) ? object.metadata.ownerReferences : [])==(has(oldObject.metadata.ownerReferences) ? oldObject.metadata.ownerReferences : []) \u0026\u0026 (has(object.metadata.finalizers) ? object.metadata.finalizers : [])==(has(oldObject.metadata.finalizers) ? oldObject.metadata.finalizers : []) \u0026\u0026 'istio.io/use-waypoint' in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})['istio.io/use-waypoint']!='' \u0026\u0026 !('istio.io/use-waypoint' in (has(object.metadata.labels) ? object.metadata.labels : {})) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {}).all(k,k in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k]) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}).all(k,k in ['istio.io/use-waypoint','istio.io/ingress-use-waypoint'] || (k in (has(object.metadata.labels) ? object.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k])))",
+            "name": "owner-checked-waypoint-retirement"
+          }
+        ],
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods",
+                "pods/ephemeralcontainers"
+              ]
+            }
+          ]
+        },
+        "mutations": [
+          {
+            "jsonPatch": {
+              "expression": "(!has(object.metadata.annotations) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+[JSONPatch{op:'add',path:\"/metadata/annotations/policy.uds.dev~1native-mutation-revision\",value:params.spec.revision}]"
+            },
+            "patchType": "JSONPatch"
+          },
+          {
+            "jsonPatch": {
+              "expression": "(has(object.metadata.annotations) \u0026\u0026 \"policy.uds.dev/native-fallback\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/policy.uds.dev~1native-fallback\"}] : []"
+            },
+            "patchType": "JSONPatch"
+          },
+          {
+            "jsonPatch": {
+              "expression": "(variables.identityLabels) || (variables.priorDiagnostic + ([(variables.grantDisallowPrivileged) || !variables.privilegeDefault ? '' : 'disallow-privileged',(variables.grantRequireNonRootUser) || variables.identityLabels ? '' : 'require-non-root-user',(variables.grantDropAllCapabilities) ? '' : 'drop-all-capabilities'].filter(p,p!='')).filter(p,!(p in variables.priorDiagnostic))).size()==0 \u0026\u0026 !variables.diagnosticInvalid ? [] : (!has(object.metadata.annotations) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+[JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1mutated\",value:'['+(variables.priorDiagnostic + ([(variables.grantDisallowPrivileged) || !variables.privilegeDefault ? '' : 'disallow-privileged',(variables.grantRequireNonRootUser) || variables.identityLabels ? '' : 'require-non-root-user',(variables.grantDropAllCapabilities) ? '' : 'drop-all-capabilities'].filter(p,p!='')).filter(p,!(p in variables.priorDiagnostic))).map(p,'\"'+p+'\"').join(',')+']'}]"
+            },
+            "patchType": "JSONPatch"
+          },
+          {
+            "jsonPatch": {
+              "expression": "(variables.grantDisallowPrivileged || variables.identityLabels) ? [] : ((has(object.spec.containers) ? object.spec.containers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext',value:Object.spec.containers.securityContext{}})+object.spec.containers.filter(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN'))).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : [])+(has(object.spec.initContainers) ? object.spec.initContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext',value:Object.spec.initContainers.securityContext{}})+object.spec.initContainers.filter(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN'))).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : [])+(has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext',value:Object.spec.ephemeralContainers.securityContext{}})+object.spec.ephemeralContainers.filter(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN'))).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : []))"
+            },
+            "patchType": "JSONPatch"
+          },
+          {
+            "applyConfiguration": {
+              "expression": "(variables.grantRequireNonRootUser || variables.identityLabels) ? Object{} : Object{spec:Object.spec{securityContext:Object.spec.securityContext{runAsNonRoot:has(object.spec.securityContext) \u0026\u0026 has(object.spec.securityContext.runAsNonRoot) ? object.spec.securityContext.runAsNonRoot : true,runAsUser:has(object.spec.securityContext) \u0026\u0026 has(object.spec.securityContext.runAsUser) ? object.spec.securityContext.runAsUser : 1000,runAsGroup:has(object.spec.securityContext) \u0026\u0026 has(object.spec.securityContext.runAsGroup) ? object.spec.securityContext.runAsGroup : 1000}}}"
+            },
+            "patchType": "ApplyConfiguration"
+          },
+          {
+            "jsonPatch": {
+              "expression": "(variables.grantDropAllCapabilities || variables.identityLabels) ? [] : ((has(object.spec.containers) ? object.spec.containers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext',value:Object.spec.containers.securityContext{}})+object.spec.containers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/capabilities',value:Object.spec.containers.securityContext.capabilities{}})+object.spec.containers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.drop)||c.securityContext.capabilities.drop!=['ALL']).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']}) : [])+(has(object.spec.initContainers) ? object.spec.initContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext',value:Object.spec.initContainers.securityContext{}})+object.spec.initContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/capabilities',value:Object.spec.initContainers.securityContext.capabilities{}})+object.spec.initContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.drop)||c.securityContext.capabilities.drop!=['ALL']).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']}) : [])+(has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext',value:Object.spec.ephemeralContainers.securityContext{}})+object.spec.ephemeralContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/capabilities',value:Object.spec.ephemeralContainers.securityContext.capabilities{}})+object.spec.ephemeralContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.drop)||c.securityContext.capabilities.drop!=['ALL']).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']}) : []))"
+            },
+            "patchType": "JSONPatch"
+          },
+          {
+            "jsonPatch": {
+              "expression": "(!has(object.metadata.annotations) \u0026\u0026 (variables.grantDisallowHostNamespaces || variables.grantRestrictHostPorts || variables.grantDisallowPrivileged || variables.grantRequireNonRootUser || variables.grantRestrictProcMount || variables.grantRestrictSeccomp || variables.grantDisallowSELinuxOptions || variables.grantRestrictSELinuxType || variables.grantDropAllCapabilities || variables.grantRestrictCapabilities || variables.grantRestrictVolumeTypes || variables.grantRestrictHostPathWrite || variables.grantRestrictIstioSidecarOverrides || variables.grantRestrictIstioTrafficOverrides || variables.grantRestrictIstioAmbientOverrides || variables.grantRestrictIstioUser) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+(variables.grantDisallowHostNamespaces ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowHostNamespaces\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.DisallowHostNamespaces\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowHostNamespaces\"}] : []))+(variables.grantRestrictHostPorts ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictHostPorts\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.RestrictHostPorts\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictHostPorts\"}] : []))+(variables.grantDisallowPrivileged ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowPrivileged\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.DisallowPrivileged\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowPrivileged\"}] : []))+(variables.grantRequireNonRootUser ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RequireNonRootUser\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.RequireNonRootUser\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RequireNonRootUser\"}] : []))+(variables.grantRestrictProcMount ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictProcMount\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.RestrictProcMount\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictProcMount\"}] : []))+(variables.grantRestrictSeccomp ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictSeccomp\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.RestrictSeccomp\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictSeccomp\"}] : []))+(variables.grantDisallowSELinuxOptions ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowSELinuxOptions\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.DisallowSELinuxOptions\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowSELinuxOptions\"}] : []))+(variables.grantRestrictSELinuxType ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictSELinuxType\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.RestrictSELinuxType\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictSELinuxType\"}] : []))+(variables.grantDropAllCapabilities ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DropAllCapabilities\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.DropAllCapabilities\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DropAllCapabilities\"}] : []))+(variables.grantRestrictCapabilities ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictCapabilities\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.RestrictCapabilities\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictCapabilities\"}] : []))+(variables.grantRestrictVolumeTypes ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictVolumeTypes\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.RestrictVolumeTypes\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictVolumeTypes\"}] : []))+(variables.grantRestrictHostPathWrite ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictHostPathWrite\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.RestrictHostPathWrite\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictHostPathWrite\"}] : []))+(variables.grantRestrictIstioSidecarOverrides ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioSidecarOverrides\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.RestrictIstioSidecarOverrides\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioSidecarOverrides\"}] : []))+(variables.grantRestrictIstioTrafficOverrides ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioTrafficOverrides\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.RestrictIstioTrafficOverrides\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioTrafficOverrides\"}] : []))+(variables.grantRestrictIstioAmbientOverrides ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioAmbientOverrides\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.RestrictIstioAmbientOverrides\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioAmbientOverrides\"}] : []))+(variables.grantRestrictIstioUser ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioUser\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.RestrictIstioUser\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictIstioUser\"}] : []))"
+            },
+            "patchType": "JSONPatch"
+          }
+        ],
+        "paramKind": {
+          "apiVersion": "policy.uds.dev/v1alpha1",
+          "kind": "AdmissionParameters"
+        },
+        "reinvocationPolicy": "IfNeeded",
+        "variables": [
+          {
+            "expression": "has(object.metadata.name) \u0026\u0026 object.metadata.name != '' ? object.metadata.name : (has(object.metadata.generateName) ? object.metadata.generateName : '')",
+            "name": "resourceName"
+          },
+          {
+            "expression": "(has(object.metadata.name) \u0026\u0026 object.metadata.name != '') || has(object.metadata.generateName)",
+            "name": "resourceNamePresent"
+          },
+          {
+            "expression": "has(object.metadata.annotations) \u0026\u0026 \"policy.uds.dev/native-mutation-revision\" in object.metadata.annotations \u0026\u0026 object.metadata.annotations[\"policy.uds.dev/native-mutation-revision\"] == params.spec.revision",
+            "name": "mutationReady"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"DisallowHostNamespaces\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantDisallowHostNamespaces"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictHostPorts\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictHostPorts"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"DisallowPrivileged\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantDisallowPrivileged"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RequireNonRootUser\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRequireNonRootUser"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictProcMount\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictProcMount"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictSeccomp\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictSeccomp"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"DisallowSELinuxOptions\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantDisallowSELinuxOptions"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictSELinuxType\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictSELinuxType"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"DropAllCapabilities\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantDropAllCapabilities"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictCapabilities\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictCapabilities"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictVolumeTypes\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictVolumeTypes"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictHostPathWrite\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictHostPathWrite"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioSidecarOverrides\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictIstioSidecarOverrides"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioTrafficOverrides\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictIstioTrafficOverrides"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioAmbientOverrides\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictIstioAmbientOverrides"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioUser\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictIstioUser"
+          },
+          {
+            "expression": "has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/mutated\" in object.metadata.annotations ? object.metadata.annotations[\"uds-core.pepr.dev/mutated\"] : ''",
+            "name": "diagnosticText"
+          },
+          {
+            "expression": "has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/mutated\" in object.metadata.annotations \u0026\u0026 !variables.diagnosticText.matches(\"^[ \\\\t\\\\r\\\\n]*\\\\[[ \\\\t\\\\r\\\\n]*(\\\"(disallow-privileged|require-non-root-user|drop-all-capabilities)\\\"([ \\\\t\\\\r\\\\n]*,[ \\\\t\\\\r\\\\n]*\\\"(disallow-privileged|require-non-root-user|drop-all-capabilities)\\\")*)?[ \\\\t\\\\r\\\\n]*\\\\][ \\\\t\\\\r\\\\n]*$\")",
+            "name": "diagnosticInvalid"
+          },
+          {
+            "expression": "variables.diagnosticText == '' || variables.diagnosticInvalid || variables.diagnosticText.trim().matches('^\\\\[[ \\t\\r\\n]*\\\\]$') ? [] : variables.diagnosticText.trim().substring(1,variables.diagnosticText.trim().size()-1).split(',').map(p,p.trim()).map(p,p.substring(1,p.size()-1))",
+            "name": "priorDiagnostic"
+          },
+          {
+            "expression": "object.spec.containers + (has(object.spec.initContainers) ? object.spec.initContainers : []) + (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers : [])",
+            "name": "containers"
+          },
+          {
+            "expression": "has(object.metadata.labels) \u0026\u0026 ['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels \u0026\u0026 object.metadata.labels[k]!='')",
+            "name": "identityLabels"
+          },
+          {
+            "expression": "variables.containers.exists(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN')))",
+            "name": "privilegeDefault"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-service-markers"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConditions": [
+          {
+            "expression": "!(has(request.operation) \u0026\u0026 request.operation=='UPDATE' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource in ['pods','services'] \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 request.userInfo.username=='system:serviceaccount:uds-system:uds-controller' \u0026\u0026 oldObject!=null \u0026\u0026 object.metadata.uid==oldObject.metadata.uid \u0026\u0026 object.spec==oldObject.spec \u0026\u0026 (has(object.metadata.annotations) ? object.metadata.annotations : {})==(has(oldObject.metadata.annotations) ? oldObject.metadata.annotations : {}) \u0026\u0026 (has(object.metadata.ownerReferences) ? object.metadata.ownerReferences : [])==(has(oldObject.metadata.ownerReferences) ? oldObject.metadata.ownerReferences : []) \u0026\u0026 (has(object.metadata.finalizers) ? object.metadata.finalizers : [])==(has(oldObject.metadata.finalizers) ? oldObject.metadata.finalizers : []) \u0026\u0026 'istio.io/use-waypoint' in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})['istio.io/use-waypoint']!='' \u0026\u0026 !('istio.io/use-waypoint' in (has(object.metadata.labels) ? object.metadata.labels : {})) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {}).all(k,k in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k]) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}).all(k,k in ['istio.io/use-waypoint','istio.io/ingress-use-waypoint'] || (k in (has(object.metadata.labels) ? object.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k])))",
+            "name": "owner-checked-waypoint-retirement"
+          }
+        ],
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "services"
+              ]
+            }
+          ]
+        },
+        "mutations": [
+          {
+            "jsonPatch": {
+              "expression": "(!has(object.metadata.annotations) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+[JSONPatch{op:'add',path:\"/metadata/annotations/policy.uds.dev~1native-mutation-revision\",value:params.spec.revision}]"
+            },
+            "patchType": "JSONPatch"
+          },
+          {
+            "jsonPatch": {
+              "expression": "(has(object.metadata.annotations) \u0026\u0026 \"policy.uds.dev/native-fallback\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/policy.uds.dev~1native-fallback\"}] : []"
+            },
+            "patchType": "JSONPatch"
+          },
+          {
+            "jsonPatch": {
+              "expression": "(!has(object.metadata.annotations) \u0026\u0026 (variables.grantRestrictExternalNames || variables.grantDisallowNodePortServices) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+(variables.grantRestrictExternalNames ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictExternalNames\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.RestrictExternalNames\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.RestrictExternalNames\"}] : []))+(variables.grantDisallowNodePortServices ? [JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowNodePortServices\",value:'exempted'}] : ((has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/uds-core-policies.DisallowNodePortServices\" in object.metadata.annotations) ? [JSONPatch{op:'remove',path:\"/metadata/annotations/uds-core.pepr.dev~1uds-core-policies.DisallowNodePortServices\"}] : []))"
+            },
+            "patchType": "JSONPatch"
+          }
+        ],
+        "paramKind": {
+          "apiVersion": "policy.uds.dev/v1alpha1",
+          "kind": "AdmissionParameters"
+        },
+        "reinvocationPolicy": "IfNeeded",
+        "variables": [
+          {
+            "expression": "has(object.metadata.name) \u0026\u0026 object.metadata.name != '' ? object.metadata.name : (has(object.metadata.generateName) ? object.metadata.generateName : '')",
+            "name": "resourceName"
+          },
+          {
+            "expression": "(has(object.metadata.name) \u0026\u0026 object.metadata.name != '') || has(object.metadata.generateName)",
+            "name": "resourceNamePresent"
+          },
+          {
+            "expression": "has(object.metadata.annotations) \u0026\u0026 \"policy.uds.dev/native-mutation-revision\" in object.metadata.annotations \u0026\u0026 object.metadata.annotations[\"policy.uds.dev/native-mutation-revision\"] == params.spec.revision",
+            "name": "mutationReady"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictExternalNames\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictExternalNames"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"DisallowNodePortServices\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantDisallowNodePortServices"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-monitor-defaults"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                "monitoring.coreos.com"
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "servicemonitors",
+                "podmonitors"
+              ]
+            }
+          ]
+        },
+        "mutations": [
+          {
+            "applyConfiguration": {
+              "expression": "has(object.spec.fallbackScrapeProtocol) \u0026\u0026 object.spec.fallbackScrapeProtocol!='' ? Object{} : Object{spec:Object.spec{fallbackScrapeProtocol:'PrometheusText0.0.4'}}"
+            },
+            "patchType": "ApplyConfiguration"
+          }
+        ],
+        "reinvocationPolicy": "IfNeeded"
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-controller-pod-defaults-recovery"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConditions": [
+          {
+            "expression": "request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='pods' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 has(object.spec.serviceAccountName) \u0026\u0026 object.spec.serviceAccountName=='uds-controller' \u0026\u0026 ((has(object.metadata.name) \u0026\u0026 object.metadata.name.startsWith('uds-controller-')) || (has(object.metadata.generateName) \u0026\u0026 object.metadata.generateName.startsWith('uds-controller-'))) \u0026\u0026 has(object.metadata.ownerReferences) \u0026\u0026 object.metadata.ownerReferences.exists(r,r.apiVersion=='apps/v1' \u0026\u0026 r.kind=='ReplicaSet' \u0026\u0026 r.name.startsWith('uds-controller-') \u0026\u0026 has(r.controller) \u0026\u0026 r.controller) \u0026\u0026 object.spec.containers.size()==1 \u0026\u0026 object.spec.containers[0].name=='controller' \u0026\u0026 (!has(object.metadata.labels)||!['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels \u0026\u0026 object.metadata.labels[k]!='')) \u0026\u0026 (!has(object.spec.initContainers)||object.spec.initContainers.size()==0) \u0026\u0026 (!has(object.spec.ephemeralContainers)||object.spec.ephemeralContainers.size()==0)",
+            "name": "authenticated-controller-recovery"
+          }
+        ],
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods"
+              ]
+            }
+          ]
+        },
+        "mutations": [
+          {
+            "jsonPatch": {
+              "expression": "(variables.identityLabels) || (variables.priorDiagnostic + ([(false) || !variables.privilegeDefault ? '' : 'disallow-privileged',(false) || variables.identityLabels ? '' : 'require-non-root-user',(false) ? '' : 'drop-all-capabilities'].filter(p,p!='')).filter(p,!(p in variables.priorDiagnostic))).size()==0 \u0026\u0026 !variables.diagnosticInvalid ? [] : (!has(object.metadata.annotations) ? [JSONPatch{op:'add',path:'/metadata/annotations',value:{}}] : [])+[JSONPatch{op:'add',path:\"/metadata/annotations/uds-core.pepr.dev~1mutated\",value:'['+(variables.priorDiagnostic + ([(false) || !variables.privilegeDefault ? '' : 'disallow-privileged',(false) || variables.identityLabels ? '' : 'require-non-root-user',(false) ? '' : 'drop-all-capabilities'].filter(p,p!='')).filter(p,!(p in variables.priorDiagnostic))).map(p,'\"'+p+'\"').join(',')+']'}]"
+            },
+            "patchType": "JSONPatch"
+          },
+          {
+            "jsonPatch": {
+              "expression": "(false || variables.identityLabels) ? [] : ((has(object.spec.containers) ? object.spec.containers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext',value:Object.spec.containers.securityContext{}})+object.spec.containers.filter(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN'))).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : [])+(has(object.spec.initContainers) ? object.spec.initContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext',value:Object.spec.initContainers.securityContext{}})+object.spec.initContainers.filter(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN'))).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : [])+(has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext',value:Object.spec.ephemeralContainers.securityContext{}})+object.spec.ephemeralContainers.filter(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN'))).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/allowPrivilegeEscalation',value:false}) : []))"
+            },
+            "patchType": "JSONPatch"
+          },
+          {
+            "applyConfiguration": {
+              "expression": "(false || variables.identityLabels) ? Object{} : Object{spec:Object.spec{securityContext:Object.spec.securityContext{runAsNonRoot:has(object.spec.securityContext) \u0026\u0026 has(object.spec.securityContext.runAsNonRoot) ? object.spec.securityContext.runAsNonRoot : true,runAsUser:has(object.spec.securityContext) \u0026\u0026 has(object.spec.securityContext.runAsUser) ? object.spec.securityContext.runAsUser : 1000,runAsGroup:has(object.spec.securityContext) \u0026\u0026 has(object.spec.securityContext.runAsGroup) ? object.spec.securityContext.runAsGroup : 1000}}}"
+            },
+            "patchType": "ApplyConfiguration"
+          },
+          {
+            "jsonPatch": {
+              "expression": "(false || variables.identityLabels) ? [] : ((has(object.spec.containers) ? object.spec.containers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext',value:Object.spec.containers.securityContext{}})+object.spec.containers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/capabilities',value:Object.spec.containers.securityContext.capabilities{}})+object.spec.containers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.drop)||c.securityContext.capabilities.drop!=['ALL']).map(c,JSONPatch{op:'add',path:'/spec/containers/'+string(object.spec.containers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']}) : [])+(has(object.spec.initContainers) ? object.spec.initContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext',value:Object.spec.initContainers.securityContext{}})+object.spec.initContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/capabilities',value:Object.spec.initContainers.securityContext.capabilities{}})+object.spec.initContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.drop)||c.securityContext.capabilities.drop!=['ALL']).map(c,JSONPatch{op:'add',path:'/spec/initContainers/'+string(object.spec.initContainers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']}) : [])+(has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers.filter(c,!has(c.securityContext)).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext',value:Object.spec.ephemeralContainers.securityContext{}})+object.spec.ephemeralContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/capabilities',value:Object.spec.ephemeralContainers.securityContext.capabilities{}})+object.spec.ephemeralContainers.filter(c,!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.drop)||c.securityContext.capabilities.drop!=['ALL']).map(c,JSONPatch{op:'add',path:'/spec/ephemeralContainers/'+string(object.spec.ephemeralContainers.indexOf(c))+'/securityContext/capabilities/drop',value:['ALL']}) : []))"
+            },
+            "patchType": "JSONPatch"
+          }
+        ],
+        "reinvocationPolicy": "IfNeeded",
+        "variables": [
+          {
+            "expression": "has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/mutated\" in object.metadata.annotations ? object.metadata.annotations[\"uds-core.pepr.dev/mutated\"] : ''",
+            "name": "diagnosticText"
+          },
+          {
+            "expression": "has(object.metadata.annotations) \u0026\u0026 \"uds-core.pepr.dev/mutated\" in object.metadata.annotations \u0026\u0026 !variables.diagnosticText.matches(\"^[ \\\\t\\\\r\\\\n]*\\\\[[ \\\\t\\\\r\\\\n]*(\\\"(disallow-privileged|require-non-root-user|drop-all-capabilities)\\\"([ \\\\t\\\\r\\\\n]*,[ \\\\t\\\\r\\\\n]*\\\"(disallow-privileged|require-non-root-user|drop-all-capabilities)\\\")*)?[ \\\\t\\\\r\\\\n]*\\\\][ \\\\t\\\\r\\\\n]*$\")",
+            "name": "diagnosticInvalid"
+          },
+          {
+            "expression": "variables.diagnosticText == '' || variables.diagnosticInvalid || variables.diagnosticText.trim().matches('^\\\\[[ \\t\\r\\n]*\\\\]$') ? [] : variables.diagnosticText.trim().substring(1,variables.diagnosticText.trim().size()-1).split(',').map(p,p.trim()).map(p,p.substring(1,p.size()-1))",
+            "name": "priorDiagnostic"
+          },
+          {
+            "expression": "object.spec.containers + (has(object.spec.initContainers) ? object.spec.initContainers : []) + (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers : [])",
+            "name": "containers"
+          },
+          {
+            "expression": "false",
+            "name": "identityLabels"
+          },
+          {
+            "expression": "variables.containers.exists(c,(!has(c.securityContext)||!has(c.securityContext.allowPrivilegeEscalation))\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.privileged)||!c.securityContext.privileged)\u0026\u0026(!has(c.securityContext)||!has(c.securityContext.capabilities)||!has(c.securityContext.capabilities.add)||!c.securityContext.capabilities.add.exists(v,v=='CAP_SYS_ADMIN')))",
+            "name": "privilegeDefault"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-defaults-profile"
+      },
+      "spec": {
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf",
+                  "uds-system"
+                ]
+              }
+            ]
+          },
+          "objectSelector": {}
+        },
+        "paramRef": {
+          "name": "uds-native-grants",
+          "namespace": "uds-policy-exemptions",
+          "parameterNotFoundAction": "Deny"
+        },
+        "policyName": "uds-native-defaults-profile"
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-service-markers"
+      },
+      "spec": {
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf",
+                  "uds-system"
+                ]
+              }
+            ]
+          },
+          "objectSelector": {}
+        },
+        "paramRef": {
+          "name": "uds-native-grants",
+          "namespace": "uds-policy-exemptions",
+          "parameterNotFoundAction": "Deny"
+        },
+        "policyName": "uds-native-service-markers"
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-monitor-defaults"
+      },
+      "spec": {
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          },
+          "objectSelector": {}
+        },
+        "policyName": "uds-native-monitor-defaults"
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "MutatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-controller-pod-defaults-recovery"
+      },
+      "spec": {
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          },
+          "objectSelector": {}
+        },
+        "policyName": "uds-native-controller-pod-defaults-recovery"
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-pod-profile"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConditions": [
+          {
+            "expression": "!(has(request.operation) \u0026\u0026 request.operation=='UPDATE' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource in ['pods','services'] \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 request.userInfo.username=='system:serviceaccount:uds-system:uds-controller' \u0026\u0026 oldObject!=null \u0026\u0026 object.metadata.uid==oldObject.metadata.uid \u0026\u0026 object.spec==oldObject.spec \u0026\u0026 (has(object.metadata.annotations) ? object.metadata.annotations : {})==(has(oldObject.metadata.annotations) ? oldObject.metadata.annotations : {}) \u0026\u0026 (has(object.metadata.ownerReferences) ? object.metadata.ownerReferences : [])==(has(oldObject.metadata.ownerReferences) ? oldObject.metadata.ownerReferences : []) \u0026\u0026 (has(object.metadata.finalizers) ? object.metadata.finalizers : [])==(has(oldObject.metadata.finalizers) ? oldObject.metadata.finalizers : []) \u0026\u0026 'istio.io/use-waypoint' in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})['istio.io/use-waypoint']!='' \u0026\u0026 !('istio.io/use-waypoint' in (has(object.metadata.labels) ? object.metadata.labels : {})) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {}).all(k,k in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k]) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}).all(k,k in ['istio.io/use-waypoint','istio.io/ingress-use-waypoint'] || (k in (has(object.metadata.labels) ? object.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k])))",
+            "name": "owner-checked-waypoint-retirement"
+          }
+        ],
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods",
+                "pods/ephemeralcontainers"
+              ]
+            }
+          ]
+        },
+        "paramKind": {
+          "apiVersion": "policy.uds.dev/v1alpha1",
+          "kind": "AdmissionParameters"
+        },
+        "validations": [
+          {
+            "expression": "variables.grantDisallowHostNamespaces || ((!has(object.spec.hostNetwork) || !object.spec.hostNetwork) \u0026\u0026 (!has(object.spec.hostPID) || !object.spec.hostPID) \u0026\u0026 (!has(object.spec.hostIPC) || !object.spec.hostIPC))",
+            "message": "Sharing the host namespaces is disallowed. The fields spec.hostNetwork, spec.hostIPC, and spec.hostPID must not be set to true."
+          },
+          {
+            "expression": "variables.grantRestrictHostPorts || (variables.containers.all(c, !has(c.ports) || c.ports.all(p, !has(p.hostPort) || p.hostPort == 0)))",
+            "message": "Host ports are not allowed."
+          },
+          {
+            "expression": "variables.grantDisallowPrivileged || (variables.containers.all(c, has(c.securityContext) \u0026\u0026 has(c.securityContext.allowPrivilegeEscalation) \u0026\u0026 !c.securityContext.allowPrivilegeEscalation \u0026\u0026 (!has(c.securityContext.privileged) || !c.securityContext.privileged)))",
+            "message": "Privilege escalation is disallowed. Authorized: [allowPrivilegeEscalation = false | privileged = false]"
+          },
+          {
+            "expression": "variables.grantRequireNonRootUser || variables.codeIdentity || (variables.contexts.all(x, (!has(x.runAsNonRoot) || x.runAsNonRoot) \u0026\u0026 (!has(x.runAsUser) || x.runAsUser != 0) \u0026\u0026 (!has(x.supplementalGroups) || !x.supplementalGroups.exists(g, g == 0))))",
+            "message": "Unauthorized container securityContext. Containers must not run as root or have root-level supplemental groups. Authorized: [runAsNonRoot = true | runAsUser \u003e 0 | supplementalGroups must not include 0]"
+          },
+          {
+            "expression": "variables.grantRestrictProcMount || (variables.containers.all(c, !has(c.securityContext) || !has(c.securityContext.procMount) || c.securityContext.procMount == \"Default\"))",
+            "message": "Unauthorized procMount type. Authorized: [undefined | Default]"
+          },
+          {
+            "expression": "variables.grantRestrictSeccomp || (variables.contexts.all(x, !has(x.seccompProfile) || x.seccompProfile.type in [\"RuntimeDefault\", \"Localhost\"]))",
+            "message": "Unauthorized seccomp profile type. Authorized: [RuntimeDefault | Localhost]"
+          },
+          {
+            "expression": "variables.grantDisallowSELinuxOptions || (variables.contexts.all(x, !has(x.seLinuxOptions) || ((!has(x.seLinuxOptions.user) || x.seLinuxOptions.user == \"\") \u0026\u0026 (!has(x.seLinuxOptions.role) || x.seLinuxOptions.role == \"\"))))",
+            "message": "Unauthorized SELinux Options. Authorized: [user: undefined | role: undefined]"
+          },
+          {
+            "expression": "variables.grantRestrictSELinuxType || (variables.contexts.all(x, !has(x.seLinuxOptions) || !has(x.seLinuxOptions.type) || x.seLinuxOptions.type in [\"container_t\", \"container_init_t\", \"container_kvm_t\"]))",
+            "message": "Unauthorized SELinux type. Authorized: [container_t | container_init_t | container_kvm_t]"
+          },
+          {
+            "expression": "variables.grantDropAllCapabilities || (variables.containers.all(c, has(c.securityContext) \u0026\u0026 has(c.securityContext.capabilities) \u0026\u0026 has(c.securityContext.capabilities.drop) \u0026\u0026 c.securityContext.capabilities.drop.exists(v, v == \"ALL\")))",
+            "message": "All container capabilities must be dropped."
+          },
+          {
+            "expression": "variables.grantRestrictCapabilities || variables.codeIdentity || (variables.containers.all(c, !has(c.securityContext) || !has(c.securityContext.capabilities) || !has(c.securityContext.capabilities.add) || c.securityContext.capabilities.add.all(v, v == \"NET_BIND_SERVICE\")))",
+            "message": "Unauthorized container capabilities in securityContext.capabilities.add. Authorized: [NET_BIND_SERVICE]"
+          },
+          {
+            "expression": "variables.grantRestrictVolumeTypes || (!has(object.spec.volumes) || object.spec.volumes.all(v, has(v.configMap) || has(v.csi) || has(v.downwardAPI) || has(v.emptyDir) || has(v.ephemeral) || has(v.image) || has(v.persistentVolumeClaim) || has(v.projected) || has(v.secret)))",
+            "message": "Volume has a disallowed volume type.",
+            "messageExpression": "'Volume '+variables.badVolumes[0].name+' has a disallowed volume type of '+\"'\"+(has(variables.badVolumes[0].hostPath) ? 'hostPath' : 'unsupported')+\"'.\"+(has(variables.badVolumes[0].hostPath) \u0026\u0026 variables.containers.exists(c, has(c.volumeMounts) \u0026\u0026 c.volumeMounts.exists(m, m.name == variables.badVolumes[0].name \u0026\u0026 (!has(m.readOnly) || !m.readOnly))) ? \" hostPath volume '\"+variables.badVolumes[0].name+\"' must be mounted as readOnly.\" : '')"
+          },
+          {
+            "expression": "variables.grantRestrictHostPathWrite || (!has(object.spec.volumes) || object.spec.volumes.filter(v, has(v.hostPath)).all(v, variables.containers.all(c, !has(c.volumeMounts) || c.volumeMounts.filter(m, m.name == v.name).all(m, has(m.readOnly) \u0026\u0026 m.readOnly))))",
+            "message": "hostPath volumes must be mounted as readOnly.",
+            "messageExpression": "\"hostPath volume '\"+object.spec.volumes.filter(v, has(v.hostPath) \u0026\u0026 variables.containers.exists(c, has(c.volumeMounts) \u0026\u0026 c.volumeMounts.exists(m, m.name == v.name \u0026\u0026 (!has(m.readOnly) || !m.readOnly))))[0].name+\"' must be mounted as readOnly.\""
+          },
+          {
+            "expression": "variables.grantRestrictIstioSidecarOverrides || (!has(object.metadata.annotations) || object.metadata.annotations.all(k, !(k in [\"sidecar.istio.io/bootstrapOverride\", \"sidecar.istio.io/discoveryAddress\", \"sidecar.istio.io/proxyImage\", \"proxy.istio.io/config\", \"sidecar.istio.io/userVolume\", \"sidecar.istio.io/userVolumeMount\"])))",
+            "message": "The following istio annotations can modify secure sidecar configuration and are not allowed:",
+            "messageExpression": "\"The following istio annotations can modify secure sidecar configuration and are not allowed: \"+variables.blockedSidecar.join(', ')"
+          },
+          {
+            "expression": "variables.grantRestrictIstioTrafficOverrides || variables.codeIdentity || ((!has(object.metadata.annotations)||object.metadata.annotations.all(k,!(k in ['traffic.sidecar.istio.io/excludeInboundPorts','traffic.sidecar.istio.io/excludeInterfaces','traffic.sidecar.istio.io/excludeOutboundIPRanges','traffic.sidecar.istio.io/excludeOutboundPorts','traffic.sidecar.istio.io/includeInboundPorts','traffic.sidecar.istio.io/includeOutboundIPRanges','traffic.sidecar.istio.io/includeOutboundPorts','sidecar.istio.io/interceptionMode','traffic.sidecar.istio.io/kubevirtInterfaces','istio.io/redirect-virtual-interfaces']))) \u0026\u0026 (request.namespace=='istio-system'||!has(object.metadata.annotations)||!('sidecar.istio.io/inject' in object.metadata.annotations)||object.metadata.annotations['sidecar.istio.io/inject'].trim()=='true') \u0026\u0026 (request.namespace=='istio-system'||!has(object.metadata.labels)||!('sidecar.istio.io/inject' in object.metadata.labels)||object.metadata.labels['sidecar.istio.io/inject'].trim()=='true'))",
+            "message": "The following istio annotations or labels can modify secure traffic interception are not allowed:",
+            "messageExpression": "\"The following istio annotations or labels can modify secure traffic interception are not allowed: \"+variables.blockedTraffic.join(', ')"
+          },
+          {
+            "expression": "variables.grantRestrictIstioAmbientOverrides || (!has(object.metadata.annotations) || !(\"ambient.istio.io/bypass-inbound-capture\" in object.metadata.annotations))",
+            "message": "The following istio ambient annotations that can modify secure mesh behavior are not allowed: ambient.istio.io/bypass-inbound-capture"
+          },
+          {
+            "expression": "variables.grantRestrictIstioUser || variables.codeIdentity || (variables.contexts.all(x,(!has(x.runAsUser)||x.runAsUser!=1337)\u0026\u0026(!has(x.runAsGroup)||x.runAsGroup!=1337)\u0026\u0026(!has(x.fsGroup)||x.fsGroup!=1337)\u0026\u0026(!has(x.supplementalGroups)||!x.supplementalGroups.exists(g,g==1337))))",
+            "message": "Application containers must not use UID/GID 1337 (Istio proxy) unless they are trusted Istio components"
+          },
+          {
+            "expression": "(has(request.subResource) \u0026\u0026 request.subResource == 'ephemeralcontainers') || variables.mutationReady == true",
+            "message": "Admission exemption snapshot changed between mutation and validation; retry the request"
+          },
+          {
+            "expression": "params.spec.valid == true",
+            "message": "Admission exemption inputs are invalid; repair the protected snapshot"
+          }
+        ],
+        "variables": [
+          {
+            "expression": "object.spec.containers + (has(object.spec.initContainers) ? object.spec.initContainers : []) + (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers : [])",
+            "name": "containers"
+          },
+          {
+            "expression": "variables.containers.filter(c, has(c.securityContext)).map(c, c.securityContext) + (has(object.spec.securityContext) ? [object.spec.securityContext] : [])",
+            "name": "contexts"
+          },
+          {
+            "expression": "[\"proxy.istio.io/config\", \"sidecar.istio.io/bootstrapOverride\", \"sidecar.istio.io/discoveryAddress\", \"sidecar.istio.io/proxyImage\", \"sidecar.istio.io/userVolume\", \"sidecar.istio.io/userVolumeMount\"].filter(k, has(object.metadata.annotations) \u0026\u0026 k in object.metadata.annotations)",
+            "name": "blockedSidecar"
+          },
+          {
+            "expression": "[\"istio.io/redirect-virtual-interfaces\", \"sidecar.istio.io/interceptionMode\", \"traffic.sidecar.istio.io/excludeInboundPorts\", \"traffic.sidecar.istio.io/excludeInterfaces\", \"traffic.sidecar.istio.io/excludeOutboundIPRanges\", \"traffic.sidecar.istio.io/excludeOutboundPorts\", \"traffic.sidecar.istio.io/includeInboundPorts\", \"traffic.sidecar.istio.io/includeOutboundIPRanges\", \"traffic.sidecar.istio.io/includeOutboundPorts\", \"traffic.sidecar.istio.io/kubevirtInterfaces\"].filter(k, has(object.metadata.annotations) \u0026\u0026 k in object.metadata.annotations).map(k, 'annotation '+k)",
+            "name": "blockedTraffic"
+          },
+          {
+            "expression": "has(object.spec.volumes) ? object.spec.volumes.filter(v, !(has(v.configMap) || has(v.csi) || has(v.downwardAPI) || has(v.emptyDir) || has(v.ephemeral) || has(v.image) || has(v.persistentVolumeClaim) || has(v.projected) || has(v.secret))) : []",
+            "name": "badVolumes"
+          },
+          {
+            "expression": "has(object.metadata.name) \u0026\u0026 object.metadata.name != '' ? object.metadata.name : (has(object.metadata.generateName) ? object.metadata.generateName : '')",
+            "name": "resourceName"
+          },
+          {
+            "expression": "(has(object.metadata.name) \u0026\u0026 object.metadata.name != '') || has(object.metadata.generateName)",
+            "name": "resourceNamePresent"
+          },
+          {
+            "expression": "has(object.metadata.annotations) \u0026\u0026 \"policy.uds.dev/native-mutation-revision\" in object.metadata.annotations \u0026\u0026 object.metadata.annotations[\"policy.uds.dev/native-mutation-revision\"] == params.spec.revision",
+            "name": "mutationReady"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"DisallowHostNamespaces\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantDisallowHostNamespaces"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictHostPorts\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictHostPorts"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"DisallowPrivileged\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantDisallowPrivileged"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RequireNonRootUser\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRequireNonRootUser"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictProcMount\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictProcMount"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictSeccomp\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictSeccomp"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"DisallowSELinuxOptions\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantDisallowSELinuxOptions"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictSELinuxType\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictSELinuxType"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"DropAllCapabilities\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantDropAllCapabilities"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictCapabilities\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictCapabilities"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictVolumeTypes\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictVolumeTypes"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictHostPathWrite\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictHostPathWrite"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioSidecarOverrides\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictIstioSidecarOverrides"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioTrafficOverrides\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictIstioTrafficOverrides"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioAmbientOverrides\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictIstioAmbientOverrides"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictIstioUser\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictIstioUser"
+          },
+          {
+            "expression": "variables.containers.exists(c,c.name in ['istio-proxy','istio-init'])",
+            "name": "codeIdentity"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-service-profile"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConditions": [
+          {
+            "expression": "!(has(request.operation) \u0026\u0026 request.operation=='UPDATE' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource in ['pods','services'] \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 request.userInfo.username=='system:serviceaccount:uds-system:uds-controller' \u0026\u0026 oldObject!=null \u0026\u0026 object.metadata.uid==oldObject.metadata.uid \u0026\u0026 object.spec==oldObject.spec \u0026\u0026 (has(object.metadata.annotations) ? object.metadata.annotations : {})==(has(oldObject.metadata.annotations) ? oldObject.metadata.annotations : {}) \u0026\u0026 (has(object.metadata.ownerReferences) ? object.metadata.ownerReferences : [])==(has(oldObject.metadata.ownerReferences) ? oldObject.metadata.ownerReferences : []) \u0026\u0026 (has(object.metadata.finalizers) ? object.metadata.finalizers : [])==(has(oldObject.metadata.finalizers) ? oldObject.metadata.finalizers : []) \u0026\u0026 'istio.io/use-waypoint' in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})['istio.io/use-waypoint']!='' \u0026\u0026 !('istio.io/use-waypoint' in (has(object.metadata.labels) ? object.metadata.labels : {})) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {}).all(k,k in (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k]) \u0026\u0026 (has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}).all(k,k in ['istio.io/use-waypoint','istio.io/ingress-use-waypoint'] || (k in (has(object.metadata.labels) ? object.metadata.labels : {}) \u0026\u0026 (has(object.metadata.labels) ? object.metadata.labels : {})[k]==(has(oldObject.metadata.labels) ? oldObject.metadata.labels : {})[k])))",
+            "name": "owner-checked-waypoint-retirement"
+          }
+        ],
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "services"
+              ]
+            }
+          ]
+        },
+        "paramKind": {
+          "apiVersion": "policy.uds.dev/v1alpha1",
+          "kind": "AdmissionParameters"
+        },
+        "validations": [
+          {
+            "expression": "variables.grantRestrictExternalNames || (!has(object.spec.type) || object.spec.type != \"ExternalName\")",
+            "message": "ExternalName services are not allowed."
+          },
+          {
+            "expression": "variables.grantDisallowNodePortServices || (!has(object.spec.type) || object.spec.type != \"NodePort\")",
+            "message": "NodePort services are not allowed."
+          },
+          {
+            "expression": "params.spec.valid == true",
+            "message": "Admission exemption inputs are invalid; repair the protected snapshot"
+          }
+        ],
+        "variables": [
+          {
+            "expression": "has(object.metadata.name) \u0026\u0026 object.metadata.name != '' ? object.metadata.name : (has(object.metadata.generateName) ? object.metadata.generateName : '')",
+            "name": "resourceName"
+          },
+          {
+            "expression": "(has(object.metadata.name) \u0026\u0026 object.metadata.name != '') || has(object.metadata.generateName)",
+            "name": "resourceNamePresent"
+          },
+          {
+            "expression": "has(object.metadata.annotations) \u0026\u0026 \"policy.uds.dev/native-mutation-revision\" in object.metadata.annotations \u0026\u0026 object.metadata.annotations[\"policy.uds.dev/native-mutation-revision\"] == params.spec.revision",
+            "name": "mutationReady"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"RestrictExternalNames\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantRestrictExternalNames"
+          },
+          {
+            "expression": "variables.resourceNamePresent \u0026\u0026 params.spec.nativeMatchers.exists(m, m.policy == \"DisallowNodePortServices\" \u0026\u0026 m.namespace == request.namespace \u0026\u0026 variables.resourceName.matches(m.pattern))",
+            "name": "grantDisallowNodePortServices"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-probe-profile"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                "monitoring.coreos.com"
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "probes"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "!has(object.spec.module) || !object.spec.module.startsWith('http_200x_sso') || object.spec.module.startsWith('http_200x_sso_'+request.namespace+'_')",
+            "message": "Probe is not authorized to use this Blackbox Exporter module"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-package-namespace"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                "uds.dev"
+              ],
+              "apiVersions": [
+                "v1alpha1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "packages"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "!(request.namespace in ['kube-system','kube-public','_unknown_','pepr-system'])",
+            "message": "invalid namespace"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-exemption-shape"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                "uds.dev"
+              ],
+              "apiVersions": [
+                "v1alpha1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "exemptions"
+              ]
+            }
+          ]
+        },
+        "paramKind": {
+          "apiVersion": "policy.uds.dev/v1alpha1",
+          "kind": "AdmissionParameters"
+        },
+        "validations": [
+          {
+            "expression": "params.spec.allowAllNamespaces || request.namespace=='uds-policy-exemptions'",
+            "message": "Exemptions must be created in the protected uds-policy-exemptions namespace"
+          },
+          {
+            "expression": "!has(object.spec.exemptions)||object.spec.exemptions.all(e,e.policies.all(p,(e.matcher.kind=='service')==(p in ['RestrictExternalNames','DisallowNodePortServices'])))",
+            "message": "Exemption matcher kind is incompatible with its policy"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-controller-pod-recovery"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConditions": [
+          {
+            "expression": "request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='pods' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 has(object.spec.serviceAccountName) \u0026\u0026 object.spec.serviceAccountName=='uds-controller' \u0026\u0026 ((has(object.metadata.name) \u0026\u0026 object.metadata.name.startsWith('uds-controller-')) || (has(object.metadata.generateName) \u0026\u0026 object.metadata.generateName.startsWith('uds-controller-'))) \u0026\u0026 has(object.metadata.ownerReferences) \u0026\u0026 object.metadata.ownerReferences.exists(r,r.apiVersion=='apps/v1' \u0026\u0026 r.kind=='ReplicaSet' \u0026\u0026 r.name.startsWith('uds-controller-') \u0026\u0026 has(r.controller) \u0026\u0026 r.controller) \u0026\u0026 object.spec.containers.size()==1 \u0026\u0026 object.spec.containers[0].name=='controller' \u0026\u0026 (!has(object.metadata.labels)||!['uds/user','uds/group','uds/fsgroup'].exists(k,k in object.metadata.labels \u0026\u0026 object.metadata.labels[k]!='')) \u0026\u0026 (!has(object.spec.initContainers)||object.spec.initContainers.size()==0) \u0026\u0026 (!has(object.spec.ephemeralContainers)||object.spec.ephemeralContainers.size()==0)",
+            "name": "authenticated-controller-recovery"
+          }
+        ],
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "pods",
+                "pods/ephemeralcontainers"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "(!has(object.spec.hostNetwork) || !object.spec.hostNetwork) \u0026\u0026 (!has(object.spec.hostPID) || !object.spec.hostPID) \u0026\u0026 (!has(object.spec.hostIPC) || !object.spec.hostIPC)",
+            "message": "Sharing the host namespaces is disallowed. The fields spec.hostNetwork, spec.hostIPC, and spec.hostPID must not be set to true."
+          },
+          {
+            "expression": "variables.containers.all(c, !has(c.ports) || c.ports.all(p, !has(p.hostPort) || p.hostPort == 0))",
+            "message": "Host ports are not allowed."
+          },
+          {
+            "expression": "variables.containers.all(c, has(c.securityContext) \u0026\u0026 has(c.securityContext.allowPrivilegeEscalation) \u0026\u0026 !c.securityContext.allowPrivilegeEscalation \u0026\u0026 (!has(c.securityContext.privileged) || !c.securityContext.privileged))",
+            "message": "Privilege escalation is disallowed. Authorized: [allowPrivilegeEscalation = false | privileged = false]"
+          },
+          {
+            "expression": "variables.contexts.all(x, (!has(x.runAsNonRoot) || x.runAsNonRoot) \u0026\u0026 (!has(x.runAsUser) || x.runAsUser != 0) \u0026\u0026 (!has(x.supplementalGroups) || !x.supplementalGroups.exists(g, g == 0)))",
+            "message": "Unauthorized container securityContext. Containers must not run as root or have root-level supplemental groups. Authorized: [runAsNonRoot = true | runAsUser \u003e 0 | supplementalGroups must not include 0]"
+          },
+          {
+            "expression": "variables.containers.all(c, !has(c.securityContext) || !has(c.securityContext.procMount) || c.securityContext.procMount == \"Default\")",
+            "message": "Unauthorized procMount type. Authorized: [undefined | Default]"
+          },
+          {
+            "expression": "variables.contexts.all(x, !has(x.seccompProfile) || x.seccompProfile.type in [\"RuntimeDefault\", \"Localhost\"])",
+            "message": "Unauthorized seccomp profile type. Authorized: [RuntimeDefault | Localhost]"
+          },
+          {
+            "expression": "variables.contexts.all(x, !has(x.seLinuxOptions) || ((!has(x.seLinuxOptions.user) || x.seLinuxOptions.user == \"\") \u0026\u0026 (!has(x.seLinuxOptions.role) || x.seLinuxOptions.role == \"\")))",
+            "message": "Unauthorized SELinux Options. Authorized: [user: undefined | role: undefined]"
+          },
+          {
+            "expression": "variables.contexts.all(x, !has(x.seLinuxOptions) || !has(x.seLinuxOptions.type) || x.seLinuxOptions.type in [\"container_t\", \"container_init_t\", \"container_kvm_t\"])",
+            "message": "Unauthorized SELinux type. Authorized: [container_t | container_init_t | container_kvm_t]"
+          },
+          {
+            "expression": "variables.containers.all(c, has(c.securityContext) \u0026\u0026 has(c.securityContext.capabilities) \u0026\u0026 has(c.securityContext.capabilities.drop) \u0026\u0026 c.securityContext.capabilities.drop.exists(v, v == \"ALL\"))",
+            "message": "All container capabilities must be dropped."
+          },
+          {
+            "expression": "variables.containers.all(c, !has(c.securityContext) || !has(c.securityContext.capabilities) || !has(c.securityContext.capabilities.add) || c.securityContext.capabilities.add.all(v, v == \"NET_BIND_SERVICE\"))",
+            "message": "Unauthorized container capabilities in securityContext.capabilities.add. Authorized: [NET_BIND_SERVICE]"
+          },
+          {
+            "expression": "!has(object.spec.volumes) || object.spec.volumes.all(v, has(v.configMap) || has(v.csi) || has(v.downwardAPI) || has(v.emptyDir) || has(v.ephemeral) || has(v.image) || has(v.persistentVolumeClaim) || has(v.projected) || has(v.secret))",
+            "message": "Volume has a disallowed volume type.",
+            "messageExpression": "'Volume '+variables.badVolumes[0].name+' has a disallowed volume type of '+\"'\"+(has(variables.badVolumes[0].hostPath) ? 'hostPath' : 'unsupported')+\"'.\"+(has(variables.badVolumes[0].hostPath) \u0026\u0026 variables.containers.exists(c, has(c.volumeMounts) \u0026\u0026 c.volumeMounts.exists(m, m.name == variables.badVolumes[0].name \u0026\u0026 (!has(m.readOnly) || !m.readOnly))) ? \" hostPath volume '\"+variables.badVolumes[0].name+\"' must be mounted as readOnly.\" : '')"
+          },
+          {
+            "expression": "!has(object.spec.volumes) || object.spec.volumes.filter(v, has(v.hostPath)).all(v, variables.containers.all(c, !has(c.volumeMounts) || c.volumeMounts.filter(m, m.name == v.name).all(m, has(m.readOnly) \u0026\u0026 m.readOnly)))",
+            "message": "hostPath volumes must be mounted as readOnly.",
+            "messageExpression": "\"hostPath volume '\"+object.spec.volumes.filter(v, has(v.hostPath) \u0026\u0026 variables.containers.exists(c, has(c.volumeMounts) \u0026\u0026 c.volumeMounts.exists(m, m.name == v.name \u0026\u0026 (!has(m.readOnly) || !m.readOnly))))[0].name+\"' must be mounted as readOnly.\""
+          },
+          {
+            "expression": "!has(object.metadata.annotations) || object.metadata.annotations.all(k, !(k in [\"sidecar.istio.io/bootstrapOverride\", \"sidecar.istio.io/discoveryAddress\", \"sidecar.istio.io/proxyImage\", \"proxy.istio.io/config\", \"sidecar.istio.io/userVolume\", \"sidecar.istio.io/userVolumeMount\"]))",
+            "message": "The following istio annotations can modify secure sidecar configuration and are not allowed:",
+            "messageExpression": "\"The following istio annotations can modify secure sidecar configuration and are not allowed: \"+variables.blockedSidecar.join(', ')"
+          },
+          {
+            "expression": "(!has(object.metadata.annotations) || object.metadata.annotations.all(k, !(k in [\"traffic.sidecar.istio.io/excludeInboundPorts\", \"traffic.sidecar.istio.io/excludeInterfaces\", \"traffic.sidecar.istio.io/excludeOutboundIPRanges\", \"traffic.sidecar.istio.io/excludeOutboundPorts\", \"traffic.sidecar.istio.io/includeInboundPorts\", \"traffic.sidecar.istio.io/includeOutboundIPRanges\", \"traffic.sidecar.istio.io/includeOutboundPorts\", \"sidecar.istio.io/interceptionMode\", \"traffic.sidecar.istio.io/kubevirtInterfaces\", \"istio.io/redirect-virtual-interfaces\"]))) \u0026\u0026 (!has(object.metadata.annotations) || !(\"sidecar.istio.io/inject\" in object.metadata.annotations) || object.metadata.annotations[\"sidecar.istio.io/inject\"] == \"true\") \u0026\u0026 (!has(object.metadata.labels) || !(\"sidecar.istio.io/inject\" in object.metadata.labels) || (object.metadata.labels[\"sidecar.istio.io/inject\"] == \"true\" || (object.spec.containers.size() == 1 \u0026\u0026 object.spec.containers.all(c, c.name == 'istio-proxy' \u0026\u0026 c.image == 'docker.io/istio/proxyv2:1.30.3-distroless' \u0026\u0026 has(c.args) \u0026\u0026 c.args.size() \u003e 0 \u0026\u0026 c.args[0] == 'proxy' \u0026\u0026 !has(c.command)))))",
+            "message": "The following istio annotations or labels can modify secure traffic interception are not allowed:",
+            "messageExpression": "\"The following istio annotations or labels can modify secure traffic interception are not allowed: \"+variables.blockedTraffic.join(', ')"
+          },
+          {
+            "expression": "!has(object.metadata.annotations) || !(\"ambient.istio.io/bypass-inbound-capture\" in object.metadata.annotations)",
+            "message": "The following istio ambient annotations that can modify secure mesh behavior are not allowed: ambient.istio.io/bypass-inbound-capture"
+          },
+          {
+            "expression": "variables.contexts.all(x,(!has(x.runAsUser)||x.runAsUser!=1337)\u0026\u0026(!has(x.runAsGroup)||x.runAsGroup!=1337)\u0026\u0026(!has(x.fsGroup)||x.fsGroup!=1337)\u0026\u0026(!has(x.supplementalGroups)||!x.supplementalGroups.exists(g,g==1337)))",
+            "message": "Application containers must not use UID/GID 1337 (Istio proxy). This development profile supports ambient mesh."
+          }
+        ],
+        "variables": [
+          {
+            "expression": "object.spec.containers + (has(object.spec.initContainers) ? object.spec.initContainers : []) + (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers : [])",
+            "name": "containers"
+          },
+          {
+            "expression": "variables.containers.filter(c, has(c.securityContext)).map(c, c.securityContext) + (has(object.spec.securityContext) ? [object.spec.securityContext] : [])",
+            "name": "contexts"
+          },
+          {
+            "expression": "[\"proxy.istio.io/config\", \"sidecar.istio.io/bootstrapOverride\", \"sidecar.istio.io/discoveryAddress\", \"sidecar.istio.io/proxyImage\", \"sidecar.istio.io/userVolume\", \"sidecar.istio.io/userVolumeMount\"].filter(k, has(object.metadata.annotations) \u0026\u0026 k in object.metadata.annotations)",
+            "name": "blockedSidecar"
+          },
+          {
+            "expression": "[\"istio.io/redirect-virtual-interfaces\", \"sidecar.istio.io/interceptionMode\", \"traffic.sidecar.istio.io/excludeInboundPorts\", \"traffic.sidecar.istio.io/excludeInterfaces\", \"traffic.sidecar.istio.io/excludeOutboundIPRanges\", \"traffic.sidecar.istio.io/excludeOutboundPorts\", \"traffic.sidecar.istio.io/includeInboundPorts\", \"traffic.sidecar.istio.io/includeOutboundIPRanges\", \"traffic.sidecar.istio.io/includeOutboundPorts\", \"traffic.sidecar.istio.io/kubevirtInterfaces\"].filter(k, has(object.metadata.annotations) \u0026\u0026 k in object.metadata.annotations).map(k, 'annotation '+k)",
+            "name": "blockedTraffic"
+          },
+          {
+            "expression": "has(object.spec.volumes) ? object.spec.volumes.filter(v, !(has(v.configMap) || has(v.csi) || has(v.downwardAPI) || has(v.emptyDir) || has(v.ephemeral) || has(v.image) || has(v.persistentVolumeClaim) || has(v.projected) || has(v.secret))) : []",
+            "name": "badVolumes"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-controller-service-recovery"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConditions": [
+          {
+            "expression": "request.namespace=='uds-system' \u0026\u0026 request.resource.group=='' \u0026\u0026 request.resource.resource=='services' \u0026\u0026 (!has(request.subResource)||request.subResource=='') \u0026\u0026 (has(request.userInfo) \u0026\u0026 ((has(request.userInfo.username) \u0026\u0026 request.userInfo.username in ['system:kube-controller-manager','system:serviceaccount:kube-system:replicaset-controller']) || (has(request.userInfo.groups) \u0026\u0026 request.userInfo.groups.exists(g,g=='system:masters')))) \u0026\u0026 object.metadata.name=='uds-controller' \u0026\u0026 has(object.spec.type) \u0026\u0026 object.spec.type=='ClusterIP' \u0026\u0026 object.spec.ports.size()==1 \u0026\u0026 object.spec.ports[0].port==443 \u0026\u0026 object.spec.ports[0].targetPort==9443",
+            "name": "authenticated-controller-recovery"
+          }
+        ],
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                ""
+              ],
+              "apiVersions": [
+                "v1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE"
+              ],
+              "resources": [
+                "services"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "!has(object.spec.type) || object.spec.type != \"ExternalName\"",
+            "message": "ExternalName services are not allowed."
+          },
+          {
+            "expression": "!has(object.spec.type) || object.spec.type != \"NodePort\"",
+            "message": "NodePort services are not allowed."
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": {
+        "name": "uds-native-controller-parameters"
+      },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [
+                "policy.uds.dev"
+              ],
+              "apiVersions": [
+                "v1alpha1"
+              ],
+              "operations": [
+                "CREATE",
+                "UPDATE",
+                "DELETE"
+              ],
+              "resources": [
+                "admissionparameters"
+              ]
+            }
+          ]
+        },
+        "validations": [
+          {
+            "expression": "request.userInfo.username == 'system:serviceaccount:uds-system:uds-controller' || (request.operation == 'DELETE' \u0026\u0026 request.userInfo.username == 'system:serviceaccount:kube-system:namespace-controller')",
+            "message": "Only the UDS controller may write AdmissionParameters; edit Exemptions to change policy grants"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-pod-profile"
+      },
+      "spec": {
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf",
+                  "uds-system"
+                ]
+              }
+            ]
+          },
+          "objectSelector": {}
+        },
+        "paramRef": {
+          "name": "uds-native-grants",
+          "namespace": "uds-policy-exemptions",
+          "parameterNotFoundAction": "Deny"
+        },
+        "policyName": "uds-native-pod-profile",
+        "validationActions": [
+          "Deny"
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-service-profile"
+      },
+      "spec": {
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf",
+                  "uds-system"
+                ]
+              }
+            ]
+          },
+          "objectSelector": {}
+        },
+        "paramRef": {
+          "name": "uds-native-grants",
+          "namespace": "uds-policy-exemptions",
+          "parameterNotFoundAction": "Deny"
+        },
+        "policyName": "uds-native-service-profile",
+        "validationActions": [
+          "Deny"
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-probe-profile"
+      },
+      "spec": {
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          },
+          "objectSelector": {}
+        },
+        "policyName": "uds-native-probe-profile",
+        "validationActions": [
+          "Deny"
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-package-namespace"
+      },
+      "spec": {
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          },
+          "objectSelector": {}
+        },
+        "policyName": "uds-native-package-namespace",
+        "validationActions": [
+          "Deny"
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-exemption-shape"
+      },
+      "spec": {
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          },
+          "objectSelector": {}
+        },
+        "paramRef": {
+          "name": "uds-native-grants",
+          "namespace": "uds-policy-exemptions",
+          "parameterNotFoundAction": "Deny"
+        },
+        "policyName": "uds-native-exemption-shape",
+        "validationActions": [
+          "Deny"
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-controller-pod-recovery"
+      },
+      "spec": {
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          },
+          "objectSelector": {}
+        },
+        "policyName": "uds-native-controller-pod-recovery",
+        "validationActions": [
+          "Deny"
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-controller-service-recovery"
+      },
+      "spec": {
+        "matchResources": {
+          "matchPolicy": "Equivalent",
+          "namespaceSelector": {
+            "matchExpressions": [
+              {
+                "key": "kubernetes.io/metadata.name",
+                "operator": "NotIn",
+                "values": [
+                  "kube-system",
+                  "pepr-system",
+                  "zarf"
+                ]
+              }
+            ]
+          },
+          "objectSelector": {}
+        },
+        "policyName": "uds-native-controller-service-recovery",
+        "validationActions": [
+          "Deny"
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": {
+        "name": "uds-native-controller-parameters"
+      },
+      "spec": {
+        "matchResources": {},
+        "policyName": "uds-native-controller-parameters",
+        "validationActions": [
+          "Deny"
+        ]
+      }
+    }
+  ]
+}

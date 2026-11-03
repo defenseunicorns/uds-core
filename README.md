@@ -21,7 +21,7 @@ Key capabilities include the [UDS Operator](https://docs.defenseunicorns.com/cor
 | [Istio](https://istio.io/) | Service Mesh |
 | [Keycloak](https://www.keycloak.org/) | Identity & Access Management |
 | [Authservice](https://github.com/istio-ecosystem/authservice) | Authorization |
-| [Pepr](https://pepr.dev) | UDS Policy Engine & Operator |
+| Kubernetes CEL and Go | UDS Policy Engine & Operator |
 | [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) | Monitoring |
 | [Grafana](https://grafana.com/oss/grafana/) | Dashboards & Visualization |
 | [Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) | Endpoint Probing |

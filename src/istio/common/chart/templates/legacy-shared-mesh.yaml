@@ -1,0 +1,35 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- $namespace := lookup "v1" "Namespace" "" "pepr-system" }}
+{{- if $namespace }}
+# Preserve an existing shared namespace during upgrades. Fresh Core does not
+# create it, enroll it, or require any Pepr module inside it.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pepr-system
+  annotations:
+    helm.sh/resource-policy: keep
+  {{- with $namespace.metadata.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- range $name := list "permissive-pepr-webhook" "permissive-pepr-webhook-watcher" }}
+{{- $existing := lookup "security.istio.io/v1" "PeerAuthentication" "pepr-system" $name }}
+{{- if $existing }}
+---
+# The old Core admission endpoint remains reachable until replacement
+# verification. Existing shared policies also remain usable by other modules.
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: {{ $name }}
+  namespace: pepr-system
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  {{- toYaml $existing.spec | nindent 2 }}
+{{- end }}
+{{- end }}

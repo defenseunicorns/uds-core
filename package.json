@@ -3,53 +3,22 @@
   "version": "0.6.0",
   "description": "A collection of capabilities for UDS Core",
   "keywords": [
-    "pepr",
     "k8s",
     "policy-engine",
-    "pepr-module",
     "security"
   ],
   "engines": {
     "node": ">=20.0.0"
   },
-  "pepr": {
-    "name": "UDS Core",
-    "uuid": "uds-core",
-    "onError": "reject",
-    "logLevel": "info",
-    "alwaysIgnore": {
-      "namespaces": []
-    },
-    "admission": {
-      "alwaysIgnore": {
-        "namespaces": [
-          "zarf"
-        ]
-      }
-    },
-    "watch": {
-      "alwaysIgnore": {
-        "namespaces": [
-          "zarf"
-        ]
-      }
-    },
-    "additionalWebhooks": [
-      {
-        "failurePolicy": "Ignore",
-        "namespace": "istio-system"
-      }
-    ]
-  },
   "scripts": {
-    "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
-    "test:unit": "vitest run src/pepr/",
+    "k3d-setup": "k3d cluster delete uds-core-dev && k3d cluster create uds-core-dev --k3s-arg '--debug@server:0'",
+    "test:unit": "go -C src/go-controller test -race ./...",
     "format": "eslint \"**/*.ts\" --fix && prettier --write \"**/*.ts\"",
-    "format:check": "eslint \"**/*.ts\" && prettier --check \"**/*.ts\""
+    "format:check": "eslint \"**/*.ts\" && prettier --check \"**/*.ts\"",
+    "test:reference": "python3 src/go-controller/hack/reference-tests.py"
   },
   "dependencies": {
-    "kubernetes-fluent-client": "3.12.6",
-    "pepr": "2.0.7"
+    "kubernetes-fluent-client": "3.12.6"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.4",
@@ -63,6 +32,11 @@
     "eslint": "^10.0.0",
     "globals": "^17.0.0",
     "prettier": "^3.6.2",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "js-yaml": "4.3.2",
+    "@kubernetes/client-node": "1.4.0",
+    "typescript": "5.9.3",
+    "tsx": "4.23.15",
+    "yaml": "2.9.0"
   }
 }

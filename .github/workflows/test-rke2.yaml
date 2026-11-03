@@ -73,6 +73,11 @@ jobs:
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
 
+      - name: Prepare source controller artifacts
+        uses: ./.github/actions/build-controller
+        with:
+          flavor: ${{ matrix.flavor }}
+
       - name: Setup Tofu
         uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with:

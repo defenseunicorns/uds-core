@@ -107,16 +107,18 @@ Review these parts of a UDS Core deployment for settings that affect security:
 
    Review who can create or edit `Package` CRs. For each `Package` with `serviceAccountsEnabled: true`, review its audience mappers and confirm that each target application's owner approves machine access. Keycloak client scopes can add audiences that do not appear in the `Package`. Check the client's effective mappers in Keycloak or the `aud` claim in an issued token. See [Configure service account clients](/how-to-guides/identity-and-authorization/configure-service-accounts/) for token verification steps.
 
-5. **Verify Pepr controller health**
+5. **Verify admission and controller health**
 
    Confirm the policy controller is running and processing resources:
 
    ```bash
-   # Check Pepr system pods
-   uds zarf tools kubectl get pods -n pepr-system
+   # Check the Core controller
+   uds zarf tools kubectl get pods -n uds-system -l app=uds-controller
 
    # Verify admission webhooks are registered
-   uds zarf tools kubectl get mutatingwebhookconfigurations,validatingwebhookconfigurations | grep pepr
+   uds zarf tools kubectl get mutatingadmissionpolicies,validatingadmissionpolicies
+   uds zarf tools kubectl get mutatingwebhookconfigurations,validatingwebhookconfigurations
+   uds zarf tools kubectl get admissionparameters.policy.uds.dev -n uds-policy-exemptions uds-native-grants -o yaml
    ```
 
 </Steps>
@@ -125,7 +127,7 @@ Review these parts of a UDS Core deployment for settings that affect security:
 
 A well-audited cluster shows:
 
-- All `pepr-system` pods are `Running` and `Ready`
+- All Core controller pods in `uds-system` are `Running` and `Ready`, and the protected admission snapshot has `spec.valid: true`
 - Every `Exemption` CR has a `title` and `description` with clear justification
 - No exemptions target removed workloads
 - No `Package` CR `allow` rules use `remoteGenerated: Anywhere` without documented justification

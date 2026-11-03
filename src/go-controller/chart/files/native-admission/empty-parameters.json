@@ -1,0 +1,17 @@
+{
+  "apiVersion": "policy.uds.dev/v1alpha1",
+  "kind": "AdmissionParameters",
+  "metadata": {
+    "name": "uds-native-grants",
+    "namespace": "uds-policy-exemptions",
+    "annotations": {
+      "helm.sh/resource-policy": "keep"
+    }
+  },
+  "spec": {
+    "nativeMatchers": [],
+    "revision": "bootstrap-empty",
+    "valid": true,
+    "allowAllNamespaces": false
+  }
+}

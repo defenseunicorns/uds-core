@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables = {
+  # Use embedded etcd for the HA validation fixture.
+  k3d_extra_args          = "--k3s-arg=--cluster-init@server:0"
+  uds_controller_replicas = "2"
   classification_banners = [
     {
       text = "SAMPLE BANNER"
@@ -13,8 +16,8 @@ variables = {
       ]
     },
     {
-      text       = "UNKNOWN"
-      addFooter  = false
+      text      = "UNKNOWN"
+      addFooter = false
       enabledHosts = [
         "grafana.admin.uds.dev",
       ]

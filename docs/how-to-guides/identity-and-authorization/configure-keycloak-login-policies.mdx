@@ -185,7 +185,7 @@ Also verify that the client session idle timeout is ≤ the realm session idle t
 
 **Solution:** Confirm the `Package` CR is applied and the UDS Operator has reconciled it. Check the operator logs:
 ```bash
-uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=50 | grep logout
+uds zarf tools kubectl logs -n uds-system -l app=uds-controller --tail=50 | grep logout
 ```
 
 ## Related documentation

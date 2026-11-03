@@ -1,6 +1,9 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+includes:
+  - test-dependencies: ../../tasks/utils.yaml
+
 tasks:
   - name: validate
     actions:
@@ -38,15 +41,15 @@ tasks:
       - description: Generate servicemonitor types
         cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.12.6 crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.94.2/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml src/pepr/operator/crd/generated/prometheus
+          npx kubernetes-fluent-client@3.12.6 crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.94.2/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml src/uds-api/generated/prometheus
       - description: Generate podmonitor types
         cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.12.6 crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.94.2/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml src/pepr/operator/crd/generated/prometheus
+          npx kubernetes-fluent-client@3.12.6 crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.94.2/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml src/uds-api/generated/prometheus
       - description: Generate probe types
         cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.12.6 crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.94.2/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml src/pepr/operator/crd/generated/prometheus
+          npx kubernetes-fluent-client@3.12.6 crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.94.2/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml src/uds-api/generated/prometheus
       - description: "Add license headers to generated CRD files"
         shell:
           darwin: bash
@@ -58,12 +61,13 @@ tasks:
             echo "Error: addlicense is not installed" >&2
             exit 1
           fi
-          addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/generated
+          addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/uds-api/generated
       - description: Format
         cmd: "npm run format"
 
   - name: e2e-test
     actions:
+      - task: test-dependencies:prepare-node-test-dependencies
       - description: "Install vitest dependencies"
         cmd: |
           npm ci

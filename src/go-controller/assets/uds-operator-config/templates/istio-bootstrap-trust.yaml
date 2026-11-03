@@ -1,0 +1,18 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if not (lookup "v1" "ConfigMap" "istio-system" "uds-trust-bundle") }}
+# Istiod mounts this before the controller can run in the mesh. The controller
+# publishes the configured CA bundle and reloads its consumers before Core is ready.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uds-trust-bundle
+  namespace: istio-system
+  labels:
+    uds.dev/pod-reload: "true"
+  annotations:
+    helm.sh/resource-policy: keep
+data:
+  extra.pem: ""
+{{- end }}

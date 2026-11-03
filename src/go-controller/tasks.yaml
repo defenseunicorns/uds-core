@@ -1,0 +1,73 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+tasks:
+  - name: gen-crds
+    description: Generate the canonical Core schemas, SDK types and Go clients
+    actions:
+      - cmd: ISTIO_VERSION="1.31.2" npx tsx src/go-controller/hack/gen-istio-crd-sources.ts
+      - cmd: npx tsx src/go-controller/hack/gen-crds.ts
+      - cmd: npx kubernetes-fluent-client crd src/uds-api/chart/templates/packages.uds.dev.yaml
+          src/uds-api/generated
+      - cmd: 'npx kubernetes-fluent-client crd src/uds-api/chart/templates/packages.uds.dev.yaml
+          -l json-schema schemas
+
+          mv schemas/package-v1alpha1.json-schema schemas/package-v1alpha1.schema.json
+
+          uds zarf tools yq -i ''(.. | select(has("additionalProperties") and .additionalProperties
+          | select(length==0))) |= .additionalProperties = false'' schemas/package-v1alpha1.schema.json
+
+          uds zarf tools yq -i ''.definitions.Package.additionalProperties = {}'' schemas/package-v1alpha1.schema.json'
+      - cmd: npx kubernetes-fluent-client crd src/uds-api/chart/templates/exemptions.uds.dev.yaml
+          src/uds-api/generated
+      - cmd: 'npx kubernetes-fluent-client crd src/uds-api/chart/templates/exemptions.uds.dev.yaml
+          -l json-schema schemas
+
+          mv schemas/exemption-v1alpha1.json-schema schemas/exemption-v1alpha1.schema.json
+
+          uds zarf tools yq -i ''(.. | select(has("additionalProperties") and .additionalProperties
+          | select(length==0))) |= .additionalProperties = false'' schemas/exemption-v1alpha1.schema.json
+
+          uds zarf tools yq -i ''.definitions.Exemption.additionalProperties = {}'' schemas/exemption-v1alpha1.schema.json'
+      - cmd: npx kubernetes-fluent-client crd src/uds-api/chart/templates/clusterconfig.uds.dev.yaml
+          src/uds-api/generated
+      - cmd:
+          'npx kubernetes-fluent-client crd src/uds-api/chart/templates/clusterconfig.uds.dev.yaml
+          -l json-schema schemas
+
+          mv schemas/clusterconfig-v1alpha1.json-schema schemas/clusterconfig-v1alpha1.schema.json
+
+          uds zarf tools yq -i ''(.. | select(has("additionalProperties") and .additionalProperties
+          | select(length==0))) |= .additionalProperties = false'' schemas/clusterconfig-v1alpha1.schema.json
+
+          uds zarf tools yq -i ''.definitions.ClusterConfig.additionalProperties = {}''
+          schemas/clusterconfig-v1alpha1.schema.json'
+      - cmd: node src/go-controller/hack/generate-api.mjs
+      - cmd: src/go-controller/hack/update-codegen.sh
+      - description: Add license headers to generated API artifacts
+        cmd: |
+          command -v addlicense
+          addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -c "Defense Unicorns" src/uds-api/sources src/uds-api/generated src/uds-api/chart/templates
+      - task: gen-native
+      - task: gen-docs
+      - cmd: npm run format
+  - name: gen-native
+    description: Generate CEL, standalone registrations, and the installer admission contract
+    actions:
+      - cmd: sh src/go-controller/hack/generate-native.sh
+  - name: gen-docs
+    actions:
+      - cmd: "set -eu\nworkdir=$(mktemp -d)\ntrap 'rm -rf \"$workdir\"' EXIT\nfor crd\
+          \ in exemptions.uds.dev packages.uds.dev clusterconfig.uds.dev; do\n  uds zarf\
+          \ tools yq -o=json '.spec.versions[] | select(.name == \"v1alpha1\").schema.openAPIV3Schema'\
+          \ \"src/uds-api/chart/templates/$crd.yaml\" > \"$workdir/$crd-crd.json\"\n \
+          \ npx tsx src/go-controller/docs-gen/main.ts \"$workdir/$crd-crd.json\" v1alpha1\n\
+          done"
+  - name: validate
+    actions:
+      - description: Require the Core controller to be ready
+        wait:
+          cluster:
+            kind: Deployment
+            name: uds-controller
+            namespace: uds-system

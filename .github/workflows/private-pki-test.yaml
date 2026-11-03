@@ -34,6 +34,8 @@ jobs:
     name: Private PKI
 
     strategy:
+      # Retain independent flavor results when one image or installation fails.
+      fail-fast: false
       matrix:
         flavor: [upstream, registry1, unicorn]
 
@@ -54,6 +56,11 @@ jobs:
           registry1Username: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
+
+      - name: Prepare source controller artifacts
+        uses: ./.github/actions/build-controller
+        with:
+          flavor: ${{ matrix.flavor }}
 
       - name: Run UDS Core Private PKI Test
         run: uds run -f tasks/test.yaml uds-core-private-pki --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress

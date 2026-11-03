@@ -51,7 +51,7 @@ The mapping is a pass-through except for protected paths. Each package validates
 
 The source package definitions and component mapping files define the exact pass-through and protected paths:
 
-- Base: [Pepr](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/zarf.yaml), [Prometheus Stack](https://github.com/defenseunicorns/uds-core/blob/main/src/prometheus-stack/zarf.yaml), [Istio](https://github.com/defenseunicorns/uds-core/blob/main/src/istio/zarf.yaml), and [Envoy Gateway](https://github.com/defenseunicorns/uds-core/blob/main/src/envoy-gateway/zarf.yaml)
+- Base: [Core controller](https://github.com/defenseunicorns/uds-core/blob/main/src/go-controller/zarf.yaml), [Prometheus Stack](https://github.com/defenseunicorns/uds-core/blob/main/src/prometheus-stack/zarf.yaml), [Istio](https://github.com/defenseunicorns/uds-core/blob/main/src/istio/zarf.yaml), and [Envoy Gateway](https://github.com/defenseunicorns/uds-core/blob/main/src/envoy-gateway/zarf.yaml)
 - Backup and restore: [Velero](https://github.com/defenseunicorns/uds-core/blob/main/src/velero/common/zarf.yaml)
 - Identity and authorization: [Keycloak](https://github.com/defenseunicorns/uds-core/blob/main/src/keycloak/common/zarf.yaml) and [Authservice](https://github.com/defenseunicorns/uds-core/blob/main/src/authservice/common/zarf.yaml)
 - Logging: [Loki](https://github.com/defenseunicorns/uds-core/blob/main/src/loki/common/zarf.yaml) and [Vector](https://github.com/defenseunicorns/uds-core/blob/main/src/vector/common/zarf.yaml)
@@ -62,7 +62,7 @@ The source package definitions and component mapping files define the exact pass
 
 ## Domains
 
-Set the tenant and admin domains with the shared `global.domain` and `global.adminDomain` values. The tenant domain fans out to Keycloak, the tenant and passthrough Istio gateways, Pepr, and Portal. The admin domain configures the admin Istio gateway, Keycloak, Grafana, Pepr, and Portal.
+Set the tenant and admin domains with the shared `global.domain` and `global.adminDomain` values. The tenant domain fans out to Keycloak, the tenant and passthrough Istio gateways, the Core controller, and Portal. The admin domain configures the admin Istio gateway, Keycloak, Grafana, the Core controller, and Portal.
 
 | Field | Type | Effective default | Description |
 |---|---|---|---|

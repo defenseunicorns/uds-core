@@ -323,7 +323,7 @@ The template repository provides the standard directory structure:
    ```
 
    > [!IMPORTANT]
-   > The security context is critical. UDS Core enforces non-root execution by default via Pepr policies. Pods that attempt to run as root will be denied by the admission webhook. Always set `runAsNonRoot: true` and drop all capabilities.
+   > The security context is critical. UDS Core enforces non-root execution by default via UDS policies. Pods that attempt to run as root will be denied by the admission webhook. Always set `runAsNonRoot: true` and drop all capabilities.
 
    > [!NOTE]
    > Use `values` (Helm value overrides in `uds-bundle.yaml`) for static configuration and `variables` (set at deploy time via `uds-config.yaml`) for secrets and environment-specific settings. Add `sensitive: true` to password and secret variables.
@@ -407,7 +407,7 @@ The template repository provides the standard directory structure:
    > helm status <package-name> -n <namespace>
    > uds zarf tools kubectl get events -n <namespace>
    > ```
-   > A `pending-install` status with `FailedCreate` events usually indicates a Pepr policy violation (e.g., pod running as root). Fix the security context in your values file and redeploy.
+   > A `pending-install` status with `FailedCreate` events usually indicates a UDS policy violation (e.g., pod running as root). Fix the security context in your values file and redeploy.
 
 </Steps>
 
@@ -446,7 +446,7 @@ For web applications, you can also navigate directly to `https://reference-packa
 
 ## Troubleshooting
 
-### Problem: Pepr policy violations blocking deployment
+### Problem: UDS policy violations blocking deployment
 
 **Symptom:** Pods fail to start and namespace events show admission webhook denials:
 
@@ -456,10 +456,10 @@ uds zarf tools kubectl get events -n <namespace>
 
 ```bash
 LAST SEEN   TYPE      REASON        OBJECT                                    MESSAGE
-8m26s       Warning   FailedCreate  replicaset/reference-package-674cc4c88b   Error creating: admission webhook "pepr-uds-core.pepr.dev" denied the request: Pod level securityContext does not meet the non-root user requirement.
+8m26s       Warning   FailedCreate  replicaset/reference-package-674cc4c88b   Error creating: ValidatingAdmissionPolicy 'uds-native-pod-profile' denied request: Containers must not run as root.
 ```
 
-You can also watch for violations in real time using `uds monitor pepr denied`.
+Inspect the owning ReplicaSet events with `uds zarf tools kubectl describe replicaset -n <namespace> <name>`.
 
 **Solution:** Update the security context in your values file so the pod runs as non-root:
 

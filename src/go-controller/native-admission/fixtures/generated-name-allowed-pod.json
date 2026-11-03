@@ -1,0 +1,23 @@
+{
+  "apiVersion": "v1",
+  "kind": "Pod",
+  "metadata": {
+    "namespace": "native-contract-test",
+    "generateName": "native-generated-allowed-"
+  },
+  "spec": {
+    "securityContext": {
+      "runAsNonRoot": false,
+      "runAsUser": 0
+    },
+    "containers": [
+      {
+        "name": "app",
+        "image": "docker.io/library/busybox:1.36",
+        "command": [
+          "true"
+        ]
+      }
+    ]
+  }
+}

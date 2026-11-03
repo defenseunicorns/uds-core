@@ -1,0 +1,19 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+suite: Core configuration namespace
+templates:
+  - secret.yaml
+  - uds-ca-certs.yaml
+release:
+  namespace: uds-system
+tests:
+  - it: installs every runtime configuration source beside the Core controller
+    set:
+      cluster:
+        expose:
+          domain: uds.dev
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: uds-system

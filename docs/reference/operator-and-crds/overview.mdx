@@ -7,7 +7,7 @@ sidebar:
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-The UDS Operator manages the lifecycle of UDS custom resources and their associated Kubernetes resources. It uses [Pepr](https://github.com/defenseunicorns/pepr) to watch for changes and reconcile desired state.
+The UDS Operator manages the lifecycle of UDS custom resources and their associated Kubernetes resources. Its Go controller watches changes and reconciles desired state. Kubernetes CEL admission policies and Go admission handlers enforce resource admission.
 
 ## Custom resource schemas
 
@@ -25,7 +25,7 @@ The UDS Operator manages the lifecycle of UDS custom resources and their associa
     <LinkCard title="View schema" href="/reference/operator-and-crds/clusterconfig-v1alpha1-cr/" />
   </Card>
   <Card title="Policy Engine" icon="approve-check-circle">
-    Pepr policies enforced by UDS Core, including validating and mutating policies and what each enforces.
+    Admission policies enforced by UDS Core, including validating and mutating policies and what each enforces.
     <LinkCard title="View reference" href="/reference/operator-and-crds/policy-engine/" />
   </Card>
 </CardGrid>

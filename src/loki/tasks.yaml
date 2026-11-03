@@ -1,6 +1,9 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+includes:
+  - test-dependencies: ../../tasks/utils.yaml
+
 variables:
   - name: LOKI_CHUNKS_OBJECT_STORAGE_BUCKET
     sensitive: true
@@ -31,6 +34,7 @@ tasks:
 
   - name: e2e-test
     actions:
+      - task: test-dependencies:prepare-node-test-dependencies
       - description: "Run Loki E2E tests"
         cmd: |
           npm ci && SKIP_INTEGRATION=true npx vitest run "loki"

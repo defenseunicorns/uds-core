@@ -1,0 +1,158 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Native controller
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/native-controller.yaml
+      - .github/workflows/controller-images.yaml
+      - .github/actions/setup-tools/**
+      - .github/actions/build-controller/**
+      - mise.toml
+      - package.json
+      - package-lock.json
+      - src/go-controller/**
+      - src/uds-api/**
+      - src/keycloak/chart/**
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/native-controller.yaml
+      - .github/workflows/controller-images.yaml
+      - .github/actions/setup-tools/**
+      - .github/actions/build-controller/**
+      - mise.toml
+      - package.json
+      - package-lock.json
+      - src/go-controller/**
+      - src/uds-api/**
+      - src/keycloak/chart/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  images:
+    uses: ./.github/workflows/controller-images.yaml
+    with:
+      tag: pr-${{ github.sha }}
+      publish: false
+    secrets: inherit
+
+  validate:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GOWORK: "off"
+      GOTOOLCHAIN: local
+      GOFLAGS: -buildvcs=false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up repository tools
+        uses: ./.github/actions/setup-tools
+
+      - name: Install controller SDK and locked JavaScript dependencies
+        run: |
+          mise install go@1.27.3
+          npm ci --ignore-scripts
+
+      - name: Race tests and vet
+        run: |
+          mise exec go@1.27.3 -- go -C src/go-controller test -race ./...
+          mise exec go@1.27.3 -- go -C src/go-controller vet ./...
+
+      - name: Check production vulnerabilities
+        run: mise exec go@1.27.3 -- go -C src/go-controller run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
+      - name: Verify unchanged reference assertions and Go differential contract
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          python3 src/go-controller/hack/reference-tests.py --output "$RUNNER_TEMP/core-compatibility-reference"
+
+      - name: Verify generated native policies
+        run: |
+          python3 src/go-controller/native-admission/render.py
+          git diff --exit-code -- src/go-controller/native-admission src/go-controller/chart/files/native-admission
+
+      - name: Verify generated API and clients
+        run: |
+          mise exec go@1.27.3 -- node src/go-controller/hack/generate-api.mjs
+          mise exec go@1.27.3 -- bash src/go-controller/hack/update-codegen.sh
+          git diff --exit-code -- src/go-controller/api src/go-controller/client
+
+      - name: Test explicit pre-upgrade Falco remediation
+        run: python3 -m unittest discover -s src/go-controller/hack -p test_migrate_falco.py
+
+      - name: Verify default distribution ownership
+        run: node --test src/go-controller/hack/distribution.test.mjs
+
+      - name: Verify host installer packaging and credential inheritance
+        run: |
+          validation_dir=$(mktemp -d)
+          trap 'rm -rf "$validation_dir"' EXIT
+          mise exec go@1.27.3 -- go -C src/go-controller build -o "$validation_dir/core-transition" ./cmd/core-transition
+          "$validation_dir/core-transition" --zarf "$(command -v uds)" --uds --phase contract \
+            --chart src/go-controller/chart --contract "$validation_dir/admission-contract.json"
+          cmp "$validation_dir/admission-contract.json" src/go-controller/native-admission/admission-contract.json
+          UDS_TRANSITION_TEST_CLI="$(command -v uds)" \
+            UDS_TRANSITION_TEST_BINARY="$validation_dir/core-transition" \
+            node --test src/go-controller/hack/host-install.test.mjs src/go-controller/hack/api-adoption.test.mjs
+
+      - name: Verify chart and admission contracts
+        run: |
+          untt src/go-controller/chart
+          untt src/keycloak/chart
+          validation_dir=$(mktemp -d)
+          trap 'rm -rf "$validation_dir"' EXIT
+          uds zarf tools helm template uds-controller src/go-controller/chart \
+            --namespace uds-system --api-versions admissionregistration.k8s.io/v1/MutatingAdmissionPolicy --kube-version 1.37.1 --set nativeAdmission.narrowCallbacks=false > "$validation_dir/broad.yaml"
+          node src/go-controller/native-admission/check-render.mjs "$validation_dir/broad.yaml"
+          uds zarf tools helm template uds-controller src/go-controller/chart \
+            --namespace uds-system --api-versions admissionregistration.k8s.io/v1/MutatingAdmissionPolicy --kube-version 1.37.1 \
+            --set nativeAdmission.narrowCallbacks=true > "$validation_dir/narrow.yaml"
+          node src/go-controller/native-admission/check-render.mjs "$validation_dir/narrow.yaml" narrow
+
+  native-admission-live:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        kubernetes: [v1.36.5-k3s1, v1.37.1-k3s1]
+    env:
+      GOWORK: "off"
+      GOTOOLCHAIN: local
+      GOFLAGS: -buildvcs=false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up repository tools
+        uses: ./.github/actions/setup-tools
+      - name: Create disposable native admission cluster
+        run: |
+          k3d cluster create native-admission --image rancher/k3s:${{ matrix.kubernetes }} --no-lb --wait
+          umask 077
+          k3d kubeconfig get native-admission > "$RUNNER_TEMP/native-admission.kubeconfig"
+      - name: Execute native policies and compare Go mutation
+        env:
+          UDS_NATIVE_TEST_KUBECONFIG: ${{ runner.temp }}/native-admission.kubeconfig
+        run: go -C src/go-controller test ./native-admission -run TestLiveNativeAdmission -v -count=1
+      - name: Remove disposable cluster
+        if: always()
+        run: |
+          k3d cluster delete native-admission
+          rm -f "$RUNNER_TEMP/native-admission.kubeconfig"

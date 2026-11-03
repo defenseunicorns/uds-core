@@ -68,7 +68,8 @@
           "$ref": "#/definitions/Kind"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "RE2 regular expression matched as an unanchored search against name, or generateName when\nname is empty. Empty patterns match every name. Lookaround and backreferences are\nunsupported. Use Python-style named groups. Syntax:\nhttps://github.com/google/re2/wiki/Syntax"
         },
         "namespace": {
           "type": "string"

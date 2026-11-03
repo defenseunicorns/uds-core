@@ -1,0 +1,44 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+suite: Retained AKS webhook compatibility
+templates:
+  - webhook.yaml
+  - mutatingwebhook.yaml
+  - mutating-webhook.yaml
+release:
+  namespace: uds-system
+tests:
+  - it: preserves the annotation on ClusterConfig validation
+    template: webhook.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.annotations["admissions.enforcer/disabled"]
+          value: "true"
+  - it: preserves the annotation on workload validation
+    template: webhook.yaml
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: metadata.annotations["admissions.enforcer/disabled"]
+          value: "true"
+  - it: preserves the annotation on resource validation
+    template: webhook.yaml
+    documentIndex: 2
+    asserts:
+      - equal:
+          path: metadata.annotations["admissions.enforcer/disabled"]
+          value: "true"
+  - it: preserves the annotation on workload mutation
+    template: mutatingwebhook.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["admissions.enforcer/disabled"]
+          value: "true"
+  - it: preserves the annotation on waypoint mutation
+    template: mutating-webhook.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["admissions.enforcer/disabled"]
+          value: "true"

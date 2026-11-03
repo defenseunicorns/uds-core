@@ -1,0 +1,30 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- $items := list -}}
+{{- range $template := list "uds.admission.validatingRegistrations" "uds.admission.podMutatingRegistrations" "uds.admission.waypointRegistrations" -}}
+{{- range $document := splitList "\n---\n" (include $template $ | trim) -}}
+{{- $object := fromYaml $document -}}
+{{- $_ := set $object.metadata.annotations "meta.helm.sh/release-name" $.Release.Name -}}
+{{- $_ := set $object.metadata.annotations "meta.helm.sh/release-namespace" $.Release.Namespace -}}
+{{- $_ := set $object.metadata.labels "app.kubernetes.io/managed-by" "Helm" -}}
+{{- range $webhook := $object.webhooks -}}
+{{- $_ := set $webhook.clientConfig "caBundle" "" -}}
+{{- end -}}
+{{- $items = append $items $object -}}
+{{- end -}}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uds-controller-admission-registration
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: uds-controller
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name | quote }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace | quote }}
+data:
+  ownerUID: {{ with (lookup "rbac.authorization.k8s.io/v1" "ClusterRole" "" "uds-controller") }}{{ .metadata.uid | quote }}{{ else }}""{{ end }}
+  active: {{ include "uds.admission.register" . | quote }}
+  registrations.json: {{ dict "items" $items | toJson | quote }}

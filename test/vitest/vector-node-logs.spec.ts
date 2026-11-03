@@ -4,7 +4,7 @@
  */
 
 import * as net from "net";
-import { K8s, kind } from "kubernetes-fluent-client";
+import { K8s, kind } from "../../src/uds-api";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { fetchWithTimeout } from "./helpers/fetch";
 import { closeForward, getForward } from "./helpers/forward";

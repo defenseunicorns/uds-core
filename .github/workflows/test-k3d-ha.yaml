@@ -33,6 +33,8 @@ jobs:
     name: HA Testing
 
     strategy:
+      # Retain independent flavor results when one image or installation fails.
+      fail-fast: false
       matrix:
         flavor: [upstream, registry1, unicorn]
         test-type: [install, upgrade]
@@ -55,6 +57,11 @@ jobs:
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
 
+      - name: Prepare source controller artifacts
+        uses: ./.github/actions/build-controller
+        with:
+          flavor: ${{ matrix.flavor }}
+
       - name: Run UDS Core Install HA Test
         if: ${{ matrix.test-type == 'install' }}
         run: uds run test-uds-core-ha --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
@@ -62,6 +69,9 @@ jobs:
       - name: Run UDS Core Upgrade HA Test
         if: ${{ matrix.test-type == 'upgrade' }}
         run: uds run test-uds-core-ha-upgrade --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Verify embedded etcd HA datastore
+        run: docker exec k3d-uds-server-0 test -d /var/lib/rancher/k3s/server/db/etcd/member
 
       - name: Debug Output
         if: ${{ always() }}

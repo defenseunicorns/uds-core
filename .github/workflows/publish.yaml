@@ -19,7 +19,54 @@ on:
         type: boolean
 
 jobs:
+  controller-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: version
+        env:
+          SNAPSHOT: ${{ inputs.snapshot }}
+        run: |
+          if [ "$SNAPSHOT" = true ]; then
+            echo "tag=$(date -u +%F)-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+  controller-images:
+    needs: controller-version
+    permissions:
+      contents: write
+      packages: write
+      actions: read
+      id-token: write
+    uses: ./.github/workflows/controller-images.yaml
+    with:
+      tag: ${{ needs.controller-version.outputs.tag }}
+      publish: true
+    secrets: inherit
+
+  controller-helper-release:
+    needs: controller-images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Attach verified host helpers to the formal release
+        if: inputs.snapshot == false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name controller-transition-tools --dir build/controller-tools
+          gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" build/controller-tools/core-transition-* build/controller-tools/SHA256SUMS
+
   publish-uds-core:
+    needs: [controller-version, controller-images, controller-helper-release]
     strategy:
       fail-fast: false
       matrix:
@@ -30,6 +77,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      actions: read
       id-token: write # This is needed for OIDC federation.
 
     steps:
@@ -42,6 +90,20 @@ jobs:
           registry1Username: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
+
+      - name: Use verified release controller artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_FLAVOR: ${{ matrix.flavor }}
+          IMAGE_TAG: ${{ needs.controller-version.outputs.tag }}
+        run: |
+          flavor="$IMAGE_FLAVOR"
+          if [ "$flavor" = registry1 ]; then flavor=upstream; fi
+          repository=$(python3 -c 'import sys,tomllib; print(tomllib.load(open("src/go-controller/image-build.toml","rb"))[sys.argv[1]]["repository"])' "$flavor")
+          echo "CONTROLLER_IMAGE=$repository:$IMAGE_TAG" >> "$GITHUB_ENV"
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name controller-transition-tools --dir build/controller-tools
+          chmod +x build/controller-tools/core-transition-*
+          echo "CONTROLLER_TOOLS_DIR=$GITHUB_WORKSPACE/build/controller-tools" >> "$GITHUB_ENV"
 
       - name: (Snapshot) Get snapshot version using git commit short sha and date
         if: ${{ inputs.snapshot }}
@@ -117,6 +179,7 @@ jobs:
           suffix: -${{ matrix.flavor }}
 
   publish-uds-core-layers:
+    needs: [controller-version, controller-images, controller-helper-release]
     if: ${{ !inputs.snapshot }}
     strategy:
       fail-fast: false
@@ -144,6 +207,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      actions: read
       id-token: write # This is needed for OIDC federation.
 
     steps:
@@ -156,6 +220,20 @@ jobs:
           registry1Username: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
+
+      - name: Use verified release controller artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_FLAVOR: ${{ matrix.flavor }}
+          IMAGE_TAG: ${{ needs.controller-version.outputs.tag }}
+        run: |
+          flavor="$IMAGE_FLAVOR"
+          if [ "$flavor" = registry1 ]; then flavor=upstream; fi
+          repository=$(python3 -c 'import sys,tomllib; print(tomllib.load(open("src/go-controller/image-build.toml","rb"))[sys.argv[1]]["repository"])' "$flavor")
+          echo "CONTROLLER_IMAGE=$repository:$IMAGE_TAG" >> "$GITHUB_ENV"
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name controller-transition-tools --dir build/controller-tools
+          chmod +x build/controller-tools/core-transition-*
+          echo "CONTROLLER_TOOLS_DIR=$GITHUB_WORKSPACE/build/controller-tools" >> "$GITHUB_ENV"
 
       - name: Test and Publish Core Package Layer
         run: uds run -f tasks/publish.yaml single-layer --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress

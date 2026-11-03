@@ -1,0 +1,93 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+name: Build controller images
+on:
+  workflow_call:
+    inputs:
+      publish:
+        type: boolean
+        default: false
+      tag:
+        type: string
+        required: true
+    secrets:
+      CHAINGUARD_IDENTITY:
+        required: false
+jobs:
+  build:
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [upstream, unicorn]
+        architecture: [amd64, arm64]
+    runs-on: ${{ matrix.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with:
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          chainguardIdentity: ${{ matrix.flavor == 'unicorn' && secrets.CHAINGUARD_IDENTITY || '' }}
+      - name: Build, verify, and optionally publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_FLAVOR: ${{ matrix.flavor }}
+          IMAGE_ARCH: ${{ matrix.architecture }}
+          IMAGE_TAG: ${{ inputs.tag }}
+          IMAGE_MODE: ${{ inputs.publish && 'publish' || 'test' }}
+        run: bash src/go-controller/hack/image-ci.sh "$IMAGE_FLAVOR" "$IMAGE_ARCH" "$IMAGE_TAG" "$IMAGE_MODE"
+      - name: Retain compiler receipt, runtime proof, and SBOM
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: controller-${{ matrix.flavor }}-${{ matrix.architecture }}
+          path: build/controller/
+          if-no-files-found: error
+  manifests:
+    if: inputs.publish && (startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'schedule' && github.ref == 'refs/heads/main'))
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    strategy:
+      matrix:
+        flavor: [upstream, unicorn]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with:
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish and sign the multi-architecture manifest
+        env:
+          IMAGE_FLAVOR: ${{ matrix.flavor }}
+          IMAGE_TAG: ${{ inputs.tag }}
+        run: |
+          IMAGE_TAG="${IMAGE_TAG#v}"
+          repository=$(python3 -c 'import os,tomllib; print(tomllib.load(open("src/go-controller/image-build.toml","rb"))[os.environ["IMAGE_FLAVOR"]]["repository"])')
+          docker buildx imagetools create --tag "$repository:$IMAGE_TAG" \
+            "$repository:$IMAGE_TAG-amd64" "$repository:$IMAGE_TAG-arm64"
+          digest=$(uds zarf tools registry digest "$repository:$IMAGE_TAG")
+          cosign sign --yes "$repository@$digest"
+          cosign verify --certificate-identity \
+            "https://github.com/defenseunicorns/uds-core/.github/workflows/controller-images.yaml@$GITHUB_REF" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com "$repository@$digest"
+  transition-tools:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-tools
+      - name: Build host transition helpers
+        run: python3 src/go-controller/hack/build-tools.py --output build/controller-tools
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: controller-transition-tools
+          path: build/controller-tools/
+          if-no-files-found: error

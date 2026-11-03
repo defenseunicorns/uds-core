@@ -15,7 +15,7 @@ UDS Core maintains a defense-in-depth baseline, providing real security across t
 - **Airgap ready** with Zarf packages for predictable, offline deployments in disconnected environments.
 - **Zero-trust networking** with default-deny Kubernetes `NetworkPolicy`, Istio STRICT mTLS, and ALLOW-based `AuthorizationPolicy`.
 - **Identity & SSO** via Keycloak and Authservice so apps can be protected consistently, whether they natively support authentication or not.
-- **Admission control** enforced by UDS policies via [Pepr](https://docs.pepr.dev/) (non-root, drop capabilities, block privileged/host access, etc.).
+- **Admission control** enforced by UDS policies through Kubernetes CEL and Go admission (non-root, drop capabilities, block privileged/host access, etc.).
 - **Runtime security** with real-time detection and alerting on malicious behavior.
 - **Observability & audit**: centralized log collection and shipping, plus metrics and dashboards.
 - **Compliance-ready**: controls are designed to address requirements in NIST 800-53, DISA STIG, and FedRAMP baselines to support ATO processes.
@@ -75,7 +75,7 @@ UDS Core implements a zero-trust networking model by default:
 
 ## Admission control
 
-Pepr enforces admission policies that prevent misconfigured or overly permissive workloads from reaching the cluster:
+UDS Core enforces admission policies that prevent misconfigured or overly permissive workloads from reaching the cluster:
 
 - **Secure defaults** block workloads running as root, requesting excess capabilities, or enabling privileged or host access.
 - **Security mutations** automatically downgrade workloads to more secure configurations where possible.

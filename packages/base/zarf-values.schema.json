@@ -1208,606 +1208,6 @@
       },
       "type": "object"
     },
-    "pepr-uds-core": {
-      "properties": {
-        "module": {
-          "properties": {
-            "additionalIgnoredNamespaces": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "admission": {
-              "properties": {
-                "affinity": {
-                  "properties": {},
-                  "type": "object"
-                },
-                "annotations": {
-                  "properties": {
-                    "pepr.dev/description": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "antiAffinity": {
-                  "type": "boolean"
-                },
-                "enabled": {
-                  "type": "boolean"
-                },
-                "env": {
-                  "items": {
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "type": "array"
-                },
-                "envFrom": {
-                  "type": "array"
-                },
-                "extraVolumeMounts": {
-                  "items": {
-                    "properties": {
-                      "mountPath": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "readOnly": {
-                        "type": "boolean"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "type": "array"
-                },
-                "extraVolumes": {
-                  "items": {
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "projected": {
-                        "properties": {
-                          "sources": {
-                            "items": {
-                              "properties": {
-                                "serviceAccountToken": {
-                                  "properties": {
-                                    "audience": {
-                                      "type": "string"
-                                    },
-                                    "expirationSeconds": {
-                                      "type": "number"
-                                    },
-                                    "path": {
-                                      "type": "string"
-                                    }
-                                  },
-                                  "type": "object"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "type": "object"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "type": "array"
-                },
-                "failurePolicy": {
-                  "type": "string"
-                },
-                "labels": {
-                  "properties": {
-                    "app": {
-                      "type": "string"
-                    },
-                    "pepr.dev/controller": {
-                      "type": "string"
-                    },
-                    "pepr.dev/uuid": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "livenessProbe": {
-                  "properties": {
-                    "failureThreshold": {
-                      "type": "number"
-                    },
-                    "httpGet": {
-                      "properties": {
-                        "path": {
-                          "type": "string"
-                        },
-                        "port": {
-                          "type": "number"
-                        },
-                        "scheme": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "initialDelaySeconds": {
-                      "type": "number"
-                    },
-                    "periodSeconds": {
-                      "type": "number"
-                    },
-                    "successThreshold": {
-                      "type": "number"
-                    },
-                    "timeoutSeconds": {
-                      "type": "number"
-                    }
-                  },
-                  "type": "object"
-                },
-                "nodeSelector": {
-                  "properties": {},
-                  "type": "object"
-                },
-                "podAnnotations": {
-                  "properties": {},
-                  "type": "object"
-                },
-                "podLabels": {
-                  "properties": {},
-                  "type": "object"
-                },
-                "readinessProbe": {
-                  "properties": {
-                    "failureThreshold": {
-                      "type": "number"
-                    },
-                    "httpGet": {
-                      "properties": {
-                        "path": {
-                          "type": "string"
-                        },
-                        "port": {
-                          "type": "number"
-                        },
-                        "scheme": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "initialDelaySeconds": {
-                      "type": "number"
-                    },
-                    "periodSeconds": {
-                      "type": "number"
-                    },
-                    "successThreshold": {
-                      "type": "number"
-                    },
-                    "timeoutSeconds": {
-                      "type": "number"
-                    }
-                  },
-                  "type": "object"
-                },
-                "resources": {
-                  "properties": {
-                    "limits": {
-                      "properties": {
-                        "cpu": {
-                          "type": "string"
-                        },
-                        "memory": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "requests": {
-                      "properties": {
-                        "cpu": {
-                          "type": "string"
-                        },
-                        "memory": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
-                },
-                "startupProbe": {
-                  "properties": {
-                    "failureThreshold": {
-                      "type": "number"
-                    },
-                    "httpGet": {
-                      "properties": {
-                        "path": {
-                          "type": "string"
-                        },
-                        "port": {
-                          "type": "number"
-                        },
-                        "scheme": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "initialDelaySeconds": {
-                      "type": "number"
-                    },
-                    "periodSeconds": {
-                      "type": "number"
-                    },
-                    "successThreshold": {
-                      "type": "number"
-                    },
-                    "timeoutSeconds": {
-                      "type": "number"
-                    }
-                  },
-                  "type": "object"
-                },
-                "terminationGracePeriodSeconds": {
-                  "type": "number"
-                },
-                "tolerations": {
-                  "type": "array"
-                },
-                "webhookAnnotations": {
-                  "properties": {
-                    "admissions.enforcer/disabled": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "webhookLabels": {
-                  "properties": {},
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "hash": {
-              "type": "string"
-            },
-            "imagePullSecrets": {
-              "type": "array"
-            },
-            "namespace": {
-              "properties": {
-                "annotations": {
-                  "properties": {},
-                  "type": "object"
-                },
-                "labels": {
-                  "properties": {
-                    "pepr.dev": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "rbac": {
-              "items": {
-                "properties": {
-                  "apiGroups": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "resources": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "verbs": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "secrets": {
-              "properties": {
-                "apiPath": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "uuid": {
-              "type": "string"
-            },
-            "watcher": {
-              "properties": {
-                "affinity": {
-                  "properties": {},
-                  "type": "object"
-                },
-                "annotations": {
-                  "properties": {
-                    "pepr.dev/description": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "enabled": {
-                  "type": "boolean"
-                },
-                "env": {
-                  "items": {
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "type": "array"
-                },
-                "envFrom": {
-                  "type": "array"
-                },
-                "extraVolumeMounts": {
-                  "items": {
-                    "properties": {
-                      "mountPath": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "readOnly": {
-                        "type": "boolean"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "type": "array"
-                },
-                "extraVolumes": {
-                  "items": {
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "projected": {
-                        "properties": {
-                          "sources": {
-                            "items": {
-                              "properties": {
-                                "serviceAccountToken": {
-                                  "properties": {
-                                    "audience": {
-                                      "type": "string"
-                                    },
-                                    "expirationSeconds": {
-                                      "type": "number"
-                                    },
-                                    "path": {
-                                      "type": "string"
-                                    }
-                                  },
-                                  "type": "object"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "type": "object"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "type": "array"
-                },
-                "labels": {
-                  "properties": {
-                    "app": {
-                      "type": "string"
-                    },
-                    "pepr.dev/controller": {
-                      "type": "string"
-                    },
-                    "pepr.dev/uuid": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "livenessProbe": {
-                  "properties": {
-                    "failureThreshold": {
-                      "type": "number"
-                    },
-                    "httpGet": {
-                      "properties": {
-                        "path": {
-                          "type": "string"
-                        },
-                        "port": {
-                          "type": "number"
-                        },
-                        "scheme": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "initialDelaySeconds": {
-                      "type": "number"
-                    },
-                    "periodSeconds": {
-                      "type": "number"
-                    },
-                    "successThreshold": {
-                      "type": "number"
-                    },
-                    "timeoutSeconds": {
-                      "type": "number"
-                    }
-                  },
-                  "type": "object"
-                },
-                "nodeSelector": {
-                  "properties": {},
-                  "type": "object"
-                },
-                "podAnnotations": {
-                  "properties": {},
-                  "type": "object"
-                },
-                "podLabels": {
-                  "properties": {},
-                  "type": "object"
-                },
-                "readinessProbe": {
-                  "properties": {
-                    "failureThreshold": {
-                      "type": "number"
-                    },
-                    "httpGet": {
-                      "properties": {
-                        "path": {
-                          "type": "string"
-                        },
-                        "port": {
-                          "type": "number"
-                        },
-                        "scheme": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "initialDelaySeconds": {
-                      "type": "number"
-                    },
-                    "periodSeconds": {
-                      "type": "number"
-                    },
-                    "successThreshold": {
-                      "type": "number"
-                    },
-                    "timeoutSeconds": {
-                      "type": "number"
-                    }
-                  },
-                  "type": "object"
-                },
-                "resources": {
-                  "properties": {
-                    "limits": {
-                      "properties": {
-                        "cpu": {
-                          "type": "string"
-                        },
-                        "memory": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "requests": {
-                      "properties": {
-                        "cpu": {
-                          "type": "string"
-                        },
-                        "memory": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
-                },
-                "startupProbe": {
-                  "properties": {
-                    "failureThreshold": {
-                      "type": "number"
-                    },
-                    "httpGet": {
-                      "properties": {
-                        "path": {
-                          "type": "string"
-                        },
-                        "port": {
-                          "type": "number"
-                        },
-                        "scheme": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "initialDelaySeconds": {
-                      "type": "number"
-                    },
-                    "periodSeconds": {
-                      "type": "number"
-                    },
-                    "successThreshold": {
-                      "type": "number"
-                    },
-                    "timeoutSeconds": {
-                      "type": "number"
-                    }
-                  },
-                  "type": "object"
-                },
-                "terminationGracePeriodSeconds": {
-                  "type": "number"
-                },
-                "tolerations": {
-                  "type": "array"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
     "prometheus-blackbox-exporter": {
       "properties": {
         "prometheus-blackbox-exporter": {
@@ -1903,6 +1303,69 @@
                   "properties": {
                     "enabled": {
                       "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "uds-controller": {
+      "properties": {
+        "uds-controller": {
+          "properties": {
+            "kubernetesAPI": {
+              "additionalProperties": false,
+              "properties": {
+                "burst": {
+                  "maximum": 400,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "qps": {
+                  "maximum": 200,
+                  "minimum": 1,
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            },
+            "logLevel": {
+              "type": "string"
+            },
+            "podLabels": {
+              "properties": {},
+              "type": "object"
+            },
+            "replicaCount": {
+              "type": "number"
+            },
+            "resources": {
+              "properties": {
+                "limits": {
+                  "properties": {
+                    "cpu": {
+                      "type": "string"
+                    },
+                    "memory": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "requests": {
+                  "properties": {
+                    "cpu": {
+                      "type": "string"
+                    },
+                    "memory": {
+                      "type": "string"
                     }
                   },
                   "type": "object"

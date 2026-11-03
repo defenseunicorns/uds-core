@@ -152,7 +152,7 @@ When `sso[].fullScopeAllowed` is omitted, UDS Core preserves Keycloak's normal b
 
 #### Public clients
 
-SSO clients with `publicClient: true` are validated by the UDS Operator (Pepr) admission webhook.
+SSO clients with `publicClient: true` are validated by the UDS Operator admission webhook.
 
 - **Device-flow-only public clients are always accepted.** A client with `standardFlowEnabled: false` and the `oauth2.device.authorization.grant.enabled` attribute set to `"true"` is admitted regardless of the `ALLOW_PUBLIC_CLIENTS` setting below. PKCE does not apply to RFC 8628 and is not required.
 

@@ -24,133 +24,116 @@ values:
   schema: zarf-values.schema.json
 
 components:
+  - name: uds-core-tools
+    required: true
+    import:
+      path: ../base
   - name: uds-crds
     required: true
     import:
       path: ../base
-
   - name: prometheus-operator-crds
     required: true
     import:
       path: ../base
-
   - name: uds-operator-config
     required: true
     import:
       path: ../base
-
-  - name: pepr-uds-core
-    required: true
-    import:
-      path: ../base
-
   - name: uds-exemptions
     required: true
     import:
       path: ../base
-
   - name: istio-controlplane
     required: true
     import:
       path: ../base
-
   - name: gateway-api-crds
     required: true
     import:
       path: ../../src/istio/common
-
+  - name: uds-controller-bootstrap
+    required: true
+    import:
+      path: ../base
+  - name: uds-controller
+    required: true
+    import:
+      path: ../base
   - name: istio-admin-gateway
     required: true
     import:
       path: ../base
-
   - name: istio-tenant-gateway
     required: true
     import:
       path: ../base
-
   - name: istio-passthrough-gateway
     required: false
     import:
       path: ../base
-
   - name: istio-egress-ambient
     required: true
     import:
       path: ../base
-
   - name: istio-egress-gateway
     required: false
     import:
       path: ../base
-
   - name: metrics-server
     required: false
     import:
       path: ../metrics-server
-
   - name: envoy-gateway
     required: false
     import:
       path: ../base
-
   - name: envoy-default-gateway
     required: false
     import:
       path: ../base
-
   - name: keycloak
     required: true
     import:
       path: ../identity-authorization
-
   - name: falco
     required: true
     import:
       path: ../runtime-security
-
   - name: loki
     required: true
     import:
       path: ../logging
-
   - name: kube-prometheus-stack
     required: true
     import:
       path: ../monitoring
-
   - name: prometheus-blackbox-exporter
     required: true
     import:
       path: ../monitoring
-
   - name: vector
     required: true
     import:
       path: ../logging
-
   - name: grafana
     required: true
     import:
       path: ../monitoring
-
   - name: authservice
     required: true
     import:
       path: ../identity-authorization
-
   - name: velero
     required: true
     import:
       path: ../backup-restore
-
   - name: uds-portal
     required: true
     only:
       flavor: upstream
     import:
       path: ../portal
-
   - name: uds-portal
     required: true
     only:

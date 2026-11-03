@@ -16,7 +16,8 @@ import {
 import * as publicCerts from "./public-certs";
 
 const CERTS_BASE_DIR = "./certs"; // Base directory to store certificates
-const PATH_TO_CONFIGMAP = "./src/pepr/uds-operator-config/templates/uds-ca-certs.yaml"; // Path to the ConfigMap file that needs updated with base64 certs
+const PATH_TO_CONFIGMAP =
+  "./src/go-controller/assets/uds-operator-config/templates/uds-ca-certs.yaml"; // Path to the ConfigMap file that needs updated with base64 certs
 const TARGET_DOD_CERT_DIR = "dod"; // subdirectory in certs directory to put DoD certs
 const DEFAULT_PUBLIC_CA_CONFIG_PATH = "./certs/public/uds-core-public-ca-trust-config.yaml";
 
