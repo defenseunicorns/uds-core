@@ -107,12 +107,12 @@ components:
         localPath: ./chart
         version: 0.1.0
       - name: podinfo
-        version: 6.16.0
+        version: 6.17.0
         namespace: podinfo
         url: https://github.com/stefanprodan/podinfo.git
         gitPath: charts/podinfo
         valuesFiles:
           - ./podinfo-values.yaml
     images:
-      - ghcr.io/stefanprodan/podinfo:6.16.0
+      - ghcr.io/stefanprodan/podinfo:6.17.0
       - quay.io/oauth2-proxy/oauth2-proxy:v7.15.5

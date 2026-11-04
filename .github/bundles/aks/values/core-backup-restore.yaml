@@ -1,0 +1,21 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+velero:
+  velero:
+    configuration:
+      backupStorageLocation:
+        - config:
+            storageAccount: "{{ .vars.core_backup_restore.azure_velero_storage_account }}"
+            storageAccountKeyEnvVar: "{{ .vars.core_backup_restore.velero_client_secret_env_var }}"
+            resourceGroup: "{{ .vars.core_backup_restore.azure_resource_group }}"
+            subscriptionId: "{{ .vars.core_backup_restore.azure_subscription_id }}"
+          bucket: "{{ .vars.core_backup_restore.azure_velero_storage_account_container }}"
+          name: "{{ .vars.core_backup_restore.velero_backup_storage_config_name }}"
+          provider: "{{ .vars.core_backup_restore.velero_storage_provider }}"
+    credentials:
+      useSecret: true
+      secretContents:
+        cloud: |
+          {{ .vars.core_backup_restore.velero_client_secret_env_var }}={{ .vars.core_backup_restore.azure_velero_storage_account_access_key }}
+          AZURE_CLOUD_NAME=AzurePublicCloud

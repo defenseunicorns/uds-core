@@ -1,0 +1,7 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+falco:
+  uds-falco-config:
+    sandboxRulesEnabled: {{.vars.core_runtime_security.falco_sandbox_rules_enabled}}
+    incubatingRulesEnabled: {{.vars.core_runtime_security.falco_incubating_rules_enabled}}

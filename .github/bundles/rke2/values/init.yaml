@@ -1,0 +1,16 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+zarf-registry:
+  docker-registry:
+    affinity:
+      custom: {{printf "%q" .vars.init.registry_affinity_custom_uds}}
+    persistence:
+      accessMode: "{{ .vars.init.registry_pvc_access_mode }}"
+
+zarf-seed-registry:
+  docker-registry:
+    affinity:
+      custom: {{printf "%q" .vars.init.registry_affinity_custom_uds}}
+    persistence:
+      accessMode: "{{ .vars.init.registry_pvc_access_mode }}"

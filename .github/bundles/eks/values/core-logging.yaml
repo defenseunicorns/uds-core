@@ -1,0 +1,21 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+loki:
+  loki:
+    loki:
+      storage:
+        bucketNames:
+          chunks: "{{ .vars.core_logging.loki_chunks_bucket }}"
+          admin: "{{ .vars.core_logging.loki_admin_bucket }}"
+        s3:
+          endpoint: ""
+          secretAccessKey: ""
+          accessKeyId: ""
+          region: "{{ .vars.core_logging.loki_s3_region }}"
+    serviceAccount:
+      annotations:
+        eks.amazonaws.com/role-arn: "{{ .vars.core_logging.loki_irsa_role_arn }}"
+    sidecar:
+      rules:
+        logLevel: DEBUG

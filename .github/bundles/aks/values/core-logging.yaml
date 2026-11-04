@@ -1,0 +1,16 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+loki:
+  loki:
+    loki:
+      storage:
+        type: "azure"
+      storage_config:
+        azure:
+          account_name: "{{ .vars.core_logging.azure_loki_storage_account }}"
+          account_key: "{{ .vars.core_logging.azure_loki_storage_account_access_key }}"
+          container_name: "{{ .vars.core_logging.azure_loki_storage_account_container }}"
+    sidecar:
+      rules:
+        logLevel: DEBUG

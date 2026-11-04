@@ -14,7 +14,7 @@ uds {
 
 locals {
   # x-release-please-start-version
-  version = "1.15.0"
+  version = "1.16.0"
   # x-release-please-end
 }
 
@@ -25,7 +25,7 @@ metadata {
 }
 
 package "uds_k3d_dev" {
-  source = "oci://ghcr.io/defenseunicorns/packages/uds-k3d:0.21.2-airgap"
+  source = "oci://ghcr.io/defenseunicorns/packages/uds-k3d:0.21.3-airgap"
   signature_verification { verify = false }
   values_files = ["values/uds-k3d-dev.yaml"]
 }
