@@ -21,6 +21,7 @@ variables = {
     },
     {
       text = "UNCLASSIFIED"
+      cssOnly = true
       enabledHosts = [
         "portal.uds.dev",
       ]

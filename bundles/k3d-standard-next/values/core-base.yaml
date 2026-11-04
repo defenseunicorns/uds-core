@@ -28,6 +28,10 @@ istio-controlplane:
 {{- if and (ne (printf "%v" $addFooter) "<no value>") (ne (printf "%v" $addFooter) "<nil>") }}
         addFooter: {{ $addFooter }}
 {{- end }}
+{{- $cssOnly := index . "cssOnly" }}
+{{- if and (ne (printf "%v" $cssOnly) "<no value>") (ne (printf "%v" $cssOnly) "<nil>") }}
+        cssOnly: {{ $cssOnly }}
+{{- end }}
 {{- with index . "enabledHosts" }}
         enabledHosts:
 {{- range . }}
