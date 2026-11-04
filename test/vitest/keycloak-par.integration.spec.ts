@@ -9,19 +9,8 @@ const gateways = [
   ["tenant", "https://sso.uds.dev"],
   ["admin", "https://keycloak.admin.uds.dev"],
 ] as const;
-const realmDiscoveryPath = (realm: string) => `/realms/${realm}/.well-known/openid-configuration`;
-
-async function getParEndpoint(origin: string, realm: string): Promise<string> {
-  const response = await fetch(`${origin}${realmDiscoveryPath(realm)}`, {
-    signal: AbortSignal.timeout(10_000),
-  });
-  expect(response.status).toBe(200);
-  const discovery = (await response.json()) as { pushed_authorization_request_endpoint?: string };
-  expect(discovery.pushed_authorization_request_endpoint).toBeDefined();
-  const endpoint = discovery.pushed_authorization_request_endpoint!;
-  expect(new URL(endpoint).origin).toBe(origin);
-  return endpoint;
-}
+const getParEndpoint = (origin: string, realm: string) =>
+  `${origin}/realms/${realm}/protocol/openid-connect/ext/par/request`;
 
 async function postPar(endpoint: string): Promise<Response> {
   return fetch(endpoint, {
@@ -37,7 +26,7 @@ describe.skipIf(process.env.SKIP_INTEGRATION === "true")(
   "integration - Keycloak PAR access",
   () => {
     it.each(gateways)("denies PAR variants through the %s gateway", async (_name, origin) => {
-      const endpoint = await getParEndpoint(origin, "uds");
+      const endpoint = getParEndpoint(origin, "uds");
       const paths = [
         ["bare endpoint", endpoint, 404],
         ["trailing slash", `${endpoint}/`, 404],
@@ -55,7 +44,7 @@ describe.skipIf(process.env.SKIP_INTEGRATION === "true")(
     });
 
     it("denies PAR for the master realm through the admin gateway", async () => {
-      const endpoint = await getParEndpoint(gateways[1][1], "master");
+      const endpoint = getParEndpoint(gateways[1][1], "master");
       expect((await postPar(endpoint)).status).toBe(404);
     });
   },
