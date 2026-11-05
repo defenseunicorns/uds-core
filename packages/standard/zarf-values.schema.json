@@ -23281,7 +23281,11 @@
                   "type": "object"
                 },
                 "podAnnotations": {
-                  "properties": {},
+                  "properties": {
+                    "ambient.istio.io/bypass-inbound-capture": {
+                      "type": "string"
+                    }
+                  },
                   "type": "object"
                 },
                 "podLabels": {
