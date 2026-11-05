@@ -1,6 +1,6 @@
 ---
 title: UDS Core 1.16
-description: UDS Core 1.16 improves operator stability, prevents Keycloak client ID collisions, and adds Portal scheduling and environment variable controls.
+description: UDS Core 1.16 hardens Keycloak client and role ownership, requires migration for existing clients with missing ownership, and improves operator stability.
 sidebar:
   order: 3.979
 ---
@@ -10,7 +10,15 @@ import { Steps } from "@astrojs/starlight/components";
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
-UDS Core 1.16 improves operator stability and includes a fix for cross-namespace Keycloak client ownership. UDS Portal adds Helm values for scheduling and additional environment variables.
+UDS Core 1.16 hardens Keycloak client and role ownership and prevents cross-namespace client ID collisions. Before upgrading, assign ownership to existing clients managed by restricted applications. This release also improves operator stability and adds Portal scheduling and environment variable controls.
+
+### ⚠ Breaking changes
+
+Review this change before upgrading:
+
+| Change | Impact | Action required |
+| --- | --- | --- |
+| Client and client-role ownership enforcement | Restricted applications cannot manage existing clients with missing or incorrect ownership, including their roles. | Follow the [client ownership migration](#identity-config-updates-client-ownership) to assign each verified owner. Keycloak `uds` Realm Administrators retain access. |
 
 ### Notable features
 
