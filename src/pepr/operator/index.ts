@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -14,12 +14,7 @@ import {
 } from "./controllers/network/generators/kubeAPI";
 
 // Resource Pod Reload controllers
-import {
-  handleConfigMapDelete,
-  handleConfigMapUpdate,
-  handleSecretDelete,
-  handleSecretUpdate,
-} from "./controllers/reload/pod-reload";
+import { handleConfigMapUpdate, handleSecretUpdate } from "./controllers/reload/pod-reload";
 
 // Controller imports
 import {
@@ -158,20 +153,11 @@ When(a.Secret)
   .WithLabel("uds.dev/pod-reload", "true")
   .Reconcile(handleSecretUpdate);
 
-// Watch for deleted secrets to clean up the checksum cache
-When(a.Secret).IsDeleted().WithLabel("uds.dev/pod-reload", "true").Reconcile(handleSecretDelete);
-
 // Watch for ConfigMaps with the uds.dev/pod-reload label for pod reload
 When(a.ConfigMap)
   .IsCreatedOrUpdated()
   .WithLabel("uds.dev/pod-reload", "true")
   .Reconcile(handleConfigMapUpdate);
-
-// Watch for deleted ConfigMaps to clean up the checksum cache
-When(a.ConfigMap)
-  .IsDeleted()
-  .WithLabel("uds.dev/pod-reload", "true")
-  .Reconcile(handleConfigMapDelete);
 
 // Istio Gateway Pods are not restarted automatically when the Istio ConfigMap is updated.
 When(a.ConfigMap)

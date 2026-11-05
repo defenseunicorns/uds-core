@@ -1,19 +1,17 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { K8s, kind } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import {
+  POD_RELOAD_CHECKSUM_ANNOTATION,
   SSA_CLEANUP_ANNOTATION,
   computeResourceChecksum,
-  configMapChecksumCache,
   discoverConfigMapConsumers,
   discoverSecretConsumers,
-  handleConfigMapDelete,
   handleConfigMapUpdate,
-  handleSecretDelete,
   handleSecretUpdate,
   parseSelectorString,
   startupCleanupQueue,
@@ -64,16 +62,7 @@ vi.mock("./reload-utils", async () => {
   };
 });
 
-// Import the caches directly
-import { secretChecksumCache } from "./pod-reload";
-
 describe("pod-reload", () => {
-  // Clear the caches before each test
-  beforeEach(() => {
-    secretChecksumCache.clear();
-    configMapChecksumCache.clear();
-  });
-
   // Global mocks for K8s API
   const mockGet = vi.fn();
   const mockApply = vi.fn();
@@ -123,8 +112,6 @@ describe("pod-reload", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    secretChecksumCache.clear();
-    configMapChecksumCache.clear();
 
     // Setup K8s mock with empty items array by default
     setupK8sMock({ items: [] });
@@ -179,26 +166,27 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
-    it("should not reload pods if the checksum has not changed", async () => {
-      // Setup a secret with metadata and data
+    it("should return when the persisted checksum matches", async () => {
+      const data = {
+        username: "dXNlcm5hbWU=", // base64 'username'
+        password: "cGFzc3dvcmQ=", // base64 'password'
+      };
       const secret = {
         metadata: {
           name: "test-secret",
           namespace: "default",
+          annotations: {
+            [POD_RELOAD_CHECKSUM_ANNOTATION]: computeResourceChecksum(data),
+          },
         },
-        data: {
-          username: "dXNlcm5hbWU=", // base64 'username'
-          password: "cGFzc3dvcmQ=", // base64 'password'
-        },
+        data,
       };
 
-      // First call should cache the checksum
       await handleSecretUpdate(secret as kind.Secret);
-      expect(utils.reloadPods).not.toHaveBeenCalled();
 
-      // Second call with the same data should not reload pods
-      await handleSecretUpdate(secret as kind.Secret);
+      expect(utils.cleanupOverClaimedControllerFields).not.toHaveBeenCalled();
       expect(utils.reloadPods).not.toHaveBeenCalled();
+      expect(mockPatch).not.toHaveBeenCalled();
     });
 
     it("should call cleanupOverClaimedControllerFields on first observation and not reload pods", async () => {
@@ -223,6 +211,7 @@ describe("pod-reload", () => {
         metadata: {
           name: "test-secret",
           namespace: "default",
+          resourceVersion: "7",
           annotations: { "existing.annotation/key": "value" },
         },
         data: { key: "dmFsdWU=" },
@@ -231,20 +220,25 @@ describe("pod-reload", () => {
       await handleSecretUpdate(secret as kind.Secret);
       await startupCleanupQueue;
 
-      // Annotation is set via JSON Patch (not SSA Apply) to avoid affecting field ownership.
-      // When annotations already exist, only the single add op is needed.
+      // Cleanup and checksum state are saved atomically without affecting field ownership.
       expect(mockPatch).toHaveBeenCalledWith([
+        { op: "test", path: "/metadata/resourceVersion", value: "7" },
         {
           op: "add",
           path: `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/\//g, "~1")}`,
           value: "true",
+        },
+        {
+          op: "add",
+          path: `/metadata/annotations/${POD_RELOAD_CHECKSUM_ANNOTATION.replace(/\//g, "~1")}`,
+          value: computeResourceChecksum(secret.data),
         },
       ]);
     });
 
     it("should create the annotations map first when resource has no annotations", async () => {
       const secret = {
-        metadata: { name: "test-secret", namespace: "default" },
+        metadata: { name: "test-secret", namespace: "default", resourceVersion: "8" },
         data: { key: "dmFsdWU=" },
         // No annotations field — patch would fail without first creating the map
       };
@@ -253,16 +247,47 @@ describe("pod-reload", () => {
       await startupCleanupQueue;
 
       expect(mockPatch).toHaveBeenCalledWith([
+        { op: "test", path: "/metadata/resourceVersion", value: "8" },
         { op: "add", path: "/metadata/annotations", value: {} },
         {
           op: "add",
           path: `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/\//g, "~1")}`,
           value: "true",
         },
+        {
+          op: "add",
+          path: `/metadata/annotations/${POD_RELOAD_CHECKSUM_ANNOTATION.replace(/\//g, "~1")}`,
+          value: computeResourceChecksum(secret.data),
+        },
       ]);
     });
 
-    it("should skip cleanup on first observation when SSA cleanup annotation is already set", async () => {
+    it("should initialize a checksum without reloading when cleanup is already complete", async () => {
+      const secret = {
+        metadata: {
+          name: "test-secret",
+          namespace: "default",
+          resourceVersion: "42",
+          annotations: { [SSA_CLEANUP_ANNOTATION]: "true" },
+        },
+        data: { key: "dmFsdWU=" },
+      };
+
+      await handleSecretUpdate(secret as kind.Secret);
+
+      expect(utils.cleanupOverClaimedControllerFields).not.toHaveBeenCalled();
+      expect(utils.reloadPods).not.toHaveBeenCalled();
+      expect(mockPatch).toHaveBeenCalledWith([
+        { op: "test", path: "/metadata/resourceVersion", value: "42" },
+        {
+          op: "add",
+          path: `/metadata/annotations/${POD_RELOAD_CHECKSUM_ANNOTATION.replace(/\//g, "~1")}`,
+          value: computeResourceChecksum(secret.data),
+        },
+      ]);
+    });
+
+    it("should not save state without a resourceVersion", async () => {
       const secret = {
         metadata: {
           name: "test-secret",
@@ -274,8 +299,112 @@ describe("pod-reload", () => {
 
       await handleSecretUpdate(secret as kind.Secret);
 
+      expect(mockPatch).not.toHaveBeenCalled();
       expect(utils.cleanupOverClaimedControllerFields).not.toHaveBeenCalled();
       expect(utils.reloadPods).not.toHaveBeenCalled();
+      expect(mocks.mockWarn).toHaveBeenCalledWith(
+        expect.objectContaining({ resource: "test-secret", namespace: "default" }),
+        "Failed to initialize pod reload checksum",
+      );
+    });
+
+    it("should process a newer observation after a stale state patch is rejected", async () => {
+      const data = { key: "dmFsdWU=" };
+      mockPatch.mockRejectedValueOnce(new Error("resourceVersion test failed"));
+      const staleSecret = {
+        metadata: {
+          name: "test-secret",
+          namespace: "default",
+          resourceVersion: "42",
+          annotations: { [SSA_CLEANUP_ANNOTATION]: "true" },
+        },
+        data,
+      };
+
+      await handleSecretUpdate(staleSecret as kind.Secret);
+
+      const currentSecret = {
+        ...staleSecret,
+        metadata: { ...staleSecret.metadata, resourceVersion: "43" },
+      };
+      await handleSecretUpdate(currentSecret as kind.Secret);
+
+      expect(mockPatch).toHaveBeenCalledTimes(2);
+      expect(mockPatch).toHaveBeenLastCalledWith([
+        { op: "test", path: "/metadata/resourceVersion", value: "43" },
+        {
+          op: "add",
+          path: `/metadata/annotations/${POD_RELOAD_CHECKSUM_ANNOTATION.replace(/\//g, "~1")}`,
+          value: computeResourceChecksum(data),
+        },
+      ]);
+      expect(utils.reloadPods).not.toHaveBeenCalled();
+    });
+
+    it("should reload existing consumers when a Secret is created", async () => {
+      const consumingPod = {
+        metadata: { name: "consumer", namespace: "default" },
+        spec: {
+          volumes: [
+            {
+              name: "config",
+              secret: { secretName: "test-secret", optional: true },
+            },
+          ],
+        },
+      } as kind.Pod;
+      setupK8sMock({ items: [consumingPod] });
+
+      const secret = {
+        metadata: {
+          name: "test-secret",
+          namespace: "default",
+          resourceVersion: "7",
+        },
+        data: { key: "dmFsdWU=" },
+      };
+
+      await handleSecretUpdate(secret as kind.Secret);
+
+      expect(utils.reloadPods).toHaveBeenCalledWith(
+        "default",
+        [consumingPod],
+        "Secret test-secret change",
+        expect.anything(),
+        "SecretChanged",
+      );
+      expect(mockPatch).toHaveBeenCalledWith([
+        { op: "test", path: "/metadata/resourceVersion", value: "7" },
+        { op: "add", path: "/metadata/annotations", value: {} },
+        {
+          op: "add",
+          path: `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/\//g, "~1")}`,
+          value: "true",
+        },
+        {
+          op: "add",
+          path: `/metadata/annotations/${POD_RELOAD_CHECKSUM_ANNOTATION.replace(/\//g, "~1")}`,
+          value: computeResourceChecksum(secret.data),
+        },
+      ]);
+    });
+
+    it("should not save state when reloading consumers throws", async () => {
+      const consumingPod = {
+        metadata: { name: "consumer", namespace: "default" },
+        spec: {
+          volumes: [{ name: "config", secret: { secretName: "test-secret", optional: true } }],
+        },
+      } as kind.Pod;
+      setupK8sMock({ items: [consumingPod] });
+      vi.mocked(utils.reloadPods).mockRejectedValueOnce(new Error("reload failed"));
+
+      await handleSecretUpdate({
+        metadata: { name: "test-secret", namespace: "default", resourceVersion: "7" },
+        data: { key: "dmFsdWU=" },
+      } as kind.Secret);
+
+      expect(mockPatch).not.toHaveBeenCalled();
     });
 
     it("should return early when the selector format is invalid without rotating pods", async () => {
@@ -358,6 +487,7 @@ describe("pod-reload", () => {
           },
           annotations: {
             "uds.dev/pod-reload-selector": "app=test-app",
+            [SSA_CLEANUP_ANNOTATION]: "true",
           },
         },
         data: {
@@ -375,9 +505,11 @@ describe("pod-reload", () => {
         },
       };
 
-      // First call should cache the checksum without rotating
+      // Adopt the existing resource without rotating, then model the persisted baseline.
       await handleSecretUpdate(secret1 as kind.Secret);
       expect(utils.reloadPods).not.toHaveBeenCalled();
+      (secret1.metadata.annotations as Record<string, string>)[POD_RELOAD_CHECKSUM_ANNOTATION] =
+        computeResourceChecksum(secret1.data);
       vi.clearAllMocks(); // Clear mock call history
 
       // Reset our mocks for the second call with the same pod
@@ -450,6 +582,7 @@ describe("pod-reload", () => {
           },
           annotations: {
             "uds.dev/pod-reload-selector": "app=test-app,tier=frontend,env=prod",
+            [SSA_CLEANUP_ANNOTATION]: "true",
           },
         },
         data: {
@@ -467,9 +600,11 @@ describe("pod-reload", () => {
         },
       };
 
-      // First call caches the checksum
+      // Adopt the existing resource without rotating, then model the persisted baseline.
       await handleSecretUpdate(secret1 as kind.Secret);
       expect(utils.reloadPods).not.toHaveBeenCalled();
+      (secret1.metadata.annotations as Record<string, string>)[POD_RELOAD_CHECKSUM_ANNOTATION] =
+        computeResourceChecksum(secret1.data);
       vi.clearAllMocks();
 
       // Reset mocks for second call with the same pod
@@ -557,6 +692,9 @@ describe("pod-reload", () => {
           labels: {
             "uds.dev/pod-reload": "true",
           },
+          annotations: {
+            [SSA_CLEANUP_ANNOTATION]: "true",
+          },
         },
         data: {
           username: "dXNlcm5hbWU=",
@@ -576,9 +714,11 @@ describe("pod-reload", () => {
       // Setup K8s mock with custom response
       setupK8sMock(mockPods);
 
-      // First call should cache the checksum without rotating
+      // Adopt the existing resource without rotating, then model the persisted baseline.
       await handleSecretUpdate(secret1 as kind.Secret);
       expect(utils.reloadPods).not.toHaveBeenCalled();
+      (secret1.metadata.annotations as Record<string, string>)[POD_RELOAD_CHECKSUM_ANNOTATION] =
+        computeResourceChecksum(secret1.data);
       vi.clearAllMocks(); // Clear mock call history
 
       // Second call with changed data should reload only the pods using the secret
@@ -615,33 +755,6 @@ describe("pod-reload", () => {
       expect(reloaddPods.some(pod => pod.metadata?.name === "pod1")).toBe(true);
       expect(reloaddPods.some(pod => pod.metadata?.name === "pod2")).toBe(true);
       expect(reloaddPods.some(pod => pod.metadata?.name === "pod3")).toBe(false);
-    });
-  });
-
-  describe("handleSecretDelete", () => {
-    it("should clean up the cache when a secret is deleted", async () => {
-      // Setup a secret and update it first to add to cache
-      const secret = {
-        metadata: {
-          name: "test-secret",
-          namespace: "default",
-        },
-        data: {
-          username: "dXNlcm5hbWU=",
-          password: "cGFzc3dvcmQ=",
-        },
-      };
-
-      // First add to cache
-      await handleSecretUpdate(secret as kind.Secret);
-
-      // Then delete it
-      await handleSecretDelete(secret as kind.Secret);
-
-      // Verify it was removed from cache by updating it again
-      // which should not trigger rotation because cache was cleared
-      await handleSecretUpdate(secret as kind.Secret);
-      expect(utils.reloadPods).not.toHaveBeenCalled();
     });
   });
 
@@ -839,26 +952,43 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
-    it("should not reload pods if the checksum has not changed", async () => {
-      // Setup a ConfigMap with metadata and data
+    it("should reload existing consumers when a ConfigMap is created", async () => {
+      const consumingPod = {
+        metadata: { name: "consumer", namespace: "default" },
+        spec: {
+          volumes: [
+            {
+              name: "config",
+              configMap: { name: "test-configmap", optional: true },
+            },
+          ],
+        },
+      } as kind.Pod;
+      setupK8sMock({ items: [consumingPod] });
+
       const configMap = {
-        metadata: {
-          name: "test-configmap",
-          namespace: "default",
-        },
-        data: {
-          "config.yaml": "key: value",
-          "settings.json": '{"enabled": true}',
-        },
+        metadata: { name: "test-configmap", namespace: "default", resourceVersion: "9" },
+        data: { "config.yaml": "key: value" },
       };
 
-      // First call should cache the checksum
       await handleConfigMapUpdate(configMap as kind.ConfigMap);
-      expect(utils.reloadPods).not.toHaveBeenCalled();
 
-      // Second call with the same data should not reload pods
-      await handleConfigMapUpdate(configMap as kind.ConfigMap);
-      expect(utils.reloadPods).not.toHaveBeenCalled();
+      expect(utils.reloadPods).toHaveBeenCalledWith(
+        "default",
+        [consumingPod],
+        "ConfigMap test-configmap change",
+        expect.anything(),
+        "ConfigMapChanged",
+      );
+      expect(mockPatch).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          {
+            op: "add",
+            path: `/metadata/annotations/${POD_RELOAD_CHECKSUM_ANNOTATION.replace(/\//g, "~1")}`,
+            value: computeResourceChecksum(configMap.data),
+          },
+        ]),
+      );
     });
 
     it("should only reload pods that match the selector when data changes", async () => {
@@ -887,6 +1017,7 @@ describe("pod-reload", () => {
           },
           annotations: {
             "uds.dev/pod-reload-selector": "app=test-app",
+            [SSA_CLEANUP_ANNOTATION]: "true",
           },
         },
         data: {
@@ -904,9 +1035,11 @@ describe("pod-reload", () => {
         },
       };
 
-      // First call should cache the checksum without rotating
+      // Adopt the existing resource without rotating, then model the persisted baseline.
       await handleConfigMapUpdate(configMap1 as kind.ConfigMap);
       expect(utils.reloadPods).not.toHaveBeenCalled();
+      (configMap1.metadata.annotations as Record<string, string>)[POD_RELOAD_CHECKSUM_ANNOTATION] =
+        computeResourceChecksum(configMap1.data);
       vi.clearAllMocks(); // Clear mock call history
 
       // Reset our mocks for the second call with the same pod
@@ -945,32 +1078,6 @@ describe("pod-reload", () => {
         expect.anything(),
         "ConfigMapChanged",
       );
-    });
-  });
-
-  describe("handleConfigMapDelete", () => {
-    it("should clean up the cache when a ConfigMap is deleted", async () => {
-      // Setup a ConfigMap and update it first to add to cache
-      const configMap = {
-        metadata: {
-          name: "test-configmap",
-          namespace: "default",
-        },
-        data: {
-          "config.yaml": "key: value",
-        },
-      };
-
-      // First add to cache
-      await handleConfigMapUpdate(configMap as kind.ConfigMap);
-
-      // Then delete it
-      await handleConfigMapDelete(configMap as kind.ConfigMap);
-
-      // Verify it was removed from cache by updating it again
-      // which should not trigger rotation because cache was cleared
-      await handleConfigMapUpdate(configMap as kind.ConfigMap);
-      expect(utils.reloadPods).not.toHaveBeenCalled();
     });
   });
 
