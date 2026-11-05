@@ -241,6 +241,8 @@ watcher:
     - name: "LOG_LEVEL"
       value: "info"
 admission:
+  podAnnotations:
+    ambient.istio.io/bypass-inbound-capture: "true"
   webhookAnnotations:
     admissions.enforcer/disabled: "true"
   serviceMonitor:
