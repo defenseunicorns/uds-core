@@ -107,22 +107,29 @@ To migrate affected clients, assign the intended manager's application client ID
        '[.[] | select(.clientId == $id)] | if length == 1 then .[0].id else error("Expected one client") end')
    CLIENT_URL="$ADMIN_URL/admin/realms/uds/clients/$TARGET_UUID"
 
-   # Update only ownership on the existing client. Expect HTTP 204.
-   jq -n --arg owner "$OWNER_CLIENT_ID" '{attributes: {"created-by": $owner}}' \
+   # Preserve Authorization Services when updating ownership. Expect HTTP 204.
+   AUTHORIZATION_SERVICES_ENABLED=$(curl --fail-with-body --silent --show-error \
+     -H "Authorization: Bearer $ADMIN_TOKEN" "$CLIENT_URL" \
+     | jq '.authorizationServicesEnabled // false')
+   jq -n --arg owner "$OWNER_CLIENT_ID" \
+     --argjson enabled "$AUTHORIZATION_SERVICES_ENABLED" \
+     '{authorizationServicesEnabled: $enabled, attributes: {"created-by": $owner}}' \
      | curl --fail-with-body --silent --show-error -X PUT \
        -H "Authorization: Bearer $ADMIN_TOKEN" -H 'Content-Type: application/json' \
        --data-binary @- --write-out 'HTTP %{http_code}\n' "$CLIENT_URL"
 
-   # Confirm that the stored owner matches. Expect true.
+   # Confirm that ownership and Authorization Services state match. Expect true.
    curl --fail-with-body --silent --show-error \
      -H "Authorization: Bearer $ADMIN_TOKEN" "$CLIENT_URL" \
-     | jq -e --arg owner "$OWNER_CLIENT_ID" '.attributes["created-by"] == $owner'
+     | jq -e --arg owner "$OWNER_CLIENT_ID" \
+       --argjson enabled "$AUTHORIZATION_SERVICES_ENABLED" \
+       '(.attributes["created-by"] == $owner) and ((.authorizationServicesEnabled // false) == $enabled)'
    unset ADMIN_TOKEN
    ```
 
    If your authentication flow requires MFA or disables password grants, supply `KEYCLOAK_TOKEN` from your normal authentication flow.
 
-   The attributes-only update preserves unrelated client settings and the client UUID. Client roles inherit this ownership and need no separate migration. The Keycloak 26.8.1 Admin Console does not expose an editor for this custom client attribute.
+   This update changes ownership while preserving the existing Authorization Services state, unrelated client settings, and client UUID. Client roles inherit this ownership and need no separate migration. The Keycloak 26.8.1 Admin Console does not expose an editor for this custom client attribute.
 
 3. **Verify and resume**
 
