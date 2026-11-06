@@ -14,13 +14,8 @@ const log = setupLogger(Component.OPERATOR_SECRETS);
 // Define resource types
 export type ResourceType = "Secret" | "ConfigMap";
 
-// Maps to store resource checksums for change detection
-// Exported for testing purposes
-export const secretChecksumCache = new Map<string, string>();
-export const configMapChecksumCache = new Map<string, string>();
-
-// Annotation set on a Secret/ConfigMap after its backing controllers have been cleaned up.
-// Prevents re-running the cleanup on every controller restart.
+// Annotations used to persist reload state across operator restarts.
+export const POD_RELOAD_CHECKSUM_ANNOTATION = "uds.dev/pod-reload-checksum";
 export const SSA_CLEANUP_ANNOTATION = "uds.dev/pod-reload-cleanup-complete";
 
 // Serializes first-observation cleanup calls to avoid thundering-herd API pressure on startup.
@@ -153,17 +148,95 @@ export async function discoverConfigMapConsumers(namespace: string, configMapNam
   });
 }
 
+type JsonPatchOperation = {
+  op: "add" | "test";
+  path: string;
+  value: unknown;
+};
+
+function annotationPath(annotation: string) {
+  const escaped = annotation.replace(/~/g, "~0").replace(/\//g, "~1");
+  return `/metadata/annotations/${escaped}`;
+}
+
+async function saveResourceState(
+  resource: kind.Secret | kind.ConfigMap,
+  resourceType: ResourceType,
+  checksum: string,
+  markCleanupComplete: boolean,
+) {
+  const metadata = resource.metadata;
+  if (!metadata?.name || !metadata.namespace) {
+    return;
+  }
+
+  const { name, namespace, resourceVersion, annotations } = metadata;
+  if (!resourceVersion) {
+    throw new Error(
+      `Cannot save pod reload state for ${namespace}/${name} without resourceVersion`,
+    );
+  }
+
+  const operations: JsonPatchOperation[] = [
+    {
+      op: "test",
+      path: "/metadata/resourceVersion",
+      value: resourceVersion,
+    },
+  ];
+
+  if (!annotations) {
+    operations.push({ op: "add", path: "/metadata/annotations", value: {} });
+  }
+
+  if (markCleanupComplete) {
+    operations.push({
+      op: "add",
+      path: annotationPath(SSA_CLEANUP_ANNOTATION),
+      value: "true",
+    });
+  }
+
+  operations.push({
+    op: "add",
+    path: annotationPath(POD_RELOAD_CHECKSUM_ANNOTATION),
+    value: checksum,
+  });
+
+  const resourceKind = resourceType === "Secret" ? kind.Secret : kind.ConfigMap;
+  await K8s(resourceKind, { name, namespace }).Patch(operations);
+}
+
+async function runStartupCleanup(
+  namespace: string,
+  name: string,
+  resourceType: ResourceType,
+  discoverResourceConsumers: (namespace: string, name: string) => Promise<kind.Pod[]>,
+) {
+  const cleanup = startupCleanupQueue.then(async () => {
+    const pods = await discoverResourceConsumers(namespace, name);
+    await cleanupOverClaimedControllerFields(namespace, pods, log);
+  });
+
+  startupCleanupQueue = cleanup.catch(err => {
+    log.warn(
+      { resource: name, namespace, type: resourceType, err },
+      "Field manager cleanup failed",
+    );
+  });
+
+  await cleanup;
+}
+
 /**
  * Generic function to handle resource updates (Secret or ConfigMap)
  *
  * @param resource The Kubernetes resource that was updated
- * @param checksumCache The cache to use for this resource type
  * @param discoverResourceConsumers Function to discover pods using this resource
  * @param resourceType Type of resource ("Secret" or "ConfigMap")
  */
 export async function handleResourceUpdate(
   resource: kind.Secret | kind.ConfigMap,
-  checksumCache: Map<string, string>,
   discoverResourceConsumers: (namespace: string, name: string) => Promise<kind.Pod[]>,
   resourceType: ResourceType,
 ) {
@@ -172,81 +245,42 @@ export async function handleResourceUpdate(
   }
 
   const { name, namespace } = resource.metadata;
-  const cacheKey = `${namespace}/${name}`;
+  const annotations = resource.metadata.annotations || {};
+  const currentChecksum = computeResourceChecksum(resource.data || {});
+  const previousChecksum = annotations[POD_RELOAD_CHECKSUM_ANNOTATION];
+  const cleanupComplete = Boolean(annotations[SSA_CLEANUP_ANNOTATION]);
 
-  // Use an empty object if data is undefined or null
-  const data = resource.data || {};
-
-  // Compute checksum of the current resource data
-  const currentChecksum = computeResourceChecksum(data);
-
-  // Check if we've seen this resource before
-  const previousChecksum = checksumCache.get(cacheKey);
-
-  // Update the cache regardless of whether we process this update
-  checksumCache.set(cacheKey, currentChecksum);
-
-  // First time we've seen this resource — proactively clean up any over-claimed controller
-  // fields so Helm upgrades don't conflict before the first reload fires.
-  if (!previousChecksum) {
-    // Already cleaned up on a prior run — skip entirely.
-    if (resource.metadata?.annotations?.[SSA_CLEANUP_ANNOTATION]) {
-      return;
-    }
-
-    // Chain onto the queue so concurrent first-observation events on startup
-    // run sequentially rather than fanning out parallel API calls.
-    startupCleanupQueue = startupCleanupQueue
-      .then(async () => {
-        const pods = await discoverResourceConsumers(namespace, name);
-        await cleanupOverClaimedControllerFields(namespace, pods, log);
-        // Mark complete so future restarts skip this work entirely.
-        // Use JSON Patch (not SSA Apply) so we don't affect field ownership — an SSA Apply
-        // that omits `data` would cause Kubernetes to drop any fields Pepr previously owned
-        // (e.g. the CA cert in uds-trust-bundle).
-        try {
-          const kindClass = resourceType === "Secret" ? kind.Secret : kind.ConfigMap;
-          // RFC 6901 JSON Pointer encoding: ~ → ~0, / → ~1
-          const annotationPath = `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/~/g, "~0").replace(/\//g, "~1")}`;
-          // If the resource has no annotations map yet, we must create it first —
-          // JSON Patch `add` on a child key fails if the parent object is absent.
-          const ops: { op: "add"; path: string; value: unknown }[] = [];
-          if (!resource.metadata?.annotations) {
-            ops.push({ op: "add", path: "/metadata/annotations", value: {} });
-          }
-          ops.push({ op: "add", path: annotationPath, value: "true" });
-          await K8s(kindClass, { name, namespace }).Patch(ops);
-        } catch (annotationErr) {
-          log.warn(
-            { resource: name, namespace, type: resourceType, annotationErr },
-            "Failed to mark cleanup complete; will retry on next restart",
-          );
-        }
-      })
-      .catch(err =>
-        log.warn(
-          { resource: name, namespace, type: resourceType, err },
-          "Field manager cleanup failed",
-        ),
-      );
-    return;
-  }
-
-  // Data unchanged — nothing to do
   if (previousChecksum === currentChecksum) {
     return;
   }
 
+  if (!previousChecksum && cleanupComplete) {
+    try {
+      await saveResourceState(resource, resourceType, currentChecksum, false);
+    } catch (error) {
+      log.warn(
+        { resource: name, namespace, type: resourceType, error },
+        "Failed to initialize pod reload checksum",
+      );
+    }
+    return;
+  }
+
+  if (!cleanupComplete) {
+    try {
+      await runStartupCleanup(namespace, name, resourceType, discoverResourceConsumers);
+    } catch {
+      return;
+    }
+  }
+
   log.info(
     { resource: name, namespace, type: resourceType },
-    `${resourceType} data changed, processing pod reload`,
+    `${resourceType} data ${previousChecksum ? "changed" : "created"}, processing pod reload`,
   );
 
-  // Determine which pods to reload based on the strategy
   let podsToReload: kind.Pod[] = [];
-
-  // Check if we have an explicit pod selector in annotations
-  const selectorStr = resource.metadata?.annotations?.["uds.dev/pod-reload-selector"];
+  const selectorStr = annotations["uds.dev/pod-reload-selector"];
 
   if (selectorStr) {
     const selector = parseSelectorString(selectorStr);
@@ -261,7 +295,6 @@ export async function handleResourceUpdate(
       `Using explicit pod selector from ${resourceType.toLowerCase()} annotation for reload`,
     );
 
-    // Build query with each label
     let podQuery = K8s(kind.Pod).InNamespace(namespace);
     for (const [key, value] of Object.entries(selector)) {
       podQuery = podQuery.WithLabel(key, value);
@@ -282,7 +315,6 @@ export async function handleResourceUpdate(
       return;
     }
   } else {
-    // No explicit selector, use auto-discovery
     log.debug(
       { resource: name, namespace, type: resourceType },
       `Auto-discovering ${resourceType.toLowerCase()} consumers`,
@@ -301,57 +333,42 @@ export async function handleResourceUpdate(
     }
   }
 
-  // If no pods found, log and exit
   if (podsToReload.length === 0) {
     log.warn(
       { resource: name, namespace, type: resourceType },
       `No pods found to reload for ${resourceType.toLowerCase()} change`,
     );
-    return;
-  }
+  } else {
+    log.info(
+      { resource: name, namespace, podCount: podsToReload.length, type: resourceType },
+      `Reloading ${podsToReload.length} pods due to ${resourceType.toLowerCase()} change`,
+    );
 
-  // Reload the pods
-  log.info(
-    { resource: name, namespace, podCount: podsToReload.length, type: resourceType },
-    `Reloading ${podsToReload.length} pods due to ${resourceType.toLowerCase()} change`,
-  );
+    try {
+      await reloadPods(
+        namespace,
+        podsToReload,
+        `${resourceType} ${name} change`,
+        log,
+        `${resourceType}Changed`,
+      );
+    } catch (error) {
+      log.error(
+        { resource: name, namespace, podCount: podsToReload.length, error, type: resourceType },
+        `Failed to reload pods after ${resourceType.toLowerCase()} change`,
+      );
+      return;
+    }
+  }
 
   try {
-    await reloadPods(
-      namespace,
-      podsToReload,
-      `${resourceType} ${name} change`,
-      log,
-      `${resourceType}Changed`,
-    );
+    await saveResourceState(resource, resourceType, currentChecksum, !cleanupComplete);
   } catch (error) {
-    log.error(
-      { resource: name, namespace, podCount: podsToReload.length, error, type: resourceType },
-      `Failed to reload pods after ${resourceType.toLowerCase()} change`,
+    log.warn(
+      { resource: name, namespace, type: resourceType, error },
+      "Failed to save pod reload state",
     );
-    return;
   }
-}
-
-/**
- * Generic function to handle resource deletion (Secret or ConfigMap)
- *
- * @param resource The Kubernetes resource that was deleted
- * @param checksumCache The cache to use for this resource type
- */
-export function handleResourceDelete(
-  resource: kind.Secret | kind.ConfigMap,
-  checksumCache: Map<string, string>,
-) {
-  if (!resource.metadata?.name || !resource.metadata?.namespace) {
-    return;
-  }
-
-  const { name, namespace } = resource.metadata;
-  const cacheKey = `${namespace}/${name}`;
-
-  // Clean up the cache entry
-  checksumCache.delete(cacheKey);
 }
 
 /**
@@ -360,16 +377,7 @@ export function handleResourceDelete(
  * @param secret The Kubernetes secret that was updated
  */
 export async function handleSecretUpdate(secret: kind.Secret) {
-  await handleResourceUpdate(secret, secretChecksumCache, discoverSecretConsumers, "Secret");
-}
-
-/**
- * Handles a secret deletion event
- *
- * @param secret The Kubernetes secret that was deleted
- */
-export function handleSecretDelete(secret: kind.Secret) {
-  handleResourceDelete(secret, secretChecksumCache);
+  await handleResourceUpdate(secret, discoverSecretConsumers, "Secret");
 }
 
 /**
@@ -378,19 +386,5 @@ export function handleSecretDelete(secret: kind.Secret) {
  * @param configMap The Kubernetes ConfigMap that was updated
  */
 export async function handleConfigMapUpdate(configMap: kind.ConfigMap) {
-  await handleResourceUpdate(
-    configMap,
-    configMapChecksumCache,
-    discoverConfigMapConsumers,
-    "ConfigMap",
-  );
-}
-
-/**
- * Handles a ConfigMap deletion event
- *
- * @param configMap The Kubernetes ConfigMap that was deleted
- */
-export function handleConfigMapDelete(configMap: kind.ConfigMap) {
-  handleResourceDelete(configMap, configMapChecksumCache);
+  await handleResourceUpdate(configMap, discoverConfigMapConsumers, "ConfigMap");
 }
