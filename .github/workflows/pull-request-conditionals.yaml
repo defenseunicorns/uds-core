@@ -166,6 +166,7 @@ jobs:
     if: ${{ needs.check-paths.outputs.run_full_tests == 'true' && needs.check-paths.outputs.combined != '' && needs.check-paths.outputs.combined != '[]' }}
     name: Schedule
     strategy:
+      fail-fast: false
       matrix:
         package: ${{ fromJson(needs.check-paths.outputs.combined) }}
         flavor: [upstream, registry1, unicorn]
