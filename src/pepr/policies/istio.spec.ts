@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -90,6 +90,58 @@ describe("checkIstioAmbientOverrides", () => {
       "ambient.istio.io/bypass-inbound-capture": "true",
       "some.other/annotation": "value",
     });
+
+    expect(checkIstioAmbientOverrides(pod as V1Pod)).toEqual([
+      "ambient.istio.io/bypass-inbound-capture",
+    ]);
+  });
+
+  it("should allow inbound bypass on Pepr admission pods only", () => {
+    const pod = {
+      metadata: {
+        namespace: "pepr-system",
+        labels: {
+          app: "pepr-uds-core",
+          "pepr.dev/controller": "admission",
+        },
+        annotations: {
+          "ambient.istio.io/bypass-inbound-capture": "true",
+        },
+      },
+    };
+
+    expect(checkIstioAmbientOverrides(pod as V1Pod)).toEqual([]);
+  });
+
+  it.each([
+    {
+      name: "a different namespace",
+      metadata: {
+        namespace: "default",
+        labels: { app: "pepr-uds-core", "pepr.dev/controller": "admission" },
+      },
+    },
+    {
+      name: "a Pepr watcher pod",
+      metadata: {
+        namespace: "pepr-system",
+        labels: { app: "pepr-uds-core", "pepr.dev/controller": "watcher" },
+      },
+    },
+    {
+      name: "a pod with a different app label",
+      metadata: {
+        namespace: "pepr-system",
+        labels: { app: "other-app", "pepr.dev/controller": "admission" },
+      },
+    },
+  ])("should continue blocking inbound bypass on $name", ({ metadata }) => {
+    const pod = {
+      metadata: {
+        ...metadata,
+        annotations: { "ambient.istio.io/bypass-inbound-capture": "true" },
+      },
+    };
 
     expect(checkIstioAmbientOverrides(pod as V1Pod)).toEqual([
       "ambient.istio.io/bypass-inbound-capture",
