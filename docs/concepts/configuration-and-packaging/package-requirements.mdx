@@ -48,7 +48,8 @@ UDS Packages are Zarf packages that integrate with UDS Core and follow these add
 - **SHOULD** use Istio Ambient unless specific technical constraints require otherwise.
 - **MAY** use Istio Sidecars, when Istio Ambient is not technically feasible. Must document the specific technical constraints in `docs/justifications.md` if using Sidecars.
 - **SHOULD** avoid workarounds with Istio such as disabling strict mTLS peer authentication.
-- **MAY** template network policy keys to provide flexibility for customers to configure.
+- **SHOULD** expose configurable subdomains for externally exposed services so deployers can avoid hostname conflicts with other applications.
+- **SHOULD** expose `additionalNetworkAllow` so deployers can add environment-specific network rules without modifying or rebuilding the package. See [UDS integration values](/concepts/configuration-and-packaging/package-values/#uds-integration-values).
 
 ## Identity and access management
 

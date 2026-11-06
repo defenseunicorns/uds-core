@@ -25,27 +25,30 @@ If individual mappings become unwieldy, consider mapping higher-level nodes and 
 
 Use values for package configuration, retaining `###ZARF_VAR_<NAME>###` in ordinary `valuesFiles` only when an existing variable must remain compatible. Declare any such variable in the package definition and use `templatedValuesFiles` with `.Variables.<NAME>` when explicit package values must take precedence over the variable or need a computed fallback. Because Zarf substitutes variable tokens before evaluating Go templates, keep those phases separate.
 
-> [!NOTE]
-> You **SHOULD** expose the UDS integration settings your application supports through chart values and map them to normalized package values, reusing common names and groupings so deployers can configure packages consistently without editing Helm templates.
->
-> These settings **SHOULD** live alongside the UDS-specific resources they configure, either in a separate `config` chart when you use an upstream application chart or directly in a local application chart tailored for UDS.
->
-> Use the following conventions where they apply, exposing only the options your integration supports rather than adding every setting to every application:
->
-> | Values pattern | Guidance |
-> | --- | --- |
-> | `domain` | Set the base domain for application URLs and SSO redirect URIs. |
-> | `subdomain`, `gateway` | Set the exposed host prefix and Istio gateway in `Package.spec.network.expose`, using service-specific host keys when the application exposes multiple services. |
-> | `additionalNetworkAllow` | Append deployment-specific rules to `Package.spec.network.allow` without replacing required application rules, defaulting the list to `[]` and scoping additions to the necessary traffic. |
-> | `sso.enabled`, `sso.protocol` | Configure SSO and the generated `Secret` the application consumes, exposing only supported protocols and keeping SSO enabled by default when the package requires it. |
-> | `sso.requiredGroups`, `sso.adminGroups`, `sso.defaultClientScopes` | Configure login restrictions and client scopes alongside application-specific administrator-group mappings. |
-> | Dependency groups such as `postgres`, `redis`, and `storage` | Group connection settings and network-rule inputs such as `internal`, `namespace`, `selector`, and `port` to support the application's in-cluster or external dependency options. |
->
-> You **SHOULD** define shared settings once at the package level and map them into every chart that consumes them so the application and its UDS resources stay consistent. For example, a dependency override should update both the application's connection configuration and the config chart's network rules, just as a hostname override should keep application URLs and SSO redirects aligned.
->
-> Document supported keys and defaults in the package `documentation` and validate them through its values schema, following the chart-mapping and schema examples below.
->
-> Reference the [UDS Reference Package](https://github.com/uds-packages/reference-package/blob/main/chart/values.yaml) for an example of how these values can be used in practice and [UDS `Package` CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) for the resources these values configure.
+## UDS integration values
+
+Your package **SHOULD** provide these controls so deployers can adapt it to their environment:
+
+- `subdomain`: For externally exposed services, expose a top-level package value for the host prefix in `Package.spec.network.expose` so deployers can avoid hostname conflicts with other applications. Use service-specific hostname values when you expose multiple services, and keep application URLs and SSO redirects aligned with hostname overrides.
+- `additionalNetworkAllow`: Let deployers add environment-specific rules to `Package.spec.network.allow`. Default to `[]` and append these rules without replacing the package's required rules.
+
+Use common names and groupings for other supported integration settings:
+
+| Values pattern | Guidance |
+| --- | --- |
+| `domain` | Expose the base domain when the chart or application needs it for application URLs or SSO redirect URIs. |
+| `gateway` | Let deployers select the Istio gateway in `Package.spec.network.expose` when the application may use either the `admin` or `tenant` gateway. |
+| `sso.enabled`, `sso.protocol` | Configure SSO and the generated `Secret` the application consumes, exposing only supported protocols and keeping SSO enabled by default when the package requires it. |
+| `sso.requiredGroups`, `sso.adminGroups`, `sso.defaultClientScopes` | Configure login restrictions and client scopes alongside application-specific administrator-group mappings. |
+| Dependency groups such as `postgres`, `redis`, and `storage` | Group connection settings and network-rule inputs such as `internal`, `namespace`, `selector`, and `port` to support the application's in-cluster or external dependency options. |
+
+These settings **SHOULD** live alongside the UDS resources they configure, either in a separate `config` chart when you use an upstream application chart or directly in a local application chart tailored for UDS.
+
+You **SHOULD** define shared settings once at the package level and map them into every chart that consumes them. For example, a dependency override should update both the application's connection configuration and the config chart's network rules.
+
+Document supported keys and defaults in the package `documentation` and validate them through its values schema.
+
+Reference the [UDS Reference Package](https://github.com/uds-packages/reference-package/blob/main/chart/values.yaml) for an example and the [UDS `Package` CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) for the resources these values configure.
 
 ## Example configuration
 
@@ -68,6 +71,10 @@ components:
         values:
           - sourcePath: .global
             targetPath: .
+          - sourcePath: .subdomain
+            targetPath: .subdomain
+          - sourcePath: .additionalNetworkAllow
+            targetPath: .additionalNetworkAllow
       - name: nginx
         version: 0.1.0
         namespace: nginx
@@ -87,7 +94,7 @@ components:
               - .nginx.readinessProbe
 ```
 
-The first mapping passes the package-level `global.domain` value to the `uds-nginx-config` chart as `domain`, while the second passes the application values to the nginx chart.
+The config chart mappings pass `global.domain` as `domain` and the top-level `subdomain` and `additionalNetworkAllow` values to matching chart keys. The `.nginx` mapping passes the application values to the nginx chart.
 
 The root `zarf.yaml` declares the defaults and schema files, imports the common component, and adds flavor-specific values and images:
 
@@ -121,6 +128,9 @@ components:
 The `zarf-values.yaml` provides defaults that deployers can override:
 
 ```yaml title="zarf-values.yaml"
+subdomain: nginx
+additionalNetworkAllow: []
+
 global:
   domain: uds.dev
 
@@ -150,6 +160,13 @@ The `zarf-values.schema.json` validates the defaults above:
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "subdomain": {
+      "type": "string"
+    },
+    "additionalNetworkAllow": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
     "global": {
       "type": "object",
       "additionalProperties": false,
