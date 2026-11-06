@@ -1,14 +1,24 @@
 ---
 title: UDS Core 1.16
-description: UDS Core 1.16 improves operator stability, prevents Keycloak client ID collisions, and adds Portal scheduling and environment variable controls.
+description: UDS Core 1.16 hardens Keycloak client and role ownership, requires migration for existing clients with missing ownership, and improves operator stability.
 sidebar:
   order: 3.979
 ---
 
+import { Steps } from "@astrojs/starlight/components";
+
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
-UDS Core 1.16 improves operator stability and includes a fix for cross-namespace Keycloak client ownership. UDS Portal adds Helm values for scheduling and additional environment variables.
+UDS Core 1.16 hardens Keycloak client and role ownership and prevents cross-namespace client ID collisions. Before upgrading, assign ownership to existing clients managed by restricted applications. This release also improves operator stability and adds Portal scheduling and environment variable controls.
+
+### ⚠ Breaking changes
+
+Review this change before upgrading:
+
+| Change | Impact | Action required |
+| --- | --- | --- |
+| Client and client-role ownership enforcement | Restricted applications cannot manage existing clients with missing or incorrect ownership, including their roles. | Follow the [client ownership migration](#identity-config-updates-client-ownership) to assign each verified owner. Keycloak `uds` Realm Administrators retain access. |
 
 ### Notable features
 
@@ -38,6 +48,94 @@ The following versions change from UDS Core 1.15.3:
 | kube-prometheus-stack Helm chart        | 92.2.0   | [92.14.0](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-92.14.0)        |
 | Prometheus Blackbox Exporter Helm chart | 11.20.0  | [11.20.2](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.20.2) |
 | prometheus-operator-crds Helm chart     | 32.0.1   | [32.0.2](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-32.0.2)       |
+
+## Upgrade considerations
+
+### Identity Config updates: client ownership
+
+UDS Identity Config restricts managed applications to their own clients and client roles. Keycloak `uds` Realm Administrators, including the bundled OpenTofu account, retain access to all clients. Enabled Client Policy checks still apply to their create/update requests.
+
+With the ownership filter and Client Policy enabled, use this table to identify clients that need migration:
+
+| Situation | What works | Action required |
+| --- | --- | --- |
+| Restricted manager creates a client | The policy stamps the client automatically. | None. |
+| Existing client has the correct owner | Its owner can manage the client and its roles. | None. |
+| Existing client has missing or incorrect ownership | Delegated management is denied. | A Keycloak `uds` Realm Administrator must assign the verified owner. |
+| Multiple delegated managers share a client | Only one owner can manage it. | Choose one owner and update the management workflow. |
+| Keycloak `uds` Realm Administrator creates or manages a client | Ownership does not restrict access, and requests do not automatically stamp ownership. | Assign an owner before handing management to a restricted caller. |
+
+To migrate affected clients, assign the intended manager's application client ID:
+
+<Steps>
+
+1. **Identify the owner**
+
+   Pause affected automation and back up each client's `created-by` attribute. Verify the owning application's readable `clientId`, not its internal UUID. Include clients created by administrators without an ownership stamp; do not infer ownership from a target client's name.
+
+2. **Assign ownership through the admin gateway**
+
+   Run these Bash commands with `curl` and `jq`, replacing the admin gateway URL and client IDs. By default, they prompt for an administrator username and password. If `KEYCLOAK_TOKEN` is set to a nonempty access token, they use it instead and skip login. The account must have Keycloak `uds` Realm Administrator permissions. Use your trusted CA if needed; keep TLS verification enabled.
+
+   ```bash
+   set -euo pipefail
+   ADMIN_URL='https://keycloak.admin.uds.dev'
+   TARGET_CLIENT_ID='<client-to-migrate>'
+   OWNER_CLIENT_ID='<owning-application-clientId>'
+   ADMIN_TOKEN="${KEYCLOAK_TOKEN:-}"
+   if [ -z "$ADMIN_TOKEN" ]; then
+     AUTH_REALM='master' # Use uds for an administrator account in that realm.
+     read -r -p 'Administrator username [admin]: ' ADMIN_USERNAME
+     ADMIN_USERNAME="${ADMIN_USERNAME:-admin}"
+     read -r -s -p 'Administrator password: ' ADMIN_PASSWORD
+     printf '\n'
+     ADMIN_TOKEN=$(printf '%s' "$ADMIN_PASSWORD" \
+       | curl --fail-with-body --silent --show-error \
+         --data-urlencode 'client_id=admin-cli' --data-urlencode 'grant_type=password' \
+         --data-urlencode "username=$ADMIN_USERNAME" --data-urlencode 'password@-' \
+         "$ADMIN_URL/realms/$AUTH_REALM/protocol/openid-connect/token" \
+       | jq -er '.access_token | select(type == "string" and length > 0)')
+     unset ADMIN_PASSWORD
+   fi
+
+   # Resolve the target UUID and require exactly one matching client.
+   TARGET_UUID=$(curl --fail-with-body --silent --show-error --get \
+     -H "Authorization: Bearer $ADMIN_TOKEN" \
+     --data-urlencode "clientId=$TARGET_CLIENT_ID" \
+     "$ADMIN_URL/admin/realms/uds/clients" \
+     | jq -er --arg id "$TARGET_CLIENT_ID" \
+       '[.[] | select(.clientId == $id)] | if length == 1 then .[0].id else error("Expected one client") end')
+   CLIENT_URL="$ADMIN_URL/admin/realms/uds/clients/$TARGET_UUID"
+
+   # Preserve Authorization Services when updating ownership. Expect HTTP 204.
+   AUTHORIZATION_SERVICES_ENABLED=$(curl --fail-with-body --silent --show-error \
+     -H "Authorization: Bearer $ADMIN_TOKEN" "$CLIENT_URL" \
+     | jq '.authorizationServicesEnabled // false')
+   jq -n --arg owner "$OWNER_CLIENT_ID" \
+     --argjson enabled "$AUTHORIZATION_SERVICES_ENABLED" \
+     '{authorizationServicesEnabled: $enabled, attributes: {"created-by": $owner}}' \
+     | curl --fail-with-body --silent --show-error -X PUT \
+       -H "Authorization: Bearer $ADMIN_TOKEN" -H 'Content-Type: application/json' \
+       --data-binary @- --write-out 'HTTP %{http_code}\n' "$CLIENT_URL"
+
+   # Confirm that ownership and Authorization Services state match. Expect true.
+   curl --fail-with-body --silent --show-error \
+     -H "Authorization: Bearer $ADMIN_TOKEN" "$CLIENT_URL" \
+     | jq -e --arg owner "$OWNER_CLIENT_ID" \
+       --argjson enabled "$AUTHORIZATION_SERVICES_ENABLED" \
+       '(.attributes["created-by"] == $owner) and ((.authorizationServicesEnabled // false) == $enabled)'
+   unset ADMIN_TOKEN
+   ```
+
+   If your authentication flow requires MFA or disables password grants, supply `KEYCLOAK_TOKEN` from your normal authentication flow.
+
+   This update changes ownership while preserving the existing Authorization Services state, unrelated client settings, and client UUID. Client roles inherit this ownership and need no separate migration. The Keycloak 26.8.1 Admin Console does not expose an editor for this custom client attribute.
+
+3. **Verify and resume**
+
+   Use the intended manager to read and update a migrated client and manage a disposable client role. Verify that another delegated manager cannot access that role. Delete the disposable role, then resume automation. If needed, restore the saved ownership values using a Keycloak `uds` Realm Administrator account.
+
+</Steps>
 
 ## Related documentation
 
