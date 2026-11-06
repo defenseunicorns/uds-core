@@ -35,7 +35,7 @@ components:
               - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyGateway.image
               - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyProxy.image
     images:
-      - docker.io/envoyproxy/gateway:v1.9.3
+      - docker.io/envoyproxy/gateway:v1.10.0
       - docker.io/envoyproxy/envoy:distroless-v1.40.2
 
   - name: envoy-gateway
