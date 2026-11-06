@@ -193,6 +193,7 @@ export function checkIstioAmbientOverrides(pod: V1Pod) {
 
   return Object.keys(annotations)
     .filter(annotation => {
+      // Avoid webhook connection resets while Pepr joins the ambient mesh.
       if (
         annotation === "ambient.istio.io/bypass-inbound-capture" &&
         annotations[annotation] === "true" &&
