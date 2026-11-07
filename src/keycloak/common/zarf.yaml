@@ -30,6 +30,45 @@ components:
     actions:
       onDeploy:
         before:
+          - description: Stop Keycloak nodes older than 26.8.2
+            cmd: |
+              set -eu
+              kc() { ./zarf tools kubectl "$@"; }
+              current_image=$(kc get sts -n keycloak keycloak --ignore-not-found -o jsonpath='{.spec.template.spec.containers[0].image}')
+              version=${current_image##*:}
+              version=${version#v}
+              version=${version%%-*}
+              if ! printf '%s\n' "$version" | awk -F. '
+                NF != 3 { exit 1 }
+                $1 !~ /^[0-9]+$/ || $2 !~ /^[0-9]+$/ || $3 !~ /^[0-9]+$/ { exit 1 }
+                { exit !($1 < 26 || ($1 == 26 && ($2 < 8 || ($2 == 8 && $3 < 2)))) }
+              '; then
+                echo "No pre-26.8.2 Keycloak StatefulSet found. Skipping cluster restart."
+                exit 0
+              fi
+
+              echo "Stopping pre-26.8.2 Keycloak nodes before applying the new chart"
+              hpa_name=$(kc get hpa -n keycloak keycloak --ignore-not-found -o name)
+              if [ -n "$hpa_name" ]; then
+                # Let the HPA enforce the existing gradual scale-down policy until one node remains.
+                kc patch hpa -n keycloak keycloak --type=merge -p '{"spec":{"minReplicas":1,"maxReplicas":1}}'
+                kc wait -n keycloak --for=jsonpath='{.status.replicas}'=1 sts/keycloak --timeout=35m
+                kc delete hpa -n keycloak keycloak --wait=true
+              else
+                pods=$(kc get pods -n keycloak -l app.kubernetes.io/instance=keycloak -o jsonpath='{.items[*].metadata.name}')
+                case "$pods" in
+                  *' '*) echo "Keycloak has multiple nodes but no HPA for gradual scale-down" >&2; exit 1 ;;
+                esac
+              fi
+
+              kc scale sts -n keycloak keycloak --replicas=0
+              if ! kc wait -n keycloak --for=delete pod -l app.kubernetes.io/instance=keycloak --timeout=3m; then
+                remaining=$(kc get pods -n keycloak -l app.kubernetes.io/instance=keycloak -o name)
+                [ -z "$remaining" ] || { echo "Old Keycloak pods are still running" >&2; exit 1; }
+              fi
+
+              # Helm recreates the StatefulSet at its default replica count; the chart restores the HPA.
+              kc delete sts -n keycloak keycloak --cascade=orphan --wait=true
           - description: Re-create Keycloak StatefulSet
             # This can be switched to true in subsequent UDS Core versions
             mute: false
