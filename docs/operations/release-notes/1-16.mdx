@@ -5,6 +5,8 @@ sidebar:
   order: 3.979
 ---
 
+import { Steps } from "@astrojs/starlight/components";
+
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
@@ -38,6 +40,21 @@ The following versions change from UDS Core 1.15.3:
 | kube-prometheus-stack Helm chart        | 92.2.0   | [92.14.0](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-92.14.0)        |
 | Prometheus Blackbox Exporter Helm chart | 11.20.0  | [11.20.2](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.20.2) |
 | prometheus-operator-crds Helm chart     | 32.0.1   | [32.0.2](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-32.0.2)       |
+
+## Upgrade considerations
+
+### Identity Config updates
+
+Keycloak 26.8.2 requires an Admin API audience. Prepare the deployment before upgrading:
+
+<Steps>
+
+1. **Deploy the migration.** Deploy an Identity Config build containing the 26.8.2 migration to every Keycloak 26.8.1 replica. Confirm the logs show `Applied UDS realm migration 26.8.2`.
+2. **Upgrade Keycloak.** The [supported upstream upgrade requires planned downtime](https://www.keycloak.org/docs/26.8.2/upgrading/): stop all 26.8.1 replicas before starting any 26.8.2 replica.
+
+</Steps>
+
+The migration adds the `kc-admin-api` scope to UDS admin clients. Existing sessions get it when refreshed; users do not need to log out. After a 401 or 403, UDS Operator renews its cached token and retries once.
 
 ## Related documentation
 

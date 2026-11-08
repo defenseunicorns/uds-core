@@ -16,7 +16,7 @@ UDS Core manages four areas of Keycloak configuration through the `uds-identity-
 - **Truststore:** CA certificates used for X.509 client authentication
 - **Custom plugins:** Keycloak extensions bundled with UDS Core
 
-Non-persistent components (themes, truststore, plugins) are automatically updated when the Keycloak package is upgraded. Realm configuration is persisted in Keycloak's database and does **not** automatically update on upgrade; see [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) for manual steps.
+Non-persistent components (themes, truststore, plugins) are automatically updated when the Keycloak package is upgraded. Most realm configuration is persisted in Keycloak's database and does not automatically mirror chart changes, but Identity Config can run versioned migrations for specific supported upgrades. See [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) for the Keycloak 26.8.2 Admin API audience migration and other manual steps.
 
 ## Realm initialization variables
 
@@ -141,6 +141,10 @@ UDS Core ships with a custom Keycloak plugin JAR that provides the following imp
 The plugin enforces a `UDS Client Profile` Keycloak client policy for all clients created by the UDS Operator. This policy restricts which Protocol Mappers and Client Scopes a package's SSO client may use.
 
 To extend the allow-list, set `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` or `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES` in `realmInitEnv` (see [Realm initialization variables](#realm-initialization-variables)).
+
+The UDS Client Policy stores its allowed protocol mappers persistently. The `allowedProtocolMapperTypesForClientAdministrators` realm attribute also controls mapper changes by delegated client administrators. These administrators need a mapper in both lists; realm administrators with `manage-realm` bypass the realm allow-list. `realmInitEnv` values apply only during initial realm import, so changing these values does not update an existing realm. The realm attribute applies across the realm, and Keycloak's native authorization still applies. Shared client-scope operations are not covered by the UDS Client Policy. For the Keycloak 26.8.2 audience-scope migration and its upgrade boundary, see [UDS Core 1.16 release notes](/operations/release-notes/1-16/#identity-config-updates).
+
+The policy rejects protocol mappers configured to overwrite protected token claims, including `sub`, `aud`, and `realm_access`.
 
 When `sso[].fullScopeAllowed` is omitted, UDS Core preserves Keycloak's normal behavior. Set it to `false` whenever your application works with explicit role scope mappings and client scopes, which limits token roles to only those the client requires. Reference the [`Package` CR SSO fields](/reference/operator-and-crds/packages-v1alpha1-cr/#sso) for the field definition.
 

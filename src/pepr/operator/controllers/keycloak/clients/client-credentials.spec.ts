@@ -38,7 +38,11 @@ vi.mock("fs", () => ({
 import fs from "fs";
 import { UDSConfig } from "../../config/config";
 import {
+  credentialsCreate,
+  credentialsDelete,
+  credentialsGet,
   credentialsGetAccessToken,
+  credentialsUpdate,
   getClientSecretToken,
   getSignedJwtToken,
   isCachedTokenValid,
@@ -412,4 +416,156 @@ describe("credentialsGetAccessToken", () => {
       await expect(credentialsGetAccessToken()).rejects.toThrow("401");
     });
   });
+});
+
+describe("Admin API token recovery", () => {
+  const client = { clientId: "test-client" };
+  const existing = { ...client, id: "client-uuid" };
+  const adminUrl = "http://keycloak-http.keycloak.svc.cluster.local:8080/admin/realms/uds/clients";
+  const firstToken = makeJwt(Math.floor(Date.now() / 1000) + 3600);
+  const renewedToken = makeJwt(Math.floor(Date.now() / 1000) + 7200);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetCachedToken();
+    UDSConfig.keycloakClientMode = KeycloakClientMode.SIGNED_JWT;
+  });
+
+  it.each([
+    ["get", credentialsGet, "GET", `${adminUrl}?clientId=test-client`],
+    ["create", credentialsCreate, "POST", adminUrl],
+    ["update", credentialsUpdate, "PUT", `${adminUrl}/client-uuid`],
+    ["delete", credentialsDelete, "DELETE", `${adminUrl}/client-uuid`],
+  ] as const)("renews and retries %s once", async (_name, operation, method, targetUrl) => {
+    let rejected = false;
+    let tokenCalls = 0;
+    mockFetch.mockImplementation(
+      async (url: string, options: { method?: string; headers?: Record<string, string> }) => {
+        if (url.includes("/protocol/openid-connect/token")) {
+          return okTokenResponse(++tokenCalls === 1 ? firstToken : renewedToken);
+        }
+        if (url === targetUrl && options.method === method && !rejected) {
+          rejected = true;
+          return errorResponse(401, "Unauthorized");
+        }
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          data: url.includes("clientId=test-client") ? [existing] : {},
+        };
+      },
+    );
+
+    await operation(client);
+
+    const targetCalls = mockFetch.mock.calls.filter(
+      ([url, options]) => url === targetUrl && (options as { method?: string }).method === method,
+    );
+    expect(targetCalls).toHaveLength(2);
+    expect(
+      targetCalls.map(
+        ([, options]) => (options as { headers: Record<string, string> }).headers.Authorization,
+      ),
+    ).toEqual([`Bearer ${firstToken}`, `Bearer ${renewedToken}`]);
+  });
+
+  it("propagates renewal failures", async () => {
+    mockFetch
+      .mockResolvedValueOnce(okTokenResponse(firstToken))
+      .mockResolvedValueOnce(errorResponse(401, "Unauthorized"))
+      .mockResolvedValueOnce(errorResponse(401, "Unauthorized"));
+
+    await expect(credentialsGet(client)).rejects.toThrow("401");
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+  });
+
+  it("propagates a repeated 403 and clears the rejected renewed token", async () => {
+    let tokenCalls = 0;
+    mockFetch.mockImplementation(async (url: string) => {
+      if (url.includes("/protocol/openid-connect/token")) {
+        return okTokenResponse(++tokenCalls === 1 ? firstToken : renewedToken);
+      }
+      return errorResponse(403, "Forbidden");
+    });
+
+    await expect(credentialsGet(client)).rejects.toThrow("403");
+    expect(mockFetch).toHaveBeenCalledTimes(4);
+    expect(isCachedTokenValid()).toBe(false);
+  });
+
+  it.each([404, 500])("does not renew or clear the token for HTTP %s", async status => {
+    mockFetch
+      .mockResolvedValueOnce(okTokenResponse(firstToken))
+      .mockResolvedValueOnce(errorResponse(status, "Failure"));
+
+    await expect(credentialsGet(client)).rejects.toThrow(String(status));
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(isCachedTokenValid()).toBe(true);
+  });
+
+  it("does not evict a newer token when concurrent requests reject the stale one", async () => {
+    let tokenCalls = 0;
+    let rejectedRequests = 0;
+    let releaseSecondRejectedRequest: (() => void) | undefined;
+    const renewedRequestSucceeded = new Promise<void>(resolve => {
+      releaseSecondRejectedRequest = resolve;
+    });
+    mockFetch.mockImplementation(
+      async (url: string, options: { headers?: Record<string, string> }) => {
+        if (url.includes("/protocol/openid-connect/token")) {
+          return okTokenResponse(++tokenCalls === 1 ? firstToken : renewedToken);
+        }
+        if (options.headers?.Authorization === `Bearer ${firstToken}`) {
+          if (++rejectedRequests === 2) await renewedRequestSucceeded;
+          return errorResponse(401, "Unauthorized");
+        }
+        releaseSecondRejectedRequest?.();
+        return { ok: true, status: 200, statusText: "OK", data: [existing] };
+      },
+    );
+
+    await Promise.all([credentialsGet(client), credentialsGet(client)]);
+
+    expect(tokenCalls).toBe(2);
+    expect(isCachedTokenValid()).toBe(true);
+    expect(await credentialsGetAccessToken()).toBe(renewedToken);
+  });
+
+  it.each([
+    ["update", credentialsUpdate, "PUT", `${adminUrl}/client-uuid`],
+    ["delete", credentialsDelete, "DELETE", `${adminUrl}/client-uuid`],
+  ] as const)(
+    "uses renewed GET credentials for %s",
+    async (_name, operation, method, targetUrl) => {
+      let tokenCalls = 0;
+      let rejectedGet = false;
+      mockFetch.mockImplementation(
+        async (url: string, options: { method?: string; headers?: Record<string, string> }) => {
+          if (url.includes("/protocol/openid-connect/token")) {
+            return okTokenResponse(++tokenCalls === 1 ? firstToken : renewedToken);
+          }
+          if (options.method === "GET" && !rejectedGet) {
+            rejectedGet = true;
+            return errorResponse(401, "Unauthorized");
+          }
+          return {
+            ok: true,
+            status: 200,
+            statusText: "OK",
+            data: url.includes("clientId=test-client") ? [existing] : {},
+          };
+        },
+      );
+
+      await operation(client);
+
+      const mutation = mockFetch.mock.calls.find(
+        ([url, options]) => url === targetUrl && (options as { method?: string }).method === method,
+      );
+      expect((mutation?.[1] as { headers: Record<string, string> }).headers.Authorization).toBe(
+        `Bearer ${renewedToken}`,
+      );
+    },
+  );
 });

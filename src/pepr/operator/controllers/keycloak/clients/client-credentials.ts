@@ -162,6 +162,30 @@ export async function credentialsGetAccessToken(): Promise<string> {
   return tokenRefreshPromise;
 }
 
+async function authenticatedFetch<T>(
+  url: string,
+  options: NonNullable<Parameters<typeof fetch>[1]>,
+) {
+  for (let attempt = 0; ; attempt++) {
+    const token = await credentialsGetAccessToken();
+    const response = await fetch<T>(url, {
+      ...options,
+      headers: { ...options.headers, Authorization: `Bearer ${token}` },
+    });
+    const authRejected = response.status === 401 || response.status === 403;
+
+    if (authRejected && cachedToken === token) resetCachedToken();
+    if (!authRejected || attempt === 1) {
+      await throwErrorIfNeeded(response);
+      return response;
+    }
+
+    log.warn(
+      `Keycloak Admin API returned ${response.status}; refreshing credentials and retrying once`,
+    );
+  }
+}
+
 export async function credentialsCreateOrUpdate(client: Partial<Client>) {
   log.info(`credentialsCreateOrUpdate: creating/updating client ${client.clientId}`);
   const existingClient = await credentialsGet(client);
@@ -174,68 +198,52 @@ export async function credentialsCreateOrUpdate(client: Partial<Client>) {
 
 export async function credentialsCreate(client: Partial<Client>) {
   log.info(`credentialsCreate: creating client ${client.clientId}`);
-  const token = await credentialsGetAccessToken();
-  const response = await fetch(clientsAdminUrl, {
+  await authenticatedFetch(clientsAdminUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(client),
-  });
-  await throwErrorIfNeeded(response, () => {
-    resetCachedToken();
   });
   return credentialsGet(client);
 }
 
 export async function credentialsGet(client: Partial<Client>) {
   log.info(`credentialsGet: retrieving client ${client.clientId}`);
-  const token = await credentialsGetAccessToken();
   const url = `${clientsAdminUrl}?clientId=${encodeURIComponent(client.clientId!)}`;
   // There's no Client GET REST endpoint that obtains a client based on client_id (the logical client name, like uds-operator).
   // All Admin REST endpoints for client operator on the database Client ID, which is a UUID. The only interface that allows to
   // obtain the Client using the client_id is the collection interface which returns a singular collection with
   // the Client in it.
-  const response = await fetch<ClientWithId[]>(url, {
+  const response = await authenticatedFetch<ClientWithId[]>(url, {
     method: "GET",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-  });
-  await throwErrorIfNeeded(response, () => {
-    resetCachedToken();
+    headers: { "Content-Type": "application/json" },
   });
   return response.data[0];
 }
 
 export async function credentialsUpdate(client: Partial<Client>) {
   log.info(`credentialsUpdate: updating client ${client.clientId}`);
-  const token = await credentialsGetAccessToken();
   const existing = await credentialsGet(client);
   if (!existing || !existing.id) {
     throw new Error(`Failed to retrieve existing client, ${client.clientId}`);
   }
   const url = `${clientsAdminUrl}/${encodeURIComponent(existing.id)}`;
-  const response = await fetch(url, {
+  await authenticatedFetch(url, {
     method: "PUT",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(client),
-  });
-  await throwErrorIfNeeded(response, () => {
-    resetCachedToken();
   });
   return credentialsGet(client);
 }
 
 export async function credentialsDelete(client: Partial<Client>) {
   log.info(`credentialsDelete: deleting client ${client.clientId}`);
-  const token = await credentialsGetAccessToken();
   const existing = await credentialsGet(client);
   if (!existing || !existing.id) {
     throw new Error(`Failed to retrieve existing client, ${client.clientId}`);
   }
   const url = `${clientsAdminUrl}/${encodeURIComponent(existing.id)}`;
-  const response = await fetch(url, {
+  await authenticatedFetch(url, {
     method: "DELETE",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-  });
-  await throwErrorIfNeeded(response, () => {
-    resetCachedToken();
+    headers: { "Content-Type": "application/json" },
   });
 }
