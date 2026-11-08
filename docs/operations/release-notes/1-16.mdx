@@ -5,8 +5,6 @@ sidebar:
   order: 3.979
 ---
 
-import { Steps } from "@astrojs/starlight/components";
-
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
@@ -45,14 +43,7 @@ The following versions change from UDS Core 1.15.3:
 
 ### Identity Config updates
 
-Keycloak 26.8.2 requires an Admin API audience. Prepare the deployment before upgrading:
-
-<Steps>
-
-1. **Deploy the migration.** Deploy an Identity Config build containing the 26.8.2 migration to every Keycloak 26.8.1 replica. Confirm the logs show `Applied UDS realm migration 26.8.2`.
-2. **Upgrade Keycloak.** The [supported upstream upgrade requires planned downtime](https://www.keycloak.org/docs/26.8.2/upgrading/): stop all 26.8.1 replicas before starting any 26.8.2 replica.
-
-</Steps>
+Before rolling Keycloak to 26.8.2, deploy the updated Identity Config to every 26.8.1 replica and confirm `Applied UDS realm migration 26.8.2` in the logs. This prepared, two-stage rollout passed local availability testing with two replicas. Mixed-version rolling upgrades remain outside [Keycloak's supported upgrade procedure](https://www.keycloak.org/docs/26.8.2/upgrading/).
 
 The migration adds the `kc-admin-api` scope to UDS admin clients. Existing sessions get it when refreshed; users do not need to log out. After a 401 or 403, UDS Operator renews its cached token and retries once.
 

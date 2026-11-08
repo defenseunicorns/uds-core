@@ -421,6 +421,7 @@ describe("credentialsGetAccessToken", () => {
 describe("Admin API token recovery", () => {
   const client = { clientId: "test-client" };
   const existing = { ...client, id: "client-uuid" };
+  const okClients = { ok: true, status: 200, statusText: "OK", data: [existing] };
   const adminUrl = "http://keycloak-http.keycloak.svc.cluster.local:8080/admin/realms/uds/clients";
   const firstToken = makeJwt(Math.floor(Date.now() / 1000) + 3600);
   const renewedToken = makeJwt(Math.floor(Date.now() / 1000) + 7200);
@@ -437,25 +438,15 @@ describe("Admin API token recovery", () => {
     ["update", credentialsUpdate, "PUT", `${adminUrl}/client-uuid`],
     ["delete", credentialsDelete, "DELETE", `${adminUrl}/client-uuid`],
   ] as const)("renews and retries %s once", async (_name, operation, method, targetUrl) => {
-    let rejected = false;
-    let tokenCalls = 0;
-    mockFetch.mockImplementation(
-      async (url: string, options: { method?: string; headers?: Record<string, string> }) => {
-        if (url.includes("/protocol/openid-connect/token")) {
-          return okTokenResponse(++tokenCalls === 1 ? firstToken : renewedToken);
-        }
-        if (url === targetUrl && options.method === method && !rejected) {
-          rejected = true;
-          return errorResponse(401, "Unauthorized");
-        }
-        return {
-          ok: true,
-          status: 200,
-          statusText: "OK",
-          data: url.includes("clientId=test-client") ? [existing] : {},
-        };
-      },
-    );
+    mockFetch.mockResolvedValueOnce(okTokenResponse(firstToken));
+    const needsLookup = method === "PUT" || method === "DELETE";
+    const returnsClient = method === "POST" || method === "PUT";
+    if (needsLookup) mockFetch.mockResolvedValueOnce(okClients);
+    mockFetch
+      .mockResolvedValueOnce(errorResponse(401, "Unauthorized"))
+      .mockResolvedValueOnce(okTokenResponse(renewedToken))
+      .mockResolvedValueOnce(okClients);
+    if (returnsClient) mockFetch.mockResolvedValueOnce(okClients);
 
     await operation(client);
 
@@ -468,6 +459,7 @@ describe("Admin API token recovery", () => {
         ([, options]) => (options as { headers: Record<string, string> }).headers.Authorization,
       ),
     ).toEqual([`Bearer ${firstToken}`, `Bearer ${renewedToken}`]);
+    expect(mockFetch).toHaveBeenCalledTimes(4 + Number(needsLookup) + Number(returnsClient));
   });
 
   it("propagates renewal failures", async () => {
@@ -481,13 +473,11 @@ describe("Admin API token recovery", () => {
   });
 
   it("propagates a repeated 403 and clears the rejected renewed token", async () => {
-    let tokenCalls = 0;
-    mockFetch.mockImplementation(async (url: string) => {
-      if (url.includes("/protocol/openid-connect/token")) {
-        return okTokenResponse(++tokenCalls === 1 ? firstToken : renewedToken);
-      }
-      return errorResponse(403, "Forbidden");
-    });
+    mockFetch
+      .mockResolvedValueOnce(okTokenResponse(firstToken))
+      .mockResolvedValueOnce(errorResponse(403, "Forbidden"))
+      .mockResolvedValueOnce(okTokenResponse(renewedToken))
+      .mockResolvedValueOnce(errorResponse(403, "Forbidden"));
 
     await expect(credentialsGet(client)).rejects.toThrow("403");
     expect(mockFetch).toHaveBeenCalledTimes(4);
@@ -538,25 +528,13 @@ describe("Admin API token recovery", () => {
   ] as const)(
     "uses renewed GET credentials for %s",
     async (_name, operation, method, targetUrl) => {
-      let tokenCalls = 0;
-      let rejectedGet = false;
-      mockFetch.mockImplementation(
-        async (url: string, options: { method?: string; headers?: Record<string, string> }) => {
-          if (url.includes("/protocol/openid-connect/token")) {
-            return okTokenResponse(++tokenCalls === 1 ? firstToken : renewedToken);
-          }
-          if (options.method === "GET" && !rejectedGet) {
-            rejectedGet = true;
-            return errorResponse(401, "Unauthorized");
-          }
-          return {
-            ok: true,
-            status: 200,
-            statusText: "OK",
-            data: url.includes("clientId=test-client") ? [existing] : {},
-          };
-        },
-      );
+      mockFetch
+        .mockResolvedValueOnce(okTokenResponse(firstToken))
+        .mockResolvedValueOnce(errorResponse(401, "Unauthorized"))
+        .mockResolvedValueOnce(okTokenResponse(renewedToken))
+        .mockResolvedValueOnce(okClients)
+        .mockResolvedValueOnce(okClients);
+      if (method === "PUT") mockFetch.mockResolvedValueOnce(okClients);
 
       await operation(client);
 
@@ -566,6 +544,7 @@ describe("Admin API token recovery", () => {
       expect((mutation?.[1] as { headers: Record<string, string> }).headers.Authorization).toBe(
         `Bearer ${renewedToken}`,
       );
+      expect(mockFetch).toHaveBeenCalledTimes(method === "PUT" ? 6 : 5);
     },
   );
 });
