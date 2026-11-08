@@ -4,7 +4,6 @@
 name: HA k3d Testing
 
 on:
-  workflow_dispatch:
   schedule:
     # Runs every morning at 2:00 AM UTC
     - cron: "0 2 * * *"
@@ -16,6 +15,7 @@ on:
       - ".github/workflows/test-k3d-ha.yaml"
       - "bundles/k3d-standard/**"
       - "bundles/k3d-standard-next/**"
+      - "src/keycloak/**"
 
 concurrency:
   group: test-k3d-ha-${{ github.ref }}
