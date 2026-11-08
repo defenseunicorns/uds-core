@@ -152,8 +152,7 @@ restartPolicy: Always
 # Lifecycle hooks for the Keycloak container
 lifecycleHooks: {}
 
-# Allow the 5s shutdown delay and 5s timeout to complete, with time for
-# Infinispan cleanup before Kubernetes kills the pod.
+# Time in seconds for graceful Keycloak shutdown and Infinispan cleanup before forced termination.
 terminationGracePeriodSeconds: 30
 
 # The internal Kubernetes cluster domain
