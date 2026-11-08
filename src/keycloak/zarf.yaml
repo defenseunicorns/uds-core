@@ -35,8 +35,8 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - quay.io/keycloak/keycloak:26.8.1
-      - ghcr.io/defenseunicorns/uds/identity-config:0.32.4
+      - quay.io/keycloak/keycloak:26.8.2
+      - quay.io/sebastian_laskawiec/uds_identity_config:kc2682-90154a70ddd5-20261108@sha256:a9ff78c556c0b1423b13bd631219fe6aaa8a49afd20dc58bcedb163179d296d8
 
   - name: keycloak
     required: true
@@ -49,8 +49,8 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips:26.8.1-fips
-      - registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.32.4
+      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips:26.8.2-fips
+      - quay.io/sebastian_laskawiec/uds_identity_config:kc2682-90154a70ddd5-20261108@sha256:a9ff78c556c0b1423b13bd631219fe6aaa8a49afd20dc58bcedb163179d296d8
 
   - name: keycloak
     required: true
@@ -63,5 +63,5 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - cgr.dev/defenseunicorns.com/keycloak-fips:v26.8.1
-      - ghcr.io/defenseunicorns/uds/identity-config:0.32.4
+      - cgr.dev/defenseunicorns.com/keycloak-fips:v26.8.2
+      - quay.io/sebastian_laskawiec/uds_identity_config:kc2682-90154a70ddd5-20261108@sha256:a9ff78c556c0b1423b13bd631219fe6aaa8a49afd20dc58bcedb163179d296d8

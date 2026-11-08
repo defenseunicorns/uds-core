@@ -3,7 +3,7 @@
 
 image:
   repository: registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips
-  tag: "26.8.1-fips"
+  tag: "26.8.2-fips"
 podSecurityContext:
   fsGroup: 1000
 securityContext:
@@ -13,7 +13,7 @@ securityContext:
   capabilities:
     drop:
       - ALL
-configImage: registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.32.4
+configImage: quay.io/sebastian_laskawiec/uds_identity_config:kc2682-90154a70ddd5-20261108@sha256:a9ff78c556c0b1423b13bd631219fe6aaa8a49afd20dc58bcedb163179d296d8
 
 migrations:
   deleteGeneratedTrustStore: true
