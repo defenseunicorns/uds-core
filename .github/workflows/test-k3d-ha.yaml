@@ -4,6 +4,7 @@
 name: HA k3d Testing
 
 on:
+  workflow_dispatch:
   schedule:
     # Runs every morning at 2:00 AM UTC
     - cron: "0 2 * * *"
