@@ -18,7 +18,7 @@ metadata {
 }
 
 package "init" {
-  source = "oci://ghcr.io/zarf-dev/packages/init:v0.88.0"
+  source = "oci://ghcr.io/zarf-dev/packages/init:v0.89.0"
 
   signature_verification {
     keyless {
