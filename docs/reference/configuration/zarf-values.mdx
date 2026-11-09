@@ -9,7 +9,9 @@ UDS Core exposes its Helm configuration as native [Zarf values](https://docs.zar
 
 ## Deploying with values
 
-UDS Core package deployment requires UDS CLI `v0.34.0` or later (Zarf `v0.79.0` or later). Pass a values file with `--values`, or set individual paths with `--set-values <component>.<chart>.<path>=<value>`.
+UDS Core package deployment requires UDS CLI `v0.41.0` or later (Zarf `v0.79.0` or later). Older UDS CLI versions may fail to deploy newer Zarf init packages, so upgrade the CLI before installing or upgrading Core.
+
+Pass a values file with `--values`, or set individual paths with `--set-values <component>.<chart>.<path>=<value>`.
 
 For example, this values file enables Keycloak horizontal autoscaling and scales authservice:
 

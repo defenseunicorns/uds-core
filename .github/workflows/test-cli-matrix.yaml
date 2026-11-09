@@ -38,23 +38,23 @@ jobs:
           - mode: legacy
             scenario: legacy-old-old
             flavor: upstream
-            install_cli: v0.34.0 # Minimum supported Legacy CLI
-            upgrade_cli: v0.34.0
+            install_cli: v0.41.0 # Minimum supported Legacy CLI
+            upgrade_cli: v0.41.0
           - mode: legacy
             scenario: legacy-old-new
             flavor: upstream
-            install_cli: v0.34.0 # Minimum supported Legacy CLI
+            install_cli: v0.41.0 # Minimum supported Legacy CLI
             # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
             upgrade_cli: v0.41.0
           - mode: next
             scenario: legacy-to-next
             flavor: upstream
-            install_cli: v0.34.0 # Minimum supported Legacy CLI
-            upgrade_cli: v0.36.0 # Minimum supported CLI Next version
+            install_cli: v0.41.0 # Minimum supported Legacy CLI
+            upgrade_cli: v0.41.0 # Minimum supported CLI Next version
           - mode: next
             scenario: next-min-to-next-latest
             flavor: upstream
-            install_cli: v0.36.0 # Minimum supported CLI Next version
+            install_cli: v0.41.0 # Minimum supported CLI Next version
             # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
             upgrade_cli: v0.41.0
 
@@ -129,10 +129,10 @@ jobs:
       matrix:
         include:
           - mode: legacy
-            cli_version: v0.34.0 # Minimum supported Legacy CLI
+            cli_version: v0.41.0 # Minimum supported Legacy CLI
             task: test:uds-core-legacy-e2e
           - mode: next
-            cli_version: v0.36.0 # Minimum supported CLI Next version
+            cli_version: v0.41.0 # Minimum supported CLI Next version
             task: test:uds-core-e2e
 
     steps:
