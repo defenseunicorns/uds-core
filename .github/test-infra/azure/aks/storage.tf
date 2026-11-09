@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 resource "azurerm_storage_account" "cluster_storage" {
@@ -46,7 +46,7 @@ resource "azurerm_postgresql_flexible_server" "psql_server" {
   storage_mb          = 32768
   storage_tier        = "P30"
 
-  sku_name = "GP_Standard_D4s_v3"
+  sku_name = "GP_Standard_D4ds_v5"
   lifecycle {
     ignore_changes = [zone]
   }
