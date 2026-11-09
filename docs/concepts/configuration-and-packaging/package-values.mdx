@@ -37,7 +37,6 @@ Use common names and groupings for other supported integration settings:
 | Values pattern | Guidance |
 | --- | --- |
 | `domain` | Expose the base domain when the chart or application needs it for application URLs or SSO redirect URIs. |
-| `gateway` | Let deployers select the Istio gateway in `Package.spec.network.expose` when the application may use either the `admin` or `tenant` gateway. |
 | `sso.enabled`, `sso.protocol` | Configure SSO and the generated `Secret` the application consumes, exposing only supported protocols and keeping SSO enabled by default when the package requires it. |
 | `sso.requiredGroups`, `sso.adminGroups`, `sso.defaultClientScopes` | Configure login restrictions and client scopes alongside application-specific administrator-group mappings. |
 | Dependency groups such as `postgres`, `redis`, and `storage` | Group connection settings and network-rule inputs such as `internal`, `namespace`, `selector`, and `port` to support the application's in-cluster or external dependency options. |
