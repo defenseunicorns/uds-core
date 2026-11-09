@@ -1462,6 +1462,9 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "alertmanagerConfigFileSystemMode": {
+                      "type": "string"
+                    },
                     "alertmanagerConfigMatcherStrategy": {
                       "properties": {},
                       "type": "object"
@@ -1516,16 +1519,24 @@
                     "dnsPolicy": {
                       "type": "string"
                     },
-                    "enableServiceLinks": {},
-                    "externalUrl": {},
+                    "enableServiceLinks": {
+                      "type": "string"
+                    },
+                    "externalUrl": {
+                      "type": "string"
+                    },
                     "forceEnableClusterMode": {
                       "type": "boolean"
                     },
                     "hostAliases": {
                       "type": "array"
                     },
-                    "hostNetwork": {},
-                    "hostUsers": {},
+                    "hostNetwork": {
+                      "type": "string"
+                    },
+                    "hostUsers": {
+                      "type": "string"
+                    },
                     "initContainers": {
                       "type": "array"
                     },
@@ -1601,12 +1612,16 @@
                     "secrets": {
                       "type": "array"
                     },
-                    "serviceName": {},
+                    "serviceName": {
+                      "type": "string"
+                    },
                     "storage": {
                       "properties": {},
                       "type": "object"
                     },
-                    "terminationGracePeriodSeconds": {},
+                    "terminationGracePeriodSeconds": {
+                      "type": "string"
+                    },
                     "tlsConfig": {
                       "properties": {},
                       "type": "object"
@@ -2203,7 +2218,9 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {},
+                    "bearerTokenFile": {
+                      "type": "string"
+                    },
                     "enableHttp2": {
                       "type": "boolean"
                     },
@@ -2982,7 +2999,9 @@
               },
               "type": "object"
             },
-            "extraManifests": {},
+            "extraManifests": {
+              "type": "string"
+            },
             "fullnameOverride": {
               "type": "string"
             },
@@ -3100,8 +3119,12 @@
                     "folder": {
                       "type": "string"
                     },
-                    "folderRef": {},
-                    "folderUID": {},
+                    "folderRef": {
+                      "type": "string"
+                    },
+                    "folderUID": {
+                      "type": "string"
+                    },
                     "matchLabels": {
                       "properties": {},
                       "type": "object"
@@ -3497,8 +3520,12 @@
                       },
                       "type": "object"
                     },
-                    "port": {},
-                    "targetPort": {}
+                    "port": {
+                      "type": "string"
+                    },
+                    "targetPort": {
+                      "type": "string"
+                    }
                   },
                   "type": "object"
                 },
@@ -3530,7 +3557,9 @@
                     "enabled": {
                       "type": "boolean"
                     },
-                    "https": {},
+                    "https": {
+                      "type": "string"
+                    },
                     "interval": {
                       "type": "string"
                     },
@@ -4033,8 +4062,12 @@
                       },
                       "type": "object"
                     },
-                    "port": {},
-                    "targetPort": {}
+                    "port": {
+                      "type": "string"
+                    },
+                    "targetPort": {
+                      "type": "string"
+                    }
                   },
                   "type": "object"
                 },
@@ -4066,7 +4099,9 @@
                     "enabled": {
                       "type": "boolean"
                     },
-                    "https": {},
+                    "https": {
+                      "type": "string"
+                    },
                     "interval": {
                       "type": "string"
                     },
@@ -4502,11 +4537,15 @@
                   "properties": {},
                   "type": "object"
                 },
-                "additionalPodMonitors": {},
+                "additionalPodMonitors": {
+                  "type": "string"
+                },
                 "additionalRulesForClusterRole": {
                   "type": "array"
                 },
-                "additionalServiceMonitors": {},
+                "additionalServiceMonitors": {
+                  "type": "string"
+                },
                 "agentMode": {
                   "type": "boolean"
                 },
@@ -4630,7 +4669,9 @@
                     "flavor": {
                       "type": "string"
                     },
-                    "namespace": {}
+                    "namespace": {
+                      "type": "string"
+                    }
                   },
                   "type": "object"
                 },
@@ -4774,7 +4815,9 @@
                     "enableRemoteWriteReceiver": {
                       "type": "boolean"
                     },
-                    "enableServiceLinks": {},
+                    "enableServiceLinks": {
+                      "type": "string"
+                    },
                     "enforcedBodySizeLimit": {
                       "type": "string"
                     },
@@ -4816,13 +4859,18 @@
                     "externalUrl": {
                       "type": "string"
                     },
+                    "extraScrapeMetrics": {
+                      "type": "string"
+                    },
                     "hostAliases": {
                       "type": "array"
                     },
                     "hostNetwork": {
                       "type": "boolean"
                     },
-                    "hostUsers": {},
+                    "hostUsers": {
+                      "type": "string"
+                    },
                     "ignoreNamespaceSelectors": {
                       "type": "boolean"
                     },
@@ -5096,7 +5144,9 @@
                     "serviceMonitorSelectorNilUsesHelmValues": {
                       "type": "boolean"
                     },
-                    "serviceName": {},
+                    "serviceName": {
+                      "type": "string"
+                    },
                     "shardRetentionPolicy": {
                       "properties": {},
                       "type": "object"
@@ -5145,7 +5195,9 @@
                     "targetLimit": {
                       "type": "number"
                     },
-                    "terminationGracePeriodSeconds": {},
+                    "terminationGracePeriodSeconds": {
+                      "type": "string"
+                    },
                     "thanos": {
                       "properties": {},
                       "type": "object"
@@ -5440,7 +5492,9 @@
                     "publishNotReadyAddresses": {
                       "type": "boolean"
                     },
-                    "reloaderWebNodePort": {},
+                    "reloaderWebNodePort": {
+                      "type": "string"
+                    },
                     "reloaderWebPort": {
                       "type": "number"
                     },
@@ -5499,7 +5553,9 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {},
+                    "bearerTokenFile": {
+                      "type": "string"
+                    },
                     "interval": {
                       "type": "string"
                     },
@@ -5745,7 +5801,9 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {},
+                    "bearerTokenFile": {
+                      "type": "string"
+                    },
                     "enabled": {
                       "type": "boolean"
                     },
@@ -5991,7 +6049,9 @@
                             "duration": {
                               "type": "string"
                             },
-                            "revisionHistoryLimit": {}
+                            "revisionHistoryLimit": {
+                              "type": "string"
+                            }
                           },
                           "type": "object"
                         },
@@ -6003,7 +6063,9 @@
                             "duration": {
                               "type": "string"
                             },
-                            "revisionHistoryLimit": {}
+                            "revisionHistoryLimit": {
+                              "type": "string"
+                            }
                           },
                           "type": "object"
                         }
@@ -6413,7 +6475,9 @@
                 "hostNetwork": {
                   "type": "boolean"
                 },
-                "hostUsers": {},
+                "hostUsers": {
+                  "type": "string"
+                },
                 "kubeletEndpointSliceEnabled": {
                   "type": "boolean"
                 },
@@ -7007,7 +7071,9 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {},
+                    "bearerTokenFile": {
+                      "type": "string"
+                    },
                     "interval": {
                       "type": "string"
                     },
@@ -7112,7 +7178,9 @@
                     "enableFeatures": {
                       "type": "array"
                     },
-                    "enableServiceLinks": {},
+                    "enableServiceLinks": {
+                      "type": "string"
+                    },
                     "enforcedNamespaceLabel": {
                       "type": "string"
                     },
@@ -7122,7 +7190,9 @@
                     "excludedFromEnforcement": {
                       "type": "array"
                     },
-                    "externalPrefix": {},
+                    "externalPrefix": {
+                      "type": "string"
+                    },
                     "externalPrefixNilUsesHelmValues": {
                       "type": "boolean"
                     },
@@ -7136,7 +7206,9 @@
                     "hostAliases": {
                       "type": "array"
                     },
-                    "hostUsers": {},
+                    "hostUsers": {
+                      "type": "string"
+                    },
                     "imagePullPolicy": {
                       "type": "string"
                     },
@@ -7156,7 +7228,9 @@
                     "logLevel": {
                       "type": "string"
                     },
-                    "minReadySeconds": {},
+                    "minReadySeconds": {
+                      "type": "string"
+                    },
                     "nodeSelector": {
                       "properties": {
                         "kubernetes.io/os": {
@@ -7238,7 +7312,9 @@
                     "routePrefix": {
                       "type": "string"
                     },
-                    "ruleConcurrentEval": {},
+                    "ruleConcurrentEval": {
+                      "type": "string"
+                    },
                     "ruleGracePeriod": {
                       "type": "string"
                     },
@@ -7262,12 +7338,16 @@
                     "schedulerName": {
                       "type": "string"
                     },
-                    "serviceName": {},
+                    "serviceName": {
+                      "type": "string"
+                    },
                     "storage": {
                       "properties": {},
                       "type": "object"
                     },
-                    "terminationGracePeriodSeconds": {},
+                    "terminationGracePeriodSeconds": {
+                      "type": "string"
+                    },
                     "tolerations": {
                       "type": "array"
                     },
@@ -7596,8 +7676,12 @@
               "properties": {},
               "type": "object"
             },
-            "dnsConfig": {},
-            "dnsPolicy": {},
+            "dnsConfig": {
+              "type": "string"
+            },
+            "dnsPolicy": {
+              "type": "string"
+            },
             "extraArgs": {
               "type": "array"
             },
@@ -7849,7 +7933,9 @@
                   },
                   "type": "object"
                 },
-                "targets": {},
+                "targets": {
+                  "type": "string"
+                },
                 "tlsConfig": {
                   "properties": {},
                   "type": "object"
@@ -8049,7 +8135,9 @@
                 "create": {
                   "type": "boolean"
                 },
-                "name": {}
+                "name": {
+                  "type": "string"
+                }
               },
               "type": "object"
             },
@@ -8058,7 +8146,9 @@
                 "apiVersion": {
                   "type": "string"
                 },
-                "bearerTokenFile": {},
+                "bearerTokenFile": {
+                  "type": "string"
+                },
                 "defaults": {
                   "properties": {
                     "additionalMetricsRelabels": {
@@ -8131,7 +8221,9 @@
                   },
                   "type": "object"
                 },
-                "targets": {},
+                "targets": {
+                  "type": "string"
+                },
                 "tlsConfig": {
                   "properties": {},
                   "type": "object"

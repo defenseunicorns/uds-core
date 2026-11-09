@@ -375,7 +375,9 @@
                   },
                   "type": "array"
                 },
-                "priorityClassName": {},
+                "priorityClassName": {
+                  "type": "string"
+                },
                 "replicas": {
                   "type": "number"
                 }
@@ -661,8 +663,12 @@
               },
               "type": "object"
             },
-            "cniBinDir": {},
-            "cniConfDir": {},
+            "cniBinDir": {
+              "type": "string"
+            },
+            "cniConfDir": {
+              "type": "string"
+            },
             "excludeNamespaces": {
               "items": {
                 "type": "string"

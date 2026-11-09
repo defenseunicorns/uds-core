@@ -2330,7 +2330,9 @@
               },
               "type": "object"
             },
-            "clusterLabelOverride": {},
+            "clusterLabelOverride": {
+              "type": "string"
+            },
             "commonLabels": {
               "additionalProperties": {
                 "type": "string"
@@ -5958,19 +5960,33 @@
                   "properties": {
                     "azure": {
                       "properties": {
-                        "accountKey": {},
-                        "accountName": {},
-                        "chunkDelimiter": {},
-                        "connectionString": {},
-                        "endpointSuffix": {},
-                        "requestTimeout": {},
+                        "accountKey": {
+                          "type": "string"
+                        },
+                        "accountName": {
+                          "type": "string"
+                        },
+                        "chunkDelimiter": {
+                          "type": "string"
+                        },
+                        "connectionString": {
+                          "type": "string"
+                        },
+                        "endpointSuffix": {
+                          "type": "string"
+                        },
+                        "requestTimeout": {
+                          "type": "string"
+                        },
                         "useFederatedToken": {
                           "type": "boolean"
                         },
                         "useManagedIdentity": {
                           "type": "boolean"
                         },
-                        "userAssignedId": {}
+                        "userAssignedId": {
+                          "type": "string"
+                        }
                       },
                       "type": "object"
                     },
@@ -6014,22 +6030,34 @@
                       "properties": {
                         "azure": {
                           "properties": {
-                            "account_key": {},
-                            "account_name": {}
+                            "account_key": {
+                              "type": "string"
+                            },
+                            "account_name": {
+                              "type": "string"
+                            }
                           },
                           "type": "object"
                         },
                         "gcs": {
                           "properties": {
-                            "bucket_name": {},
-                            "service_account": {}
+                            "bucket_name": {
+                              "type": "string"
+                            },
+                            "service_account": {
+                              "type": "string"
+                            }
                           },
                           "type": "object"
                         },
                         "s3": {
                           "properties": {
-                            "access_key_id": {},
-                            "endpoint": {},
+                            "access_key_id": {
+                              "type": "string"
+                            },
+                            "endpoint": {
+                              "type": "string"
+                            },
                             "http": {
                               "properties": {},
                               "type": "object"
@@ -6037,8 +6065,12 @@
                             "insecure": {
                               "type": "boolean"
                             },
-                            "region": {},
-                            "secret_access_key": {},
+                            "region": {
+                              "type": "string"
+                            },
+                            "secret_access_key": {
+                              "type": "string"
+                            },
                             "sse": {
                               "properties": {},
                               "type": "object"
@@ -6046,7 +6078,9 @@
                           },
                           "type": "object"
                         },
-                        "storage_prefix": {},
+                        "storage_prefix": {
+                          "type": "string"
+                        },
                         "type": {
                           "type": "string"
                         }
@@ -6075,39 +6109,83 @@
                         "insecure": {
                           "type": "boolean"
                         },
-                        "region": {},
-                        "s3": {},
+                        "region": {
+                          "type": "string"
+                        },
+                        "s3": {
+                          "type": "string"
+                        },
                         "s3ForcePathStyle": {
                           "type": "boolean"
                         },
                         "secretAccessKey": {
                           "type": "string"
                         },
-                        "signatureVersion": {}
+                        "signatureVersion": {
+                          "type": "string"
+                        }
                       },
                       "type": "object"
                     },
                     "swift": {
                       "properties": {
-                        "auth_url": {},
-                        "auth_version": {},
-                        "connect_timeout": {},
-                        "container_name": {},
-                        "domain_id": {},
-                        "domain_name": {},
-                        "internal": {},
-                        "max_retries": {},
-                        "password": {},
-                        "project_domain_id": {},
-                        "project_domain_name": {},
-                        "project_id": {},
-                        "project_name": {},
-                        "region_name": {},
-                        "request_timeout": {},
-                        "user_domain_id": {},
-                        "user_domain_name": {},
-                        "user_id": {},
-                        "username": {}
+                        "auth_url": {
+                          "type": "string"
+                        },
+                        "auth_version": {
+                          "type": "string"
+                        },
+                        "connect_timeout": {
+                          "type": "string"
+                        },
+                        "container_name": {
+                          "type": "string"
+                        },
+                        "domain_id": {
+                          "type": "string"
+                        },
+                        "domain_name": {
+                          "type": "string"
+                        },
+                        "internal": {
+                          "type": "string"
+                        },
+                        "max_retries": {
+                          "type": "string"
+                        },
+                        "password": {
+                          "type": "string"
+                        },
+                        "project_domain_id": {
+                          "type": "string"
+                        },
+                        "project_domain_name": {
+                          "type": "string"
+                        },
+                        "project_id": {
+                          "type": "string"
+                        },
+                        "project_name": {
+                          "type": "string"
+                        },
+                        "region_name": {
+                          "type": "string"
+                        },
+                        "request_timeout": {
+                          "type": "string"
+                        },
+                        "user_domain_id": {
+                          "type": "string"
+                        },
+                        "user_domain_name": {
+                          "type": "string"
+                        },
+                        "user_id": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        }
                       },
                       "type": "object"
                     },
@@ -11948,7 +12026,9 @@
                 "targetCPUUtilizationPercentage": {
                   "type": "number"
                 },
-                "targetMemoryUtilizationPercentage": {}
+                "targetMemoryUtilizationPercentage": {
+                  "type": "string"
+                }
               },
               "type": "object"
             },
@@ -12376,7 +12456,9 @@
                     "targetCPUUtilizationPercentage": {
                       "type": "number"
                     },
-                    "targetMemoryUtilizationPercentage": {}
+                    "targetMemoryUtilizationPercentage": {
+                      "type": "string"
+                    }
                   },
                   "type": "object"
                 },
@@ -12500,7 +12582,9 @@
                     "create": {
                       "type": "boolean"
                     },
-                    "name": {}
+                    "name": {
+                      "type": "string"
+                    }
                   },
                   "type": "object"
                 },
@@ -12611,7 +12695,9 @@
                 "size": {
                   "type": "string"
                 },
-                "volumeAttributesClassName": {}
+                "volumeAttributesClassName": {
+                  "type": "string"
+                }
               },
               "type": "object"
             },
@@ -12624,7 +12710,9 @@
                 "enabled": {
                   "type": "boolean"
                 },
-                "maxUnavailable": {},
+                "maxUnavailable": {
+                  "type": "string"
+                },
                 "minAvailable": {
                   "type": "number"
                 }
@@ -12660,7 +12748,9 @@
                 "honorTimestamps": {
                   "type": "boolean"
                 },
-                "interval": {},
+                "interval": {
+                  "type": "string"
+                },
                 "jobLabel": {
                   "type": "string"
                 },
@@ -12679,7 +12769,9 @@
                 "relabelings": {
                   "type": "array"
                 },
-                "scrapeTimeout": {}
+                "scrapeTimeout": {
+                  "type": "string"
+                }
               },
               "type": "object"
             },
@@ -12809,7 +12901,9 @@
                 "create": {
                   "type": "boolean"
                 },
-                "name": {}
+                "name": {
+                  "type": "string"
+                }
               },
               "type": "object"
             },
