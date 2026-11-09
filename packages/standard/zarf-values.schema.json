@@ -4863,6 +4863,9 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "alertmanagerConfigFileSystemMode": {
+                      "type": "string"
+                    },
                     "alertmanagerConfigMatcherStrategy": {
                       "properties": {},
                       "type": "object"
@@ -8217,6 +8220,7 @@
                     "externalUrl": {
                       "type": "string"
                     },
+                    "extraScrapeMetrics": {},
                     "hostAliases": {
                       "type": "array"
                     },
