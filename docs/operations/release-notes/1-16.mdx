@@ -43,7 +43,7 @@ The following versions change from UDS Core 1.15.3:
 
 ### Identity Config updates
 
-Before rolling Keycloak to 26.8.2, deploy the updated Identity Config to every 26.8.1 replica and confirm `Applied UDS realm migration 26.8.2` in the logs. This prepared, two-stage rollout passed local availability testing with two replicas. Mixed-version rolling upgrades remain outside [Keycloak's supported upgrade procedure](https://www.keycloak.org/docs/26.8.2/upgrading/).
+During a rolling upgrade to Keycloak 26.8.2, remaining 26.8.1 replicas can issue tokens without the required Admin API audience. Token retries do not guarantee uninterrupted Operator access during this overlap. Mixed-version rolling upgrades remain outside [Keycloak's supported upgrade procedure](https://www.keycloak.org/docs/26.8.2/upgrading/).
 
 The migration adds the `kc-admin-api` scope to UDS admin clients. Existing sessions get it when refreshed; users do not need to log out. After a 401 or 403, UDS Operator renews its cached token and retries once.
 
