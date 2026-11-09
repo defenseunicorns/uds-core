@@ -28,7 +28,7 @@ tasks:
     description: "Get the CA cert value for the Istio Gateway"
     actions:
       - cmd: |
-          IMAGE_REF="quay.io/sebastian_laskawiec/uds_identity_config:kc2682-90154a70ddd5-20261108@sha256:a9ff78c556c0b1423b13bd631219fe6aaa8a49afd20dc58bcedb163179d296d8"
+          IMAGE_REF="quay.io/sebastian_laskawiec/uds_identity_config:kc2682-49d55c0-20261108@sha256:e3a1beec332d9d63ba1d6286e8350efb06ed77ee33748ca755561a7e3cb96686"
           # Pre-pull image to simplify output
           docker pull "${IMAGE_REF}" -q
           CA_CERT=$(docker run --rm --entrypoint sh "${IMAGE_REF}" -c 'cat /home/nonroot/authorized_certs.pem | base64 -w 0')
