@@ -13,7 +13,7 @@ securityContext:
   capabilities:
     drop:
       - ALL
-configImage: quay.io/sebastian_laskawiec/uds_identity_config:kc2682-49d55c0-20261108@sha256:e3a1beec332d9d63ba1d6286e8350efb06ed77ee33748ca755561a7e3cb96686
+configImage: quay.io/sebastian_laskawiec/uds_identity_config:kc2682-4c30ca6-20261108@sha256:a9383ed0df7b05f05b7f0224a8dca6055c7bbc3b3c8eb11adc2f0928504ed561
 
 migrations:
   deleteGeneratedTrustStore: true
