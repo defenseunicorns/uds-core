@@ -145,45 +145,19 @@
                   },
                   "type": "array"
                 },
-                "backupSyncPeriod": {
-                  "type": "string"
-                },
-                "clientBurst": {
-                  "type": "string"
-                },
-                "clientPageSize": {
-                  "type": "string"
-                },
-                "clientQPS": {
-                  "type": "string"
-                },
-                "dataMoverPrepareTimeout": {
-                  "type": "string"
-                },
-                "defaultBackupStorageLocation": {
-                  "type": "string"
-                },
-                "defaultBackupTTL": {
-                  "type": "string"
-                },
-                "defaultItemOperationTimeout": {
-                  "type": "string"
-                },
-                "defaultRepoMaintainFrequency": {
-                  "type": "string"
-                },
-                "defaultSnapshotMoveData": {
-                  "type": "string"
-                },
-                "defaultVolumeSnapshotLocations": {
-                  "type": "string"
-                },
-                "defaultVolumesToFsBackup": {
-                  "type": "string"
-                },
-                "disableControllers": {
-                  "type": "string"
-                },
+                "backupSyncPeriod": {},
+                "clientBurst": {},
+                "clientPageSize": {},
+                "clientQPS": {},
+                "dataMoverPrepareTimeout": {},
+                "defaultBackupStorageLocation": {},
+                "defaultBackupTTL": {},
+                "defaultItemOperationTimeout": {},
+                "defaultRepoMaintainFrequency": {},
+                "defaultSnapshotMoveData": {},
+                "defaultVolumeSnapshotLocations": {},
+                "defaultVolumesToFsBackup": {},
+                "disableControllers": {},
                 "disableInformerCache": {
                   "type": "boolean"
                 },
@@ -193,39 +167,21 @@
                 "extraEnvVars": {
                   "type": "array"
                 },
-                "features": {
-                  "type": "string"
-                },
-                "fsBackupTimeout": {
-                  "type": "string"
-                },
-                "garbageCollectionFrequency": {
-                  "type": "string"
-                },
-                "itemBlockWorkerCount": {
-                  "type": "string"
-                },
-                "logFormat": {
-                  "type": "string"
-                },
-                "logLevel": {
-                  "type": "string"
-                },
-                "metricsAddress": {
-                  "type": "string"
-                },
+                "features": {},
+                "fsBackupTimeout": {},
+                "garbageCollectionFrequency": {},
+                "itemBlockWorkerCount": {},
+                "logFormat": {},
+                "logLevel": {},
+                "metricsAddress": {},
                 "namespace": {
                   "type": [
                     "string",
                     "null"
                   ]
                 },
-                "pluginDir": {
-                  "type": "string"
-                },
-                "profilerAddress": {
-                  "type": "string"
-                },
+                "pluginDir": {},
+                "profilerAddress": {},
                 "repositoryMaintenanceJob": {
                   "properties": {
                     "latestJobsCount": {
@@ -349,21 +305,11 @@
                   },
                   "type": "object"
                 },
-                "restoreOnlyMode": {
-                  "type": "string"
-                },
-                "restoreResourcePriorities": {
-                  "type": "string"
-                },
-                "storeValidationFrequency": {
-                  "type": "string"
-                },
-                "terminatingResourceTimeout": {
-                  "type": "string"
-                },
-                "uploaderType": {
-                  "type": "string"
-                },
+                "restoreOnlyMode": {},
+                "restoreResourcePriorities": {},
+                "storeValidationFrequency": {},
+                "terminatingResourceTimeout": {},
+                "uploaderType": {},
                 "volumeSnapshotLocation": {
                   "items": {
                     "properties": {
@@ -377,12 +323,8 @@
                       },
                       "credential": {
                         "properties": {
-                          "key": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          }
+                          "key": {},
+                          "name": {}
                         },
                         "type": "object"
                       },
@@ -650,9 +592,7 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "nodePort": {
-                      "type": "string"
-                    },
+                    "nodePort": {},
                     "type": {
                       "type": "string"
                     }

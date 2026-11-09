@@ -130,9 +130,7 @@
               },
               "type": "object"
             },
-            "hostUsers": {
-              "type": "string"
-            },
+            "hostUsers": {},
             "imagePullSecrets": {
               "type": "array"
             },
@@ -191,15 +189,9 @@
                 "enabled": {
                   "type": "boolean"
                 },
-                "maxUnavailable": {
-                  "type": "string"
-                },
-                "minAvailable": {
-                  "type": "string"
-                },
-                "unhealthyPodEvictionPolicy": {
-                  "type": "string"
-                }
+                "maxUnavailable": {},
+                "minAvailable": {},
+                "unhealthyPodEvictionPolicy": {}
               },
               "type": "object"
             },
@@ -268,9 +260,7 @@
               },
               "type": "object"
             },
-            "revisionHistoryLimit": {
-              "type": "string"
-            },
+            "revisionHistoryLimit": {},
             "schedulerName": {
               "type": "string"
             },
