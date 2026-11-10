@@ -4871,6 +4871,9 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "alertmanagerConfigFileSystemMode": {
+                      "type": "string"
+                    },
                     "alertmanagerConfigMatcherStrategy": {
                       "properties": {},
                       "type": "object"
@@ -8225,6 +8228,7 @@
                     "externalUrl": {
                       "type": "string"
                     },
+                    "extraScrapeMetrics": {},
                     "hostAliases": {
                       "type": "array"
                     },
@@ -23289,7 +23293,11 @@
                   "type": "object"
                 },
                 "podAnnotations": {
-                  "properties": {},
+                  "properties": {
+                    "ambient.istio.io/bypass-inbound-capture": {
+                      "type": "string"
+                    }
+                  },
                   "type": "object"
                 },
                 "podLabels": {

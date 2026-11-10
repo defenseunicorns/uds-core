@@ -126,6 +126,19 @@ After deployment, confirm the workflow is active:
 
 **Solution:** The workflow excludes users with the `realm-management/realm-admin` client role. If an admin account was disabled, it was not assigned that role. Re-enable the account manually and assign the role via **Users** → select user → **Role Mapping** → assign `realm-admin` under `realm-management`.
 
+### Problem: Enabled workflow not scheduling or disabling users
+
+**Symptom:** The workflow is enabled but inactive users are not being disabled, and users are not being scheduled to be disabled. (In Keycloak 26.5.0+)
+
+**Solution:** Verify the Keycloak version is >= `26.5.0`. If this keycloak instance was initialized with uds-identity-config 0.32.5 or older, you may need to manually patch the workflow. The realm.json5 configuration of the uds-identity-config is only loaded on the initial Keycloak install
+
+1. Navigate to the **uds** realm → **workflows**
+2. Click on the `disable-inactive-users` workflow
+3. Ensure that the `if:` condition appears without quotes around the role as follows `if: NOT has-role(realm-management/realm-admin)`
+4. Save the workflow
+
+Test by logging into a user account through the sso portal and then from the admin console **Users** menu select that users account and click the **Workflows** tab. You should see the `disable-inactive-users` workflow.
+
 ## Related documentation
 
 - [Keycloak: Managing workflows](https://www.keycloak.org/docs/latest/server_admin/index.html#managing-workflows) - upstream reference for the Workflows preview feature

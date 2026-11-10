@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -182,12 +182,28 @@ When(a.Pod)
 
 export function checkIstioAmbientOverrides(pod: V1Pod) {
   const annotations = pod.metadata?.annotations || {};
+  const labels = pod.metadata?.labels || {};
+  const isPeprAdmissionPod =
+    pod.metadata?.namespace === "pepr-system" &&
+    labels.app === "pepr-uds-core" &&
+    labels["pepr.dev/controller"] === "admission";
   const ambientBlockedAnnotations = [
     "ambient.istio.io/bypass-inbound-capture", // Bypasses inbound traffic capture in ambient mesh mode
   ];
 
   return Object.keys(annotations)
-    .filter(annotation => ambientBlockedAnnotations.includes(annotation))
+    .filter(annotation => {
+      // Avoid webhook connection resets while Pepr joins the ambient mesh.
+      if (
+        annotation === "ambient.istio.io/bypass-inbound-capture" &&
+        annotations[annotation] === "true" &&
+        isPeprAdmissionPod
+      ) {
+        return false;
+      }
+
+      return ambientBlockedAnnotations.includes(annotation);
+    })
     .sort((a, b) => a.localeCompare(b));
 }
 
