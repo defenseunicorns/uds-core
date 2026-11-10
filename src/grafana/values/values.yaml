@@ -53,6 +53,9 @@ grafana.ini:
     check_for_updates: false
     check_for_plugin_updates: false
     feedback_links_enabled: false
+  security:
+    # Disable external profile image requests to Gravatar
+    disable_gravatar: true
   plugins:
     public_key_retrieval_disabled: true
     preinstall_disabled: true # Ensure we don't try to install plugins from grafana.com which would fail in the airgap

@@ -2407,6 +2407,14 @@
                   },
                   "type": "object"
                 },
+                "security": {
+                  "properties": {
+                    "disable_gravatar": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
                 "server": {
                   "properties": {
                     "domain": {
