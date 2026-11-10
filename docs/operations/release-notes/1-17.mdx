@@ -10,12 +10,6 @@ sidebar:
 
 UDS Core 1.17 adds a CSS-only classification banner mode and improves Pepr admission webhook reliability. The release updates Keycloak to 26.8.2 through an automated upgrade.
 
-### ⚠ Breaking changes
-
-| Change | Impact | Action required |
-| --- | --- | --- |
-| Keycloak 26.8.2 upgrade | Authentication may be intermittent for a few minutes during the upgrade. | Plan for a brief authentication interruption. Core handles the transition automatically. |
-
 ### Notable features
 
 This release includes these features and fixes:
@@ -56,6 +50,11 @@ The following versions change from UDS Core 1.16.0:
 | Vector Helm chart | 0.60.0 | [0.61.0](https://github.com/vectordotdev/helm-charts/releases/tag/vector-0.61.0) |
 
 ## Upgrade considerations
+
+### Keycloak upgrade notice
+
+> [!IMPORTANT]
+> During the automated upgrade to Keycloak 26.8.2, authentication may be intermittently unavailable for a few minutes. Plan for a brief interruption. No operator action is required; Core handles the transition automatically.
 
 ### Identity Config updates (0.32.6)
 
