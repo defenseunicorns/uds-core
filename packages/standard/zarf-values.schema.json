@@ -388,10 +388,16 @@
                       },
                       "type": "object"
                     },
+                    "extraContainers": {
+                      "type": "array"
+                    },
                     "extraVolumeMounts": {
                       "type": "array"
                     },
                     "extraVolumes": {
+                      "type": "array"
+                    },
+                    "initContainers": {
                       "type": "array"
                     },
                     "labels": {
