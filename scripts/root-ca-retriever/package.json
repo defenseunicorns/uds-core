@@ -4,19 +4,16 @@
   "description": "Scripts to retrieve and update root CA certificates from various sources.",
   "private": true,
   "scripts": {
-    "test": "vitest run"
+    "test": "npm run typecheck && vitest run",
+    "typecheck": "tsc"
   },
   "devDependencies": {
     "@types/node": "^26.0.0",
     "tsx": "^4.23.1",
     "typescript": "^7.0.0",
     "vitest": "^5.0.0",
-    "@types/adm-zip": "^0.6.0",
     "adm-zip": "^0.6.1",
     "csv-parse": "^7.0.0",
-    "js-yaml": "^5.2.2",
-    "@types/js-yaml": "^4.0.9"
-  },
-  "dependencies": {
+    "js-yaml": "^5.2.2"
   }
 }
