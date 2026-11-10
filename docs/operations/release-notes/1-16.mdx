@@ -39,14 +39,6 @@ The following versions change from UDS Core 1.15.3:
 | Prometheus Blackbox Exporter Helm chart | 11.20.0  | [11.20.2](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.20.2) |
 | prometheus-operator-crds Helm chart     | 32.0.1   | [32.0.2](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-32.0.2)       |
 
-## Upgrade considerations
-
-### Identity Config updates
-
-During a rolling upgrade to Keycloak 26.8.2, remaining 26.8.1 replicas can issue tokens without the required Admin API audience. Token retries do not guarantee uninterrupted Operator access during this overlap. Mixed-version rolling upgrades remain outside [Keycloak's supported upgrade procedure](https://www.keycloak.org/docs/26.8.2/upgrading/).
-
-The migration adds the `kc-admin-api` scope to UDS admin clients. Existing sessions get it when refreshed; users do not need to log out. After a 401 or 403, UDS Operator renews its cached token and retries once.
-
 ## Related documentation
 
 - [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
