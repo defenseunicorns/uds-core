@@ -64,7 +64,7 @@ components:
       - name: metallb
         namespace: kube-system
         url: https://metallb.github.io/metallb
-        version: 0.16.1
+        version: 0.16.2
         valuesFiles:
           - values/metallb-values.yaml
       - name: uds-dev-stack
