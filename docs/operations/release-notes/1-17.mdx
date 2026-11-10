@@ -16,7 +16,6 @@ This release includes these features and fixes:
 
 - **CSS-only classification banners:** Set `cssOnly: true` on a `classificationBanners` entry to keep the page body unchanged. This mode supports server-rendered applications that remove injected banner elements during hydration. A Content Security Policy that blocks inline styles can prevent the banner from appearing. See [Enable the classification banner](/how-to-guides/platform-features/enable-classification-banner/) ([#3095](https://github.com/defenseunicorns/uds-core/pull/3095)).
 - **Pepr admission webhook reliability:** Fixes webhook connection resets that could occur while Istio CNI updates the inbound traffic path for Pepr admission pods ([#3199](https://github.com/defenseunicorns/uds-core/pull/3199)).
-- **Keycloak upgrade compatibility:** Updates Keycloak to 26.8.2 and renews rejected Admin API credentials during the automated upgrade ([#3207](https://github.com/defenseunicorns/uds-core/pull/3207)).
 - **Grafana profile privacy:** Disables Gravatar profile image requests by default, so Grafana does not contact Gravatar to look up profile images ([#3203](https://github.com/defenseunicorns/uds-core/pull/3203)).
 - **Gateway TLS certificates:** Rotates the tenant and admin gateway certificates ([#3201](https://github.com/defenseunicorns/uds-core/pull/3201)).
 
@@ -54,11 +53,18 @@ The following versions change from UDS Core 1.16.0:
 ### Keycloak upgrade notice
 
 > [!IMPORTANT]
-> During the automated upgrade to Keycloak 26.8.2, authentication may be intermittently unavailable for a few minutes. Plan for a brief interruption. No operator action is required; Core handles the transition automatically.
+> Authentication may be intermittently unavailable for a few minutes during the automated upgrade to Keycloak 26.8.2. UDS Core manages the upgrade and applies the required compatibility updates automatically. See the [Keycloak 26.8.2 upgrade guidance](https://www.keycloak.org/docs/26.8.2/upgrading/#migrating-to-26-8-2).
+
+### Keycloak 26.8.2 upstream changes
+
+Keycloak 26.8.2 changes Admin API scope requirements and protocol mapper permissions. UDS Core automatically prepares UDS-managed clients. If you use custom service-account clients or delegated client administration, review these changes.
+
+- Custom service-account clients that call the Admin API must include the built-in `kc-admin-api` client scope, which provides an audience required by the API.
+- Keycloak 26.8.2 restricts protocol mapper changes through the Admin API. Delegated client admins need the `manage-realm` role unless the required mapper types are allowed in realm settings. For Dynamic Client Registration, those types must also be allowed by the client registration policy.
 
 ### Identity Config updates (0.32.6)
 
-UDS Core updates UDS Identity Config from 0.32.4 to [0.32.6](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.32.6). This version includes Keycloak 26.8.2 compatibility updates and restores passwordless credential registration. Core applies the upgrade automatically. See the [UDS Identity Config 0.32.6 changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0326-2026-11-09).
+UDS Core updates UDS Identity Config from 0.32.4 to [0.32.6](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.32.6). This version includes Keycloak 26.8.2 compatibility updates and restores passwordless credential registration. See the [UDS Identity Config 0.32.6 changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0326-2026-11-09).
 
 ## Related documentation
 
