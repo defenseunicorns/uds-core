@@ -152,8 +152,8 @@ restartPolicy: Always
 # Lifecycle hooks for the Keycloak container
 lifecycleHooks: {}
 
-# Termination grace period in seconds for Keycloak shutdown. Clusters with a large cache might need to extend this to give Infinispan more time to rebalance
-terminationGracePeriodSeconds: 5
+# Time in seconds for graceful Keycloak shutdown and Infinispan cleanup before forced termination.
+terminationGracePeriodSeconds: 30
 
 # The internal Kubernetes cluster domain
 clusterDomain: cluster.local
