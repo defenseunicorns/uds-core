@@ -8,6 +8,7 @@ metadata:
   description: "UDS Core is a collection of several individual applications combined into a single Zarf Package, that establishes a secure baseline for secure cloud-native systems."
   # @lulaEnd babb60a4-d745-426c-ab8e-9527fda629d6
   authors: "Defense Unicorns - Product"
+  source: https://github.com/defenseunicorns/uds-core
   # x-release-please-start-version
   version: "1.17.0"
   # x-release-please-end
