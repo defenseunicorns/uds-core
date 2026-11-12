@@ -36,14 +36,24 @@ TEMP_IMAGES=$(mktemp)
 TEMP_MISSING=$(mktemp)
 trap "rm -f $TEMP_IMAGES $TEMP_MISSING" EXIT
 
-echo "Scanning $SRC_DIR for unicorn and registry1 images..."
+echo "Scanning $SRC_DIR for upstream, unicorn, and registry1 images..."
 
-# Extract all cgr.dev/defenseunicorns.com/ (unicorn) and registry1.dso.mil/ironbank/ (registry1) images
-find "$SRC_DIR" -name "zarf.yaml" -type f -exec grep -hE "cgr.dev/defenseunicorns.com/|registry1.dso.mil/ironbank/" {} \; | \
-    sed 's/^[[:space:]]*-[[:space:]]*//' | \
-    sed 's/#.*//' | \
-    sed 's/"//g' | \
-    sed 's/[[:space:]]*$//' | \
+# Extract all cgr.dev/defenseunicorns.com/ (unicorn) and registry1.dso.mil/ironbank/ (registry1) images + upstream images.
+{
+    find "$SRC_DIR" -name "zarf.yaml" -type f -exec grep -hE "cgr.dev/defenseunicorns.com/|registry1.dso.mil/ironbank/" {} \;
+
+    find "$SRC_DIR" -name "zarf.yaml" -type f -exec awk '
+        FNR == 1 { upstream = 0; in_images = 0 }
+        /^  - name:/ { upstream = 0; in_images = 0 }
+        /^[[:space:]]+flavor:[[:space:]]*["\047]?upstream["\047]?[[:space:]]*$/ { upstream = 1 }
+        /^    [[:alnum:]_-]+:/ { in_images = ($0 ~ /^    images:/); next }
+        upstream && in_images && /^      - / { print }
+    ' {} +
+} | sed \
+    -e 's/^[[:space:]]*-[[:space:]]*//' \
+    -e 's/#.*//' \
+    -e 's/"//g' \
+    -e 's/[[:space:]]*$//' | \
     sort -u > "$TEMP_IMAGES"
 
 TOTAL=$(wc -l < "$TEMP_IMAGES")
