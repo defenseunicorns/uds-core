@@ -13,27 +13,7 @@ runs:
     - name: Autogenerate Files
       shell: bash
       run: |
-        # Install Pepr/Dependencies
-        npm ci
-        command -v addlicense
-
-        # Generate CRD files
-        uds run -f src/pepr/tasks.yaml gen-crds
-        uds run -f src/istio/tasks.yaml gen-crds
-        uds run -f src/istio/tasks.yaml update-gateway-api-crds
-        uds run -f src/prometheus-stack/tasks.yaml gen-crds
-
-        # Generate CACert values
-        uds run -f src/keycloak/tasks.yaml cacert
-
-        # Update Falco rules
-        uds run -f src/falco/tasks.yaml update-rules
-
-        # Update Velero CRDs
-        uds run -f src/velero/tasks.yaml update-crds
-
-        # Generate Zarf values schemas
-        uds run -f tasks/lint.yaml values-generate
+        uds run -f tasks/generate.yaml all
 
     - name: Check generated files for diffs
       shell: bash

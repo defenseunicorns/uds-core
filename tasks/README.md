@@ -10,6 +10,10 @@ Create tasks are used to create the core packages and bundles. See all available
 
 Deploy tasks are user to deploy the core packages and bundles. See all available tasks and descriptions with `uds run -f tasks/deploy.yaml --list`.
 
+## `generate.yaml`
+
+Run `uds run -f tasks/generate.yaml all` from the repository root to install Pepr dependencies and regenerate CRDs, schemas, CA certificate values, and Falco rules. CI runs the same task, then checks for uncommitted generated-file changes. See available tasks with `uds run -f tasks/generate.yaml --list`.
+
 ## `iac.yaml`
 
 IAC tasks are primarily used for nightly/weekly CI deployments to cloud provider infrastructure. See all available tasks and descriptions with `uds run -f tasks/iac.yaml --list`.
