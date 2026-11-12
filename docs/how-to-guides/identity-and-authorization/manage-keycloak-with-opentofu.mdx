@@ -91,13 +91,15 @@ UDS Core ships with a `uds-opentofu-client` in the `uds` realm. This client is *
 3. **Configure the OpenTofu Keycloak provider**
 
    Create your OpenTofu configuration pointing at your UDS Core Keycloak instance:
+   > ![NOTE]
+   > Keycloak 26.8.0+ requires at least 5.10.0 of the keycloak provider. If you are running an older version of the provider you will begin to see `403` errors when attempting to read the client secrets 
 
    ```hcl title="main.tf"
    terraform {
      required_providers {
        keycloak = {
          source  = "keycloak/keycloak"
-         version = "5.5.0"
+         version = "5.10.0"
        }
      }
      required_version = ">= 1.0.0"
