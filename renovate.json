@@ -60,6 +60,12 @@
   ],
   "packageRules": [
     {
+      "description": "Skip Zarf registry placeholders; image override comments track the real registries",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/^###ZARF_REGISTRY###\\//"],
+      "enabled": false
+    },
+    {
       "matchFileNames": ["src/authservice/**"],
       "groupName": "authservice",
       "commitMessageTopic": "authservice"
