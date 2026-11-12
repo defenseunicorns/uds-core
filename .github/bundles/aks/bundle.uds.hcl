@@ -7,7 +7,7 @@ uds {
 
 locals {
   # x-release-please-start-version
-  version = "1.16.0"
+  version = "1.17.0"
   # x-release-please-end
 }
 
@@ -18,7 +18,7 @@ metadata {
 }
 
 package "init" {
-  source = "oci://ghcr.io/zarf-dev/packages/init:v0.88.0"
+  source = "oci://ghcr.io/zarf-dev/packages/init:v0.89.0"
 
   signature_verification {
     keyless {

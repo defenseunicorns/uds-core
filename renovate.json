@@ -42,7 +42,7 @@
       "customType": "regex",
       "managerFilePatterns": ["/^tasks\\/setup\\.yaml$/"],
       "matchStrings": [
-        "oci:\\/\\/defenseunicorns\\/uds-k3d:(?<currentValue>\\d+\\.\\d+\\.\\d+(?:-airgap)?)"
+        "oci:\\/\\/ghcr\\.io\\/defenseunicorns\\/packages\\/uds-k3d:(?<currentValue>\\d+\\.\\d+\\.\\d+(?:-airgap)?)"
       ],
       "depNameTemplate": "ghcr.io/defenseunicorns/packages/uds-k3d",
       "datasourceTemplate": "docker",
@@ -59,6 +59,12 @@
     }
   ],
   "packageRules": [
+    {
+      "description": "Skip Zarf registry placeholders; image override comments track the real registries",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/^###ZARF_REGISTRY###\\//"],
+      "enabled": false
+    },
     {
       "matchFileNames": ["src/authservice/**"],
       "groupName": "authservice",

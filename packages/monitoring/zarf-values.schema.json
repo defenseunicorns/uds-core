@@ -463,6 +463,14 @@
                   },
                   "type": "object"
                 },
+                "security": {
+                  "properties": {
+                    "disable_gravatar": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
                 "server": {
                   "properties": {
                     "domain": {
@@ -1461,6 +1469,9 @@
                     "affinity": {
                       "properties": {},
                       "type": "object"
+                    },
+                    "alertmanagerConfigFileSystemMode": {
+                      "type": "string"
                     },
                     "alertmanagerConfigMatcherStrategy": {
                       "properties": {},
@@ -4816,6 +4827,7 @@
                     "externalUrl": {
                       "type": "string"
                     },
+                    "extraScrapeMetrics": {},
                     "hostAliases": {
                       "type": "array"
                     },
