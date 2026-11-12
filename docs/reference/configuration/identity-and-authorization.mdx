@@ -254,6 +254,9 @@ The `keycloak.keycloak.features.additional` path is available through native Zar
 
 UDS Core disables Keycloak's Pushed Authorization Requests (PAR) feature for all realms by default. Set `allowPushedAuthorizationRequests` to `true` before upgrading if your clients use PAR. This omits the `--feature-par=disabled` startup argument. Changing this value restarts Keycloak.
 
+> [!WARNING]
+> Keycloak still advertises the PAR endpoint in OpenID Connect discovery when PAR is disabled. Clients that use this endpoint receive HTTP 404. Future Keycloak releases will change this behavior; see [Keycloak issue #54605](https://github.com/keycloak/keycloak/issues/54605).
+
 | Deployment method  | Configuration path                                                            | Value  |
 | ------------------ | ----------------------------------------------------------------------------- | ------ |
 | Helm               | `allowPushedAuthorizationRequests`                                            | `true` |
