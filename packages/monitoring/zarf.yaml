@@ -8,7 +8,7 @@ metadata:
   authors: "Defense Unicorns - Product"
   source: https://github.com/defenseunicorns/uds-core
   # x-release-please-start-version
-  version: "1.17.0"
+  version: "1.18.0"
   # x-release-please-end
   x-uds-dependencies: ["base", "identity-authorization"]
   annotations:
