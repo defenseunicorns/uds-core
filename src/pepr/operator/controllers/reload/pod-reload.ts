@@ -16,6 +16,7 @@ export type ResourceType = "Secret" | "ConfigMap";
 
 // Annotations used to persist reload state across operator restarts.
 export const POD_RELOAD_CHECKSUM_ANNOTATION = "uds.dev/pod-reload-checksum";
+export const POD_RELOAD_PENDING_ANNOTATION = "uds.dev/pod-reload-pending";
 export const SSA_CLEANUP_ANNOTATION = "uds.dev/pod-reload-cleanup-complete";
 
 // Serializes first-observation cleanup calls to avoid thundering-herd API pressure on startup.
@@ -148,11 +149,16 @@ export async function discoverConfigMapConsumers(namespace: string, configMapNam
   });
 }
 
-type JsonPatchOperation = {
-  op: "add" | "test";
-  path: string;
-  value: unknown;
-};
+type JsonPatchOperation =
+  | {
+      op: "add" | "test";
+      path: string;
+      value: unknown;
+    }
+  | {
+      op: "remove";
+      path: string;
+    };
 
 function annotationPath(annotation: string) {
   const escaped = annotation.replace(/~/g, "~0").replace(/\//g, "~1");
@@ -203,8 +209,21 @@ async function saveResourceState(
     value: checksum,
   });
 
+  if (annotations?.[POD_RELOAD_PENDING_ANNOTATION]) {
+    operations.push({
+      op: "remove",
+      path: annotationPath(POD_RELOAD_PENDING_ANNOTATION),
+    });
+  }
+
   const resourceKind = resourceType === "Secret" ? kind.Secret : kind.ConfigMap;
   await K8s(resourceKind, { name, namespace }).Patch(operations);
+}
+
+export function markPodReloadCreation(request: {
+  SetAnnotation: (key: string, value: string) => unknown;
+}) {
+  request.SetAnnotation(POD_RELOAD_PENDING_ANNOTATION, "true");
 }
 
 async function runStartupCleanup(
@@ -248,30 +267,33 @@ export async function handleResourceUpdate(
   const annotations = resource.metadata.annotations || {};
   const currentChecksum = computeResourceChecksum(resource.data || {});
   const previousChecksum = annotations[POD_RELOAD_CHECKSUM_ANNOTATION];
+  const creationPending = Boolean(annotations[POD_RELOAD_PENDING_ANNOTATION]);
   const cleanupComplete = Boolean(annotations[SSA_CLEANUP_ANNOTATION]);
 
   if (previousChecksum === currentChecksum) {
     return;
   }
 
-  if (!previousChecksum && cleanupComplete) {
+  // Resources created while admission is active carry the pending annotation. An unprocessed
+  // resource without it came from the watcher's initial list and should be baselined, not reloaded.
+  if (!previousChecksum && !creationPending) {
+    if (!cleanupComplete) {
+      await runStartupCleanup(namespace, name, resourceType, discoverResourceConsumers);
+    }
     try {
-      await saveResourceState(resource, resourceType, currentChecksum, false);
+      await saveResourceState(resource, resourceType, currentChecksum, !cleanupComplete);
     } catch (error) {
       log.warn(
         { resource: name, namespace, type: resourceType, error },
         "Failed to initialize pod reload checksum",
       );
+      throw error;
     }
     return;
   }
 
   if (!cleanupComplete) {
-    try {
-      await runStartupCleanup(namespace, name, resourceType, discoverResourceConsumers);
-    } catch {
-      return;
-    }
+    await runStartupCleanup(namespace, name, resourceType, discoverResourceConsumers);
   }
 
   log.info(
@@ -312,7 +334,7 @@ export async function handleResourceUpdate(
         { resource: name, namespace, selector, error, type: resourceType },
         `Failed to get pods using selector from ${resourceType.toLowerCase()} annotation`,
       );
-      return;
+      throw error;
     }
   } else {
     log.debug(
@@ -329,7 +351,7 @@ export async function handleResourceUpdate(
         { resource: name, namespace, error, type: resourceType },
         `Failed to discover ${resourceType.toLowerCase()} consumers`,
       );
-      return;
+      throw error;
     }
   }
 
@@ -357,7 +379,7 @@ export async function handleResourceUpdate(
         { resource: name, namespace, podCount: podsToReload.length, error, type: resourceType },
         `Failed to reload pods after ${resourceType.toLowerCase()} change`,
       );
-      return;
+      throw error;
     }
   }
 
@@ -368,6 +390,7 @@ export async function handleResourceUpdate(
       { resource: name, namespace, type: resourceType, error },
       "Failed to save pod reload state",
     );
+    throw error;
   }
 }
 

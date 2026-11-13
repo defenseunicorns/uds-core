@@ -14,7 +14,11 @@ import {
 } from "./controllers/network/generators/kubeAPI";
 
 // Resource Pod Reload controllers
-import { handleConfigMapUpdate, handleSecretUpdate } from "./controllers/reload/pod-reload";
+import {
+  handleConfigMapUpdate,
+  handleSecretUpdate,
+  markPodReloadCreation,
+} from "./controllers/reload/pod-reload";
 
 // Controller imports
 import {
@@ -146,6 +150,11 @@ When(a.Secret)
   .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
   .WithName(KEYCLOAK_CLIENTS_SECRET_NAME)
   .Reconcile(s => updateKeycloakClientsSecret(s, false));
+
+// Mark newly created pod-reload resources during admission so reconciliation can distinguish
+// genuine creations from existing resources returned by the watcher's initial list.
+When(a.Secret).IsCreated().WithLabel("uds.dev/pod-reload", "true").Mutate(markPodReloadCreation);
+When(a.ConfigMap).IsCreated().WithLabel("uds.dev/pod-reload", "true").Mutate(markPodReloadCreation);
 
 // Watch for secrets with the uds.dev/pod-reload label for pod reload
 When(a.Secret)

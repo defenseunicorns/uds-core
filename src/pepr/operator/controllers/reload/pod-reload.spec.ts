@@ -7,12 +7,14 @@ import { K8s, kind } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import {
   POD_RELOAD_CHECKSUM_ANNOTATION,
+  POD_RELOAD_PENDING_ANNOTATION,
   SSA_CLEANUP_ANNOTATION,
   computeResourceChecksum,
   discoverConfigMapConsumers,
   discoverSecretConsumers,
   handleConfigMapUpdate,
   handleSecretUpdate,
+  markPodReloadCreation,
   parseSelectorString,
   startupCleanupQueue,
 } from "./pod-reload";
@@ -145,6 +147,16 @@ describe("pod-reload", () => {
     });
   });
 
+  describe("markPodReloadCreation", () => {
+    it("marks admission-time creations as pending", () => {
+      const request = { SetAnnotation: vi.fn() };
+
+      markPodReloadCreation(request);
+
+      expect(request.SetAnnotation).toHaveBeenCalledWith(POD_RELOAD_PENDING_ANNOTATION, "true");
+    });
+  });
+
   describe("handleSecretUpdate", () => {
     it("should do nothing if secret is missing metadata or data", async () => {
       // Missing metadata
@@ -161,7 +173,7 @@ describe("pod-reload", () => {
 
       // Missing data
       await handleSecretUpdate({
-        metadata: { name: "test-secret", namespace: "default" },
+        metadata: { name: "test-secret", namespace: "default", resourceVersion: "1" },
       } as kind.Secret);
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
@@ -189,9 +201,20 @@ describe("pod-reload", () => {
       expect(mockPatch).not.toHaveBeenCalled();
     });
 
-    it("should call cleanupOverClaimedControllerFields on first observation and not reload pods", async () => {
+    it("should baseline existing resources on first observation without reloading consumers", async () => {
+      const consumingPod = {
+        metadata: { name: "consumer", namespace: "default" },
+        spec: {
+          volumes: [{ name: "config", secret: { secretName: "test-secret", optional: true } }],
+        },
+      } as kind.Pod;
+      setupK8sMock({ items: [consumingPod] });
       const secret = {
-        metadata: { name: "test-secret", namespace: "default" },
+        metadata: {
+          name: "test-secret",
+          namespace: "default",
+          resourceVersion: "6",
+        },
         data: { key: "dmFsdWU=" },
       };
 
@@ -200,10 +223,19 @@ describe("pod-reload", () => {
 
       expect(utils.cleanupOverClaimedControllerFields).toHaveBeenCalledWith(
         "default",
-        expect.any(Array),
+        [consumingPod],
         expect.anything(),
       );
       expect(utils.reloadPods).not.toHaveBeenCalled();
+      expect(mockPatch).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          {
+            op: "add",
+            path: `/metadata/annotations/${POD_RELOAD_CHECKSUM_ANNOTATION.replace(/\//g, "~1")}`,
+            value: computeResourceChecksum(secret.data),
+          },
+        ]),
+      );
     });
 
     it("should set the SSA cleanup annotation after first-observation cleanup when annotations exist", async () => {
@@ -297,7 +329,9 @@ describe("pod-reload", () => {
         data: { key: "dmFsdWU=" },
       };
 
-      await handleSecretUpdate(secret as kind.Secret);
+      await expect(handleSecretUpdate(secret as kind.Secret)).rejects.toThrow(
+        "without resourceVersion",
+      );
 
       expect(mockPatch).not.toHaveBeenCalled();
       expect(utils.cleanupOverClaimedControllerFields).not.toHaveBeenCalled();
@@ -321,7 +355,9 @@ describe("pod-reload", () => {
         data,
       };
 
-      await handleSecretUpdate(staleSecret as kind.Secret);
+      await expect(handleSecretUpdate(staleSecret as kind.Secret)).rejects.toThrow(
+        "resourceVersion test failed",
+      );
 
       const currentSecret = {
         ...staleSecret,
@@ -355,13 +391,17 @@ describe("pod-reload", () => {
       } as kind.Pod;
       setupK8sMock({ items: [consumingPod] });
 
+      const data = { key: "dmFsdWU=" };
       const secret = {
         metadata: {
           name: "test-secret",
           namespace: "default",
-          resourceVersion: "7",
+          resourceVersion: "8",
+          annotations: {
+            [POD_RELOAD_PENDING_ANNOTATION]: "true",
+          },
         },
-        data: { key: "dmFsdWU=" },
+        data,
       };
 
       await handleSecretUpdate(secret as kind.Secret);
@@ -374,8 +414,7 @@ describe("pod-reload", () => {
         "SecretChanged",
       );
       expect(mockPatch).toHaveBeenCalledWith([
-        { op: "test", path: "/metadata/resourceVersion", value: "7" },
-        { op: "add", path: "/metadata/annotations", value: {} },
+        { op: "test", path: "/metadata/resourceVersion", value: "8" },
         {
           op: "add",
           path: `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/\//g, "~1")}`,
@@ -384,12 +423,16 @@ describe("pod-reload", () => {
         {
           op: "add",
           path: `/metadata/annotations/${POD_RELOAD_CHECKSUM_ANNOTATION.replace(/\//g, "~1")}`,
-          value: computeResourceChecksum(secret.data),
+          value: computeResourceChecksum(data),
+        },
+        {
+          op: "remove",
+          path: `/metadata/annotations/${POD_RELOAD_PENDING_ANNOTATION.replace(/\//g, "~1")}`,
         },
       ]);
     });
 
-    it("should not save state when reloading consumers throws", async () => {
+    it("should keep creation pending and retry after a reload failure", async () => {
       const consumingPod = {
         metadata: { name: "consumer", namespace: "default" },
         spec: {
@@ -399,12 +442,34 @@ describe("pod-reload", () => {
       setupK8sMock({ items: [consumingPod] });
       vi.mocked(utils.reloadPods).mockRejectedValueOnce(new Error("reload failed"));
 
-      await handleSecretUpdate({
-        metadata: { name: "test-secret", namespace: "default", resourceVersion: "7" },
-        data: { key: "dmFsdWU=" },
-      } as kind.Secret);
+      const data = { key: "dmFsdWU=" };
+      const pendingSecret = {
+        metadata: {
+          name: "test-secret",
+          namespace: "default",
+          resourceVersion: "8",
+          annotations: {
+            [POD_RELOAD_PENDING_ANNOTATION]: "true",
+          },
+        },
+        data,
+      } as kind.Secret;
 
+      await expect(handleSecretUpdate(pendingSecret)).rejects.toThrow("reload failed");
       expect(mockPatch).not.toHaveBeenCalled();
+
+      vi.mocked(utils.reloadPods).mockResolvedValueOnce();
+      await handleSecretUpdate(pendingSecret);
+
+      expect(utils.reloadPods).toHaveBeenCalledTimes(2);
+      expect(mockPatch).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          {
+            op: "remove",
+            path: `/metadata/annotations/${POD_RELOAD_PENDING_ANNOTATION.replace(/\//g, "~1")}`,
+          },
+        ]),
+      );
     });
 
     it("should return early when the selector format is invalid without rotating pods", async () => {
@@ -413,6 +478,7 @@ describe("pod-reload", () => {
         metadata: {
           name: "test-secret",
           namespace: "default",
+          resourceVersion: "1",
           labels: {
             "uds.dev/pod-reload": "true",
           },
@@ -429,7 +495,10 @@ describe("pod-reload", () => {
       // Process the initial secret to set the checksum
       await handleSecretUpdate(initialSecret as kind.Secret);
 
-      // Clear mocks to prepare for the actual test
+      // Model the checksum persisted by the first observation.
+      (initialSecret.metadata.annotations as Record<string, string>)[
+        POD_RELOAD_CHECKSUM_ANNOTATION
+      ] = computeResourceChecksum(initialSecret.data);
       vi.clearAllMocks();
 
       // Update the secret with invalid selector format and new data
@@ -482,6 +551,7 @@ describe("pod-reload", () => {
         metadata: {
           name: "test-secret",
           namespace: "default",
+          resourceVersion: "1",
           labels: {
             "uds.dev/pod-reload": "true",
           },
@@ -577,6 +647,7 @@ describe("pod-reload", () => {
         metadata: {
           name: "multi-selector-secret",
           namespace: "default",
+          resourceVersion: "1",
           labels: {
             "uds.dev/pod-reload": "true",
           },
@@ -689,6 +760,7 @@ describe("pod-reload", () => {
         metadata: {
           name: "test-secret",
           namespace: "default",
+          resourceVersion: "1",
           labels: {
             "uds.dev/pod-reload": "true",
           },
@@ -947,7 +1019,7 @@ describe("pod-reload", () => {
 
       // Missing data
       await handleConfigMapUpdate({
-        metadata: { name: "test-configmap", namespace: "default" },
+        metadata: { name: "test-configmap", namespace: "default", resourceVersion: "1" },
       } as kind.ConfigMap);
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
@@ -966,9 +1038,17 @@ describe("pod-reload", () => {
       } as kind.Pod;
       setupK8sMock({ items: [consumingPod] });
 
+      const data = { "config.yaml": "key: value" };
       const configMap = {
-        metadata: { name: "test-configmap", namespace: "default", resourceVersion: "9" },
-        data: { "config.yaml": "key: value" },
+        metadata: {
+          name: "test-configmap",
+          namespace: "default",
+          resourceVersion: "10",
+          annotations: {
+            [POD_RELOAD_PENDING_ANNOTATION]: "true",
+          },
+        },
+        data,
       };
 
       await handleConfigMapUpdate(configMap as kind.ConfigMap);
@@ -985,7 +1065,7 @@ describe("pod-reload", () => {
           {
             op: "add",
             path: `/metadata/annotations/${POD_RELOAD_CHECKSUM_ANNOTATION.replace(/\//g, "~1")}`,
-            value: computeResourceChecksum(configMap.data),
+            value: computeResourceChecksum(data),
           },
         ]),
       );
@@ -1012,6 +1092,7 @@ describe("pod-reload", () => {
         metadata: {
           name: "test-configmap",
           namespace: "default",
+          resourceVersion: "1",
           labels: {
             "uds.dev/pod-reload": "true",
           },
