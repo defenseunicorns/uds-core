@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.18.0](https://github.com/defenseunicorns/uds-core/compare/v1.17.0...v1.18.0) (2026-11-13)
+
+
+### Miscellaneous
+
+* add source to package metadata ([#3220](https://github.com/defenseunicorns/uds-core/issues/3220)) ([f133499](https://github.com/defenseunicorns/uds-core/commit/f1334997e35739480261380634e0cc5d81f9a874))
+* **deps:** update upstream prometheus operator images to v0.95.2 ([#3224](https://github.com/defenseunicorns/uds-core/issues/3224)) ([cff1255](https://github.com/defenseunicorns/uds-core/commit/cff1255458757284305d2755314e1738e3e281ed))
+* remove redundant types and fix Renovate placeholder lookups ([#3219](https://github.com/defenseunicorns/uds-core/issues/3219)) ([adb7d2a](https://github.com/defenseunicorns/uds-core/commit/adb7d2af006846fe929806efe2469716f8187a5b))
+
 ## [1.17.0](https://github.com/defenseunicorns/uds-core/compare/v1.16.0...v1.17.0) (2026-11-10)
 
 
