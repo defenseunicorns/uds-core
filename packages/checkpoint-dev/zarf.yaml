@@ -7,6 +7,7 @@ metadata:
   name: k3d-core-slim-dev
   description: "Rehydratable UDS K3d + UDS Core Slim (Istio, UDS Operator and Keycloak) Checkpoint"
   authors: "Defense Unicorns - Product"
+  source: https://github.com/defenseunicorns/uds-core
   # x-release-please-start-version
   version: "1.17.0"
   # x-release-please-end

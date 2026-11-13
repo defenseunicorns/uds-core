@@ -869,9 +869,10 @@ UNRECOGNIZED_CERT_CONTENT
         exclude: undefined as PublicCACert[] | undefined,
       };
 
-      expect(() => checkForUnaccountedCerts(certs, config, "/test/config.yaml")).toThrow(
-        "Unaccounted certificates found in public CA bundle.",
-      );
+      expect(() => {
+        // @ts-expect-error Intentionally invalid config tests runtime handling of undefined arrays.
+        checkForUnaccountedCerts(certs, config, "/test/config.yaml");
+      }).toThrow("Unaccounted certificates found in public CA bundle.");
     });
   });
 

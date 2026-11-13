@@ -1,0 +1,27 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+includes:
+  - lint: ./lint.yaml
+  - pepr: ../src/pepr/tasks.yaml
+  - istio: ../src/istio/tasks.yaml
+  - prometheus: ../src/prometheus-stack/tasks.yaml
+  - keycloak: ../src/keycloak/tasks.yaml
+  - falco: ../src/falco/tasks.yaml
+  - velero: ../src/velero/tasks.yaml
+
+tasks:
+  - name: all
+    description: "Regenerate all generated files checked by CI"
+    actions:
+      - task: lint:install-pepr-deps
+      - description: Ensure addlicense is installed
+        cmd: command -v addlicense
+      - task: pepr:gen-crds
+      - task: istio:gen-crds
+      - task: istio:update-gateway-api-crds
+      - task: prometheus:gen-crds
+      - task: keycloak:cacert
+      - task: falco:update-rules
+      - task: velero:update-crds
+      - task: lint:values-generate
