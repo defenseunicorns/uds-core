@@ -70,7 +70,8 @@ grafana:
 # --- runtime-security (falco) ---
 falco:
   falco: {}
-  uds-falco-config: {}
+  uds-falco-config:
+    extraTolerations: []
 
 # --- metrics-server ---
 metrics-server:

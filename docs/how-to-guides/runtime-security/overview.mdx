@@ -1,13 +1,13 @@
 ---
 title: Runtime Security
-description: Guides for UDS Core's Falco-based runtime security, covering detection tuning, querying events in Grafana, alert routing, and migration from NeuVector.
+description: Guides for UDS Core's Falco-based runtime security, covering detection tuning, querying events, alert routing, node scheduling, and migration from NeuVector.
 sidebar:
   order: 6.000
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-UDS Core provides runtime threat detection using Falco and Falcosidekick. This section covers tuning what Falco detects, querying and visualizing events, routing alerts to external destinations, and migrating from NeuVector.
+UDS Core provides runtime threat detection using Falco and Falcosidekick. This section covers tuning what Falco detects, querying and visualizing events, routing alerts to external destinations, scheduling Falco on tainted nodes, and migrating from NeuVector.
 
 For background on how Falco, Falcosidekick, and runtime threat detection work, see [Runtime security concepts](/concepts/core-features/runtime-security/).
 
@@ -28,6 +28,11 @@ For background on how Falco, Falcosidekick, and runtime threat detection work, s
     title="Route runtime alerts to external destinations"
     description="Configure Falcosidekick to forward alerts to Slack, Mattermost, or Microsoft Teams for real-time notifications."
     href="/how-to-guides/runtime-security/route-runtime-alerts/"
+  />
+  <LinkCard
+    title="Schedule Falco on tainted nodes"
+    description="Add DaemonSet tolerations for tainted node pools without replacing Falco's defaults."
+    href="/how-to-guides/runtime-security/schedule-falco-on-tainted-nodes/"
   />
   <LinkCard
     title="Migrate from NeuVector to Falco"

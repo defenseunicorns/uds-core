@@ -3,6 +3,7 @@
 
 # Support for custom `network.allow` entries on the Package CR, useful for sending Falco Sidekick alerts to external destinations
 additionalNetworkAllow: []
+
 # ref: https://docs.defenseunicorns.com/core/reference/operator--crds/packages-v1alpha1-cr/#allow
 #   - direction: Egress
 #     selector:
@@ -10,6 +11,9 @@ additionalNetworkAllow: []
 #     remoteGenerated: Anywhere
 #     description: "from falcosidekick to anywhere"
 #     port: 443
+
+# Additional tolerations for the Falco DaemonSet, appended to the upstream chart defaults.
+extraTolerations: []
 
 # Toggle inclusion of Falco's "incubating" ruleset (provide a certain level of robustness guarantee but have been identified by experts as catering to more specific use cases, which may or may not be relevant for each adopter.)
 incubatingRulesEnabled: false

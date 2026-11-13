@@ -12,6 +12,20 @@
         "$ref": "#/definitions/networkAllowEntry"
       }
     },
+    "extraTolerations": {
+      "type": "array",
+      "default": [],
+      "description": "Additional tolerations appended to the Falco DaemonSet's default tolerations.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": { "type": "string" },
+          "operator": { "type": "string" },
+          "value": { "type": "string" },
+          "effect": { "type": "string" }
+        }
+      }
+    },
     "incubatingRulesEnabled": {
       "type": "boolean",
       "default": false,

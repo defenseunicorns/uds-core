@@ -1,0 +1,85 @@
+---
+title: Schedule Falco on tainted nodes
+description: Add Falco DaemonSet tolerations for tainted node pools without replacing the chart defaults.
+sidebar:
+  order: 6.005
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Add tolerations so the Falco DaemonSet can run on tainted node pools. UDS Core appends these entries to Falco's default control plane tolerations. By default, `extraTolerations` is empty.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
+- Access to a Kubernetes cluster with the target node taints
+- A UDS bundle that includes the Falco component
+
+## Steps
+
+<Steps>
+
+1. **Add the toleration to your bundle**
+
+   A bundle override can set `tolerations` on the `falco` chart directly, but that replaces the whole list. Include the default control plane tolerations if you use that path. To add entries without repeating the defaults, set `extraTolerations` on the `uds-falco-config` chart. Replace the example key and value with the taint on your nodes:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
+       overrides:
+         falco:
+           uds-falco-config:
+             values:
+               - path: extraTolerations
+                 value:
+                   - key: example.com/node-pool
+                     operator: Equal
+                     value: applications
+                     effect: NoSchedule
+   ```
+
+   UDS Core retains Falco's default `node-role.kubernetes.io/master` and `node-role.kubernetes.io/control-plane` tolerations. Do not set both override paths for the same deployment, because a direct `tolerations` override replaces the appended list.
+
+2. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm the DaemonSet tolerates the target taint and has a Ready Pod on each Ready Linux node:
+
+```bash
+uds zarf tools kubectl get daemonset falco -n falco -o jsonpath='{.spec.template.spec.tolerations}'
+uds zarf tools kubectl get nodes
+uds zarf tools kubectl get pods -n falco -l app.kubernetes.io/name=falco -o wide
+```
+
+During deployment, UDS Core prints a nonblocking warning with the names of any Ready Linux nodes that lack a Ready Falco Pod. The Falco validation task reports the same coverage finding without failing the test. Review the node taints and Falco Pod events, then add matching tolerations when taints prevent scheduling.
+
+Both checks include every Ready Linux node, even if you intentionally isolate a node pool. They exclude Windows and NotReady nodes and do not apply a separate node exclusion list. Assess any warning against your intended node inventory. The checks report coverage at deployment or validation time; they do not continuously monitor Falco or establish compliance on their own.
+
+## Troubleshooting
+
+### Problem: Falco remains absent from a node
+
+**Symptom:** The Falco Pod list does not include a tainted node.
+
+**Solution:** Check the node's taints with `uds zarf tools kubectl describe node <node-name>`. Add a matching entry to `extraTolerations`, then redeploy the bundle. Also check the Falco DaemonSet's node selector and affinity if the node has no unmatched taint.
+
+## Related documentation
+
+- [Tune Falco runtime detections](/how-to-guides/runtime-security/tune-falco-detections/) - Configure Falco's detection rules.
+- [Kubernetes taints and tolerations](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/) - Reference the scheduling behavior and toleration fields.
