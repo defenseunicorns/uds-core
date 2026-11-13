@@ -26,7 +26,7 @@ package "pod-identity-webhook" {
 }
 
 package "init" {
-  source     = "oci://ghcr.io/zarf-dev/packages/init:v0.89.0"
+  source     = "oci://ghcr.io/zarf-dev/packages/init:v1.0.1"
   depends_on = [package.pod-identity-webhook]
 
   signature_verification {
