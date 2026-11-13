@@ -28,6 +28,14 @@ describe("runtime-security package values", () => {
           "uds-falco-config": {
             disabledRules: ["PROBE_VISIBLE"],
             udsDefaultDisabledRulesStable: ["PROBE_DEFAULT"],
+            extraTolerations: [
+              {
+                key: "example.com/node-pool",
+                operator: "Equal",
+                value: "applications",
+                effect: "NoSchedule",
+              },
+            ],
           },
         },
       },
@@ -39,6 +47,37 @@ describe("runtime-security package values", () => {
     expect(resourceString(r, "spec", "template", "metadata", "labels", "probe")).toBe(
       "PROBE_VISIBLE",
     );
+  });
+
+  it("falco daemonset appends extra tolerations to the chart defaults", () => {
+    const r = findResource(manifests, "DaemonSet", "falco");
+    expect(r?.spec?.template).toMatchObject({
+      spec: {
+        tolerations: [
+          { effect: "NoSchedule", key: "node-role.kubernetes.io/master" },
+          { effect: "NoSchedule", key: "node-role.kubernetes.io/control-plane" },
+          {
+            effect: "NoSchedule",
+            key: "example.com/node-pool",
+            operator: "Equal",
+            value: "applications",
+          },
+        ],
+      },
+    });
+  });
+
+  it("falco has only the chart tolerations by default", async () => {
+    const defaults = await renderManifests(PKG);
+    const r = findResource(defaults, "DaemonSet", "falco");
+    expect(r?.spec?.template).toMatchObject({
+      spec: {
+        tolerations: [
+          { effect: "NoSchedule", key: "node-role.kubernetes.io/master" },
+          { effect: "NoSchedule", key: "node-role.kubernetes.io/control-plane" },
+        ],
+      },
+    });
   });
 
   it("falco disabled rules config has probe rule", () => {

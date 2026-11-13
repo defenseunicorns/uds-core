@@ -59,3 +59,33 @@ components:
               else
                 echo "[cleanup] Skipping NeuVector CRD cleanup (CLEANUP_LEGACY_NEUVECTOR=false)"
               fi
+        after:
+          - description: Report Falco node coverage
+            cmd: |
+              nodes="$(./zarf tools kubectl get nodes -l kubernetes.io/os=linux -o jsonpath='{range .items[*]}{.metadata.name}{" "}{range .status.conditions[?(@.type=="Ready")]}{.status}{end}{"\n"}{end}' 2>/dev/null)" || {
+                echo "[falco] WARNING: Could not check node coverage because the node query failed."
+                exit 0
+              }
+              pods="$(./zarf tools kubectl get pods -n falco -l app.kubernetes.io/name=falco -o jsonpath='{range .items[*]}{.spec.nodeName}{" "}{range .status.conditions[?(@.type=="Ready")]}{.status}{end}{"\n"}{end}' 2>/dev/null)" || {
+                echo "[falco] WARNING: Could not check node coverage because the Falco Pod query failed."
+                exit 0
+              }
+              ready_nodes="$(printf '%s\n' "$nodes" | awk '$2 == "True" { print $1 }')"
+              if [ -z "$ready_nodes" ]; then
+                echo "[falco] WARNING: No Ready Linux nodes found for the coverage check."
+                exit 0
+              fi
+
+              missing=""
+              total=0
+              for node in $ready_nodes; do
+                total=$((total + 1))
+                if ! printf '%s\n' "$pods" | awk -v node="$node" '$1 == node && $2 == "True" { found=1 } END { exit !found }'; then
+                  missing="${missing}${missing:+, }${node}"
+                fi
+              done
+              if [ -n "$missing" ]; then
+                echo "[falco] WARNING: No Ready Falco Pod on these Ready Linux nodes: $missing. For complete runtime coverage, inspect node taints and Falco Pod events, then add matching falco.uds-falco-config.extraTolerations when taints prevent scheduling."
+              else
+                echo "[falco] Ready Falco Pods on all $total Ready Linux nodes."
+              fi
