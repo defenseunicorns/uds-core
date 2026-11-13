@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.33.1/tasks/lint.yaml
+  - common-lint: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.33.1/tasks/lint.yaml
 
 variables:
   - name: VELERO_CRD_VERSION
@@ -153,4 +153,4 @@ tasks:
 
           echo "Successfully updated $(echo "$CRD_FILES" | wc -w) CRDs"
       - description: "Add License Headers to CRDs"
-        task: common-setup:fix-license
+        task: common-lint:fix-license
