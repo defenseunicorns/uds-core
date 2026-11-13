@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -15,10 +15,9 @@ import {
 
 // Resource Pod Reload controllers
 import {
-  handleConfigMapDelete,
   handleConfigMapUpdate,
-  handleSecretDelete,
   handleSecretUpdate,
+  markPodReloadCreation,
 } from "./controllers/reload/pod-reload";
 
 // Controller imports
@@ -152,26 +151,22 @@ When(a.Secret)
   .WithName(KEYCLOAK_CLIENTS_SECRET_NAME)
   .Reconcile(s => updateKeycloakClientsSecret(s, false));
 
+// Mark newly created pod-reload resources during admission so reconciliation can distinguish
+// genuine creations from existing resources returned by the watcher's initial list.
+When(a.Secret).IsCreated().WithLabel("uds.dev/pod-reload", "true").Mutate(markPodReloadCreation);
+When(a.ConfigMap).IsCreated().WithLabel("uds.dev/pod-reload", "true").Mutate(markPodReloadCreation);
+
 // Watch for secrets with the uds.dev/pod-reload label for pod reload
 When(a.Secret)
   .IsCreatedOrUpdated()
   .WithLabel("uds.dev/pod-reload", "true")
   .Reconcile(handleSecretUpdate);
 
-// Watch for deleted secrets to clean up the checksum cache
-When(a.Secret).IsDeleted().WithLabel("uds.dev/pod-reload", "true").Reconcile(handleSecretDelete);
-
 // Watch for ConfigMaps with the uds.dev/pod-reload label for pod reload
 When(a.ConfigMap)
   .IsCreatedOrUpdated()
   .WithLabel("uds.dev/pod-reload", "true")
   .Reconcile(handleConfigMapUpdate);
-
-// Watch for deleted ConfigMaps to clean up the checksum cache
-When(a.ConfigMap)
-  .IsDeleted()
-  .WithLabel("uds.dev/pod-reload", "true")
-  .Reconcile(handleConfigMapDelete);
 
 // Istio Gateway Pods are not restarted automatically when the Istio ConfigMap is updated.
 When(a.ConfigMap)
