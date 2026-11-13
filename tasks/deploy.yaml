@@ -170,7 +170,9 @@ tasks:
             TARGET_VERSION="${BRANCH#release-please--branches--release-}"
           fi
 
-          if [ -n "${TARGET_VERSION}" ]; then
+          if [[ "${VERSION:-}" == "1.17.1" && "${FLAVOR:-}" == "upstream" ]]; then
+            echo "1.16.0-upstream"
+          elif [ -n "${TARGET_VERSION}" ]; then
             ./uds zarf tools registry ls ${TARGET_REPO}/core | grep "${FLAVOR}" | grep -E "^${TARGET_VERSION}\\." | sort -V | tail -1
           else
             ./uds zarf tools registry ls ${TARGET_REPO}/core | grep "${FLAVOR}" | sort -V | tail -1
