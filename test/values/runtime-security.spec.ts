@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { readFileSync } from "node:fs";
 import { describe, it, expect, beforeAll } from "vitest";
+import { parse } from "yaml";
 import {
   renderManifests,
   findResource,
@@ -67,17 +69,30 @@ describe("runtime-security package values", () => {
     });
   });
 
-  it("falco has only the chart tolerations by default", async () => {
+  it("falco default tolerations match the pinned upstream chart", async () => {
+    const zarf = parse(readFileSync("src/falco/common/zarf.yaml", "utf8")) as {
+      components: { charts?: { name: string; version: string }[] }[];
+    };
+    const version = zarf.components
+      .flatMap(component => component.charts ?? [])
+      .find(chart => chart.name === "falco")?.version;
+    expect(version).toBeDefined();
+
+    const response = await fetch(
+      `https://raw.githubusercontent.com/falcosecurity/charts/falco-${version}/charts/falco/values.yaml`,
+      { signal: AbortSignal.timeout(20000) },
+    );
+    if (!response.ok)
+      throw new Error(`Could not read Falco chart ${version}: HTTP ${response.status}`);
+    const upstream = parse(await response.text()) as { tolerations: unknown };
+
     const defaults = await renderManifests(PKG);
     const r = findResource(defaults, "DaemonSet", "falco");
-    expect(r?.spec?.template).toMatchObject({
-      spec: {
-        tolerations: [
-          { effect: "NoSchedule", key: "node-role.kubernetes.io/master" },
-          { effect: "NoSchedule", key: "node-role.kubernetes.io/control-plane" },
-        ],
-      },
-    });
+    const pod = r?.spec?.template as { spec?: { tolerations?: unknown } } | undefined;
+    expect(
+      pod?.spec?.tolerations,
+      `Falco chart ${version} changed its default tolerations; update src/falco/values/tolerations.yaml`,
+    ).toEqual(upstream.tolerations);
   });
 
   it("falco disabled rules config has probe rule", () => {
