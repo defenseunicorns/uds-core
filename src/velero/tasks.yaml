@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - common-lint: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.33.1/tasks/lint.yaml
+  - common-lint: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.34.1/tasks/lint.yaml
 
 variables:
   - name: VELERO_CRD_VERSION

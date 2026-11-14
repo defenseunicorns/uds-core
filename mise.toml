@@ -4,10 +4,10 @@
 min_version = "2026.9.7"
 
 [tools]
-hk = "2.11.1"
+hk = "2.12.0"
 jq = "1.8.2"
 k3d = "5.9.0"
-node = "26.13.0"
+node = "26.13.1"
 opentofu = "1.13.9"
 
 # renovate: datasource=pypi depName=codespell versioning=pep440

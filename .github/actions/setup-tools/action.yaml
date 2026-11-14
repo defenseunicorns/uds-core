@@ -11,6 +11,6 @@ runs:
     - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
       with:
         # renovate: datasource=github-releases depName=jdx/mise versioning=semver
-        version: 2026.11.5
+        version: 2026.11.8
         install: true
         cache: true
