@@ -39,14 +39,19 @@ trap "rm -f $TEMP_IMAGES $TEMP_MISSING" EXIT
 echo "Scanning $SRC_DIR for images from all declared flavors..."
 
 # Render each declared flavor so Zarf resolves component imports and image lists.
+find "$SRC_DIR" -name "zarf.yaml" -type f -print0 |
 while IFS= read -r -d '' ZARF_YAML; do
     PACKAGE_DIR="${ZARF_YAML%/zarf.yaml}"
+    if ! FLAVORS=$(uds zarf tools yq -r '.components[].only.flavor // ""' "$ZARF_YAML" | sort -u); then
+        echo "ERROR: Failed to extract flavors from $ZARF_YAML" >&2
+        exit 1
+    fi
     while IFS= read -r FLAVOR; do
         [ -n "$FLAVOR" ] || continue
         uds zarf dev inspect definition "$PACKAGE_DIR" --flavor "$FLAVOR" --no-color --log-level error |
             uds zarf tools yq -rN '.components[].images[]?' >> "$TEMP_IMAGES"
-    done < <(uds zarf tools yq -r '.components[].only.flavor // ""' "$ZARF_YAML" | sort -u)
-done < <(find "$SRC_DIR" -name "zarf.yaml" -type f -print0)
+    done <<< "$FLAVORS"
+done
 
 sort -u -o "$TEMP_IMAGES" "$TEMP_IMAGES"
 
