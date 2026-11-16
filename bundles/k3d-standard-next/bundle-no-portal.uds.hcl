@@ -25,13 +25,13 @@ metadata {
 }
 
 package "uds_k3d_dev" {
-  source = "oci://ghcr.io/defenseunicorns/packages/uds-k3d:0.21.4-airgap"
+  source = "oci://ghcr.io/defenseunicorns/packages/uds-k3d:0.21.5-airgap"
   signature_verification { verify = false }
   values_files = ["values/uds-k3d-dev.yaml"]
 }
 
 package "init" {
-  source = "oci://ghcr.io/zarf-dev/packages/init:v0.89.0"
+  source = "oci://ghcr.io/zarf-dev/packages/init:v1.0.1"
   signature_verification {
     keyless {
       certificate_identity_regexp = "https://github\\.com/zarf-dev/zarf/\\.github/workflows/release\\.yml@refs/tags/v\\d+\\.\\d+\\.\\d+"
