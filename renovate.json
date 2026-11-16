@@ -238,6 +238,12 @@
       "matchPackageNames": ["opentofu"],
       "groupName": "iac-support-deps",
       "commitMessageTopic": "iac support dependencies"
+    },
+    {
+      "description": "Match the npm release-age policy for Playwright images",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["mcr.microsoft.com/playwright"],
+      "minimumReleaseAge": "5 days"
     }
   ]
 }
