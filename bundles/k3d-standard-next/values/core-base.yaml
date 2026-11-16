@@ -13,7 +13,7 @@ pepr-uds-core:
           memory: "{{ .vars.pepr_watcher_memory_request }}"
           cpu: "{{ .vars.pepr_watcher_cpu_request }}"
         limits:
-          memory: 768Mi
+          memory: "{{ .vars.pepr_watcher_memory_limit }}"
     admission:
       resources:
         requests:

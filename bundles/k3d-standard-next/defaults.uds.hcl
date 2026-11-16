@@ -6,6 +6,7 @@ variables = {
   pepr_admission_memory_request = "256Mi"
   pepr_watcher_cpu_request      = "200m"
   pepr_admission_cpu_request    = "200m"
+  pepr_watcher_memory_limit     = "768Mi"
 
   authservice_redis_uri     = ""
   authservice_replica_count = "1"
