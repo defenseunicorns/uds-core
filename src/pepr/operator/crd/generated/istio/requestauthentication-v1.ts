@@ -83,6 +83,12 @@ export interface JwtRule {
    */
   outputPayloadToHeader?: string;
   /**
+   * Configures whether the JWT token must be present in the request.
+   *
+   * Valid Options: OPTIONAL, REQUIRED
+   */
+  presence?: Presence;
+  /**
    * List of JWT claim names that should be treated as space-delimited strings.
    */
   spaceDelimitedClaims?: string[];
@@ -114,6 +120,16 @@ export interface OutputClaimToHeader {
    * The name of the header to be created.
    */
   header: string;
+}
+
+/**
+ * Configures whether the JWT token must be present in the request.
+ *
+ * Valid Options: OPTIONAL, REQUIRED
+ */
+export enum Presence {
+  Optional = "OPTIONAL",
+  Required = "REQUIRED",
 }
 
 /**
