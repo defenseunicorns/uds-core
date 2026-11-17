@@ -3,6 +3,20 @@
 
 {{- $domain := .Values.domain }}
 {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
+{{- $env := tpl (toYaml .Values.env) . | fromYamlArray }}
+{{- $optionalJavaOptsAppend := false }}
+{{- range $env }}
+  {{- if eq .name "JAVA_OPTS_APPEND" }}
+    {{- if contains "cgr.dev" $.Values.image.repository }}
+      {{- fail "cgr.dev image detected with JAVA_OPTS_APPEND in .Values.env; the chart injects JAVA_OPTS_APPEND to load the FIPS JCE security override" }}
+    {{- end }}
+    {{- with .valueFrom }}
+      {{- if or (dig "secretKeyRef" "optional" false .) (dig "configMapKeyRef" "optional" false .) }}
+        {{- $optionalJavaOptsAppend = true }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
 
 apiVersion: apps/v1
 kind: StatefulSet
@@ -141,7 +155,17 @@ spec:
           securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
           command:
+            {{- if $optionalJavaOptsAppend }}
+            # An absent optional reference leaves JAVA_OPTS_APPEND unset.
+            - /bin/sh
+            - -ec
+            - |
+              export JAVA_OPTS_APPEND="${JAVA_OPTS_APPEND:+${JAVA_OPTS_APPEND} }-XX:-UseBASE64Intrinsics"
+              exec /opt/keycloak/bin/kc.sh "$@"
+            - keycloak
+            {{- else }}
             - "/opt/keycloak/bin/kc.sh"
+            {{- end }}
           args:
             {{- if .Values.devMode }}
             - "start-dev"
@@ -194,19 +218,30 @@ spec:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env
           env:
-          {{- if and (contains "cgr.dev" .Values.image.repository) .Values.env }}
-            {{- range .Values.env }}
-              {{- if eq .name "JAVA_OPTS_APPEND" }}
-                {{- fail "cgr.dev image detected with JAVA_OPTS_APPEND in .Values.env; the chart injects JAVA_OPTS_APPEND to load the FIPS JCE security override" }}
-              {{- end }}
+          {{- $hasJavaOptsAppend := false }}
+          {{- range $env }}
+            {{- if eq .name "JAVA_OPTS_APPEND" }}
+            {{- $hasJavaOptsAppend = true }}
+            {{- if $optionalJavaOptsAppend }}
+            {{- toYaml (list .) | nindent 12 }}
+            {{- else if .valueFrom }}
+            # Resolve referenced options before appending the mitigation.
+            - name: UDS_KEYCLOAK_JAVA_OPTS_APPEND
+              valueFrom:
+                {{- toYaml .valueFrom | nindent 16 }}
+            - name: JAVA_OPTS_APPEND
+              value: "$(UDS_KEYCLOAK_JAVA_OPTS_APPEND) -XX:-UseBASE64Intrinsics"
+            {{- else }}
+            {{- toYaml (list (set (deepCopy .) "value" (printf "%s -XX:-UseBASE64Intrinsics" .value))) | nindent 12 }}
+            {{- end }}
+            {{- else }}
+            {{- toYaml (list .) | nindent 12 }}
             {{- end }}
           {{- end }}
-          {{- if .Values.env }}
-            {{- tpl (toYaml .Values.env) . | nindent 12 }}
-          {{- end }}
-            {{- if contains "cgr.dev" .Values.image.repository }}
+            {{- if not $hasJavaOptsAppend }}
+            # Mitigate Java4Shell in every image flavor.
             - name: JAVA_OPTS_APPEND
-              value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
+              value: "{{ if contains "cgr.dev" .Values.image.repository }}-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security {{ end }}-XX:-UseBASE64Intrinsics"
             {{- end }}
             # Common configuration
             - name: UDS_DOMAIN
