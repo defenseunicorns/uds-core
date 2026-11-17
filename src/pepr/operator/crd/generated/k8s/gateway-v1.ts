@@ -288,6 +288,16 @@ export interface Spec {
  */
 export interface SpecAddress {
   /**
+   * Routability specifies the requested reachability scope of this address.
+   * Valid values are empty, `Cluster`, or a prefixed implementation-specific value.
+   * The `k8s.io` domain and all its subdomains are reserved.
+   * When unset or empty, this field uses the implementation's default
+   * routability behavior.
+   *
+   * Support: Extended
+   */
+  routability?: string;
+  /**
    * Type of the address.
    */
   type?: string;
@@ -555,6 +565,16 @@ export interface SpecListener {
    */
   allowedRoutes?: AllowedRoutes;
   /**
+   * Filters groups the pre-routing filter lists that run on every
+   * request accepted on this Listener, before route matching is
+   * performed. Filters is only valid when Protocol is `HTTP` or
+   * `HTTPS`; this constraint is enforced by CEL validation on the
+   * enclosing Listener struct.
+   *
+   * Support: Extended
+   */
+  filters?: Filters;
+  /**
    * Hostname specifies the virtual hostname to match for protocol types that
    * define this concept. When unspecified, all hostnames are matched. This
    * field is ignored for protocols that don't require hostname based
@@ -792,6 +812,389 @@ export interface FluffyMatchExpression {
    * merge patch.
    */
   values?: string[];
+}
+
+/**
+ * Filters groups the pre-routing filter lists that run on every
+ * request accepted on this Listener, before route matching is
+ * performed. Filters is only valid when Protocol is `HTTP` or
+ * `HTTPS`; this constraint is enforced by CEL validation on the
+ * enclosing Listener struct.
+ *
+ * Support: Extended
+ */
+export interface Filters {
+  /**
+   * Implementations MUST execute the filters in the exact order they
+   * appear here and MUST NOT reorder them. If an implementation can
+   * not implement the filters in the order they are specified, the
+   * implementation MUST set the "Accepted" Listener condition to "false"
+   * with the "InvalidListenerFilterOrder" reason.
+   *
+   * Requests only apply to connections with a visible HTTP stream
+   * and metadata (Protocol=HTTP, or Protocol=HTTPS with TLS
+   * terminated at the Gateway).
+   *
+   * Requests may mutate inputs that route matching consumes
+   * (path, request headers, method, computed metadata), with the
+   * explicit exception of the `Host` and `:authority` headers. If a
+   * ListenerFilter attempts to modify either header, implementations
+   * MUST NOT allow that modification to take effect. Implementations
+   * SHOULD satisfy this by ignoring the mutation and continuing to
+   * process the request with the original value; they MAY instead
+   * fail the request with a 5xx response. Implementations MUST
+   * evaluate route matching exactly once after the last
+   * ListenerFilter has run.
+   *
+   * Requests MUST NOT be interpreted as changing which Listener
+   * handles the request. Listener selection is decided from inputs
+   * the client committed to before any pre-routing filter runs: TLS
+   * SNI (for HTTPS) or the request's initial Host header (for HTTP).
+   * Because filters cannot modify Host or :authority, the input to
+   * cleartext-HTTP Listener selection cannot change; Listener
+   * selection therefore does not need to be re-evaluated after
+   * pre-routing filters run, and MUST NOT be.
+   */
+  requests?: Request[];
+}
+
+/**
+ * ListenerFilter is one element of a ListenerFilters.Requests list.
+ * Unlike HTTPRouteFilter, which runs after a route is selected and whose
+ * ordering is a SHOULD, ListenerFilter runs before route selection and
+ * its ordering within the containing list is a MUST.
+ *
+ * Only a subset of HTTPRouteFilter variants are permitted:
+ * ExternalAuth (to establish identity that route matching can consume) and
+ * ExtensionRef (the escape hatch for custom pre-routing behavior, for
+ * example body-based routing or JWT-claim projection). The other
+ * HTTPRouteFilter variants are excluded because they either cannot influence
+ * route selection or can already be expressed post-routing with equal
+ * expressiveness. See the GEP text for details.
+ */
+export interface Request {
+  /**
+   * LocalObjectReference identifies an API object within the namespace of the
+   * referrer.
+   * The API object must be valid in the cluster; the Group and Kind must
+   * be registered in the cluster for this reference to be valid.
+   *
+   * References to objects with invalid Group and Kind are not valid, and must
+   * be rejected by the implementation, with appropriate Conditions set
+   * on the containing object.
+   */
+  extensionRef?: ExtensionRef;
+  /**
+   * HTTPExternalAuthFilter defines a filter that modifies requests by sending
+   * request details to an external authorization server.
+   *
+   * Support: Extended
+   * Feature Name: HTTPRouteExternalAuth
+   */
+  externalAuth?: ExternalAuth;
+  /**
+   * Type identifies which variant of the discriminated union below is
+   * populated. Uses the same union-discriminator pattern as
+   * HTTPRouteFilter and GRPCRouteFilter.
+   */
+  type: Type;
+}
+
+/**
+ * LocalObjectReference identifies an API object within the namespace of the
+ * referrer.
+ * The API object must be valid in the cluster; the Group and Kind must
+ * be registered in the cluster for this reference to be valid.
+ *
+ * References to objects with invalid Group and Kind are not valid, and must
+ * be rejected by the implementation, with appropriate Conditions set
+ * on the containing object.
+ */
+export interface ExtensionRef {
+  /**
+   * Group is the group of the referent. For example, "gateway.networking.k8s.io".
+   * When unspecified or empty string, core API group is inferred.
+   */
+  group: string;
+  /**
+   * Kind is kind of the referent. For example "HTTPRoute" or "Service".
+   */
+  kind: string;
+  /**
+   * Name is the name of the referent.
+   */
+  name: string;
+}
+
+/**
+ * HTTPExternalAuthFilter defines a filter that modifies requests by sending
+ * request details to an external authorization server.
+ *
+ * Support: Extended
+ * Feature Name: HTTPRouteExternalAuth
+ */
+export interface ExternalAuth {
+  /**
+   * BackendRef is a reference to a backend to send authorization
+   * requests to.
+   *
+   * The backend must speak the selected protocol (GRPC or HTTP) on the
+   * referenced port.
+   *
+   * If the backend service requires TLS, use BackendTLSPolicy to tell the
+   * implementation to supply the TLS details to be used to connect to that
+   * backend.
+   */
+  backendRef: BackendRef;
+  /**
+   * ForwardBody controls if requests to the authorization server should include
+   * the body of the client request; and if so, how big that body is allowed
+   * to be.
+   *
+   * It is expected that implementations will buffer the request body up to
+   * `forwardBody.maxSize` bytes. Bodies over that size must be rejected with a
+   * 4xx series error (413 or 403 are common examples), and fail processing
+   * of the filter.
+   *
+   * If unset, or `forwardBody.maxSize` is set to `0`, then the body will not
+   * be forwarded.
+   *
+   * Feature Name: HTTPRouteExternalAuthForwardBody
+   */
+  forwardBody?: ForwardBody;
+  /**
+   * GRPCAuthConfig contains configuration for communication with ext_authz
+   * protocol-speaking backends.
+   *
+   * If unset, implementations must assume the default behavior for each
+   * included field is intended.
+   */
+  grpc?: Grpc;
+  /**
+   * HTTPAuthConfig contains configuration for communication with HTTP-speaking
+   * backends.
+   *
+   * If unset, implementations must assume the default behavior for each
+   * included field is intended.
+   */
+  http?: HTTP;
+  /**
+   * ExternalAuthProtocol describes which protocol to use when communicating with an
+   * ext_authz authorization server.
+   *
+   * When this is set to GRPC, each backend must use the Envoy ext_authz protocol
+   * on the port specified in `backendRefs`. Requests and responses are defined
+   * in the protobufs explained at:
+   * https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto
+   *
+   * When this is set to HTTP, each backend must respond with a `200` status
+   * code in on a successful authorization. Any other code is considered
+   * an authorization failure.
+   *
+   * Feature Names:
+   * GRPC Support - HTTPRouteExternalAuthGRPC
+   * HTTP Support - HTTPRouteExternalAuthHTTP
+   */
+  protocol: Protocol;
+}
+
+/**
+ * BackendRef is a reference to a backend to send authorization
+ * requests to.
+ *
+ * The backend must speak the selected protocol (GRPC or HTTP) on the
+ * referenced port.
+ *
+ * If the backend service requires TLS, use BackendTLSPolicy to tell the
+ * implementation to supply the TLS details to be used to connect to that
+ * backend.
+ */
+export interface BackendRef {
+  /**
+   * Group is the group of the referent. For example, "gateway.networking.k8s.io".
+   * When unspecified or empty string, core API group is inferred.
+   */
+  group?: string;
+  /**
+   * Kind is the Kubernetes resource kind of the referent. For example
+   * "Service".
+   *
+   * Defaults to "Service" when not specified.
+   *
+   * ExternalName services can refer to CNAME DNS records that may live
+   * outside of the cluster and as such are difficult to reason about in
+   * terms of conformance. They also may not be safe to forward to (see
+   * CVE-2021-25740 for more information). Implementations SHOULD NOT
+   * support ExternalName Services.
+   *
+   * Support: Core (Services with a type other than ExternalName)
+   *
+   * Support: Implementation-specific (Services with type ExternalName)
+   */
+  kind?: string;
+  /**
+   * Name is the name of the referent.
+   */
+  name: string;
+  /**
+   * Namespace is the namespace of the backend. When unspecified, the local
+   * namespace is inferred.
+   *
+   * Note that when a namespace different than the local namespace is specified,
+   * a ReferenceGrant object is required in the referent namespace to allow that
+   * namespace's owner to accept the reference. See the ReferenceGrant
+   * documentation for details.
+   *
+   * Support: Core
+   */
+  namespace?: string;
+  /**
+   * Port specifies the destination port number to use for this resource.
+   * Port is required when the referent is a Kubernetes Service. In this
+   * case, the port number is the service port number, not the target port.
+   * For other resources, destination port might be derived from the referent
+   * resource or this field.
+   */
+  port?: number;
+}
+
+/**
+ * ForwardBody controls if requests to the authorization server should include
+ * the body of the client request; and if so, how big that body is allowed
+ * to be.
+ *
+ * It is expected that implementations will buffer the request body up to
+ * `forwardBody.maxSize` bytes. Bodies over that size must be rejected with a
+ * 4xx series error (413 or 403 are common examples), and fail processing
+ * of the filter.
+ *
+ * If unset, or `forwardBody.maxSize` is set to `0`, then the body will not
+ * be forwarded.
+ *
+ * Feature Name: HTTPRouteExternalAuthForwardBody
+ */
+export interface ForwardBody {
+  /**
+   * MaxSize specifies how large in bytes the largest body that will be buffered
+   * and sent to the authorization server. If the body size is larger than
+   * `maxSize`, then the body sent to the authorization server must be
+   * truncated to `maxSize` bytes.
+   *
+   * Experimental note: This behavior needs to be checked against
+   * various dataplanes; it may need to be changed.
+   * See https://github.com/kubernetes-sigs/gateway-api/pull/4001#discussion_r2291405746
+   * for more.
+   *
+   * If 0, the body will not be sent to the authorization server.
+   */
+  maxSize?: number;
+}
+
+/**
+ * GRPCAuthConfig contains configuration for communication with ext_authz
+ * protocol-speaking backends.
+ *
+ * If unset, implementations must assume the default behavior for each
+ * included field is intended.
+ */
+export interface Grpc {
+  /**
+   * AllowedRequestHeaders specifies what headers from the client request
+   * will be sent to the authorization server.
+   *
+   * If this list is empty, then all headers must be sent.
+   *
+   * If the list has entries, only those entries must be sent.
+   */
+  allowedHeaders?: string[];
+}
+
+/**
+ * HTTPAuthConfig contains configuration for communication with HTTP-speaking
+ * backends.
+ *
+ * If unset, implementations must assume the default behavior for each
+ * included field is intended.
+ */
+export interface HTTP {
+  /**
+   * AllowedRequestHeaders specifies what additional headers from the client request
+   * will be sent to the authorization server.
+   *
+   * The following headers must always be sent to the authorization server,
+   * regardless of this setting:
+   *
+   * * `Host`
+   * * `Method`
+   * * `Path`
+   * * `Content-Length`
+   * * `Authorization`
+   *
+   * If this list is empty, then only those headers must be sent.
+   *
+   * Note that `Content-Length` has a special behavior, in that the length
+   * sent must be correct for the actual request to the external authorization
+   * server - that is, it must reflect the actual number of bytes sent in the
+   * body of the request to the authorization server.
+   *
+   * So if the `forwardBody` stanza is unset, or `forwardBody.maxSize` is set
+   * to `0`, then `Content-Length` must be `0`. If `forwardBody.maxSize` is set
+   * to anything other than `0`, then the `Content-Length` of the authorization
+   * request must be set to the actual number of bytes forwarded.
+   */
+  allowedHeaders?: string[];
+  /**
+   * AllowedResponseHeaders specifies what headers from the authorization response
+   * will be copied into the request to the backend.
+   *
+   * If this list is empty, then all headers from the authorization server
+   * except Authority or Host must be copied.
+   */
+  allowedResponseHeaders?: string[];
+  /**
+   * Path sets the prefix that paths from the client request will have added
+   * when forwarded to the authorization server.
+   *
+   * When empty or unspecified, no prefix is added.
+   *
+   * Valid values are the same as the "value" regex for path values in the `match`
+   * stanza, and the validation regex will screen out invalid paths in the same way.
+   * Even with the validation, implementations MUST sanitize this input before using it
+   * directly.
+   */
+  path?: string;
+}
+
+/**
+ * ExternalAuthProtocol describes which protocol to use when communicating with an
+ * ext_authz authorization server.
+ *
+ * When this is set to GRPC, each backend must use the Envoy ext_authz protocol
+ * on the port specified in `backendRefs`. Requests and responses are defined
+ * in the protobufs explained at:
+ * https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto
+ *
+ * When this is set to HTTP, each backend must respond with a `200` status
+ * code in on a successful authorization. Any other code is considered
+ * an authorization failure.
+ *
+ * Feature Names:
+ * GRPC Support - HTTPRouteExternalAuthGRPC
+ * HTTP Support - HTTPRouteExternalAuthHTTP
+ */
+export enum Protocol {
+  Grpc = "GRPC",
+  HTTP = "HTTP",
+}
+
+/**
+ * Type identifies which variant of the discriminated union below is
+ * populated. Uses the same union-discriminator pattern as
+ * HTTPRouteFilter and GRPCRouteFilter.
+ */
+export enum Type {
+  ExtensionRef = "ExtensionRef",
+  ExternalAuth = "ExternalAuth",
 }
 
 /**
@@ -1125,6 +1528,12 @@ export interface DefaultValidation {
    * reference, the `ResolvedRefs` on all matching HTTPS listeners condition
    * MUST be set with the Reason `RefNotPermitted`.
    *
+   *
+   * For cluster-scoped resources (such as ClusterTrustBundle), the
+   * `namespace` field MUST be unset. The implementation resolves the scope
+   * based on the kind.
+   *
+   *
    * Implementations MAY choose to perform further validation of the
    * certificate content (e.g., checking expiry or enforcing specific formats).
    * In such cases, an implementation-specific Reason and Message MUST be set.
@@ -1141,6 +1550,11 @@ export interface DefaultValidation {
    *
    * Support: Core - A single reference to a Kubernetes ConfigMap, with the
    * CA certificate in a key named `ca.crt`.
+   *
+   *
+   * Support: Extended - References to ClusterTrustBundle
+   * (certificates.k8s.io), with `namespace` unset.
+   *
    *
    * Support: Implementation-specific - More than one reference, other kinds
    * of resources, or a single reference that includes multiple certificates.
@@ -1302,6 +1716,12 @@ export interface TLSValidation {
    * reference, the `ResolvedRefs` on all matching HTTPS listeners condition
    * MUST be set with the Reason `RefNotPermitted`.
    *
+   *
+   * For cluster-scoped resources (such as ClusterTrustBundle), the
+   * `namespace` field MUST be unset. The implementation resolves the scope
+   * based on the kind.
+   *
+   *
    * Implementations MAY choose to perform further validation of the
    * certificate content (e.g., checking expiry or enforcing specific formats).
    * In such cases, an implementation-specific Reason and Message MUST be set.
@@ -1318,6 +1738,11 @@ export interface TLSValidation {
    *
    * Support: Core - A single reference to a Kubernetes ConfigMap, with the
    * CA certificate in a key named `ca.crt`.
+   *
+   *
+   * Support: Extended - References to ClusterTrustBundle
+   * (certificates.k8s.io), with `namespace` unset.
+   *
    *
    * Support: Implementation-specific - More than one reference, other kinds
    * of resources, or a single reference that includes multiple certificates.
@@ -1425,6 +1850,7 @@ export interface StatusObject {
    * * "Accepted"
    * * "Programmed"
    * * "Ready"
+   * * "AddressesAssigned"
    */
   conditions?: StatusCondition[];
   /**
@@ -1437,6 +1863,12 @@ export interface StatusObject {
  * GatewayStatusAddress describes a network address that is bound to a Gateway.
  */
 export interface StatusAddress {
+  /**
+   * Routability reports the reachability scope of this address. When empty or
+   * unset, this field uses the implementation's default routability behavior.
+   * The `k8s.io` domain and all its subdomains are reserved for well-known values.
+   */
+  routability?: string;
   /**
    * Type of the address.
    */
