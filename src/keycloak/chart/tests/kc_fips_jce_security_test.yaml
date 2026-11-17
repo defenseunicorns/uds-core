@@ -129,6 +129,25 @@ tests:
             name: JAVA_OPTS_APPEND
             value: "$(UDS_KEYCLOAK_JAVA_OPTS_APPEND) -XX:-UseBASE64Intrinsics"
 
+  - it: should append the mitigation even when an optional JVM options reference is missing
+    set:
+      env:
+        - name: JAVA_OPTS_APPEND
+          value: ""
+          valueFrom:
+            secretKeyRef:
+              name: jvm-options
+              key: options
+              optional: true
+    template: statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.optional
+          value: true
+      - matchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: 'export JAVA_OPTS_APPEND="\$\{JAVA_OPTS_APPEND:\+\$\{JAVA_OPTS_APPEND\} \}-XX:-UseBASE64Intrinsics"'
+
   - it: should inject JAVA_OPTS_APPEND with correct path when image.repository contains cgr.dev
     set:
       image:

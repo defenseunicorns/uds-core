@@ -5,6 +5,20 @@
 {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
 {{- $runAsUser := .Values.securityContext.runAsUser | default 1000 }}
 {{- $runAsGroup := .Values.securityContext.runAsGroup | default 1000 }}
+{{- $env := tpl (toYaml .Values.env) . | fromYamlArray }}
+{{- $optionalJavaOptsAppend := false }}
+{{- range $env }}
+  {{- if eq .name "JAVA_OPTS_APPEND" }}
+    {{- if contains "cgr.dev" $.Values.image.repository }}
+      {{- fail "cgr.dev image detected with JAVA_OPTS_APPEND in .Values.env; the chart injects JAVA_OPTS_APPEND to load the FIPS JCE security override" }}
+    {{- end }}
+    {{- with .valueFrom }}
+      {{- if or (dig "secretKeyRef" "optional" false .) (dig "configMapKeyRef" "optional" false .) }}
+        {{- $optionalJavaOptsAppend = true }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
 
 apiVersion: apps/v1
 kind: StatefulSet
@@ -143,7 +157,17 @@ spec:
           securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
           command:
+            {{- if $optionalJavaOptsAppend }}
+            # An absent optional reference leaves JAVA_OPTS_APPEND unset.
+            - /bin/sh
+            - -ec
+            - |
+              export JAVA_OPTS_APPEND="${JAVA_OPTS_APPEND:+${JAVA_OPTS_APPEND} }-XX:-UseBASE64Intrinsics"
+              exec /opt/keycloak/bin/kc.sh "$@"
+            - keycloak
+            {{- else }}
             - "/opt/keycloak/bin/kc.sh"
+            {{- end }}
           args:
             {{- if .Values.devMode }}
             - "start-dev"
@@ -196,19 +220,13 @@ spec:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env
           env:
-          {{- $env := tpl (toYaml .Values.env) . | fromYamlArray }}
           {{- $hasJavaOptsAppend := false }}
-          {{- if contains "cgr.dev" .Values.image.repository }}
-            {{- range $env }}
-              {{- if eq .name "JAVA_OPTS_APPEND" }}
-                {{- fail "cgr.dev image detected with JAVA_OPTS_APPEND in .Values.env; the chart injects JAVA_OPTS_APPEND to load the FIPS JCE security override" }}
-              {{- end }}
-            {{- end }}
-          {{- end }}
           {{- range $env }}
             {{- if eq .name "JAVA_OPTS_APPEND" }}
             {{- $hasJavaOptsAppend = true }}
-            {{- if .valueFrom }}
+            {{- if $optionalJavaOptsAppend }}
+            {{- toYaml (list .) | nindent 12 }}
+            {{- else if .valueFrom }}
             # Resolve referenced options before appending the mitigation.
             - name: UDS_KEYCLOAK_JAVA_OPTS_APPEND
               valueFrom:
