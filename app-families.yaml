@@ -1,0 +1,486 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Each family follows one application release stream; sourceFiles lists all its pins.
+# Patterns capture comparable app versions as (?<version>...) and retain original tags.
+# Chart and auxiliary-image updates outside these identities keep their Renovate rules.
+families:
+  - name: istio
+    sourceFiles:
+      - src/istio/zarf.yaml
+      - src/istio/tasks.yaml
+      - src/pepr/tasks.yaml
+    appDependency:
+      datasource: github-tags
+      packageName: istio/istio
+      tagPattern: &plain '^(?<version>\d+\.\d+\.\d+)$'
+
+    flavors:
+      upstream:
+        images:
+          - repository: docker.io/istio/pilot
+            tagPattern: &distroless '^(?<version>\d+\.\d+\.\d+)-distroless$'
+          - repository: docker.io/istio/proxyv2
+            tagPattern: *distroless
+          - repository: docker.io/istio/install-cni
+            tagPattern: *distroless
+          - repository: docker.io/istio/ztunnel
+            tagPattern: *distroless
+
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/tetrate/istio/pilot
+            tagPattern: &fips '^(?<version>\d+\.\d+\.\d+)-fips$'
+          - repository: registry1.dso.mil/ironbank/tetrate/istio/proxyv2
+            tagPattern: *fips
+          - repository: registry1.dso.mil/ironbank/tetrate/istio/install-cni
+            tagPattern: *fips
+          - repository: registry1.dso.mil/ironbank/tetrate/istio/ztunnel
+            tagPattern: *fips
+
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/istio-pilot-fips
+            tagPattern: &v '^v(?<version>\d+\.\d+\.\d+)$'
+          - repository: cgr.dev/defenseunicorns.com/istio-proxy-fips
+            tagPattern: *v
+          - repository: cgr.dev/defenseunicorns.com/istio-install-cni-fips
+            tagPattern: *v
+          - repository: cgr.dev/defenseunicorns.com/ztunnel-fips
+            tagPattern: *v
+
+  - name: gateway-api
+    sourceFiles: [src/istio/tasks.yaml]
+    appDependency:
+      datasource: github-tags
+      packageName: kubernetes-sigs/gateway-api
+      tagPattern: *v
+
+    # Gateway API has an independent source release, not flavor images.
+    flavors: {}
+
+  - name: authservice
+    sourceFiles: [src/authservice/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: ghcr.io/istio-ecosystem/authservice/authservice
+      tagPattern: *plain
+
+    flavors:
+      upstream:
+        images:
+          - repository: ghcr.io/istio-ecosystem/authservice/authservice
+            tagPattern: *plain
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/istio-ecosystem/authservice
+            tagPattern: *fips
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/authservice-fips
+            tagPattern: *v
+
+  - name: vector
+    sourceFiles: [src/vector/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: timberio/vector
+      tagPattern: &vector '^(?<version>\d+\.\d+\.\d+)-distroless-static$'
+
+    flavors:
+      upstream:
+        images:
+          - repository: timberio/vector
+            tagPattern: *vector
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/timberio/vector
+            tagPattern: *plain
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/vector-fips
+            tagPattern: *v
+
+  - name: metrics-server
+    sourceFiles: [src/metrics-server/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: registry.k8s.io/metrics-server/metrics-server
+      tagPattern: *v
+
+    flavors:
+      upstream:
+        images:
+          - repository: registry.k8s.io/metrics-server/metrics-server
+            tagPattern: *v
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server
+            tagPattern: *v
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/metrics-server-fips
+            tagPattern: *v
+
+  - name: loki
+    sourceFiles: [src/loki/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: docker.io/grafana/loki
+      tagPattern: *plain
+
+    flavors:
+      upstream:
+        images:
+          - repository: docker.io/grafana/loki
+            tagPattern: *plain
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/grafana/loki
+            tagPattern: *plain
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/loki-fips
+            tagPattern: *v
+
+  - name: grafana
+    sourceFiles: [src/grafana/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: docker.io/grafana/grafana
+      tagPattern: *plain
+
+    flavors:
+      upstream:
+        images:
+          - repository: docker.io/grafana/grafana
+            tagPattern: *plain
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/grafana/grafana
+            tagPattern: *plain
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/grafana-fips
+            tagPattern: *v
+
+  - name: keycloak
+    sourceFiles: [src/keycloak/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: quay.io/keycloak/keycloak
+      tagPattern: *plain
+
+    flavors:
+      upstream:
+        images:
+          - repository: quay.io/keycloak/keycloak
+            tagPattern: *plain
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips
+            tagPattern: *fips
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/keycloak-fips
+            tagPattern: *v
+
+  - name: identity-config
+    sourceFiles: [src/keycloak/zarf.yaml, src/keycloak/tasks.yaml]
+    appDependency:
+      datasource: docker
+      packageName: ghcr.io/defenseunicorns/uds/identity-config
+      tagPattern: *plain
+
+    flavors:
+      upstream:
+        images:
+          - repository: ghcr.io/defenseunicorns/uds/identity-config
+            tagPattern: *plain
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config
+            tagPattern: *plain
+      unicorn:
+        images:
+          - repository: ghcr.io/defenseunicorns/uds/identity-config
+            tagPattern: *plain
+
+  - name: velero
+    sourceFiles: [src/velero/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: velero/velero
+      tagPattern: *v
+
+    flavors:
+      upstream:
+        images:
+          - repository: velero/velero
+            tagPattern: *v
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/velero/velero
+            tagPattern: *v
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/velero-fips
+            tagPattern: *v
+
+  - name: velero-plugin-for-aws
+    sourceFiles: [src/velero/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: velero/velero-plugin-for-aws
+      tagPattern: *v
+
+    flavors:
+      upstream:
+        images:
+          - repository: velero/velero-plugin-for-aws
+            tagPattern: *v
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws
+            tagPattern: *v
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/velero-plugin-for-aws-fips
+            tagPattern: *v
+
+  - name: velero-plugin-for-microsoft-azure
+    sourceFiles: [src/velero/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: velero/velero-plugin-for-microsoft-azure
+      tagPattern: *v
+
+    flavors:
+      upstream:
+        images:
+          - repository: velero/velero-plugin-for-microsoft-azure
+            tagPattern: *v
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-microsoft-azure
+            tagPattern: *v
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/velero-plugin-for-microsoft-azure-fips
+            tagPattern: *v
+
+  - name: falco
+    sourceFiles: [src/falco/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: docker.io/falcosecurity/falco
+      tagPattern: *plain
+
+    flavors:
+      upstream:
+        images:
+          - repository: docker.io/falcosecurity/falco
+            tagPattern: *plain
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/falcosecurity/falco
+            tagPattern: *plain
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/falco-fips
+            tagPattern: *v
+
+  - name: falcosidekick
+    sourceFiles: [src/falco/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: docker.io/falcosecurity/falcosidekick
+      tagPattern: *plain
+
+    flavors:
+      upstream:
+        images:
+          - repository: docker.io/falcosecurity/falcosidekick
+            tagPattern: *plain
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick
+            tagPattern: *plain
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/falcosidekick-fips
+            tagPattern: *v
+
+  - name: prometheus
+    sourceFiles: [src/prometheus-stack/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: quay.io/prometheus/prometheus
+      tagPattern: *v
+
+    flavors:
+      upstream:
+        images:
+          - repository: quay.io/prometheus/prometheus
+            tagPattern: *v
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/prometheus/prometheus
+            tagPattern: *v
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/prometheus-fips
+            tagPattern: *v
+
+  - name: prometheus-operator
+    sourceFiles: [src/prometheus-stack/zarf.yaml, src/prometheus-stack/tasks.yaml]
+    appDependency:
+      datasource: github-tags
+      packageName: prometheus-operator/prometheus-operator
+      tagPattern: *v
+
+    flavors:
+      upstream:
+        images:
+          - repository: quay.io/prometheus-operator/prometheus-operator
+            tagPattern: *v
+          - repository: quay.io/prometheus-operator/prometheus-config-reloader
+            tagPattern: *v
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator
+            tagPattern: *v
+          - repository: registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader
+            tagPattern: *v
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/prometheus-operator-fips
+            tagPattern: *v
+          - repository: cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips
+            tagPattern: *v
+
+  - name: alertmanager
+    sourceFiles: [src/prometheus-stack/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: quay.io/prometheus/alertmanager
+      tagPattern: *v
+
+    flavors:
+      upstream:
+        images:
+          - repository: quay.io/prometheus/alertmanager
+            tagPattern: *v
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/prometheus/alertmanager
+            tagPattern: *v
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/prometheus-alertmanager-fips
+            tagPattern: *v
+
+  - name: node-exporter
+    sourceFiles: [src/prometheus-stack/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: quay.io/prometheus/node-exporter
+      tagPattern: &v-distroless '^v(?<version>\d+\.\d+\.\d+)-distroless$'
+
+    flavors:
+      upstream:
+        images:
+          - repository: quay.io/prometheus/node-exporter
+            tagPattern: *v-distroless
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/prometheus/node-exporter
+            tagPattern: *v
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/prometheus-node-exporter-fips
+            tagPattern: *v
+
+  - name: kube-state-metrics
+    sourceFiles: [src/prometheus-stack/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: registry.k8s.io/kube-state-metrics/kube-state-metrics
+      tagPattern: *v
+
+    flavors:
+      upstream:
+        images:
+          - repository: registry.k8s.io/kube-state-metrics/kube-state-metrics
+            tagPattern: *v
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics
+            tagPattern: *v
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/kube-state-metrics-fips
+            tagPattern: *v
+
+  - name: blackbox-exporter
+    sourceFiles: [src/prometheus-stack/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: quay.io/prometheus/blackbox-exporter
+      tagPattern: *v
+
+    flavors:
+      upstream:
+        images:
+          - repository: quay.io/prometheus/blackbox-exporter
+            tagPattern: *v
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/prometheus/blackbox_exporter
+            tagPattern: *v
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/prometheus-blackbox-exporter-fips
+            tagPattern: *v
+
+  - name: envoy-gateway
+    sourceFiles: [src/envoy-gateway/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: docker.io/envoyproxy/gateway
+      tagPattern: *v
+
+    flavors:
+      upstream:
+        images:
+          - repository: docker.io/envoyproxy/gateway
+            tagPattern: *v
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway
+            tagPattern: *v
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/envoy-gateway-fips
+            tagPattern: *v
+
+  - name: envoy
+    sourceFiles: [src/envoy-gateway/zarf.yaml]
+    appDependency:
+      datasource: docker
+      packageName: docker.io/envoyproxy/envoy
+      tagPattern: &envoy '^distroless-v(?<version>\d+\.\d+\.\d+)$'
+
+    flavors:
+      upstream:
+        images:
+          - repository: docker.io/envoyproxy/envoy
+            tagPattern: *envoy
+      registry1:
+        images:
+          - repository: registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless
+            tagPattern: *v
+      unicorn:
+        images:
+          - repository: cgr.dev/defenseunicorns.com/envoy-fips
+            tagPattern: *envoy

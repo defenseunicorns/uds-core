@@ -15,12 +15,34 @@ tasks:
           codespell || true
           codespell -w
 
+  - name: renovate
+    description: Validate Renovate configuration in its pinned container runtime
+    inputs:
+      file:
+        description: Path to the Renovate configuration file
+        default: renovate.json
+    actions:
+      - description: Validate Renovate configuration
+        env:
+          - RENOVATE_FILE=${{ .inputs.file }}
+          - RENOVATE_IMAGE=ghcr.io/renovatebot/renovate:44.188.4@sha256:e66496afe14c7eb4904189a77b9f49c7d8d7c2128f607d2db922ec38e7b81eb6
+        cmd: |
+          set -eu
+          config_dir="$(cd "$(dirname "$RENOVATE_FILE")" && pwd -P)"
+          config_file="$config_dir/$(basename "$RENOVATE_FILE")"
+          printf 'Validating %s with %s\n' "$config_file" "$RENOVATE_IMAGE"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            --mount "type=bind,source=$config_file,target=/config/renovate.json,readonly" \
+            --entrypoint renovate-config-validator \
+            "$RENOVATE_IMAGE" --strict --no-global /config/renovate.json
+
   - name: check
     description: "Run linting checks"
     actions:
       - description: install pepr deps
         cmd: npm ci
-      - task: remote:renovate
+      - task: renovate
       - description: "Format check"
         cmd: npm run format:check
       - description: Build the Pepr module for values lint

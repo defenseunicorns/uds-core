@@ -11,7 +11,14 @@ on:
   pull_request:
     paths:
       - "scripts/renovate/**"
+      - "app-families.yaml"
+      - "src/**/zarf.yaml"
+      - "src/**/tasks.yaml"
       - "scripts/root-ca-retriever/**"
+      - ".github/workflows/scripts-test.yaml"
+      - "tasks/lint.yaml"
+      - "renovate.json"
+      - "mise.toml"
 
 concurrency:
   group: scripts-test-${{ github.ref }}
@@ -39,3 +46,8 @@ jobs:
       - name: Run tests
         working-directory: scripts/${{ matrix.script-dir }}
         run: npm run test
+
+      - name: Validate generated Renovate configuration
+        if: matrix.script-dir == 'renovate'
+        working-directory: scripts/renovate
+        run: npm run test:config
