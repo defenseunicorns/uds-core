@@ -208,7 +208,16 @@ spec:
           {{- range $env }}
             {{- if eq .name "JAVA_OPTS_APPEND" }}
             {{- $hasJavaOptsAppend = true }}
+            {{- if .valueFrom }}
+            # Resolve referenced options before appending the mitigation.
+            - name: UDS_KEYCLOAK_JAVA_OPTS_APPEND
+              valueFrom:
+                {{- toYaml .valueFrom | nindent 16 }}
+            - name: JAVA_OPTS_APPEND
+              value: "$(UDS_KEYCLOAK_JAVA_OPTS_APPEND) -XX:-UseBASE64Intrinsics"
+            {{- else }}
             {{- toYaml (list (set (deepCopy .) "value" (printf "%s -XX:-UseBASE64Intrinsics" .value))) | nindent 12 }}
+            {{- end }}
             {{- else }}
             {{- toYaml (list .) | nindent 12 }}
             {{- end }}

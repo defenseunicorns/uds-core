@@ -104,6 +104,31 @@ tests:
             name: JAVA_OPTS_APPEND
             value: "-Xmx512m -Dcustom=true -XX:-UseBASE64Intrinsics"
 
+  - it: should append the mitigation to JVM options from a Secret
+    set:
+      env:
+        - name: JAVA_OPTS_APPEND
+          value: ""
+          valueFrom:
+            secretKeyRef:
+              name: jvm-options
+              key: options
+    template: statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0]
+          value:
+            name: UDS_KEYCLOAK_JAVA_OPTS_APPEND
+            valueFrom:
+              secretKeyRef:
+                name: jvm-options
+                key: options
+      - equal:
+          path: spec.template.spec.containers[0].env[1]
+          value:
+            name: JAVA_OPTS_APPEND
+            value: "$(UDS_KEYCLOAK_JAVA_OPTS_APPEND) -XX:-UseBASE64Intrinsics"
+
   - it: should inject JAVA_OPTS_APPEND with correct path when image.repository contains cgr.dev
     set:
       image:
