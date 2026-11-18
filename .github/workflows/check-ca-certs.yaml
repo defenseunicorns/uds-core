@@ -7,15 +7,7 @@ on:
   schedule:
     # Runs every morning at 2:00 AM UTC
     - cron: "0 2 * * *"
-  pull_request:
-    branches: [main]
-    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    types: [milestoned, opened, reopened, edited, synchronize]
-    paths:
-      - "certs/**"
-      - "scripts/root-ca-retriever/**"
-      - "src/pepr/uds-operator-config/templates/uds-ca-certs.yaml"
-      - ".github/workflows/check-ca-certs.yaml"
+  workflow_call:
 
 permissions:
   contents: read

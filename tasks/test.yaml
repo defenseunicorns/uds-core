@@ -12,6 +12,7 @@ includes:
   - deploy: ./deploy.yaml
   - util: ./utils.yaml
   - test-resources: ../src/test/tasks.yaml
+  - crds-layer: ../packages/crds/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
   - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.34.1/tasks/setup.yaml
@@ -64,8 +65,9 @@ tasks:
       validate_passthrough:
         description: Whether to validate the passthrough gateway.
         default: "true"
-    # loop through each src/* package and run the validate.yaml task
+    # Validate the CRDs layer, then each src/* package.
     actions:
+      - task: crds-layer:validate
       - cmd: |
           for package in $(ls src); do
             if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
@@ -147,6 +149,36 @@ tasks:
         task: test-resources:remove
         with:
           validate_udp_expose: ${{ .inputs.validate_udp_expose }}
+
+  - name: post-upgrade-tests
+    description: Validate preserved test resources and upgrade-specific contracts
+    inputs:
+      validate_passthrough:
+        description: Whether to validate the passthrough gateway route
+        default: "true"
+      remove_baseline_apps:
+        description: Remove released test applications before deploying current test applications
+        default: "true"
+    actions:
+      - task: test-resources:validate-existing
+        with:
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
+      - task: util:prepare-node-test-ca
+      - description: Install post-upgrade Vitest dependencies
+        dir: test/vitest
+        cmd: npm ci
+      - description: Verify retained baseline applications and their routes, policies, and probes
+        dir: test/vitest
+        env:
+          - EXCLUDED_PACKAGES=${EXCLUDED_PACKAGES}
+          - EGRESS_TESTS=true
+          - UDP_EXPOSE_TESTS=false
+        cmd: |
+          NODE_EXTRA_CA_CERTS="${PWD}/../../build/uds-test-ca.pem" npx vitest run test-resources.spec.ts uptime.spec.ts network.spec.ts
+      - task: test-resources:remove
+        if: ${{ eq .inputs.remove_baseline_apps "true" }}
+        with:
+          package_path: build/released-test-apps.tar.zst
 
   - name: unit-tests
     description: "Run uds-core source unit tests"
@@ -264,6 +296,7 @@ tasks:
           create_options: "--skip-sbom"
       - task: deploy:k3d-standard-bundle-ha-next
       - task: validate-packages
+      - task: ha-specific-checks
 
   - name: uds-core-ha-legacy
     description: "Build and test UDS Core with HA configuration and UDS CLI Legacy bundle workflow"
@@ -274,61 +307,125 @@ tasks:
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle-ha
       - task: validate-packages
+      - task: ha-specific-checks
+
+  - name: ha-specific-checks
+    description: Validate Keycloak session affinity in an HA deployment
+    inputs:
+      prepare_vitest:
+        description: Install Vitest dependencies and prepare the test CA when no post-upgrade test ran first
+        default: "true"
+    actions:
+      - task: util:prepare-node-test-ca
+        if: ${{ eq .inputs.prepare_vitest "true" }}
+      - description: Install HA Vitest dependencies
+        dir: test/vitest
+        cmd: npm ci
+        if: ${{ eq .inputs.prepare_vitest "true" }}
+      - description: Check the HA Keycloak affinity cookie over HTTP
+        dir: test/vitest
+        cmd: |
+          NODE_EXTRA_CA_CERTS="${PWD}/../../build/uds-test-ca.pem" npx vitest run keycloak-ingress-security.spec.ts -t 'marks the Istio-generated affinity cookie Secure'
 
   - name: uds-core-ha-upgrade
     description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA and UDS CLI Next"
+    inputs:
+      validate_passthrough:
+        description: Whether to validate the passthrough gateway route
+        default: "true"
+      full_e2e:
+        description: Run general application E2E on the HA upgrade, in addition to HA-specific checks
+        default: "true"
     actions:
       - task: deploy:latest-bundle-release
         with:
           configFile: "bundles/k3d-standard/uds-ha-config.yaml"
       - task: deploy:latest-release-test-resources
+        with:
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
       - task: upgrade-existing
         with:
           configFile: "bundles/k3d-standard-next/config-ha.uds.hcl"
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
+          full_e2e: ${{ .inputs.full_e2e }}
+      - task: ha-specific-checks
+        with:
+          prepare_vitest: "false"
 
   - name: uds-core-ha-upgrade-legacy
     description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA and UDS CLI Legacy"
+    inputs:
+      validate_passthrough:
+        description: Whether to validate the passthrough gateway route
+        default: "true"
     actions:
       - task: uds-core-upgrade-legacy
         with:
           configFile: "bundles/k3d-standard/uds-ha-config.yaml"
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
+      - task: ha-specific-checks
+        with:
+          prepare_vitest: "false"
 
   - name: uds-core-upgrade
     inputs:
       configFile:
         description: "UDS_CONFIG file to use for the latest release deployment"
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
+      validate_passthrough:
+        description: Whether to validate the passthrough gateway route
+        default: "true"
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
       - task: deploy:latest-bundle-release
         with:
           configFile: ${{ .inputs.configFile }}
       - task: deploy:latest-release-test-resources
+        with:
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
       - task: upgrade-existing
+        with:
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
 
   - name: uds-core-upgrade-legacy
     inputs:
       configFile:
         description: "UDS_CONFIG file to use for the deployments"
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
+      validate_passthrough:
+        description: Whether to validate the passthrough gateway route
+        default: "true"
     description: "Test an upgrade from the latest released UDS Core package to current branch with UDS CLI Legacy bundle workflow"
     actions:
       - task: deploy:latest-bundle-release
         with:
           configFile: ${{ .inputs.configFile }}
       - task: deploy:latest-release-test-resources
+        with:
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
       - task: upgrade-existing-legacy
         with:
           configFile: ${{ .inputs.configFile }}
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
 
   - name: upgrade-existing
     inputs:
+      candidate_bundle_prebuilt:
+        description: Skip candidate creation when the bundle was built during baseline deployment
+        default: "false"
       configFile:
         description: "UDS CLI Next config file to use for the upgrade deployment"
         default: "bundles/k3d-standard-next/config-upgrade.uds.hcl"
-    description: "Upgrade phase only: builds and deploys current branch over an existing installation with UDS CLI Next. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
+      validate_passthrough:
+        description: Whether to validate the passthrough gateway route after upgrading
+        default: "true"
+      full_e2e:
+        description: Run the full application suite after the upgrade
+        default: "true"
+    description: "Upgrade phase only: deploys current branch over an existing installation with UDS CLI Next, building the candidate unless one was prebuilt. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
     actions:
       - task: create:k3d-standard-bundle-next
+        if: ${{ ne .inputs.candidate_bundle_prebuilt "true" }}
         with:
           create_options: "--skip-sbom"
       - task: test-resources:cleanup-udp-expose
@@ -338,9 +435,14 @@ tasks:
           configFile: ${{ .inputs.configFile }}
           packages: core_crds,core_base,core_identity_authorization,core_logging,core_monitoring,core_runtime_security,core_backup_restore,core_portal,core_metrics_server
       - task: validate-packages
-      - task: e2e-tests
-        # TODO: Remove this override once Fleet admin realm updates are included in a released Core baseline.
+      - task: post-upgrade-tests
         with:
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
+          remove_baseline_apps: ${{ .inputs.full_e2e }}
+      - task: e2e-tests
+        if: ${{ eq .inputs.full_e2e "true" }}
+        with:
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
           skip_fleet_admin: "true"
 
   - name: upgrade-existing-legacy
@@ -348,6 +450,9 @@ tasks:
       configFile:
         description: "UDS_CONFIG file to use for the legacy upgrade deployment"
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
+      validate_passthrough:
+        description: Whether to validate the passthrough gateway route after upgrading
+        default: "true"
     description: "Upgrade phase only with UDS CLI Legacy: builds and deploys current branch over an existing installation. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
     actions:
       - task: create:standard-package
@@ -360,9 +465,12 @@ tasks:
         with:
           configFile: ${{ .inputs.configFile }}
       - task: validate-packages
-      - task: e2e-tests
-        # TODO: Remove this override once Fleet admin realm updates are included in a released Core baseline.
+      - task: post-upgrade-tests
         with:
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
+      - task: e2e-tests
+        with:
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
           skip_fleet_admin: "true"
 
   - name: slim-dev

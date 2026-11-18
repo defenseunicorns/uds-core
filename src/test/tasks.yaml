@@ -103,6 +103,17 @@ tasks:
             uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm
           fi
 
+      - task: validate-existing
+        with:
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
+
+  - name: validate-existing
+    description: Validate the existing test resources without redeploying them
+    inputs:
+      validate_passthrough:
+        description: Whether to validate the passthrough gateway route
+        default: "true"
+    actions:
       - description: Verify the admin app is accessible
         wait:
           network:
@@ -208,6 +219,9 @@ tasks:
 
   - name: remove
     inputs:
+      package_path:
+        description: Path to the deployed test apps package archive
+        default: build/zarf-package-uds-core-test-apps-*.zst
       validate_udp_expose:
         description: Whether the test run deployed UDP expose resources
         default: "true"
@@ -215,7 +229,7 @@ tasks:
       - description: Remove the test apps zarf package
         cmd: |
           set -e
-          set -- build/zarf-package-uds-core-test-apps-*.zst
+          set -- ${{ .inputs.package_path }}
           if [ -f "$1" ]; then
             uds zarf package remove "$1" --confirm
           fi

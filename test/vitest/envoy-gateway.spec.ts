@@ -301,6 +301,7 @@ function isPodReady(pod: k8s.V1Pod): boolean {
 
 describe("Envoy Gateway", () => {
   let usesClusterIPOverride = false;
+  const verifyNamespaceCleanup = process.env.VERIFY_ENVOY_CLEANUP === "true";
 
   beforeAll(async () => {
     await deleteGateway();
@@ -318,7 +319,6 @@ describe("Envoy Gateway", () => {
     await waitForGatewayDeleted();
     await deleteProxyConfig();
     await deleteNamespace();
-    await waitForNamespaceDeleted();
   });
 
   test("reconciles a UDP Gateway into managed Envoy infrastructure", async () => {
@@ -358,4 +358,16 @@ describe("Envoy Gateway", () => {
 
     expect(pods.some(isPodReady)).toBe(true);
   });
+
+  test.skipIf(!verifyNamespaceCleanup)(
+    "removes the test namespace after Gateway deletion",
+    { timeout: 420000 },
+    async () => {
+      await deleteGateway();
+      await waitForGatewayDeleted();
+      await deleteProxyConfig();
+      await deleteNamespace();
+      await waitForNamespaceDeleted();
+    },
+  );
 });

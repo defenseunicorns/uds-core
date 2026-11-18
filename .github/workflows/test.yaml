@@ -19,6 +19,11 @@ on:
         type: string
         description: "The type of test to perform"
         required: true
+      verify_envoy_cleanup:
+        type: boolean
+        description: "Wait for Envoy test namespace deletion"
+        required: false
+        default: false
     # Triggered by pull-request-conditionals.yaml
   workflow_call:
     inputs:
@@ -34,6 +39,11 @@ on:
         type: string
         description: "The type of test to perform"
         required: true
+      verify_envoy_cleanup:
+        type: boolean
+        description: "Wait for Envoy test namespace deletion"
+        required: false
+        default: false
       k3s_version:
         type: string
         description: "Exact K3s version for values tests"
@@ -81,7 +91,16 @@ jobs:
 
       - name: Test UDS Core Install
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        env:
+          VERIFY_ENVOY_CLEANUP: ${{ inputs.verify_envoy_cleanup && 'true' || 'false' }}
         run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Pin the latest released baseline
+        if: ${{ inputs.test_type == 'upgrade' && github.event_name == 'pull_request' }}
+        uses: ./.github/actions/pin-released-baseline
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base_ref: ${{ github.base_ref }}
 
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
@@ -89,6 +108,8 @@ jobs:
 
       - name: Test UDS Core values deploy equivalency
         if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        env:
+          VERIFY_ENVOY_CLEANUP: ${{ inputs.verify_envoy_cleanup && 'true' || 'false' }}
         run: uds run test:uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --with k3s_version=${{ inputs.k3s_version }} --no-progress
 
       - name: Debug Output

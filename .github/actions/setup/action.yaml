@@ -54,3 +54,6 @@ runs:
       uses: chainguard-dev/setup-chainctl@bfe7503a12660737d9d66d02d2610a399d804316 # v0.6.0
       with:
         identity: ${{ inputs.chainguardIdentity }}
+        # Version used successfully by the 1.17.1 Publish run. The action
+        # still downloads and verifies its published checksum.
+        version: 0.2.403

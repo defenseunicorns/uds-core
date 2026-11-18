@@ -8,10 +8,7 @@ permissions:
   contents: read # Allows reading the content of the repository.
 
 on:
-  pull_request:
-    paths:
-      - "scripts/renovate/**"
-      - "scripts/root-ca-retriever/**"
+  workflow_call:
 
 concurrency:
   group: scripts-test-${{ github.ref }}
@@ -22,6 +19,7 @@ jobs:
     name: ${{ matrix.script-dir }} Tests
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         script-dir: [renovate, root-ca-retriever]
 

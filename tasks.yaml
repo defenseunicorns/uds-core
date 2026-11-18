@@ -160,10 +160,16 @@ tasks:
 
   - name: test-uds-core-ha-upgrade
     description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA"
+    inputs:
+      full_e2e:
+        description: Run general application E2E in addition to HA-specific checks
+        default: "true"
     actions:
       - task: setup:ha-postgres
       - task: setup:ha-redis
       - task: test:uds-core-ha-upgrade
+        with:
+          full_e2e: ${{ .inputs.full_e2e }}
 
   - name: test-uds-core-ha-upgrade-legacy
     description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA and UDS CLI Legacy"

@@ -5,31 +5,11 @@ name: K0s Testing
 
 on:
   schedule:
-    - cron: "0 0 * * *"  # Every day at midnight UTC
-  pull_request:
-    # Milestoning triggers release-please PRs, which GitHub Actions does not trigger on creation.
-    types: [milestoned, labeled, opened, reopened, synchronize]
-    paths:
-      - ".github/workflows/test-k0s.yaml"
-      - "tasks/setup.yaml"
-      - "tasks/deploy.yaml"
-      - "tasks/create.yaml"
-      - "tasks/test.yaml"
-      - "bundles/k3d-standard-next/**"
-      - ".github/test-infra/k0s/**"
-      - "packages/base/**"
-      - "packages/crds/**"
-      - "packages/backup-restore/**"
-      - "packages/runtime-security/**"
-      - "src/istio/**"
-      - "src/envoy-gateway/**"
-      - "src/pepr/**"
-      - "src/velero/**"
-      - "src/falco/**"
-      - ".release-please-manifest.json"
-      - "release-please-config.json"
+    - cron: "17 0 * * *" # Daily UTC; avoid the top-of-hour scheduling peak.
+  workflow_call:
 
 permissions:
+  checks: read
   id-token: write
   contents: read
   packages: read
@@ -40,7 +20,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  nightly-gate:
+    if: ${{ github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check whether K0s needs testing
+        id: gate
+        uses: ./.github/actions/should-run-nightly
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          check_name: Nightly K0s result
+
   test-k0s-install:
+    needs: nightly-gate
+    if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.nightly-gate.outputs.run == 'true' || needs.nightly-gate.result == 'failure') }}
     strategy:
       fail-fast: false
       matrix:
@@ -129,3 +126,14 @@ jobs:
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: ${{ vars.SLACK_ALERT_CHANNEL }}
+
+  nightly-result:
+    needs: [nightly-gate, test-k0s-install]
+    if: ${{ always() && github.event_name == 'schedule' && (needs.nightly-gate.outputs.run == 'true' || needs.nightly-gate.result == 'failure') }}
+    name: Nightly K0s result
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all K0s flavors passed
+        env:
+          TEST_RESULT: ${{ needs.test-k0s-install.result }}
+        run: test "$TEST_RESULT" = success
