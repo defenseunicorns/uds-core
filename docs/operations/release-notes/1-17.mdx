@@ -17,7 +17,7 @@ This release includes these features and fixes:
 - **CSS-only classification banners:** Set `cssOnly: true` on a `classificationBanners` entry to keep the page body unchanged. This mode supports server-rendered applications that remove injected banner elements during hydration. A Content Security Policy that blocks inline styles can prevent the banner from appearing. See [Enable the classification banner](/how-to-guides/platform-features/enable-classification-banner/) ([#3095](https://github.com/defenseunicorns/uds-core/pull/3095)).
 - **Pepr admission webhook reliability:** Fixes webhook connection resets that could occur while Istio CNI updates the inbound traffic path for Pepr admission pods ([#3199](https://github.com/defenseunicorns/uds-core/pull/3199)).
 - **Grafana profile privacy:** Disables Gravatar profile image requests by default, so Grafana does not contact Gravatar to look up profile images ([#3203](https://github.com/defenseunicorns/uds-core/pull/3203)).
-- **Gateway TLS certificates:** Rotates the tenant and admin gateway certificates ([#3201](https://github.com/defenseunicorns/uds-core/pull/3201)).
+- **Development gateway TLS certificates:** Rotates the default tenant and admin gateway certificates for `uds.dev` development deployments ([#3201](https://github.com/defenseunicorns/uds-core/pull/3201)).
 
 ### Dependency updates
 
