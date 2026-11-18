@@ -39,9 +39,21 @@ The following versions change from UDS Core 1.15.3:
 | Prometheus Blackbox Exporter Helm chart | 11.20.0  | [11.20.2](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.20.2) |
 | prometheus-operator-crds Helm chart     | 32.0.1   | [32.0.2](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-32.0.2)       |
 
+## Upgrade considerations
+
+### Patch release 1.16.1
+
+> [!IMPORTANT]
+> Upgrade directly to UDS Core 1.16.1 to mitigate [CVE-2026-114938 (Java4Shell)](https://www.keycloak.org/2026/11/java4shell-vulnerability-cve-2026-114938), which can allow unauthenticated remote code execution in Keycloak on affected systems. This patch automatically disables the vulnerable Base64 intrinsics across all flavors.
+
+UDS Core 1.16.1 also includes these fixes:
+
+- **Keycloak runtime user (Unicorn):** Aligns the container user and group with the image's UID and GID `65532`. The chart automatically migrates persistent volume ownership during upgrade ([#3251](https://github.com/defenseunicorns/uds-core/pull/3251)).
+- **Gateway TLS certificates:** Rotates the tenant and admin gateway certificates ([#3248](https://github.com/defenseunicorns/uds-core/pull/3248)).
+
 ## Related documentation
 
 - [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
 - [Package values](/concepts/configuration-and-packaging/package-values/) - configure chart values and bundle overrides
 - [UDS Core 1.16.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#1160-2026-10-26) - full changelog
-- [Full diff (1.15.3...1.16.0)](https://github.com/defenseunicorns/uds-core/compare/v1.15.3...v1.16.0) - all changes between versions
+- [Full diff (1.15.5...1.16.1)](https://github.com/defenseunicorns/uds-core/compare/v1.15.5...v1.16.1) - all changes between versions
