@@ -47,6 +47,16 @@ UDS Core 1.15 restores login and issuer validation through additional Keycloak S
 
 ## Upgrade considerations
 
+### Patch release 1.15.5
+
+> [!IMPORTANT]
+> Upgrade directly to UDS Core 1.15.5 to mitigate [CVE-2026-114938 (Java4Shell)](https://www.keycloak.org/2026/11/java4shell-vulnerability-cve-2026-114938), which can allow unauthenticated remote code execution in Keycloak on affected systems. This patch automatically disables the vulnerable Base64 intrinsics across all flavors.
+
+UDS Core 1.15.5 also includes these fixes:
+
+- **Keycloak runtime user (Unicorn):** Aligns the container user and group with the image's UID and GID `65532`. The chart automatically migrates persistent volume ownership during upgrade ([#3250](https://github.com/defenseunicorns/uds-core/pull/3250)).
+- **Gateway TLS certificates:** Rotates the tenant and admin gateway certificates ([#3249](https://github.com/defenseunicorns/uds-core/pull/3249)).
+
 ### Patch release 1.15.4
 
 > [!IMPORTANT]
