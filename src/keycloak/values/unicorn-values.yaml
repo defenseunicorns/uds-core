@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 podSecurityContext:
-  fsGroup: 1000
+  fsGroup: 65532
 securityContext:
-  runAsUser: 1000
-  runAsGroup: 1000
+  runAsUser: 65532
+  runAsGroup: 65532
   runAsNonRoot: true
   capabilities:
     drop:
@@ -16,3 +16,5 @@ image:
 
 migrations:
   deleteGeneratedTrustStore: true
+  # Migrate persisted files owned by UID 1000 on upgrade.
+  upgradePermissions: true
