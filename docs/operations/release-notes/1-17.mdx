@@ -50,6 +50,33 @@ The following versions change from UDS Core 1.16.0:
 
 ## Upgrade considerations
 
+### Patch release 1.17.2
+
+> [!IMPORTANT]
+> Upgrade directly to UDS Core 1.17.2 to mitigate [CVE-2026-114938 (Java4Shell)](https://www.keycloak.org/2026/11/java4shell-vulnerability-cve-2026-114938), which can allow unauthenticated remote code execution in Keycloak on affected systems. This patch automatically disables the vulnerable Base64 intrinsics across all flavors and requires no additional manual steps.
+
+UDS Core 1.17.2 includes these dependency updates:
+
+| Package | Previous | Updated |
+| --- | --- | --- |
+| Gateway API CRDs | 1.6.3 | [1.7.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.7.0) |
+| Istio (upstream and Unicorn) | 1.31.2 | [1.32.0](https://istio.io/latest/news/releases/1.32.x/announcing-1.32/) |
+
+> [!NOTE]
+> Iron Bank Istio images remain at `1.31.2-fips`. Shared Istio Helm charts update to 1.32.0 for all flavors.
+
+### Patch release 1.17.1
+
+UDS Core 1.17.1 includes these dependency updates:
+
+| Package | Previous | Updated |
+| --- | --- | --- |
+| Prometheus Operator (upstream) | 0.95.1 | [0.95.2](https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.95.2) |
+| Prometheus Config Reloader (upstream) | 0.95.1 | [0.95.2](https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.95.2) |
+
+> [!NOTE]
+> Unicorn and Iron Bank Prometheus Operator and Config Reloader images remain at 0.95.1.
+
 ### Keycloak upgrade notice
 
 > [!IMPORTANT]
