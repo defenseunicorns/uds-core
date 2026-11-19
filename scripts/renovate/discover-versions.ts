@@ -99,7 +99,7 @@ export async function main(
   if (values["write-config"]) {
     await writeFile(
       configPath,
-      `${JSON.stringify(appendConstraints(config, snapshot), null, 2)}\n`,
+      `${JSON.stringify(appendConstraints(config, snapshot.families), null, 2)}\n`,
     );
     console.error(`[discovery] Config written: ${configPath}`);
   } else {
@@ -257,17 +257,15 @@ function applyVersionRestrictions(
   now: number,
 ): void {
   try {
+    // Resolve lazily to preserve short-circuiting when an earlier pin rejects a release.
+    const policies = new Map<Pin, ReturnType<typeof restrictionsForPin>>();
     for (const release of observation.releases) {
-      let eligible = true;
-      for (const pin of observation.current) {
-        if (!isEligibleRelease(pin, release, restrictionsForPin(observation, pin, rules), now)) {
-          eligible = false;
-          break;
-        }
-      }
-
-      release.eligible = eligible;
-      release.reason = eligible ? undefined : "version-policy";
+      release.eligible = observation.current.every(pin => {
+        const policy = policies.get(pin) ?? restrictionsForPin(observation, pin, rules);
+        policies.set(pin, policy);
+        return isEligibleRelease(pin, release, policy, now);
+      });
+      release.reason = release.eligible ? undefined : "version-policy";
     }
   } catch {
     for (const release of observation.releases) {

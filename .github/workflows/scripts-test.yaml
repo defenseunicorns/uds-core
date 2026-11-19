@@ -32,7 +32,11 @@ jobs:
     timeout-minutes: 20
     strategy:
       matrix:
-        script-dir: [renovate, root-ca-retriever]
+        include:
+          - script-dir: renovate
+            test-script: test:config
+          - script-dir: root-ca-retriever
+            test-script: test
 
     steps:
       - name: Checkout code
@@ -46,11 +50,6 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        working-directory: scripts/${{ matrix.script-dir }}
-        run: npm run test
-
-      - name: Validate generated Renovate configuration
-        if: matrix.script-dir == 'renovate'
         timeout-minutes: 8
-        working-directory: scripts/renovate
-        run: npm run test:config
+        working-directory: scripts/${{ matrix.script-dir }}
+        run: npm run ${{ matrix.test-script }}

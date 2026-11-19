@@ -197,7 +197,7 @@ Discovery calls GitHub through `gh`, so those tests supply known command respons
 
 Registry tests run the installed `crane` against an authenticated local registry. A mocked tag list would not prove that the real CLI uses Docker credentials and credential helpers, follows pagination, or fails when a later page cannot be read. The local registry checks those boundaries with known data and failures, without requiring publisher accounts.
 
-With UDS CLI and Docker available, run the test suite with container validation enabled from the same directory:
+With UDS CLI and Docker available, run type checking and the test suite with container validation enabled from the same directory:
 
 ```bash
 npm run test:config

@@ -43,6 +43,10 @@ const family: Family = {
 const files = {
   "src/app/zarf.yaml": "components:\n  - name: app\n    images: [example.com/app:v1.0.0]\n",
 };
+const filesWithMixedPins = {
+  "src/app/zarf.yaml":
+    "components:\n  - name: app\n    images: [example.com/app:v1.0.0, example.com/app:v1.1.0]\n",
+};
 const controlled: VersionSources = {
   readPreset: async () => "{}",
   lookup: async () => [{ tag: "v1.1.0", eligible: true }],
@@ -122,6 +126,59 @@ describe("inventory and discovery", () => {
     expect(snapshot.families[0].publisherGaps).toEqual([]);
   });
 
+  it("resolves restrictions once per current pin across release candidates", async () => {
+    const resolveRestrictions = vi.spyOn(await import("./shared-releases"), "restrictionsForPin");
+    const snapshot = await discover(
+      [{ ...family, flavors: {} }],
+      filesWithMixedPins,
+      {
+        packageRules: [{ matchCurrentValue: "/^v1\\.0\\.0$/", allowedVersions: "<1.2" }],
+      },
+      {
+        ...controlled,
+        lookup: async () => ["v1.1.0", "v1.2.0", "v1.3.0"].map(tag => ({ tag, eligible: true })),
+      },
+      "a".repeat(40),
+    );
+
+    expect(snapshot.families[0].selectedRelease).toBe("1.1.0");
+    expect(resolveRestrictions).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    {
+      name: "skips later-pin rules when every candidate is already rejected",
+      bound: "<1",
+      status: "no-shared-release",
+    },
+    {
+      name: "rejects unsupported later-pin rules once a candidate reaches that pin",
+      bound: "<1.2",
+      status: "unsupported",
+    },
+  ])("$name", async ({ bound, status }) => {
+    const snapshot = await discover(
+      [{ ...family, flavors: {} }],
+      filesWithMixedPins,
+      {
+        packageRules: [
+          { matchCurrentValue: "/^v1\\.0\\.0$/", allowedVersions: bound },
+          { matchCurrentValue: "/^v1\\.1\\.0$/", followTag: "latest" },
+        ],
+      },
+      {
+        ...controlled,
+        lookup: async () => ["v1.1.0", "v1.2.0", "v1.3.0"].map(tag => ({ tag, eligible: true })),
+      },
+      "a".repeat(40),
+    );
+
+    const result = snapshot.families[0];
+    expect(result.status).toBe(status);
+    expect(result.dependencies[0].releases.every(release => !release.eligible)).toBe(true);
+    expect(result.targets.map(target => target.tag)).toEqual(["v1.0.0", "v1.1.0"]);
+  });
+
   it("selects an upgrade when the source pin omits the publisher prefix", async () => {
     const sourceOnly: Family = {
       ...family,
@@ -147,7 +204,9 @@ describe("inventory and discovery", () => {
 
     expect(snapshot.families[0].selectedRelease).toBe("1.1.0");
     expect(snapshot.families[0].targets[0].tag).toBe("v1.1.0");
-    expect(appendConstraints({}, snapshot).packageRules[0].allowedVersions).toBe("/^1\\.1\\.0$/");
+    expect(appendConstraints({}, snapshot.families).packageRules[0].allowedVersions).toBe(
+      "/^1\\.1\\.0$/",
+    );
   });
 
   it("finds comparable current pins for every dependency declared in the repository manifest", async () => {

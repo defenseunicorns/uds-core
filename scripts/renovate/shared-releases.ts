@@ -106,16 +106,14 @@ export interface SelectionConfig extends Rule {
  * when building allowedVersions so constraints match the value Renovate evaluates.
  * The caller must reject family errors before writing; this is not the run-level gate.
  *
- * @throws Unsupported snapshot schemas, missing current pins, or invalid extracted targets.
+ * @throws Missing current pins or invalid extracted targets.
  */
 export function appendConstraints<T extends { packageRules?: object[] }>(
   config: T,
-  snapshot: Snapshot,
+  families: Selection[],
 ) {
-  if (snapshot.schemaVersion !== 2) throw new Error("Unsupported snapshot schema");
-
   const exact = (value: string) => `/^${value.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}$/`;
-  const generated = snapshot.families.flatMap(family => {
+  const generated = families.flatMap(family => {
     if (
       family.status === "missing-pin" ||
       family.dependencies.some(dependency => !dependency.current.length)
@@ -266,10 +264,7 @@ export function inventoryPins(dependency: Dependency, file: string, content: str
   return pins;
 }
 
-export function applicationVersionFromTag(
-  pattern: string,
-  publisherTag: string,
-): string | undefined {
+function applicationVersionFromTag(pattern: string, publisherTag: string): string | undefined {
   const value = new RegExp(pattern).exec(publisherTag)?.groups?.version;
   return value ? (semver.valid(value) ?? undefined) : undefined;
 }

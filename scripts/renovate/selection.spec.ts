@@ -13,7 +13,6 @@ import {
   selectFamilyRelease,
   type Dependency,
   type Observation,
-  type Snapshot,
 } from "./shared-releases";
 
 const dependency: Dependency = {
@@ -49,15 +48,6 @@ function appObservation(): Observation {
     [{ file: "src/app/tasks.yaml", currentValue: "1.0.0" }],
     ["1.0.0", "1.1.0", "1.2.0"].map(tag => ({ tag, eligible: true })),
   );
-}
-
-function snapshot(...dependencies: Observation[]): Snapshot {
-  return {
-    schemaVersion: 2,
-    observedAt: "2026-11-12T12:00:00Z",
-    mainSha: "a".repeat(40),
-    families: [selectFamilyRelease("app", dependencies)],
-  };
 }
 
 describe("shared-release selection", () => {
@@ -169,10 +159,13 @@ describe("shared-release selection", () => {
     const source = appObservation();
     source.current = [];
 
-    const input = snapshot(source, imageObservation("one", ["v1.1.0-fips"]));
+    const selection = selectFamilyRelease("app", [
+      source,
+      imageObservation("one", ["v1.1.0-fips"]),
+    ]);
 
-    expect(input.families[0].status).toBe("missing-pin");
-    expect(() => appendConstraints({}, input)).toThrow(/missing.pin/i);
+    expect(selection.status).toBe("missing-pin");
+    expect(() => appendConstraints({}, [selection])).toThrow(/missing.pin/i);
   });
 });
 
@@ -186,7 +179,7 @@ describe("generated constraints", () => {
     const source = imageObservation("example/app", ["v1.2.0-fips"]);
     source.flavor = "app";
 
-    const result = appendConstraints(config, snapshot(source));
+    const result = appendConstraints(config, [selectFamilyRelease("app", [source])]);
 
     expect(result).toEqual({
       ...config,
@@ -209,7 +202,7 @@ describe("generated constraints", () => {
     source.flavor = "app";
     source.current.push({ ...pin, currentValue: "v1.1.0-fips", version: "1.1.0" });
 
-    const config = appendConstraints({}, snapshot(source));
+    const config = appendConstraints({}, [selectFamilyRelease("app", [source])]);
 
     expect(config.packageRules.map(rule => [rule.matchCurrentValue, rule.allowedVersions])).toEqual(
       [
@@ -267,10 +260,10 @@ describe("generated constraints", () => {
         [{ tag, eligible: true }],
       );
 
-      const input = snapshot(source);
+      const selection = selectFamilyRelease("app", [source]);
 
-      expect(input.families[0].targets[0].tag).toBe(expectedTag);
-      expect(appendConstraints({}, input).packageRules[0].allowedVersions).toBe(allowed);
+      expect(selection.targets[0].tag).toBe(expectedTag);
+      expect(appendConstraints({}, [selection]).packageRules[0].allowedVersions).toBe(allowed);
     },
   );
 });
