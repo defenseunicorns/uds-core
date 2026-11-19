@@ -40,7 +40,9 @@ The following versions change from UDS Core 1.17.0. UDS Core 1.17.2 already incl
 
 ### Identity Config updates: client ownership
 
-This migration applies to builds that include the [Identity Config ownership change](https://github.com/defenseunicorns/uds-identity-config/pull/963), which is planned for UDS Core 1.18.0. The UDS Client Policy enrolls the UDS Operator (`uds-operator`), `uds-fleet-admin`, and the built-in OpenTofu client (`uds-opentofu-client`) by default. An enrolled service account follows the ownership rule even if it has the `realm-admin` role.
+This migration applies to builds that include the [Identity Config ownership change](https://github.com/defenseunicorns/uds-identity-config/pull/963), which is planned for UDS Core 1.18.0. The UDS Client Policy enrolls the UDS Operator (`uds-operator`) and `uds-fleet-admin` by default. An enrolled service account follows the ownership rule even if it has the `realm-admin` role.
+
+If you use the built-in OpenTofu client, skip this migration for clients managed only by OpenTofu unless you explicitly enrolled `uds-opentofu-client` in `ownership-enforced-clients`. If OpenTofu also updates an Operator-managed client, keep `created-by` set to `uds-operator` under the default policy.
 
 Use these examples to decide which existing clients need an ownership update.
 
@@ -48,8 +50,6 @@ Use these examples to decide which existing clients need an ownership update.
 | --- | --- | --- |
 | The UDS Operator registers a new SSO client from a `Package` CR after the upgrade. | A `Package` sets `spec.sso[].clientId` to `my-app`. When the UDS Operator creates that client, the policy sets `created-by` to `uds-operator`. | No action for a client that does not exist yet. |
 | The UDS Operator already manages a Package SSO client with the correct owner. | The Grafana `Package` uses `uds-core-admin-grafana` as its SSO client ID. If `created-by` is already `uds-operator`, the operator can continue reconciling it. | Verify the existing value. |
-| OpenTofu manages an existing Keycloak client with missing or incorrect ownership. | The OpenTofu state tracks `example-client` and the provider authenticates as `uds-opentofu-client`. | Verify that OpenTofu is the intended owner, then set `created-by` to `uds-opentofu-client`. |
-| Two enrolled service accounts manage the same client. | OpenTofu also updates a `fleet-agent-123` client that's owned by `uds-fleet-admin`. | Choose which service account should own the client and update the other workflow to stop managing it. Keep the verified owner's client ID in `created-by`. |
 | A Keycloak administrator creates a client for the UDS Operator to manage. | An administrator registers `my-app` through the Keycloak Admin Console before adding that client ID to a `Package` CR. | Verify the handoff and set `created-by` to `uds-operator` before the operator reconciles it on the upgraded system. |
 
 Before upgrading, assign the intended service account's client ID to each affected client.
@@ -58,7 +58,7 @@ Before upgrading, assign the intended service account's client ID to each affect
 
 1. **Identify the owner**
 
-   Pause affected automation and back up each client's `created-by` attribute. Verify the owning application's `clientId`. Include clients that bundled OpenTofu must continue managing. A client's name alone cannot establish its owner.
+   Pause affected automation and back up each client's `created-by` attribute. Verify the enrolled service account's `clientId`. A client's name alone cannot establish its owner.
 
 2. **Assign ownership through the admin gateway**
 
