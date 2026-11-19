@@ -56,7 +56,7 @@ Publisher and preset failures report the command name and available safe metadat
 
 ### Discovery flow
 
-These diagrams separate script execution, dependency inspection, and selection paths in `discover-versions.ts`.
+[`discover-versions.ts`](discover-versions.ts) owns CLI arguments, files, and discovery orchestration. [`publisher-sources.ts`](publisher-sources.ts) handles `gh` and `crane` access; [`shared-releases.ts`](shared-releases.ts) owns domain types, pin interpretation, version restrictions, selection, and constraint generation. These diagrams follow the execution paths across those modules.
 
 #### Script execution and outputs
 

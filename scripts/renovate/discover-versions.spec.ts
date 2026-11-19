@@ -16,18 +16,15 @@ import { tmpdir } from "node:os";
 import { delimiter, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { discover, main } from "./discover-versions";
+import { createCliVersionSources, type RunCommand, type VersionSources } from "./publisher-sources";
 import {
   appendConstraints,
-  createCliVersionSources,
-  discover,
   inventoryPins,
-  main,
   buildDependencyObservation,
   parseFamilies,
   type Family,
-  type RunCommand,
-  type VersionSources,
-} from "./discover-versions";
+} from "./shared-releases";
 
 const family: Family = {
   name: "app",
@@ -222,7 +219,8 @@ async function createDiscoveryWorkspace() {
   const scriptDirectory = join(directory, "scripts/renovate");
   await mkdir(scriptDirectory, { recursive: true });
   const script = join(scriptDirectory, "discover-versions.ts");
-  await copyFile(join(__dirname, "discover-versions.ts"), script);
+  for (const file of ["discover-versions.ts", "publisher-sources.ts", "shared-releases.ts"])
+    await copyFile(join(__dirname, file), join(scriptDirectory, file));
   await symlink(join(__dirname, "node_modules"), join(scriptDirectory, "node_modules"), "dir");
 
   return {

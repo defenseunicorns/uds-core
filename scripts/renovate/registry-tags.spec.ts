@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createCliVersionSources } from "./discover-versions";
+import { createCliVersionSources } from "./publisher-sources";
 
 const credentials = "fixture-user:fixture-password";
 const authorization = `Basic ${Buffer.from(credentials).toString("base64")}`;

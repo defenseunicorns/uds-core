@@ -14,7 +14,7 @@ import {
   type Dependency,
   type Observation,
   type Snapshot,
-} from "./discover-versions";
+} from "./shared-releases";
 
 const dependency: Dependency = {
   datasource: "docker",
