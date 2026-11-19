@@ -42,8 +42,6 @@ The following versions change from UDS Core 1.17.0. UDS Core 1.17.2 already incl
 
 This migration applies to builds that include the [Identity Config ownership change](https://github.com/defenseunicorns/uds-identity-config/pull/963), which is planned for UDS Core 1.18.0. The UDS Client Policy enrolls the UDS Operator (`uds-operator`) and `uds-fleet-admin` by default. An enrolled service account follows the ownership rule even if it has the `realm-admin` role.
 
-If you use the built-in OpenTofu client, skip this migration for clients managed only by OpenTofu unless you explicitly enrolled `uds-opentofu-client` in `ownership-enforced-clients`. If OpenTofu also updates an Operator-managed client, keep `created-by` set to `uds-operator` under the default policy.
-
 Use these examples to decide which existing clients need an ownership update.
 
 | Scenario | Example | Before upgrading |
@@ -106,6 +104,5 @@ Before upgrading, assign the intended service account's client ID to each affect
 
 - [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
 - [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) - declare SSO clients in a `Package` CR
-- [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) - configure the built-in OpenTofu client
 - [UDS Core 1.18.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#1180-2026-11-17) - full changelog
 - [Full diff (1.17.2...1.18.0)](https://github.com/defenseunicorns/uds-core/compare/v1.17.2...v1.18.0) - all changes between versions
