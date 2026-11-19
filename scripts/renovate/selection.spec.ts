@@ -7,10 +7,10 @@ import { describe, expect, it } from "vitest";
 import {
   appendConstraints,
   isEligibleRelease,
-  observe,
+  buildDependencyObservation,
   readVersionRules,
   restrictionsForPin,
-  selectFamily,
+  selectFamilyRelease,
   type Dependency,
   type Observation,
   type Snapshot,
@@ -26,11 +26,11 @@ const release = { tag: "v1.2.0-fips", version: "1.2.0", eligible: true };
 
 // Use captured selection rules for repeatable restriction checks, not a live preset lookup.
 const preset = "github>defenseunicorns/uds-common//config/renovate.json5";
-const readPreset = () =>
+const readPresetFixture = () =>
   readFile(resolve(__dirname, "fixtures/uds-common-selection.json5"), "utf8");
 
-function image(name: string, tags: string[], current = pin.currentValue): Observation {
-  return observe(
+function imageObservation(name: string, tags: string[], current = pin.currentValue): Observation {
+  return buildDependencyObservation(
     { ...dependency, packageName: name },
     "unicorn",
     [{ ...pin, currentValue: current }],
@@ -38,8 +38,8 @@ function image(name: string, tags: string[], current = pin.currentValue): Observ
   );
 }
 
-function app(): Observation {
-  return observe(
+function appObservation(): Observation {
+  return buildDependencyObservation(
     {
       datasource: "github-tags",
       packageName: "example/app",
@@ -56,20 +56,20 @@ function snapshot(...dependencies: Observation[]): Snapshot {
     schemaVersion: 2,
     observedAt: "2026-11-12T12:00:00Z",
     mainSha: "a".repeat(40),
-    families: [selectFamily("app", dependencies)],
+    families: [selectFamilyRelease("app", dependencies)],
   };
 }
 
 describe("shared-release selection", () => {
   it("requires every image in every flavor and reports the publisher holding back the newest release", () => {
-    const upstream = image("one", ["v1.1.0-fips", "v1.2.0-fips"]);
+    const upstream = imageObservation("one", ["v1.1.0-fips", "v1.2.0-fips"]);
     upstream.flavor = "upstream";
 
-    const result = selectFamily("app", [
-      app(),
+    const result = selectFamilyRelease("app", [
+      appObservation(),
       upstream,
-      image("two", ["v1.1.0-fips", "v1.2.0-fips"]),
-      image("three", ["v1.1.0-fips"]),
+      imageObservation("two", ["v1.1.0-fips", "v1.2.0-fips"]),
+      imageObservation("three", ["v1.1.0-fips"]),
     ]);
 
     expect(result.status).toBe("update-available");
@@ -86,10 +86,10 @@ describe("shared-release selection", () => {
   });
 
   it("intersects actual tag sets instead of assuming each publisher has every lower version", () => {
-    const result = selectFamily("app", [
-      app(),
-      image("one", ["v1.0.0-fips", "v1.2.0-fips"]),
-      image("two", ["v1.0.0-fips", "v1.1.0-fips"]),
+    const result = selectFamilyRelease("app", [
+      appObservation(),
+      imageObservation("one", ["v1.0.0-fips", "v1.2.0-fips"]),
+      imageObservation("two", ["v1.0.0-fips", "v1.1.0-fips"]),
     ]);
 
     expect(result.status).toBe("current");
@@ -102,10 +102,14 @@ describe("shared-release selection", () => {
   });
 
   it("retains every current occurrence if any pin would downgrade", () => {
-    const one = image("one", ["v1.1.0-fips"], "v1.2.0-fips");
+    const one = imageObservation("one", ["v1.1.0-fips"], "v1.2.0-fips");
     one.current.push({ ...pin, currentValue: "v1.3.0-fips", version: "1.3.0" });
 
-    const result = selectFamily("app", [app(), one, image("two", ["v1.1.0-fips"])]);
+    const result = selectFamilyRelease("app", [
+      appObservation(),
+      one,
+      imageObservation("two", ["v1.1.0-fips"]),
+    ]);
 
     expect(result.status).toBe("downgrade-blocked");
     expect(result.selectedRelease).toBeNull();
@@ -118,10 +122,10 @@ describe("shared-release selection", () => {
   });
 
   it("aligns mixed current versions forward", () => {
-    const result = selectFamily("app", [
-      app(),
-      image("one", ["v1.2.0-fips"], "v1.1.0-fips"),
-      image("two", ["v1.2.0-fips"], "v1.2.0-fips"),
+    const result = selectFamilyRelease("app", [
+      appObservation(),
+      imageObservation("one", ["v1.2.0-fips"], "v1.1.0-fips"),
+      imageObservation("two", ["v1.2.0-fips"], "v1.2.0-fips"),
     ]);
 
     expect(result.selectedRelease).toBe("1.2.0");
@@ -133,16 +137,19 @@ describe("shared-release selection", () => {
   });
 
   it("retains original pins when no release is shared", () => {
-    const result = selectFamily("app", [app(), image("one", ["v2.0.0-fips"])]);
+    const result = selectFamilyRelease("app", [
+      appObservation(),
+      imageObservation("one", ["v2.0.0-fips"]),
+    ]);
 
     expect(result.status).toBe("no-shared-release");
     expect(result.targets.map(target => target.tag)).toEqual(["1.0.0", "v1.0.0-fips"]);
   });
 
   it("selects the newest version from unordered catalogs while preserving the current raw-tag style", () => {
-    const source = app();
+    const source = appObservation();
     source.releases.reverse();
-    const one = observe(
+    const one = buildDependencyObservation(
       { ...dependency, tagPattern: "^v?(?<version>\\d+\\.\\d+\\.\\d+)-fips$" },
       "unicorn",
       [pin],
@@ -151,7 +158,7 @@ describe("shared-release selection", () => {
       ),
     );
 
-    const result = selectFamily("app", [source, one]);
+    const result = selectFamilyRelease("app", [source, one]);
 
     expect(one.latestVersion).toBe("1.2.0");
     expect(result.selectedRelease).toBe("1.2.0");
@@ -159,10 +166,10 @@ describe("shared-release selection", () => {
   });
 
   it("requires the application pin as well as image pins before generating constraints", () => {
-    const source = app();
+    const source = appObservation();
     source.current = [];
 
-    const input = snapshot(source, image("one", ["v1.1.0-fips"]));
+    const input = snapshot(source, imageObservation("one", ["v1.1.0-fips"]));
 
     expect(input.families[0].status).toBe("missing-pin");
     expect(() => appendConstraints({}, input)).toThrow(/missing.pin/i);
@@ -176,7 +183,7 @@ describe("generated constraints", () => {
       packageRules: [{ groupName: "existing", matchFileNames: ["src/app/**"] }],
       prHourlyLimit: 3,
     };
-    const source = image("example/app", ["v1.2.0-fips"]);
+    const source = imageObservation("example/app", ["v1.2.0-fips"]);
     source.flavor = "app";
 
     const result = appendConstraints(config, snapshot(source));
@@ -198,7 +205,7 @@ describe("generated constraints", () => {
   });
 
   it("holds different versions in the same file independently without restricting unrelated packages", async () => {
-    const source = image("example/app", ["v0.9.0-fips"]);
+    const source = imageObservation("example/app", ["v0.9.0-fips"]);
     source.flavor = "app";
     source.current.push({ ...pin, currentValue: "v1.1.0-fips", version: "1.1.0" });
 
@@ -241,9 +248,9 @@ describe("generated constraints", () => {
     { tag: "v1.2.0", expectedTag: "v1.2.0", allowed: "/^1\\.2\\.0$/" },
     { tag: "v1.0.0", expectedTag: "1.0.0", allowed: "/^1\\.0\\.0$/" },
   ])(
-    "writes the extracted source value for publisher tag $tag",
+    "constrains the extracted source value for publisher tag $tag",
     ({ tag, expectedTag, allowed }) => {
-      const source = observe(
+      const source = buildDependencyObservation(
         {
           datasource: "github-tags",
           packageName: "example/app",
@@ -332,7 +339,7 @@ describe("version restrictions", () => {
   });
 
   it("enforces inherited timestamp requirements and the three-day plus thirty-minute age boundary", async () => {
-    const rules = await readVersionRules({ extends: [preset] }, readPreset);
+    const rules = await readVersionRules({ extends: [preset] }, readPresetFixture);
     const policy = restrictionsForPin({ ...dependency, datasource: "github-tags" }, pin, rules);
     const now = Date.parse("2026-11-12T12:00:00Z");
 
@@ -345,7 +352,7 @@ describe("version restrictions", () => {
   });
 
   it("respects datasource/package exclusions and explicit age exemptions", async () => {
-    const rules = await readVersionRules({ extends: [preset] }, readPreset);
+    const rules = await readVersionRules({ extends: [preset] }, readPresetFixture);
 
     expect(isEligibleRelease(pin, release, restrictionsForPin(dependency, pin, rules))).toBe(true);
     expect(
@@ -365,7 +372,7 @@ describe("version restrictions", () => {
         extends: [preset],
         packageRules: [{ matchPackageNames: ["example/app"], minimumReleaseAge: null }],
       },
-      readPreset,
+      readPresetFixture,
     );
 
     expect(
@@ -392,7 +399,7 @@ describe("version restrictions", () => {
     },
   );
 
-  it("does not select releases when updates are disabled", async () => {
+  it("rejects release candidates when updates are disabled", async () => {
     const rules = await readVersionRules({ enabled: false });
 
     expect(isEligibleRelease(pin, release, restrictionsForPin(dependency, pin, rules))).toBe(false);

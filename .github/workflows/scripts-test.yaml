@@ -18,6 +18,7 @@ on:
       - ".github/workflows/scripts-test.yaml"
       - "tasks/lint.yaml"
       - "renovate.json"
+      - "app-families.yaml"
       - "mise.toml"
 
 concurrency:
@@ -28,6 +29,7 @@ jobs:
   test:
     name: ${{ matrix.script-dir }} Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       matrix:
         script-dir: [renovate, root-ca-retriever]
@@ -49,5 +51,6 @@ jobs:
 
       - name: Validate generated Renovate configuration
         if: matrix.script-dir == 'renovate'
+        timeout-minutes: 8
         working-directory: scripts/renovate
         run: npm run test:config

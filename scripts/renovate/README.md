@@ -6,39 +6,53 @@ This directory contains shared-release discovery and Renovate PR readiness scrip
 
 [`discover-versions.ts`](discover-versions.ts) selects the newest eligible application release available across every required image in [`app-families.yaml`](../../app-families.yaml). It retains current pins when no shared upgrade exists or an update would downgrade a pin. Existing grouping and unrelated Renovate updates remain unchanged.
 
-Use the repository's Node version and install Git, GitHub CLI (`gh`), and the repository-pinned `crane`. Discovery uses your existing `gh` authentication and registry logins or Docker credential helpers. Run these commands from `scripts/renovate`:
+Discovery produces two distinct outputs:
+
+- **Discovery report**: JSON diagnostic/results data recording current pins, selected releases, publisher gaps, and failures. It is not Renovate configuration.
+- **Renovate config**: the configuration discovery reads to honor existing restrictions. With `--write-config`, discovery appends constraints to this same file.
+
+Use the repository's Node version and install Git, GitHub CLI (`gh`), and the repository-pinned `crane`. Discovery uses your existing `gh` authentication and registry logins or Docker credential helpers.
+
+### 1. Inspect available shared releases
+
+Run these commands from `scripts/renovate` to write a discovery report without changing the Renovate config. The `--report` destination is required:
 
 ```bash
 npm ci
-npm test
-npx --no-install tsx discover-versions.ts --output /tmp/app-versions.json
+npx --no-install tsx discover-versions.ts --report /tmp/shared-release-report.json
 ```
 
-Add `--write-config` to also append constraints to `../../renovate.json`. This changes your checkout's config, so use a disposable checkout for manual testing:
+Defaults come from the checkout containing the script: `app-families.yaml`, `renovate.json`, and manifest `sourceFiles`. Explicit relative paths for `--families-file`, `--config`, and `--report` resolve from your working directory. Manifest source paths remain checkout-relative even with an alternate manifest. For focused troubleshooting, use `--families-file /tmp/focused-families.yaml` with only the families you want to inspect.
+
+Exit `0` means discovery completed, including legitimate gaps or held upgrades. Exit `2` writes family-error diagnostics to the discovery report without changing config. Exit `1` means an input or command failure. A failure can leave an older report at the output path, so check the exit code before consuming it. The report records the checkout's current `HEAD`; discovery does not switch branches or enforce a clean `main` checkout.
+
+### 2. Generate constraints safely
+
+Use `--config` to target a temporary copy of `renovate.json`, leaving your checkout unchanged. This option selects both the input config and the file modified by `--write-config`:
 
 ```bash
-npx --no-install tsx discover-versions.ts --output /tmp/app-versions.json --write-config
+workdir=$(mktemp -d)
+cp ../../renovate.json "$workdir/renovate.json"
+npx --no-install tsx discover-versions.ts --report "$workdir/discovery-report.json" --config "$workdir/renovate.json" --write-config
 ```
 
-Exit `0` means discovery completed, including legitimate gaps or held upgrades. Exit `2` writes family-error diagnostics to the snapshot without changing config. Exit `1` means an input or command failure. Start each run with the original config; do not commit generated constraints. The script does not run Renovate itself.
+Start each run with the original config; do not commit generated constraints. Without `--config`, `--write-config` modifies your checkout's `renovate.json`. The script does not run Renovate itself.
 
-Discovery prints progress and a final summary to stderr: publisher lookup starts and tag counts, each family's status and selected release, the snapshot path, and whether it wrote or left config unchanged. Lookup progress appears once per publisher lookup, even when multiple roles share it. On failure, the final recap lists each failed family and affected publishers, failure kinds, and roles. Publishers shared across roles appear once per failure kind in that family's recap.
+### 3. Validate the resulting Renovate config
+
+With UDS CLI and a running Docker daemon, validate the temporary config using the [shared validation task](../../tasks/lint.yaml). Continue from `scripts/renovate` in the same shell:
+
+```bash
+uds run -f ../../tasks/lint.yaml renovate --with file="$workdir/renovate.json"
+```
+
+Pass the Renovate config, not the discovery report. The task uses the same digest-pinned Renovate image locally and in CI, independently of your host Node version.
+
+### Read discovery progress
+
+Discovery prints progress and a final summary to stderr: publisher lookup starts and tag counts, each family's status and selected release, the discovery-report path, and whether discovery wrote or left config unchanged. Lookup progress appears once per publisher lookup, even when multiple roles share it. On failure, the final recap lists each failed family and affected publishers, failure kinds, and roles. Publishers shared across roles appear once per failure kind in that family's recap.
 
 Publisher and preset failures report the command name and available safe metadata: numeric exit codes, recognized HTTP statuses, and known process error codes or termination signals. They do not print raw command output or response bodies; unknown failure details remain unavailable.
-
-The snapshot uses `schemaVersion: 2` and contains `observedAt`, `mainSha`, and per-family decisions, dependencies, targets, and publisher gaps. `mainSha` records the current `HEAD`; the script does not switch branches or enforce a clean `main` checkout.
-
-Override input locations with `--repo-root`, `--families`, or `--repo-config`. CLI paths resolve from your working directory; manifest `sourceFiles` resolve from `--repo-root`.
-
-### Validate configuration
-
-From the repository root, validate a generated Renovate config with the [shared validation task](../../tasks/lint.yaml):
-
-```bash
-uds run lint:renovate --with file=/absolute/path/to/all-config.json
-```
-
-This requires UDS CLI and a running Docker daemon. The task uses the same digest-pinned Renovate image locally and in CI, independently of your host Node version. Pass the generated config, not the discovery snapshot.
 
 ### Discovery flow
 
@@ -46,14 +60,14 @@ These diagrams separate script execution, dependency inspection, and selection p
 
 #### Script execution and outputs
 
-`main()` loads inputs and writes the snapshot before considering config changes. Thrown input or command errors exit `1`; a failure can leave an older snapshot at the output path, so check the exit code before consuming it.
+`main()` loads inputs and writes the discovery report before considering config changes. Thrown input or command errors exit `1`.
 
 ```mermaid
 flowchart TD
     main["main()"] --> inputs["parseFamilies()<br/>Load config and source files"]
     inputs --> discover["discover()"]
-    discover --> snapshot["Write schema 2 snapshot"]
-    snapshot --> errors{"Family errors?"}
+    discover --> report["Write discovery report"]
+    report --> errors{"Family errors?"}
     errors -->|Yes| exit2["Exit 2<br/>Config unchanged"]
     errors -->|No| write{"--write-config?"}
     write -->|No| exit0["Exit 0"]
@@ -64,7 +78,7 @@ flowchart TD
 
 #### Dependency discovery and policy
 
-`discover()` loads policy once, then inspects each family's members before selection. The diagram shows the successful inspection path. `createVersionSources()` supplies publisher and preset clients through `gh api` and `crane ls`; discovery reuses publisher lookups by datasource and package.
+`discover()` loads policy once, then inspects each family's members before selection. The diagram shows the successful inspection path. `createCliVersionSources()` supplies publisher and preset clients through `gh api` and `crane ls`; discovery reuses publisher lookups by datasource and package.
 
 ```mermaid
 flowchart TD
@@ -73,20 +87,20 @@ flowchart TD
     members --> pins["inventoryPins()"]
     pins --> inspect["inspectDependency()"]
     inspect --> lookup["lookup(): publisher tags"]
-    lookup --> observe["observe(): normalize versions"]
+    lookup --> observe["buildDependencyObservation()<br/>Normalize versions"]
     observe --> policy["applyVersionRestrictions()"]
-    policy --> select["selectFamily()<br/>After all members"]
+    policy --> select["selectFamilyRelease()<br/>After all members"]
 ```
 
 `applyVersionRestrictions()` uses `restrictionsForPin()` and `isEligibleRelease()` to evaluate each release against every current pin. `inspectDependency()` records lookup failures and unsupported applicable policies as family errors instead of selecting from incomplete or unsupported data.
 
 #### Shared-release selection
 
-`selectFamily()` starts with current targets. It replaces them only when every member has an eligible shared release, no pin would downgrade, and at least one pin needs an upgrade.
+`selectFamilyRelease()` starts with current targets. It replaces them only when every member has an eligible shared release, no pin would downgrade, and at least one pin needs an upgrade.
 
 ```mermaid
 flowchart TD
-    select["selectFamily()"] --> retain["retainedTargets()"]
+    select["selectFamilyRelease()"] --> retain["retainedTargets()"]
     retain --> invalid{"Errors or missing pins?"}
     invalid -->|Yes| keep["Keep current pins"]
     invalid -->|No| shared{"Shared release?<br/>newestSharedRelease()"}
@@ -113,15 +127,15 @@ For an image-only application, add an entry under `families` using this pattern,
     datasource: docker
     packageName: example.com/team/app
     # Capture the application version, not a Helm chart version.
-    tagPattern: &exampleVersion '^(?<version>\d+\.\d+\.\d+)$'
+    tagPattern: '^(?<version>\d+\.\d+\.\d+)$'
   flavors:
     upstream:
       images:
         - repository: example.com/team/app
-          tagPattern: *exampleVersion
+          tagPattern: '^(?<version>\d+\.\d+\.\d+)$'
 ```
 
-List every file containing the family's pins in `sourceFiles`. Use `github-tags` for a GitHub-tagged application source when appropriate. Patterns must match actual publisher tags and capture comparable versions in the named `version` group; prefixes and suffixes stay in the original tags. Run `npm test`, then inspect a fresh snapshot before enabling config writing. Unsupported applicable restrictions produce an error rather than a guessed selection.
+List every file containing the family's pins in `sourceFiles`. Use `github-tags` for a GitHub-tagged application source when appropriate. Patterns must match actual publisher tags and capture comparable versions in the named `version` group; prefixes and suffixes stay in the original tags. Run `npm test`, then inspect a fresh discovery report before enabling config writing. Unsupported applicable restrictions produce an error rather than a guessed selection.
 
 Restriction selectors support case-insensitive globs and `/pattern/i` regexes, matching Renovate. Semver `allowedVersions` bounds require the publisher tag, after any existing `extractVersion`, to parse as the same semver as the normalized application version. Otherwise discovery reports `unsupported` and leaves config unchanged. This prevents normalization from removing meaningful prefixes or suffixes before generated constraints replace the original bounds.
 
@@ -179,24 +193,19 @@ From `scripts/renovate`, run type checking and unit tests:
 npm test
 ```
 
-The suites cover these boundaries:
+Discovery calls GitHub through `gh`, so those tests supply known command responses and check the requests and output parsing. This makes pagination, release dates, prerelease flags, and failure cases repeatable without depending on GitHub availability, credentials, or changing releases.
 
-| Suite                                                                                                                          | Coverage                                                                                                                        |
-| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| [`selection.spec.ts`](selection.spec.ts)                                                                                       | Shared-release intersections, downgrade prevention, tag/extraction formats, generated constraints, and inherited restrictions.  |
-| [`discover-versions.spec.ts`](discover-versions.spec.ts)                                                                       | Manifest pins, command outputs and exit codes, config-write guards, failure reporting, and GitHub publisher requests/responses. |
-| [`registry-tags.spec.ts`](registry-tags.spec.ts)                                                                               | Bounded pagination, Docker credentials/helpers, authentication failures, and rejection of partial catalogs.                     |
-| [`getImagesAndCharts.spec.ts`](getImagesAndCharts.spec.ts), [`compareImagesAndCharts.spec.ts`](compareImagesAndCharts.spec.ts) | Existing readiness image/chart extraction and comparison.                                                                       |
+Registry tests run the installed `crane` against an authenticated local registry. A mocked tag list would not prove that the real CLI uses Docker credentials and credential helpers, follows pagination, or fails when a later page cannot be read. The local registry checks those boundaries with known data and failures, without requiring publisher accounts.
 
-GitHub tests inject CLI responses. Registry tests invoke real `crane` against an authenticated local registry and temporary Docker configuration, not live publishers. These tests do not verify access to your publisher accounts.
-
-With UDS CLI and Docker available, run the container integration check from the same directory:
+With UDS CLI and Docker available, run the test suite with container validation enabled from the same directory:
 
 ```bash
 npm run test:config
 ```
 
-This generates constraints for one representative family on top of the real repository configuration using controlled publisher data. It validates the result with the shared Renovate container task and checks that invalid configuration fails. Scripts CI runs the same command; the normal unit suite skips this Docker-dependent check. It checks configuration compatibility, not Renovate's extraction/update execution or live publisher availability.
+Unit tests can confirm that generated rules have the expected shape, but not that Renovate accepts them. This check generates constraints for one representative family on top of the real repository configuration, then runs Renovate's actual validator. It catches unsupported options and invalid regexes and confirms that validation errors produce a failing command. The pinned container keeps Renovate, Node, and the native RE2 regex engine consistent between local and CI runs.
+
+Scripts CI runs the same command. Without this opt-in, the suite skips container validation because it requires Docker. This validates configuration compatibility, not Renovate's extraction/update execution or access to live publishers.
 
 ## Related documentation
 

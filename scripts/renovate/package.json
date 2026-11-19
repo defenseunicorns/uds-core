@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "test": "npm run typecheck && vitest run",
-    "test:config": "RENOVATE_VALIDATE_CONFIG=true vitest run discover-versions.spec.ts -t 'shared container task'",
+    "test:config": "RENOVATE_VALIDATE_CONFIG=true vitest run",
     "typecheck": "tsc"
   },
   "dependencies": {

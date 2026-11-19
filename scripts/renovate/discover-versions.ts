@@ -125,35 +125,37 @@ class VersionSourceError extends Error {
 }
 
 /**
- * Write a discovery snapshot, then optionally append constraints to the repo config.
- * Family errors still produce a snapshot but prevent config writes. Progress uses stderr.
+ * Write a discovery report, then optionally append constraints to the Renovate config.
+ * Family errors still produce a report but prevent config writes. Progress uses stderr.
+ * The root defaults to this script's checkout; callers can supply an isolated test checkout.
  *
  * @returns 0 for successful discovery (including held releases), or 2 for family errors.
  * @throws Input, preset-resolution, or I/O failures; the executable maps rejections to exit 1.
  */
 export async function main(
   args = process.argv.slice(2),
-  sources = createVersionSources(),
+  sources = createCliVersionSources(),
+  root = resolve(__dirname, "../.."),
 ): Promise<number> {
   const { values } = parseArgs({
     args,
     options: {
-      output: { type: "string" },
+      report: { type: "string" },
       "write-config": { type: "boolean", default: false },
-      "repo-root": { type: "string", default: "../.." },
-      families: { type: "string", default: "../../app-families.yaml" },
-      "repo-config": { type: "string", default: "../../renovate.json" },
+      "families-file": { type: "string" },
+      config: { type: "string" },
     },
   });
-  if (!values.output) throw new Error("--output is required");
+  if (!values.report) throw new Error("--report is required");
 
-  const root = resolve(values["repo-root"]!);
+  const familiesPath = resolve(values["families-file"] ?? resolve(root, "app-families.yaml"));
+  const configPath = resolve(values.config ?? resolve(root, "renovate.json"));
   const mainSha = execFileSync("git", ["rev-parse", "HEAD"], {
     cwd: root,
     encoding: "utf8",
   }).trim();
-  const families = parseFamilies(await readFile(values.families!, "utf8"));
-  const config = JSON.parse(await readFile(values["repo-config"]!, "utf8"));
+  const families = parseFamilies(await readFile(familiesPath, "utf8"));
+  const config = JSON.parse(await readFile(configPath, "utf8"));
   console.error(`[discovery] Starting discovery: families=${families.length} HEAD=${mainSha}`);
 
   const files: Record<string, string> = {};
@@ -161,8 +163,8 @@ export async function main(
     files[file] = await readFile(resolve(root, file), "utf8");
 
   const snapshot = await discover(families, files, config, sources, mainSha);
-  await writeFile(values.output, `${JSON.stringify(snapshot, null, 2)}\n`);
-  console.error(`[discovery] Snapshot written: ${values.output}`);
+  await writeFile(values.report, `${JSON.stringify(snapshot, null, 2)}\n`);
+  console.error(`[discovery] Discovery report written: ${values.report}`);
 
   const counts: Record<string, number> = {};
   for (const family of snapshot.families) counts[family.status] = (counts[family.status] ?? 0) + 1;
@@ -185,10 +187,10 @@ export async function main(
 
   if (values["write-config"]) {
     await writeFile(
-      values["repo-config"]!,
+      configPath,
       `${JSON.stringify(appendConstraints(config, snapshot), null, 2)}\n`,
     );
-    console.error(`[discovery] Config written: ${values["repo-config"]}`);
+    console.error(`[discovery] Config written: ${configPath}`);
   } else {
     console.error("[discovery] Config unchanged (--write-config not requested)");
   }
@@ -268,7 +270,7 @@ export async function discover(
       observations.push(await inspectDependency(member, pins, lookup, rules, now));
     }
 
-    const selection = selectFamily(family.name, observations);
+    const selection = selectFamilyRelease(family.name, observations);
     snapshot.families.push(selection);
     console.error(
       `[discovery] ${family.name}: ${selection.status}${selection.selectedRelease ? ` selected=${selection.selectedRelease}` : ""}`,
@@ -324,7 +326,7 @@ async function inspectDependency(
   try {
     publisherReleases = await lookup(dependency);
   } catch {
-    const observation = observe(dependency, flavor, pins, []);
+    const observation = buildDependencyObservation(dependency, flavor, pins, []);
     observation.error = {
       kind: "lookup-failed",
       message: `Publisher lookup failed: ${dependency.datasource}:${dependency.packageName}`,
@@ -332,7 +334,7 @@ async function inspectDependency(
     return observation;
   }
 
-  const observation = observe(dependency, flavor, pins, publisherReleases);
+  const observation = buildDependencyObservation(dependency, flavor, pins, publisherReleases);
   if (!observation.error) applyVersionRestrictions(observation, rules, now);
 
   return observation;
@@ -421,7 +423,7 @@ export function parseFamilies(content: string): Family[] {
   const names = new Set<string>();
   const owners = new Map<string, string>();
 
-  function pattern(value: unknown): void {
+  function validateTagPattern(value: unknown): void {
     if (
       typeof value !== "string" ||
       !value.startsWith("^") ||
@@ -432,7 +434,7 @@ export function parseFamilies(content: string): Family[] {
     new RegExp(value);
   }
 
-  function dependency(value: Dependency): void {
+  function validateDependency(value: Dependency): void {
     if (
       !value ||
       !["docker", "github-tags"].includes(value.datasource) ||
@@ -440,7 +442,7 @@ export function parseFamilies(content: string): Family[] {
       !/^[\w.-]+(?:\/[\w.-]+)+$/.test(value.packageName)
     )
       throw new Error("Invalid dependency identity");
-    pattern(value.tagPattern);
+    validateTagPattern(value.tagPattern);
   }
 
   for (const family of data.families as Family[]) {
@@ -458,7 +460,7 @@ export function parseFamilies(content: string): Family[] {
     )
       throw new Error("Invalid sourceFiles");
 
-    dependency(family.appDependency);
+    validateDependency(family.appDependency);
     if (!family.flavors || typeof family.flavors !== "object" || Array.isArray(family.flavors))
       throw new Error("Expected flavor definitions");
 
@@ -471,7 +473,7 @@ export function parseFamilies(content: string): Family[] {
         throw new Error("Invalid flavor images");
 
       for (const image of value.images) {
-        dependency({
+        validateDependency({
           datasource: "docker",
           packageName: image.repository,
           tagPattern: image.tagPattern,
@@ -550,7 +552,7 @@ function renovateValueForTag(pin: Pin, publisherTag: string): string | undefined
     : publisherTag;
 }
 
-export function observe(
+export function buildDependencyObservation(
   dependency: Dependency,
   flavor: string,
   pins: Pin[],
@@ -601,7 +603,7 @@ export function observe(
  * Uses already-evaluated observations; errors, no intersection, or any downgrade
  * retain the original source targets rather than generating partial upgrades.
  */
-export function selectFamily(name: string, dependencies: Observation[]): Selection {
+export function selectFamilyRelease(name: string, dependencies: Observation[]): Selection {
   const result: Selection = {
     name,
     status: "no-shared-release",
@@ -798,7 +800,7 @@ export async function readVersionRules(
   ];
 }
 
-function matches(value: string, patterns: unknown): boolean {
+function matchesRulePatterns(value: string, patterns: unknown): boolean {
   const entries = typeof patterns === "string" ? [patterns] : patterns;
   if (!Array.isArray(entries) || !entries.every(entry => typeof entry === "string"))
     throw new Error("Unsupported restriction matcher");
@@ -817,7 +819,7 @@ function matches(value: string, patterns: unknown): boolean {
   );
 }
 
-function duration(value: string | null | undefined): number {
+function parseDurationMs(value: string | null | undefined): number {
   if (value === undefined || value === null || value === "") return 0;
 
   const match = /^(\d+)\s+(minute|hour|day|week)s?$/.exec(String(value));
@@ -850,7 +852,8 @@ export function restrictionsForPin(
 
   const policy: Rule = {};
   for (const rule of rules) {
-    if (selectors.some(key => key in rule && !matches(values[key], rule[key]))) continue;
+    if (selectors.some(key => key in rule && !matchesRulePatterns(values[key], rule[key])))
+      continue;
 
     const unknown = Object.keys(rule).find(
       key => key.startsWith("match") && !selectors.includes(key),
@@ -910,7 +913,7 @@ export function isEligibleRelease(
     }
   }
 
-  const age = duration(restrictions.minimumReleaseAge);
+  const age = parseDurationMs(restrictions.minimumReleaseAge);
   if (!age) return true;
   if (!release.releaseTimestamp)
     return restrictions.minimumReleaseAgeBehaviour === "timestamp-optional";
@@ -923,7 +926,7 @@ export function isEligibleRelease(
     restrictions.minimumReleaseAgeBuffer === undefined
       ? "30 minutes"
       : restrictions.minimumReleaseAgeBuffer;
-  return now - timestamp >= age + duration(buffer);
+  return now - timestamp >= age + parseDurationMs(buffer);
 }
 
 function safeFailureDetails(error: unknown): string {
@@ -1008,7 +1011,7 @@ interface GitHubRelease {
  * Requires complete pagination and retains raw publisher tags and release metadata.
  * Failures retain only allowlisted context, never raw command output or response bodies.
  */
-export function createVersionSources(run: RunCommand = runCommand): VersionSources {
+export function createCliVersionSources(run: RunCommand = runCommand): VersionSources {
   return {
     async readPreset(preset) {
       const match = /^github>([^/]+\/[^/]+)\/\/([^#]+)(?:#(.+))?$/.exec(preset);

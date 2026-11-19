@@ -8,10 +8,10 @@ import * as path from "path";
 import * as yaml from "yaml";
 
 /**
- * Extracts images and charts from zarf.yaml files in a given directory path
+ * Write image and chart inventories extracted from zarf.yaml files in a directory.
  * @param directoryPath - Path to the directory containing zarf.yaml files
  */
-export async function getImagesAndCharts(directoryPath: string): Promise<void> {
+export async function writeImageAndChartInventory(directoryPath: string): Promise<void> {
   // Create extract directory if it doesn't exist
   const extractDir = path.join(directoryPath, "extract");
   if (!fs.existsSync(extractDir)) {
@@ -164,7 +164,7 @@ if (require.main === module) {
     process.exit(1);
   }
 
-  getImagesAndCharts(directoryPath)
+  writeImageAndChartInventory(directoryPath)
     .then(() => process.exit(0))
     .catch(error => {
       console.error(error);

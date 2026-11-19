@@ -7,13 +7,13 @@ import * as fs from "fs";
 import * as path from "path";
 import { afterEach, beforeEach, describe, expect, Mock, test, vi } from "vitest";
 import * as yaml from "yaml";
-import { getImagesAndCharts } from "./getImagesAndCharts";
+import { writeImageAndChartInventory } from "./getImagesAndCharts";
 
 // Mock fs and path modules
 vi.mock("fs");
 vi.mock("path");
 
-describe("getImagesAndCharts", () => {
+describe("image and chart inventory output", () => {
   beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
@@ -55,7 +55,7 @@ describe("getImagesAndCharts", () => {
     vi.restoreAllMocks();
   });
 
-  test("should extract charts and images from realistic zarf.yaml files", async () => {
+  test("writes chart versions and images grouped by normalized version", async () => {
     // Mock real-world zarf.yaml files based on the grafana example
     (fs.readFileSync as Mock).mockImplementation(filePath => {
       if (filePath === "test-dir/zarf.yaml") {
@@ -149,7 +149,7 @@ components:
       return "";
     });
 
-    await getImagesAndCharts("test-dir");
+    await writeImageAndChartInventory("test-dir");
 
     // Check if extract directory was created
     expect(fs.mkdirSync).toHaveBeenCalledWith("test-dir/extract", { recursive: true });
@@ -206,7 +206,7 @@ components:
     });
   });
 
-  test("should handle multi-flavor images with same version but different image names", async () => {
+  test("groups differently named publisher images by their shared version", async () => {
     // Mock zarf.yaml with different image names but same versions across flavors
     (fs.readFileSync as Mock).mockImplementation(filePath => {
       if (filePath === "test-dir/zarf.yaml") {
@@ -256,7 +256,7 @@ metadata:
       return "";
     });
 
-    await getImagesAndCharts("test-dir");
+    await writeImageAndChartInventory("test-dir");
 
     // Get the actual content written to images.yaml
     const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
@@ -281,11 +281,11 @@ metadata:
     });
   });
 
-  test("should handle empty directory", async () => {
+  test("writes empty inventories when the directory has no package files", async () => {
     // Mock empty directory
     (fs.readdirSync as Mock).mockReturnValue([]);
 
-    await getImagesAndCharts("empty-dir");
+    await writeImageAndChartInventory("empty-dir");
 
     // Check if extract directory was created
     expect(fs.mkdirSync).toHaveBeenCalledWith("empty-dir/extract", { recursive: true });
@@ -308,7 +308,7 @@ metadata:
     expect(images).toEqual({});
   });
 
-  test("should handle invalid zarf.yaml file", async () => {
+  test("writes empty inventories when package YAML is invalid", async () => {
     // Mock invalid YAML content
     (fs.readFileSync as Mock).mockImplementation(filePath => {
       if (filePath === "test-dir/zarf.yaml") {
@@ -317,7 +317,7 @@ metadata:
       return "";
     });
 
-    await getImagesAndCharts("test-dir");
+    await writeImageAndChartInventory("test-dir");
 
     // Check if extract directory was created
     expect(fs.mkdirSync).toHaveBeenCalledWith("test-dir/extract", { recursive: true });
@@ -340,7 +340,7 @@ metadata:
     expect(images).toEqual({});
   });
 
-  test("should handle images with beta/rc version tags", async () => {
+  test("groups beta-tagged images by normalized version while retaining their original tags", async () => {
     // Mock YAML with images having beta/rc version tags
     (fs.readFileSync as Mock).mockImplementation(filePath => {
       if (filePath === "test-dir/zarf.yaml") {
@@ -371,7 +371,7 @@ metadata:
       return "";
     });
 
-    await getImagesAndCharts("test-dir");
+    await writeImageAndChartInventory("test-dir");
 
     // Get the actual content written to images.yaml
     const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
@@ -391,7 +391,7 @@ metadata:
     });
   });
 
-  test("should normalize prefixed distroless image tags", async () => {
+  test("groups prefixed distroless tags under their normalized version", async () => {
     (fs.readFileSync as Mock).mockImplementation(filePath => {
       if (filePath === "test-dir/zarf.yaml") {
         return `
@@ -420,7 +420,7 @@ components:
       return "";
     });
 
-    await getImagesAndCharts("test-dir");
+    await writeImageAndChartInventory("test-dir");
 
     const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
       call => call[0] === "test-dir/extract/images.yaml",

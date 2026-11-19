@@ -1,12 +1,14 @@
 // Copyright 2026 Defense Unicorns
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+import { execFile } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
+import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createVersionSources } from "./discover-versions";
+import { createCliVersionSources } from "./discover-versions";
 
 const credentials = "fixture-user:fixture-password";
 const authorization = `Basic ${Buffer.from(credentials).toString("base64")}`;
@@ -32,7 +34,7 @@ afterEach(async () => {
 });
 
 // Exercise real crane authentication and pagination without contacting a publisher.
-async function registry(failSecondPage = false) {
+async function startTestRegistry(failSecondPage = false) {
   const pages: string[] = [];
   const server = createServer((request, response) => {
     response.setHeader("Content-Type", "application/json");
@@ -71,7 +73,7 @@ async function registry(failSecondPage = false) {
   return { host: `127.0.0.1:${address.port}`, pages };
 }
 
-async function login(host: string) {
+async function writeDockerCredentials(host: string) {
   await writeFile(
     join(configDirectory, "config.json"),
     JSON.stringify({
@@ -83,24 +85,31 @@ async function login(host: string) {
 }
 
 async function lookup(host: string) {
-  return createVersionSources().lookup({
+  const sources = createCliVersionSources(async (command, args) => {
+    const { stdout } = await promisify(execFile)(command, args, {
+      encoding: "utf8",
+      timeout: 15_000,
+    });
+    return stdout;
+  });
+  return sources.lookup({
     datasource: "docker",
     packageName: `${host}/app`,
     tagPattern: "^v(?<version>\\d+\\.\\d+\\.\\d+)$",
   });
 }
 
-describe("registry discovery through crane", () => {
+describe("registry discovery through crane", { timeout: 20_000 }, () => {
   it("requests bounded pages using credentials from Docker config", async () => {
-    const { host, pages } = await registry();
-    await login(host);
+    const { host, pages } = await startTestRegistry();
+    await writeDockerCredentials(host);
 
     expect((await lookup(host)).map(release => release.tag)).toEqual(["v1.0.0", "v1.1.0"]);
     expect(pages).toEqual(["/v2/app/tags/list?n=1000", "/v2/app/tags/list?last=v1.0.0"]);
   });
 
-  it("uses a configured Docker credential helper, like the Chainguard setup action", async () => {
-    const { host } = await registry();
+  it("authenticates using the configured Docker credential helper", async () => {
+    const { host } = await startTestRegistry();
     await writeFile(
       join(configDirectory, "config.json"),
       JSON.stringify({ credHelpers: { [host]: "fixture" } }),
@@ -116,16 +125,16 @@ describe("registry discovery through crane", () => {
     expect((await lookup(host)).map(release => release.tag)).toEqual(["v1.0.0", "v1.1.0"]);
   });
 
-  it("rejects partial output if a later page fails without leaking command errors", async () => {
-    const { host, pages } = await registry(true);
-    await login(host);
+  it("rejects the lookup when a later tag page fails", async () => {
+    const { host, pages } = await startTestRegistry(true);
+    await writeDockerCredentials(host);
 
     await expect(lookup(host)).rejects.toThrow(`Publisher lookup failed: docker:${host}/app`);
     expect(pages).toContain("/v2/app/tags/list?last=v1.0.0");
   });
 
-  it("reports authentication failure instead of a publisher gap", async () => {
-    const { host } = await registry();
+  it("rejects unauthenticated registry lookups", async () => {
+    const { host } = await startTestRegistry();
 
     await expect(lookup(host)).rejects.toThrow(`Publisher lookup failed: docker:${host}/app`);
   });

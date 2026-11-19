@@ -2,18 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 import { execFile, execFileSync, spawnSync } from "node:child_process";
-import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  copyFile,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { delimiter, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   appendConstraints,
-  createVersionSources,
+  createCliVersionSources,
   discover,
   inventoryPins,
   main,
-  observe,
+  buildDependencyObservation,
   parseFamilies,
   type Family,
   type RunCommand,
@@ -43,7 +52,7 @@ const controlled: VersionSources = {
 };
 
 const root = resolve(__dirname, "../..");
-const readPreset = () =>
+const readPresetFixture = () =>
   readFile(resolve(__dirname, "fixtures/uds-common-selection.json5"), "utf8");
 
 describe("inventory and discovery", () => {
@@ -101,7 +110,7 @@ describe("inventory and discovery", () => {
         packageRules: [{ matchDatasources: ["docker"], allowedVersions: "!/^v1\\.2\\.0$/" }],
       },
       {
-        readPreset,
+        readPreset: readPresetFixture,
         lookup: async () => [
           { tag: "v1.1.0", eligible: true, releaseTimestamp: "2020-01-01T00:00:00Z" },
           { tag: "v1.2.0", eligible: true, releaseTimestamp: "2020-01-01T00:00:00Z" },
@@ -116,7 +125,7 @@ describe("inventory and discovery", () => {
     expect(snapshot.families[0].publisherGaps).toEqual([]);
   });
 
-  it("updates a source-only family whose annotation omits the publisher prefix", async () => {
+  it("selects an upgrade when the source pin omits the publisher prefix", async () => {
     const sourceOnly: Family = {
       ...family,
       sourceFiles: ["src/app/tasks.yaml"],
@@ -171,7 +180,7 @@ describe("inventory and discovery", () => {
         expect(pins.length, label).toBeGreaterThan(0);
         // Current pins must remain comparable even without publisher data.
         expect(
-          observe(dependency, "app", pins, []).current.every(pin => pin.version),
+          buildDependencyObservation(dependency, "app", pins, []).current.every(pin => pin.version),
           label,
         ).toBe(true);
       }
@@ -190,11 +199,13 @@ afterEach(async () => {
   await Promise.all(workspaces.splice(0).map(root => rm(root, { recursive: true, force: true })));
 });
 
-async function workspace() {
+async function createDiscoveryWorkspace() {
   const directory = await mkdtemp(join(tmpdir(), "discover-cli-"));
   workspaces.push(directory);
   // Supply a real HEAD without checking out repo files; source/config fixtures stay controlled.
-  execFileSync("git", ["clone", "--quiet", "--shared", "--no-checkout", root, directory]);
+  execFileSync("git", ["clone", "--quiet", "--shared", "--no-checkout", root, directory], {
+    timeout: 5_000,
+  });
 
   await mkdir(join(directory, "src/app"), { recursive: true });
   await writeFile(join(directory, "src/app/zarf.yaml"), files["src/app/zarf.yaml"]);
@@ -208,28 +219,141 @@ async function workspace() {
   await writeFile(manifest, JSON.stringify({ families: [family] }));
   await writeFile(configFile, original);
 
+  const scriptDirectory = join(directory, "scripts/renovate");
+  await mkdir(scriptDirectory, { recursive: true });
+  const script = join(scriptDirectory, "discover-versions.ts");
+  await copyFile(join(__dirname, "discover-versions.ts"), script);
+  await symlink(join(__dirname, "node_modules"), join(scriptDirectory, "node_modules"), "dir");
+
   return {
     directory,
+    script,
     manifest,
     configFile,
     output,
     original,
-    args: [
-      "--repo-root",
-      directory,
-      "--families",
-      manifest,
-      "--repo-config",
-      configFile,
-      "--output",
-      output,
-    ],
+    main: (args: string[], sources: VersionSources) => main(args, sources, directory),
+    args: ["--families-file", manifest, "--config", configFile, "--report", output],
   };
 }
 
-describe("discovery command", () => {
+async function runDiscoveryCliWithFakeCrane(
+  script: string,
+  args: string[],
+  cwd: string,
+  directory: string,
+) {
+  const bin = join(directory, "bin");
+  await mkdir(bin);
+  await writeFile(join(bin, "crane"), "#!/bin/sh\nprintf '%s\\n' v1.1.0\n", { mode: 0o700 });
+  return spawnSync(resolve(__dirname, "node_modules/.bin/tsx"), [script, ...args], {
+    cwd,
+    env: { ...process.env, PATH: `${bin}${delimiter}${process.env.PATH}` },
+    encoding: "utf8",
+    timeout: 15_000,
+  });
+}
+
+describe("discovery command", { timeout: 20_000 }, () => {
+  it.each(["root", "script directory", "outside checkout"])(
+    "resolves default inputs from the script checkout when invoked from %s",
+    async location => {
+      const test = await createDiscoveryWorkspace();
+      const caller = await createDiscoveryWorkspace();
+      await writeFile(caller.manifest, "{}");
+      await writeFile(caller.configFile, '{"followTag":"latest"}');
+      await writeFile(join(caller.directory, "src/app/zarf.yaml"), "components: []");
+      await writeFile(test.configFile, '{"allowedVersions":"<1"}');
+      const cwd =
+        location === "root"
+          ? test.directory
+          : location === "script directory"
+            ? join(test.directory, "scripts/renovate")
+            : caller.directory;
+
+      const result = await runDiscoveryCliWithFakeCrane(
+        test.script,
+        ["--report", test.output],
+        cwd,
+        test.directory,
+      );
+
+      expect(result.status, result.stderr).toBe(0);
+      expect(JSON.parse(await readFile(test.output, "utf8")).families[0]).toMatchObject({
+        name: "app",
+        status: "no-shared-release",
+        targets: [{ pin: { currentValue: "v1.0.0" }, tag: "v1.0.0" }],
+      });
+      expect(await readFile(test.configFile, "utf8")).toBe('{"allowedVersions":"<1"}');
+    },
+  );
+
+  it("resolves explicit relative paths from the caller but source files from the script checkout", async () => {
+    const test = await createDiscoveryWorkspace();
+    const caller = await createDiscoveryWorkspace();
+    await mkdir(join(caller.directory, "inputs"));
+    await copyFile(caller.manifest, join(caller.directory, "inputs/focused.yaml"));
+    await writeFile(join(caller.directory, "inputs/config.json"), '{"allowedVersions":"<1"}');
+    await writeFile(join(caller.directory, "src/app/zarf.yaml"), "components: []");
+
+    const result = await runDiscoveryCliWithFakeCrane(
+      test.script,
+      [
+        "--families-file",
+        "inputs/focused.yaml",
+        "--config",
+        "inputs/config.json",
+        "--report",
+        "report.json",
+        "--write-config",
+      ],
+      caller.directory,
+      test.directory,
+    );
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(
+      JSON.parse(await readFile(join(caller.directory, "report.json"), "utf8")).families[0].status,
+    ).toBe("no-shared-release");
+    expect(
+      JSON.parse(await readFile(join(caller.directory, "inputs/config.json"), "utf8"))
+        .packageRules[0].allowedVersions,
+    ).toBe("/^v1\\.0\\.0$/");
+    expect(await readFile(test.configFile, "utf8")).toBe(test.original);
+    expect(await readFile(caller.configFile, "utf8")).toBe(caller.original);
+  });
+
+  it("generates constraints against a temporary copy without modifying the canonical config", async () => {
+    const test = await createDiscoveryWorkspace();
+    const canonical = join(root, "renovate.json");
+    const original = await readFile(canonical, "utf8");
+    await writeFile(test.configFile, original);
+
+    expect(
+      await test.main([...test.args, "--write-config"], {
+        ...controlled,
+        readPreset: readPresetFixture,
+      }),
+    ).toBe(0);
+
+    const config = JSON.parse(await readFile(test.configFile, "utf8"));
+    expect(config.packageRules.slice(0, -1)).toEqual(JSON.parse(original).packageRules);
+    expect(config.packageRules.at(-1).allowedVersions).toBe("/^v1\\.1\\.0$/");
+    expect(await readFile(canonical, "utf8")).toBe(original);
+  });
+
+  it("rejects the removed repo-root option before writing outputs", async () => {
+    const test = await createDiscoveryWorkspace();
+
+    await expect(
+      test.main([...test.args, "--repo-root", test.directory], controlled),
+    ).rejects.toThrow(/Unknown option/);
+    await expect(readFile(test.output, "utf8")).rejects.toThrow();
+    expect(await readFile(test.configFile, "utf8")).toBe(test.original);
+  });
+
   it("writes config only when requested, preserving existing rules and sharing publisher lookups across roles", async () => {
-    const test = await workspace();
+    const test = await createDiscoveryWorkspace();
     let lookups = 0;
     let logAtLookup = "";
     const sources: VersionSources = {
@@ -241,7 +365,7 @@ describe("discovery command", () => {
       },
     };
 
-    expect(await main(test.args, sources)).toBe(0);
+    expect(await test.main(test.args, sources)).toBe(0);
     expect(await readFile(test.configFile, "utf8")).toBe(test.original);
     expect(lookups).toBe(1);
     expect(logAtLookup).toContain("Lookup started docker:example.com/app");
@@ -251,18 +375,22 @@ describe("discovery command", () => {
     expect(logs).toContain("Lookup complete docker:example.com/app: tags=1");
     expect(logs).toContain("app: update-available selected=1.1.0");
     expect(logs).toContain("Summary: update-available=1");
-    expect(logs).toContain(`Snapshot written: ${test.output}`);
+    expect(logs).toContain(`Discovery report written: ${test.output}`);
     expect(logs).toContain("Config unchanged (--write-config not requested)");
 
     const snapshot = JSON.parse(await readFile(test.output, "utf8"));
     expect(snapshot.mainSha).toBe(
-      execFileSync("git", ["rev-parse", "HEAD"], { cwd: test.directory, encoding: "utf8" }).trim(),
+      execFileSync("git", ["rev-parse", "HEAD"], {
+        cwd: test.directory,
+        encoding: "utf8",
+        timeout: 5_000,
+      }).trim(),
     );
     expect(
       snapshot.families[0].dependencies.map((dependency: { flavor: string }) => dependency.flavor),
     ).toEqual(["app", "upstream"]);
 
-    expect(await main([...test.args, "--write-config"], sources)).toBe(0);
+    expect(await test.main([...test.args, "--write-config"], sources)).toBe(0);
 
     const config = JSON.parse(await readFile(test.configFile, "utf8"));
     expect(config.packageRules).toHaveLength(2);
@@ -274,10 +402,10 @@ describe("discovery command", () => {
   });
 
   it("treats a legitimate held selection as success and writes current-pin constraints", async () => {
-    const test = await workspace();
+    const test = await createDiscoveryWorkspace();
     await writeFile(test.configFile, '{"allowedVersions":"<1"}');
 
-    expect(await main([...test.args, "--write-config"], controlled)).toBe(0);
+    expect(await test.main([...test.args, "--write-config"], controlled)).toBe(0);
     expect(JSON.parse(await readFile(test.output, "utf8")).families[0].status).toBe(
       "no-shared-release",
     );
@@ -289,7 +417,7 @@ describe("discovery command", () => {
   it.each(["lookup-failed", "unsupported", "missing-pin", "invalid-data"])(
     "returns diagnostics without changing config for %s",
     async status => {
-      const test = await workspace();
+      const test = await createDiscoveryWorkspace();
       if (status === "unsupported") await writeFile(test.configFile, '{"followTag":"latest"}');
       if (status === "missing-pin")
         await writeFile(join(test.directory, "src/app/zarf.yaml"), "components: []");
@@ -310,7 +438,7 @@ describe("discovery command", () => {
             }
           : controlled;
 
-      expect(await main([...test.args, "--write-config"], sources)).toBe(2);
+      expect(await test.main([...test.args, "--write-config"], sources)).toBe(2);
       expect(await readFile(test.configFile, "utf8")).toBe(original);
 
       const result = JSON.parse(await readFile(test.output, "utf8")).families[0];
@@ -360,12 +488,12 @@ describe("discovery command", () => {
       details: ["details unavailable"],
     },
   ])("logs only safe publisher failure metadata: $details", async ({ failure, details }) => {
-    const test = await workspace();
-    const sources = createVersionSources(async () => {
+    const test = await createDiscoveryWorkspace();
+    const sources = createCliVersionSources(async () => {
       throw Object.assign(new Error("TOP_SECRET raw-response"), failure);
     });
 
-    expect(await main([...test.args, "--write-config"], sources)).toBe(2);
+    expect(await test.main([...test.args, "--write-config"], sources)).toBe(2);
 
     const logs = vi.mocked(console.error).mock.calls.flat().join("\n");
     expect(logs).toContain("Lookup failed docker:example.com/app");
@@ -384,20 +512,20 @@ describe("discovery command", () => {
   });
 
   it("reports safe preset failure context without writing outputs", async () => {
-    const test = await workspace();
+    const test = await createDiscoveryWorkspace();
     await writeFile(
       test.configFile,
       JSON.stringify({ extends: ["github>example/presets//renovate.json5"] }),
     );
     const original = await readFile(test.configFile, "utf8");
-    const sources = createVersionSources(async () => {
+    const sources = createCliVersionSources(async () => {
       throw Object.assign(new Error("TOP_SECRET"), {
         code: 1,
         stderr: "gh: TOP_SECRET (HTTP 403)",
       });
     });
 
-    await expect(main([...test.args, "--write-config"], sources)).rejects.toThrow(
+    await expect(test.main([...test.args, "--write-config"], sources)).rejects.toThrow(
       /Cannot read selection preset/,
     );
 
@@ -413,7 +541,7 @@ describe("discovery command", () => {
   });
 
   it("reports command failures safely on stderr and continues without writing partial config", async () => {
-    const test = await workspace();
+    const test = await createDiscoveryWorkspace();
     const other: Family = {
       ...family,
       name: "other",
@@ -441,11 +569,12 @@ describe("discovery command", () => {
 
     const result = spawnSync(
       resolve(__dirname, "node_modules/.bin/tsx"),
-      [resolve(__dirname, "discover-versions.ts"), ...test.args, "--write-config"],
+      [test.script, ...test.args, "--write-config"],
       {
         cwd: __dirname,
         env: { ...process.env, PATH: `${bin}${delimiter}${process.env.PATH}` },
         encoding: "utf8",
+        timeout: 15_000,
       },
     );
 
@@ -464,7 +593,7 @@ describe("discovery command", () => {
     expect(recap).toContain("broken: lookup-failed");
     expect(recap).toContain("docker:example.com/broken: lookup-failed [app]");
     expect(recap).not.toContain("other:");
-    expect(result.stderr).toContain(`Snapshot written: ${test.output}`);
+    expect(result.stderr).toContain(`Discovery report written: ${test.output}`);
     expect(result.stderr).toContain("Config unchanged because discovery failed");
     expect(result.stderr).not.toContain("TOP_SECRET");
     expect(result.stderr).not.toContain("raw-response");
@@ -472,7 +601,7 @@ describe("discovery command", () => {
   });
 
   it("leaves config unchanged when semver bounds cannot preserve publisher tag semantics", async () => {
-    const test = await workspace();
+    const test = await createDiscoveryWorkspace();
     const original = JSON.stringify({
       packageRules: [
         { matchPackageNames: [family.appDependency.packageName], allowedVersions: "<2" },
@@ -500,7 +629,7 @@ describe("discovery command", () => {
     );
 
     expect(
-      await main([...test.args, "--write-config"], {
+      await test.main([...test.args, "--write-config"], {
         ...controlled,
         lookup: async () => [{ tag: "v1.2.0-fips", eligible: true }],
       }),
@@ -514,12 +643,12 @@ describe("discovery command", () => {
     expect(await readFile(test.configFile, "utf8")).toBe(original);
   });
 
-  it("leaves config unchanged if the snapshot cannot be written", async () => {
-    const test = await workspace();
+  it("leaves config unchanged if the discovery report cannot be written", async () => {
+    const test = await createDiscoveryWorkspace();
 
     await expect(
-      main(
-        [...test.args, "--output", join(test.directory, "missing/output.json"), "--write-config"],
+      test.main(
+        [...test.args, "--report", join(test.directory, "missing/output.json"), "--write-config"],
         controlled,
       ),
     ).rejects.toThrow();
@@ -528,18 +657,23 @@ describe("discovery command", () => {
 
   // CI opts in separately so the normal unit suite does not require a Docker daemon.
   it.runIf(process.env.RENOVATE_VALIDATE_CONFIG === "true")(
-    "validates generated config with the shared container task",
+    "validates generated config and rejects invalid config with Renovate",
     async () => {
-      const test = await workspace();
+      const test = await createDiscoveryWorkspace();
       await writeFile(test.configFile, await readFile(join(root, "renovate.json"), "utf8"));
 
-      expect(await main([...test.args, "--write-config"], { ...controlled, readPreset })).toBe(0);
+      expect(
+        await test.main([...test.args, "--write-config"], {
+          ...controlled,
+          readPreset: readPresetFixture,
+        }),
+      ).toBe(0);
       const config = JSON.parse(await readFile(test.configFile, "utf8"));
       expect(config.packageRules.at(-1).allowedVersions).toBe("/^v1\\.1\\.0$/");
       // The container must read a caller-owned private file without changing its permissions.
       await chmod(test.configFile, 0o600);
 
-      const validate = () =>
+      const validate = (timeout: number) =>
         promisify(execFile)(
           "uds",
           [
@@ -551,20 +685,21 @@ describe("discovery command", () => {
             "--with",
             `file=${test.configFile}`,
           ],
-          { cwd: root, encoding: "utf8", timeout: 600_000, maxBuffer: 16 * 1024 * 1024 },
+          { cwd: root, encoding: "utf8", timeout, maxBuffer: 16 * 1024 * 1024 },
         );
-      const { stdout, stderr } = await validate();
+      // The first validation may pull the image; the rejection check reuses it.
+      const { stdout, stderr } = await validate(300_000);
 
       expect(`${stdout}${stderr}`).toContain("Config validated successfully against 1 file(s)");
 
       await writeFile(test.configFile, JSON.stringify({ families: [] }));
-      await expect(validate()).rejects.toMatchObject({ code: 1 });
+      await expect(validate(60_000)).rejects.toMatchObject({ code: 1 });
     },
-    610_000,
+    420_000,
   );
 
-  it("rejects an invalid manifest before writing snapshot or config", async () => {
-    const test = await workspace();
+  it("rejects an invalid manifest before writing the discovery report or config", async () => {
+    const test = await createDiscoveryWorkspace();
     await writeFile(
       test.manifest,
       JSON.stringify({
@@ -572,7 +707,9 @@ describe("discovery command", () => {
       }),
     );
 
-    await expect(main([...test.args, "--write-config"], controlled)).rejects.toThrow(/pattern/i);
+    await expect(test.main([...test.args, "--write-config"], controlled)).rejects.toThrow(
+      /pattern/i,
+    );
     expect(await readFile(test.configFile, "utf8")).toBe(test.original);
     await expect(readFile(test.output, "utf8")).rejects.toThrow();
   });
@@ -592,10 +729,10 @@ const page = (nodes: object[], hasNextPage: boolean) => ({
   },
 });
 
-describe("container publisher boundary", () => {
-  it("lists container tags through crane", async () => {
+describe("container command adapter", () => {
+  it("builds the crane tag-list command and parses its output", async () => {
     const commands: string[][] = [];
-    const sources = createVersionSources(async (command, args) => {
+    const sources = createCliVersionSources(async (command, args) => {
       commands.push([command, ...args]);
       return "v1.0.0\nv1.1.0\n";
     });
@@ -608,8 +745,8 @@ describe("container publisher boundary", () => {
   });
 });
 
-describe("GitHub publisher boundary", () => {
-  it("requests every page and retains tag dates, later publication dates, and prerelease flags", async () => {
+describe("GitHub command adapter", () => {
+  it("requests pagination and combines tag dates with release metadata", async () => {
     const commands: string[][] = [];
     const run: RunCommand = async (command, args) => {
       commands.push([command, ...args]);
@@ -621,7 +758,7 @@ describe("GitHub publisher boundary", () => {
       return '[]\n[{"tag_name":"1.1.0","published_at":"2020-03-01T00:00:00Z","prerelease":true}]\n';
     };
 
-    expect(await createVersionSources(run).lookup(github)).toEqual([
+    expect(await createCliVersionSources(run).lookup(github)).toEqual([
       { tag: "1.0.0", eligible: true, releaseTimestamp: "2020-01-01T00:00:00Z" },
       {
         tag: "1.1.0",
@@ -644,7 +781,7 @@ describe("GitHub publisher boundary", () => {
   });
 
   it("rejects a truncated tag catalog instead of selecting from partial results", async () => {
-    const sources = createVersionSources(async () =>
+    const sources = createCliVersionSources(async () =>
       JSON.stringify([page([{ name: "1.0.0", target: {} }], true)]),
     );
 
@@ -652,7 +789,7 @@ describe("GitHub publisher boundary", () => {
   });
 
   it("does not substitute an old commit date for an invalid publication date", async () => {
-    const sources = createVersionSources(async (_command, args) =>
+    const sources = createCliVersionSources(async (_command, args) =>
       args.includes("graphql")
         ? JSON.stringify([
             page([{ name: "1.0.0", target: { committedDate: "2020-01-01T00:00:00Z" } }], false),
@@ -662,9 +799,9 @@ describe("GitHub publisher boundary", () => {
     await expect(sources.lookup(github)).rejects.toThrow(/publisher lookup failed/i);
   });
 
-  it("reads inherited preset contents through the authenticated gh API", async () => {
+  it("builds the preset-content request and decodes its base64 response", async () => {
     const commands: string[][] = [];
-    const sources = createVersionSources(async (command, args) => {
+    const sources = createCliVersionSources(async (command, args) => {
       commands.push([command, ...args]);
       return Buffer.from("{ packageRules: [] }").toString("base64");
     });
