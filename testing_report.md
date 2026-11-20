@@ -118,8 +118,20 @@ The private repository fixture was `test-bot/machine-access-test`.
 | Registry authentication                                           | The registry's `/v2/` returned a `401` challenge pointing to `gitlab.uds.dev/jwt/auth`. Basic credentials alone at that endpoint returned `302`. Adding the UDS token returned a registry token, which the registry accepted at `/v2/` with `200`. |
 | Direct Service access                                             | A request from the GitLab toolbox to `http://gitlab-webservice-default.gitlab.svc.cluster.local:8181/api/v4/user` returned `403`.                                                                                                                  |
 
+### Client compatibility
+
+Each test supplied a freshly issued UDS token. Automatic renewal after expiry remains untested for every client.
+
+| Ticket flow        | How the test sent the UDS header                                                                             | Compatibility result                                                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Git over HTTPS     | The Git CLI received the UDS header and GitLab Basic credentials through `http.extraHeader`.                 | Private `ls-remote` and shallow clone passed. Git push remains untested.                                                                 |
+| REST API           | `curl` sent the UDS header alongside a GitLab Bearer PAT.                                                    | `GET /api/v4/user` identified `test-bot`.                                                                                                |
+| Git LFS            | An HTTP test sent the header on the LFS batch request.                                                       | Batch negotiation passed. Header delivery by the Git LFS client and transfer of an object remain unverified.                             |
+| GitLab Runner      | An HTTP test sent the header to `/api/v4/runners/verify`.                                                    | GitLab rejected the invalid runner credential. Header delivery by a registered runner and job execution remain unverified.               |
+| Container registry | An HTTP test followed the registry challenge and supplied the header on the request to GitLab's `/jwt/auth`. | The registry accepted the issued token at `/v2/`. Header delivery by a container client during an image pull or push remains unverified. |
+
 ## Coverage limits
 
-The ticket names runners, LFS and registry exchanges. This test covered runner credential rejection, LFS negotiation and registry token exchange. A registered runner executing a job, transfer of actual LFS bytes, an image pull or push, Git writes, and Artifactory remain unverified. Clients must be able to attach the UDS header to requests on the protected host. The existing GitLab settings and bot-account jobs call the Service directly and ran before opt-in.
+Artifactory remains untested. The existing GitLab settings and bot-account jobs call the Service directly and ran before opt-in.
 
 The [Core e2e suite](test/vitest/integration-machine-access.spec.ts) passed all 10 checks across Sidecar and Ambient, including app credential preservation, reserved-token stripping, wrong-client rejection, malformed headers and cleanup on update. GitLab itself ran in Ambient only. The test cluster used the license-free migration fixture after the packaged migration encountered an empty license, and the shared Istio CNI was restarted before the final tests.
