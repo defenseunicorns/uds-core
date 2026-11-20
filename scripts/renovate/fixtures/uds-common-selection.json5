@@ -1,0 +1,59 @@
+// Copyright 2026 Defense Unicorns
+// SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+// Selection rules from defenseunicorns/uds-common/config/renovate.json5,
+// observed 2026-11-12. Authentication and unrelated manager configuration omitted.
+{
+  extends: [
+    ":dependencyDashboard",
+    "config:base",
+    "helpers:pinGitHubActionDigests",
+    "helpers:pinGitHubActionDigestsToSemver",
+  ],
+
+  packageRules: [
+    {
+      matchPackageNames: ["registry1.dso.mil/ironbank/big-bang/base"],
+      allowedVersions: "!/8.4/",
+    },
+
+    {
+      matchDatasources: ["terraform-provider"],
+      registryUrls: ["https://registry.opentofu.org"],
+    },
+
+    {
+      matchDatasources: [
+        "crate",
+        "rubygems",
+        "github-releases",
+        "terraform-provider",
+        "github-tags",
+        "go",
+        "maven",
+        "npm",
+        "nuget",
+        "pypi",
+        "jsr",
+      ],
+      matchPackageNames: [
+        "!pepr",
+        "!@defenseunicorns/**",
+        "!defenseunicorns/**",
+        "!zarf-dev/**",
+        "!uds-packages/**",
+        "!github.com/defenseunicorns/**",
+        "!github.com/zarf-dev/**",
+        "!github.com/uds-packages/**",
+        "!ghcr.io/defenseunicorns/**",
+        "!ghcr.io/zarf-dev/**",
+        "!ghcr.io/uds-packages/**",
+        "!registry.defenseunicorns.com/**",
+      ],
+
+      minimumReleaseAge: "3 days",
+      internalChecksFilter: "strict",
+      minimumReleaseAgeBehaviour: "timestamp-required",
+    },
+  ],
+}

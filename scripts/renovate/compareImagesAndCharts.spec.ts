@@ -579,7 +579,7 @@ describe("compareImagesAndCharts", () => {
     );
   });
 
-  it("should handle empty files gracefully", async () => {
+  it("requires review when the new image inventory is empty", async () => {
     // Mock fs.existsSync to return true for all files
     (fs.existsSync as Mock).mockReturnValue(true);
 
@@ -798,7 +798,7 @@ describe("compareImagesAndCharts", () => {
     await expect(compareImagesAndCharts("old", "new")).rejects.toThrow("Invalid YAML");
   });
 
-  it("should handle images without matches in other flavors", async () => {
+  it("requires review when an image has no other publisher variants", async () => {
     // Mock fs.readFileSync to return different content based on the file path
     (fs.readFileSync as Mock).mockImplementation(filePath => {
       if (filePath === "old/charts.yaml") {
@@ -896,7 +896,7 @@ describe("compareImagesAndCharts", () => {
     expect(result.changes).toContain("PR contains only helm chart updates");
   });
 
-  it("should detect wait for loki (regression test)", async () => {
+  it("waits for the Unicorn Loki image when other publishers have advanced", async () => {
     // Mock fs.readFileSync to return different content based on the file path
     (fs.readFileSync as Mock).mockImplementation(filePath => {
       if (filePath === "old/charts.yaml") {

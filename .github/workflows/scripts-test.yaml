@@ -11,7 +11,15 @@ on:
   pull_request:
     paths:
       - "scripts/renovate/**"
+      - "app-families.yaml"
+      - "src/**/zarf.yaml"
+      - "src/**/tasks.yaml"
       - "scripts/root-ca-retriever/**"
+      - ".github/workflows/scripts-test.yaml"
+      - "tasks/lint.yaml"
+      - "renovate.json"
+      - "app-families.yaml"
+      - "mise.toml"
 
 concurrency:
   group: scripts-test-${{ github.ref }}
@@ -21,9 +29,14 @@ jobs:
   test:
     name: ${{ matrix.script-dir }} Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       matrix:
-        script-dir: [renovate, root-ca-retriever]
+        include:
+          - script-dir: renovate
+            test-script: test:config
+          - script-dir: root-ca-retriever
+            test-script: test
 
     steps:
       - name: Checkout code
@@ -37,5 +50,6 @@ jobs:
         run: npm ci
 
       - name: Run tests
+        timeout-minutes: 8
         working-directory: scripts/${{ matrix.script-dir }}
-        run: npm run test
+        run: npm run ${{ matrix.test-script }}

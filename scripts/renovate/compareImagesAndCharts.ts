@@ -216,7 +216,7 @@ function compareImages(
       // Check if identical
       if (JSON.stringify(oldImageNames.sort()) === JSON.stringify(newImageNames.sort())) {
         foundMatch = true;
-        checkForMajorUpdate(oldVersion, newVersion, result);
+        recordMajorImageUpdate(oldVersion, newVersion, result);
         break;
       }
 
@@ -267,7 +267,7 @@ function compareImages(
         }
 
         // Check if this is a major version update
-        checkForMajorUpdate(oldVersion, newVersion, result);
+        recordMajorImageUpdate(oldVersion, newVersion, result);
         break;
       }
     }
@@ -291,13 +291,12 @@ function isSubset(a: string[], b: string[]): boolean {
 }
 
 /**
- * Checks if there's a major version update between two versions and updates the result
+ * Record a major image version update in the result.
  * @param oldVersion - Old version string
  * @param newVersion - New version string
  * @param result - Result object to update
- * @returns Boolean indicating if a major update was detected
  */
-function checkForMajorUpdate(oldVersion: string, newVersion: string, result: ComparisonResult) {
+function recordMajorImageUpdate(oldVersion: string, newVersion: string, result: ComparisonResult) {
   if (
     oldVersion !== newVersion &&
     semver.valid(oldVersion) &&

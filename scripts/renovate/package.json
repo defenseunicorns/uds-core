@@ -5,9 +5,12 @@
   "private": true,
   "scripts": {
     "test": "npm run typecheck && vitest run",
+    "test:config": "RENOVATE_VALIDATE_CONFIG=true npm test",
     "typecheck": "tsc"
   },
   "dependencies": {
+    "json5": "2.2.3",
+    "minimatch": "11.0.8",
     "semver": "^7.5.4",
     "yaml": "^2.8.3"
   },
@@ -15,7 +18,7 @@
     "@types/node": "^26.0.0",
     "@types/semver": "^7.5.6",
     "tsx": "^4.23.1",
-    "vitest": "^5.0.0",
-    "typescript": "^7.0.0"
+    "typescript": "^7.0.0",
+    "vitest": "^5.0.0"
   }
 }
