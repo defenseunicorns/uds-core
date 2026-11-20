@@ -411,6 +411,11 @@ export interface IngressPort {
  */
 export interface TLS {
   /**
+   * Optional: If specified, the ALPN protocols advertised by the proxy during the TLS
+   * handshake are overridden with this list.
+   */
+  alpnProtocols?: string[];
+  /**
    * For mutual TLS, the name of the secret or the configmap that holds CA certificates.
    */
   caCertCredentialName?: string;
@@ -436,6 +441,10 @@ export interface TLS {
    * Same as CredentialName but for multiple certificates.
    */
   credentialNames?: string[];
+  /**
+   * Optional: If specified, only support the specified ecdh curves.
+   */
+  ecdhCurves?: string[];
   /**
    * If set to true, the load balancer will send a 301 redirect for all http connections,
    * asking the clients to use HTTPS.
