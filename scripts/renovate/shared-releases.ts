@@ -242,7 +242,9 @@ export function inventoryPins(dependency: Dependency, file: string, content: str
     if (fields.datasource !== dependency.datasource || fields.depName !== dependency.packageName)
       continue;
 
-    const value = /(?:default:\s*|[A-Z_]+=)["']?([^\s"']+)/.exec(lines[index + 1] ?? "")?.[1];
+    const value = /(?:(?:default|version):\s*|[A-Z_]+=)["']?([^\s"']+)/.exec(
+      lines[index + 1] ?? "",
+    )?.[1];
     if (!value) throw new Error(`Unsupported annotated pin: ${file}:${index + 1}`);
     add({
       file,

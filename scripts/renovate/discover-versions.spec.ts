@@ -16,6 +16,8 @@ import { tmpdir } from "node:os";
 import { delimiter, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import * as semver from "semver";
+import * as yaml from "yaml";
 import { discover, main } from "./discover-versions";
 import { createCliVersionSources, type RunCommand, type VersionSources } from "./publisher-sources";
 import {
@@ -86,6 +88,97 @@ describe("inventory and discovery", () => {
       },
       { file: "src/pepr/tasks.yaml", currentValue: "1.2.4", versioning: "semver-coerced" },
     ]);
+  });
+
+  it("reads only matching annotated chart versions, not appVersion or unrelated dependencies", () => {
+    const file = "src/app/chart/Chart.yaml";
+    const content = [
+      "apiVersion: v2",
+      "name: app",
+      "# renovate: datasource=docker depName=example.com/app versioning=semver",
+      'version: "v1.0.0"',
+      "appVersion: 99.0.0",
+      "dependencies:",
+      "  - name: unrelated",
+      "    # renovate: datasource=docker depName=example.com/unrelated versioning=semver",
+      "    version: 88.0.0",
+    ].join("\n");
+
+    expect(inventoryPins(family.appDependency, file, content)).toEqual([
+      { file, currentValue: "v1.0.0", versioning: "semver" },
+    ]);
+  });
+
+  it.each([
+    { scenario: "holds chart pins when Unicorn lacks the newer release", sharedUpgrade: false },
+    {
+      scenario: "updates chart pins when every publisher has the newer release",
+      sharedUpgrade: true,
+    },
+  ])("Keycloak $scenario", async ({ sharedUpgrade }) => {
+    const manifest = parseFamilies(await readFile(join(root, "app-families.yaml"), "utf8"));
+    const keycloak = manifest.find(family => family.name === "keycloak")!;
+    const sourceFiles = [
+      "src/keycloak/zarf.yaml",
+      "src/keycloak/chart/Chart.yaml",
+      "src/keycloak/common/zarf.yaml",
+    ];
+    const contents: Record<string, string> = {};
+    for (const file of sourceFiles) contents[file] = await readFile(join(root, file), "utf8");
+    const currentVersion = yaml.parse(contents["src/keycloak/chart/Chart.yaml"]).version as string;
+    const nextVersion = semver.inc(currentVersion, "patch")!;
+    const registry1 = keycloak.flavors.registry1.images[0].repository;
+    const unicorn = keycloak.flavors.unicorn.images[0].repository;
+    const snapshot = await discover(
+      [keycloak],
+      contents,
+      {},
+      {
+        ...controlled,
+        lookup: async dependency => {
+          const versions =
+            dependency.packageName === unicorn && !sharedUpgrade
+              ? [currentVersion]
+              : [currentVersion, nextVersion];
+          return versions.map(version => ({
+            tag:
+              dependency.packageName === registry1
+                ? `${version}-fips`
+                : dependency.packageName === unicorn
+                  ? `v${version}`
+                  : version,
+            eligible: true,
+          }));
+        },
+      },
+      "a".repeat(40),
+    );
+    const targetVersion = sharedUpgrade ? nextVersion : currentVersion;
+    const currentPattern = currentVersion.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
+    const targetPattern = targetVersion.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
+    const rules = appendConstraints({}, snapshot.families).packageRules;
+
+    expect(snapshot.families[0].status).toBe(sharedUpgrade ? "update-available" : "current");
+    expect(rules).toHaveLength(5);
+    expect(rules).toEqual(
+      expect.arrayContaining([
+        ...sourceFiles.map(file => ({
+          matchDatasources: ["docker"],
+          matchPackageNames: ["quay.io/keycloak/keycloak"],
+          matchFileNames: [file],
+          matchCurrentValue: `/^${currentPattern}$/`,
+          allowedVersions: `/^${targetPattern}$/`,
+        })),
+        expect.objectContaining({
+          matchPackageNames: [registry1],
+          allowedVersions: `/^${targetPattern}-fips$/`,
+        }),
+        expect.objectContaining({
+          matchPackageNames: [unicorn],
+          allowedVersions: `/^v${targetPattern}$/`,
+        }),
+      ]),
+    );
   });
 
   it("applies app age and image version bounds without inventing publisher gaps", async () => {

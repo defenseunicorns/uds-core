@@ -165,7 +165,10 @@ families:
             tagPattern: '^v(?<version>\d+\.\d+\.\d+)$'
 
   - name: keycloak
-    sourceFiles: [src/keycloak/zarf.yaml]
+    sourceFiles:
+      - src/keycloak/zarf.yaml
+      - src/keycloak/chart/Chart.yaml
+      - src/keycloak/common/zarf.yaml
     appDependency:
       datasource: docker
       packageName: quay.io/keycloak/keycloak
