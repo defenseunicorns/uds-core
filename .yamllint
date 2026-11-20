@@ -19,6 +19,7 @@ ignore:
   - "uds-docs/**"
   - "/tmp/**"
   - "src/falco/chart/rules/**"
+  - "src/falco/values/tolerations.yaml"
   - "src/velero/chart/templates/crds/**"
   - "bundles/k3d-standard-next/values/**"
   - "bundles/k3d-slim-dev-next/values/**"

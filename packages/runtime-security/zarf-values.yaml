@@ -4,4 +4,5 @@
 # Default Zarf values for the UDS Core runtime-security layer (Falco).
 falco:
   falco: {}
-  uds-falco-config: {}
+  uds-falco-config:
+    extraTolerations: []

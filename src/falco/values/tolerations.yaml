@@ -1,0 +1,7 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Keep these defaults in sync with the pinned upstream Falco chart's tolerations.
+{{ $defaults := list (dict "effect" "NoSchedule" "key" "node-role.kubernetes.io/master") (dict "effect" "NoSchedule" "key" "node-role.kubernetes.io/control-plane") -}}
+tolerations:
+{{ toYaml (concat $defaults (index .Values.falco "uds-falco-config" "extraTolerations")) | indent 2 }}

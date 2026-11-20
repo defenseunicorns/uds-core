@@ -27,6 +27,8 @@ components:
         namespace: falco
         valuesFiles:
           - ../values/values.yaml
+        templatedValuesFiles:
+          - ../values/tolerations.yaml
         values:
           - sourcePath: .falco.falco
             targetPath: .
