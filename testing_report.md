@@ -80,7 +80,30 @@ The browser did not reach the successful Authservice callback, GitLab's native S
 
 ## Machine flows
 
-The tests obtained the UDS access token with Keycloak's client-credentials grant and sent it in `x-uds-machine-token: Bearer <token>`. The private fixture was `test-bot/machine-access-test`. Its GitLab PAT had `read_api` and `read_repository` scopes.
+### Client credentials
+
+Set `GITLAB_MACHINE_CLIENT_SECRET` from the `client_secret` key in the Package-managed Secret `gitlab/gitlab-machine-secret`. Request an access token from Keycloak. The Package audience mapper adds `gitlab-ingress-auth` to the token.
+
+```bash
+UDS_TOKEN=$(curl --fail --silent --show-error \
+  --data-urlencode 'grant_type=client_credentials' \
+  --data-urlencode 'client_id=gitlab-machine' \
+  --data-urlencode "client_secret=$GITLAB_MACHINE_CLIENT_SECRET" \
+  https://sso.uds.dev/realms/uds/protocol/openid-connect/token | jq -er '.access_token')
+```
+
+Send the UDS token to ingress and the GitLab PAT to the application in the same request. The test used the PAT for `test-bot`, scoped to `read_api` and `read_repository`. GitLab returned HTTP `200` and the command printed `test-bot`.
+
+```bash
+curl --fail --silent --show-error \
+  -H "x-uds-machine-token: Bearer $UDS_TOKEN" \
+  -H "Authorization: Bearer $GITLAB_PAT" \
+  https://gitlab.uds.dev/api/v4/user | jq -er '.username'
+```
+
+### Results
+
+The private repository fixture was `test-bot/machine-access-test`.
 
 | Scenario                                                          | Observed result                                                                                                                                                                                                                                    |
 | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
