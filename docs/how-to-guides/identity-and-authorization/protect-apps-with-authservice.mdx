@@ -152,6 +152,51 @@ The Istio policies confirm JWT and Authservice enforcement. The Secret check con
 3. Log in with valid credentials
 4. You should be redirected back to the application and see the content
 
+## Allow machine clients on a protected host
+
+Use host authentication when a browser signs in through Authservice and a machine client also needs to send an application credential. For example, a Git client can present a UDS token to Core and a personal access token to GitLab on the same request.
+
+Configure both clients in the same Package. Use the Service and port from your deployment. Reserve the first redirect URI's path and `/logout` for Authservice.
+
+```yaml title="package.yaml"
+spec:
+  network:
+    expose:
+      - host: gitlab
+        service: gitlab-webservice-default
+        port: 8181
+        selector:
+          app: webservice
+        authentication:
+          mode: authservice
+          ssoClientId: gitlab-ingress-auth
+          machineClientId: gitlab-machine
+  sso:
+    - name: GitLab ingress authentication
+      clientId: gitlab-ingress-auth
+      redirectUris:
+        - https://gitlab.uds.dev/authservice/callback
+    - name: GitLab machine access
+      clientId: gitlab-machine
+      standardFlowEnabled: false
+      serviceAccountsEnabled: true
+      secretConfig:
+        name: gitlab-machine-secret
+        template:
+          client_secret: clientField(secret)
+      protocolMappers:
+        - name: GitLab audience
+          protocol: openid-connect
+          protocolMapper: oidc-audience-mapper
+          config:
+            included.client.audience: gitlab-ingress-auth
+            access.token.claim: "true"
+```
+
+Exchange the Package-managed client secret for an access token using Keycloak's client credentials grant. Send that token as `x-uds-machine-token: Bearer <access_token>`. Keep the application's credential in `Authorization`. Keycloak controls token expiry, and the Package SSO Secret mechanism handles client secret rotation.
+
+Use tenant HTTP ingress for every caller. Omit uptime probes on this exposure. The protected Service must have its own workload selector, distinct from other exposures and selector-based Authservice clients. Both Sidecar and Ambient validate the UDS token before the request reaches the application. A request without the machine header enters the browser flow. An invalid machine header can return `401` on any tenant host.
+
 ## Troubleshooting
 
 ### Problem: `Package` CR is rejected with a redirect URI error

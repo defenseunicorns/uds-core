@@ -406,7 +406,7 @@ export async function generateAuthorizationPolicies(
 
   // Process waypoint deny-all policies for SSO clients
   if (pkg.spec?.sso && shouldUseAmbientWaypoint(pkg)) {
-    for (const sso of pkg.spec.sso) {
+    for (const sso of getAuthserviceClients(pkg)) {
       if (!sso.enableAuthserviceSelector) continue;
 
       const waypointName = getWaypointName(sso.clientId);

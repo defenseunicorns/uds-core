@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: v1
@@ -52,6 +52,9 @@ spec:
             requests:
               cpu: 50m
               memory: 64Mi
+          readinessProbe:
+            tcpSocket:
+              port: 80
           ports:
             - containerPort: 80
           securityContext:

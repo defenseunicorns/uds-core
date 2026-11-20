@@ -247,3 +247,14 @@ export async function credentialsDelete(client: Partial<Client>) {
     headers: { "Content-Type": "application/json" },
   });
 }
+
+export async function serviceAccountSubject(clientId: string): Promise<string> {
+  const client = await credentialsGet({ clientId });
+  if (!client?.id) throw new Error(`Missing machine client ${clientId}`);
+  const response = await authenticatedFetch<{ id?: string }>(
+    `${clientsAdminUrl}/${encodeURIComponent(client.id)}/service-account-user`,
+    { method: "GET" },
+  );
+  if (!response.data?.id) throw new Error(`Missing service-account user for ${clientId}`);
+  return response.data.id;
+}

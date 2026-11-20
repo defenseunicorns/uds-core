@@ -4,6 +4,12 @@
  */
 
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
+import { K8s } from "pepr";
+import {
+  applyHostPolicies,
+  purgeHostPolicies,
+  resolveHostSelectors,
+} from "../controllers/keycloak/authservice/host-policies";
 import { Component, setupLogger } from "../../logger";
 import { caBundleConfigMap } from "../controllers/ca-bundles/ca-bundle";
 import { UDSConfig } from "../controllers/config/config";
@@ -20,9 +26,10 @@ import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import { PackageAction } from "../controllers/istio/types";
 import {
   authservice,
+  cleanupAuthservice,
   purgeAuthserviceClients,
 } from "../controllers/keycloak/authservice/authservice";
-import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
+import { keycloak, purgeSSOClients, purgeSSOSecrets } from "../controllers/keycloak/client-sync";
 import { Client } from "../controllers/keycloak/types";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
@@ -31,7 +38,7 @@ import { probe } from "../controllers/uptime/probe";
 import { updateBlackboxConfig } from "../controllers/uptime/config";
 import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
-import { Phase, UDSPackage } from "../crd";
+import { IstioVirtualService, Phase, UDSPackage } from "../crd";
 import { AuthserviceClient, Mode, StatusObject } from "../crd/generated/package-v1alpha1";
 import { migrate } from "../crd/migrate";
 
@@ -106,6 +113,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   // Get the requested service mesh mode, default to ambient if not specified
   const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
 
+  await resolveHostSelectors(pkg);
   // Ensure network policies are in place
   const netPol = await networkPolicies(pkg, namespace!, istioMode);
   const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
@@ -120,6 +128,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   if (UDSConfig.isIdentityDeployed) {
     // Configure SSO
     ssoClients = await keycloak(pkg);
+    await applyHostPolicies(pkg);
     authserviceClients = await authservice(pkg, ssoClients);
   } else if (pkg.spec?.sso) {
     log.error("Identity & Authorization is not deployed, but the package has SSO configuration");
@@ -130,6 +139,12 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
 
   // Create the Istio ingress resources per the package configuration
   endpoints = await istioResources(pkg, namespace!);
+
+  if (UDSConfig.isIdentityDeployed) {
+    await cleanupAuthservice(pkg, authserviceClients);
+    await purgeSSOSecrets(pkg);
+  }
+  if (pkg.metadata?.uid) await purgeHostPolicies(pkg);
 
   // Create the Envoy Gateway ingress resources for UDP expose entries.
   await envoyGatewayResources(pkg, namespace!);
@@ -206,6 +221,14 @@ export async function packageFinalizer(pkg: UDSPackage) {
 
   // Cleanup Istio status on namespace
   try {
+    if (pkg.metadata?.uid) {
+      const routes = await K8s(IstioVirtualService)
+        .InNamespace(pkg.metadata.namespace!)
+        .WithLabel("uds.dev/host-auth-package", pkg.metadata.uid)
+        .Get();
+      for (const route of routes.items) await K8s(IstioVirtualService).Delete(route);
+      await purgeHostPolicies(pkg, true);
+    }
     await writeEvent(pkg, {
       message: `Restoring original Istio injection status on namespace`,
       reason: "RemovalInProgress",

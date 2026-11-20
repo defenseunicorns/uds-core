@@ -376,6 +376,10 @@
         "uptime": {
           "$ref": "#/definitions/Uptime",
           "description": "Uptime monitoring configuration for this exposed service. Presence of checks.paths\nenables monitoring."
+        },
+        "authentication": {
+          "$ref": "#/definitions/Authentication",
+          "description": "Protect this tenant HTTP host with Authservice and a UDS machine identity."
         }
       },
       "required": [],
@@ -1411,6 +1415,32 @@
         "RemovalFailed"
       ],
       "title": "Phase"
+    },
+    "Authentication": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "machineClientId": {
+          "type": "string",
+          "description": "Service-account client ID required as the machine token presenter."
+        },
+        "mode": {
+          "type": "string",
+          "pattern": "^authservice$",
+          "description": "Set to authservice to protect this host."
+        },
+        "ssoClientId": {
+          "type": "string",
+          "description": "Browser client ID and required machine token audience."
+        }
+      },
+      "required": [
+        "machineClientId",
+        "mode",
+        "ssoClientId"
+      ],
+      "title": "Authentication",
+      "description": "Protect this tenant HTTP host with Authservice and a UDS machine identity."
     }
   }
 }

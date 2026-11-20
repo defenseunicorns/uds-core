@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -10,7 +10,7 @@ import { K8sGateway, UDSPackage } from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
 import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
-import { getAuthserviceClients, purgeOrphans } from "../../utils";
+import { getAuthserviceClients, Mutex, purgeOrphans } from "../../utils";
 import { Client } from "../types";
 import { UDSConfig, updatePolicy } from "./authorization-policy";
 import {
@@ -28,7 +28,7 @@ import {
 } from "./types";
 
 export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
-let lock = false;
+const configMutex = new Mutex();
 
 export async function authservice(
   pkg: UDSPackage,
@@ -40,7 +40,6 @@ export async function authservice(
 
   // Get the requested service mesh mode, default to ambient if not specified
   const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
-  const previousMeshMode = pkg.status?.meshMode || Mode.Ambient;
   const isAmbient = istioMode === Mode.Ambient;
 
   // Get the list of authservice-enabled clients from the package
@@ -66,6 +65,15 @@ export async function authservice(
     // Get the full waypoint name for authorization policies
     const fullWaypointName = getWaypointName(sso.clientId);
 
+    if (pkg.spec?.network?.expose?.some(e => e.authentication?.ssoClientId === sso.clientId)) {
+      await updateConfig({
+        name: sso.clientId,
+        action: Action.AddClient,
+        client,
+        hostAuthentication: true,
+      });
+      continue;
+    }
     await reconcileAuthservice(
       { name: sso.clientId, action: Action.AddClient, client },
       sso.enableAuthserviceSelector!,
@@ -75,20 +83,20 @@ export async function authservice(
     );
   }
 
-  // Cleanup logic now takes the new objects
-  await purgeAuthserviceClients(pkg, newAuthserviceClients, previousMeshMode, istioMode);
+  // Return the new status objects for status update
+  return newAuthserviceClients;
+}
 
-  // Clean up any existing waypoint resources if SSO is not configured
+export async function cleanupAuthservice(pkg: UDSPackage, clients: AuthserviceClient[]) {
+  const mode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
+  await purgeAuthserviceClients(pkg, clients, pkg.status?.meshMode || Mode.Ambient, mode);
   await purgeOrphans(
-    (pkg.metadata?.generation ?? 0).toString(),
-    pkg.metadata.namespace,
-    pkg.metadata.name,
+    String(pkg.metadata?.generation ?? 0),
+    pkg.metadata!.namespace!,
+    pkg.metadata!.name!,
     K8sGateway,
     log,
   );
-
-  // Return the new status objects for status update
-  return newAuthserviceClients;
 }
 
 export async function purgeAuthserviceClients(
@@ -150,7 +158,11 @@ export async function purgeAuthserviceClients(
     );
 
     if (pkg.metadata?.namespace) {
-      await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
+      const host =
+        currentMeshMode === Mode.Ambient &&
+        pkg.spec?.network?.expose?.find(e => e.authentication?.ssoClientId === client.clientId);
+      if (host) await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName, host.service);
+      else await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
     }
   }
 }
@@ -176,20 +188,10 @@ export async function reconcileAuthservice(
 }
 
 // Write authservice config to secret (ensure the new function name is referenced)
-export async function updateConfig(event: AuthServiceEvent) {
-  // Lock to prevent concurrent updates
-  if (lock) {
-    log.debug("Lock is set for config update, retrying...");
-    setTimeout(() => updateConfig(event), 0);
-    return;
-  }
-
+export async function updateConfig(event: AuthServiceEvent): Promise<void> {
+  const release = await configMutex.acquire();
   let config: AuthserviceConfig;
-
   try {
-    log.debug("Locking config for update");
-    lock = true;
-
     // build updated config based on event
     config = await getAuthserviceConfig().then(config => {
       return buildConfig(config, event);
@@ -201,9 +203,7 @@ export async function updateConfig(event: AuthServiceEvent) {
     log.error({ event, e }, "Failed to build in memory authservice secret for event");
     throw e;
   } finally {
-    // unlock config
-    log.debug("Unlocking config for update");
-    lock = false;
+    release();
   }
 
   // apply the authservice secret
@@ -263,7 +263,7 @@ export function buildChain(update: AuthServiceEvent) {
     name: update.name,
     match: {
       header: ":authority",
-      prefix: hostname,
+      ...(update.hostAuthentication ? { equality: hostname } : { prefix: hostname }),
     },
     filters: [
       {
@@ -273,6 +273,9 @@ export function buildChain(update: AuthServiceEvent) {
           callback_uri: update.client!.redirectUris[0],
           client_id: update.client!.clientId,
           client_secret: update.client!.secret,
+          ...(update.hostAuthentication && {
+            id_token: { header: "x-uds-authservice-token", preamble: "Bearer" },
+          }),
           scopes: [],
           logout: {
             path: "/logout",

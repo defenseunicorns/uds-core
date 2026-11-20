@@ -1,6 +1,6 @@
 /**
  * Waypoint utility module for standardized waypoint operations
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -22,7 +22,10 @@ export const shouldUseAmbientWaypoint = (pkg: UDSPackage): boolean => {
  * Checks if a package has authservice SSO configuration
  */
 export const hasAuthserviceSSO = (pkg: UDSPackage): boolean =>
-  pkg.spec?.sso?.some(s => s.enableAuthserviceSelector !== undefined) || false;
+  !!(
+    pkg.spec?.sso?.some(s => s.enableAuthserviceSelector !== undefined) ||
+    pkg.spec?.network?.expose?.some(e => e.authentication)
+  );
 
 /**
  * Generates a consistent waypoint name from an ID

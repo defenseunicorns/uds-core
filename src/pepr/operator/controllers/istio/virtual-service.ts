@@ -66,6 +66,7 @@ export function generateIngressVirtualService(
       labels: {
         "uds/package": pkgName,
         "uds/generation": generation,
+        ...(expose.authentication && { "uds.dev/host-auth-package": ownerRefs[0].uid }),
       },
       // Use the CR as the owner ref for each VirtualService
       ownerReferences: ownerRefs,

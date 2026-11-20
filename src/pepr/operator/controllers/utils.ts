@@ -374,13 +374,17 @@ export async function validateNamespace(
 
 /**
  * Get SSO clients with authservice enabled.
- * Filters to entries where enableAuthserviceSelector is present (not null/undefined).
+ * Host-based clients use the protected Service selector for network and waypoint policies.
  */
 export function getAuthserviceClients(pkg: UDSPackage) {
   const list = pkg.spec?.sso || [];
-  return list.filter(
-    sso => sso?.enableAuthserviceSelector !== null && sso?.enableAuthserviceSelector !== undefined,
-  );
+  return list.flatMap(sso => {
+    if (sso.enableAuthserviceSelector != null) return [sso];
+    const exposure = pkg.spec?.network?.expose?.find(
+      e => e.authentication?.ssoClientId === sso.clientId,
+    );
+    return exposure?.selector ? [{ ...sso, enableAuthserviceSelector: exposure.selector }] : [];
+  });
 }
 
 /**

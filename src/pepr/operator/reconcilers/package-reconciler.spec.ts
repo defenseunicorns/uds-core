@@ -26,10 +26,12 @@ vi.mock("../controllers/istio/namespace", () => ({
 }));
 vi.mock("../controllers/keycloak/client-sync", () => ({
   keycloak: vi.fn(),
+  purgeSSOSecrets: vi.fn(),
   purgeSSOClients: vi.fn(),
 }));
 vi.mock("../controllers/keycloak/authservice/authservice", () => ({
   authservice: vi.fn(),
+  cleanupAuthservice: vi.fn(),
   purgeAuthserviceClients: vi.fn(),
 }));
 vi.mock("../controllers/monitoring/pod-monitor", () => ({ podMonitor: vi.fn() }));
@@ -119,10 +121,12 @@ vi.mock("../controllers/istio/namespace", async () => {
 });
 vi.mock("../controllers/keycloak/client-sync", () => ({
   keycloak: vi.fn(),
+  purgeSSOSecrets: vi.fn(),
   purgeSSOClients: vi.fn(),
 }));
 vi.mock("../controllers/keycloak/authservice/authservice", () => ({
   authservice: vi.fn(),
+  cleanupAuthservice: vi.fn(),
   purgeAuthserviceClients: vi.fn(),
 }));
 vi.mock("../controllers/uptime/config", () => ({ updateBlackboxConfig: vi.fn() }));
