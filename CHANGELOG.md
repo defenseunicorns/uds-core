@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.18.0](https://github.com/defenseunicorns/uds-core/compare/v1.17.0...v1.18.0) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** bump istio unicorn/upstream to 1.32.0 ([#3239](https://github.com/defenseunicorns/uds-core/issues/3239)) ([03d6ad6](https://github.com/defenseunicorns/uds-core/commit/03d6ad620c7aa984de9a1716936a3cab0c4f071c))
+* **dev:** bump pepr watcher memory limit for k3d-standard-next ([#3230](https://github.com/defenseunicorns/uds-core/issues/3230)) ([75aade8](https://github.com/defenseunicorns/uds-core/commit/75aade89eff6a32231ac691e9eee7f221013fbe4))
+* disable hardware-accelerated Base64 encoding and decoding for keycloak ([#3240](https://github.com/defenseunicorns/uds-core/issues/3240)) ([cedd577](https://github.com/defenseunicorns/uds-core/commit/cedd577be8a83ec1000b3708a651935d3a77b4ff))
+
+
+### Miscellaneous
+
+* add source to package metadata ([#3220](https://github.com/defenseunicorns/uds-core/issues/3220)) ([f133499](https://github.com/defenseunicorns/uds-core/commit/f1334997e35739480261380634e0cc5d81f9a874))
+* **deps:** update grafana ([#3198](https://github.com/defenseunicorns/uds-core/issues/3198)) ([2d26151](https://github.com/defenseunicorns/uds-core/commit/2d26151b4a7a425977af28e312a853efcb3e783c))
+* **deps:** update upstream prometheus operator images to v0.95.2 ([#3224](https://github.com/defenseunicorns/uds-core/issues/3224)) ([cff1255](https://github.com/defenseunicorns/uds-core/commit/cff1255458757284305d2755314e1738e3e281ed))
+* remove redundant types and fix Renovate placeholder lookups ([#3219](https://github.com/defenseunicorns/uds-core/issues/3219)) ([adb7d2a](https://github.com/defenseunicorns/uds-core/commit/adb7d2af006846fe929806efe2469716f8187a5b))
+
+
+### Documentation
+
+* update 1.17 release notes ([#3256](https://github.com/defenseunicorns/uds-core/issues/3256)) ([6dab2dc](https://github.com/defenseunicorns/uds-core/commit/6dab2dcf90a32df3397d55822b5384f19477db5c))
+
 ## [1.17.0](https://github.com/defenseunicorns/uds-core/compare/v1.16.0...v1.17.0) (2026-11-10)
 
 
