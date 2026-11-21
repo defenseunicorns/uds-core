@@ -2,7 +2,7 @@
 # Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-set -e  # Exit on error
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SRC_DIR="${1:-$SCRIPT_DIR/../src}"
@@ -36,15 +36,24 @@ TEMP_IMAGES=$(mktemp)
 TEMP_MISSING=$(mktemp)
 trap "rm -f $TEMP_IMAGES $TEMP_MISSING" EXIT
 
-echo "Scanning $SRC_DIR for unicorn and registry1 images..."
+echo "Scanning $SRC_DIR for images from all declared flavors..."
 
-# Extract all cgr.dev/defenseunicorns.com/ (unicorn) and registry1.dso.mil/ironbank/ (registry1) images
-find "$SRC_DIR" -name "zarf.yaml" -type f -exec grep -hE "cgr.dev/defenseunicorns.com/|registry1.dso.mil/ironbank/" {} \; | \
-    sed 's/^[[:space:]]*-[[:space:]]*//' | \
-    sed 's/#.*//' | \
-    sed 's/"//g' | \
-    sed 's/[[:space:]]*$//' | \
-    sort -u > "$TEMP_IMAGES"
+# Render each declared flavor so Zarf resolves component imports and image lists.
+find "$SRC_DIR" -name "zarf.yaml" -type f -print0 |
+while IFS= read -r -d '' ZARF_YAML; do
+    PACKAGE_DIR="${ZARF_YAML%/zarf.yaml}"
+    if ! FLAVORS=$(uds zarf tools yq -r '.components[].only.flavor // ""' "$ZARF_YAML" | sort -u); then
+        echo "ERROR: Failed to extract flavors from $ZARF_YAML" >&2
+        exit 1
+    fi
+    while IFS= read -r FLAVOR; do
+        [ -n "$FLAVOR" ] || continue
+        uds zarf dev inspect definition "$PACKAGE_DIR" --flavor "$FLAVOR" --no-color --log-level error |
+            uds zarf tools yq -rN '.components[].images[]?' >> "$TEMP_IMAGES"
+    done <<< "$FLAVORS"
+done
+
+sort -u -o "$TEMP_IMAGES" "$TEMP_IMAGES"
 
 TOTAL=$(wc -l < "$TEMP_IMAGES")
 echo "Found $TOTAL images"
