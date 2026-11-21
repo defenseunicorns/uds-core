@@ -217,6 +217,20 @@ describe("reloadPods", () => {
     expect(mockK8sClient.Evict).toHaveBeenCalledWith(podName);
   });
 
+  it("should reject when standalone pod eviction and deletion fail", async () => {
+    const podName = "standalone-pod";
+    const pods = [{ metadata: { name: podName, namespace: "default" } }];
+    mockK8sClient.Evict.mockRejectedValue(new Error("eviction failed"));
+    mockK8sClient.Delete.mockRejectedValue(new Error("deletion failed"));
+
+    await expect(
+      reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "Secret"),
+    ).rejects.toThrow("Failed to reload one or more pods");
+
+    expect(mockK8sClient.Evict).toHaveBeenCalledWith(podName);
+    expect(mockK8sClient.Delete).toHaveBeenCalled();
+  });
+
   it("should restart StatefulSets by applying with annotation", async () => {
     // Pod owned by a StatefulSet
     const pods = [
@@ -398,8 +412,8 @@ describe("reloadPods", () => {
     const testStatefulSet = makeTestStatefulSet();
     mockK8sClient.Get.mockResolvedValueOnce(testStatefulSet);
 
-    // Fail the Apply call to trigger fallback path
-    mockK8sClient.Apply.mockRejectedValueOnce(new Error("Failed to apply controller"));
+    // Fail the Apply call so reloadPods reports the unsuccessful restart.
+    mockK8sClient.Apply.mockRejectedValue(new Error("Failed to apply controller"));
 
     // Set up K8s mock to return our mockK8sClient
     vi.mocked(K8s as Mock).mockImplementation((resourceKind, options) => {
@@ -412,7 +426,9 @@ describe("reloadPods", () => {
     });
 
     // Execute the function under test
-    await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "Secret");
+    await expect(
+      reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "Secret"),
+    ).rejects.toThrow("Failed to reload one or more pods");
 
     // Verify Apply was called
     expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch(), { force: true });

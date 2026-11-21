@@ -42,6 +42,7 @@ export async function reloadPods(
   // Track which controllers we've already handled to avoid duplicate restarts
   const handledControllers: Record<string, boolean> = {};
   const standalonePodsToEvict: kind.Pod[] = [];
+  const failures: Error[] = [];
 
   // First pass - identify controllers and standalone pods
   for (const pod of pods) {
@@ -96,12 +97,28 @@ export async function reloadPods(
         },
         `Failed to handle controller for pod: ${message}`,
       );
+      failures.push(error instanceof Error ? error : new Error(String(error)));
     }
   }
 
   // Now handle any standalone pods with direct eviction
   if (standalonePodsToEvict.length > 0) {
-    await evictStandalonePods(namespace, standalonePodsToEvict, message, log);
+    try {
+      await evictStandalonePods(namespace, standalonePodsToEvict, message, log);
+    } catch (error) {
+      if (error instanceof AggregateError) {
+        failures.push(...error.errors.map(e => (e instanceof Error ? e : new Error(String(e)))));
+      } else {
+        failures.push(error instanceof Error ? error : new Error(String(error)));
+      }
+    }
+  }
+
+  if (failures.length > 0) {
+    throw new AggregateError(
+      failures,
+      `Failed to reload one or more pods in namespace ${namespace}`,
+    );
   }
 }
 
@@ -385,6 +402,8 @@ export async function evictStandalonePods(
     groups[controlledBy].push(pod);
   }
 
+  const failures: Error[] = [];
+
   // Evict each group of pods
   for (const group of Object.values(groups)) {
     for (const pod of group) {
@@ -414,8 +433,16 @@ export async function evictStandalonePods(
           log.error(
             `Failed to delete pod ${namespace}/${pod.metadata?.name}: ${deleteErr.message}`,
           );
+          failures.push(deleteErr instanceof Error ? deleteErr : new Error(String(deleteErr)));
         }
       }
     }
+  }
+
+  if (failures.length > 0) {
+    throw new AggregateError(
+      failures,
+      `Failed to evict or delete one or more pods in namespace ${namespace}`,
+    );
   }
 }
