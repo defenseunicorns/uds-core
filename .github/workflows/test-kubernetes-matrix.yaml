@@ -5,27 +5,40 @@ name: Kubernetes Compatibility
 
 on:
   schedule:
-    - cron: "0 4 * * *"
+    - cron: "41 4 * * *" # Daily UTC; avoid the top-of-hour scheduling peak.
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
-      - "release/**"
-    paths:
-      - ".github/workflows/test-kubernetes-matrix.yaml"
+  workflow_call:
 
 concurrency:
   group: test-kubernetes-matrix-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
+  checks: read
   contents: read
   id-token: write
   packages: read
 
 # Keep the complete compatibility matrix at the top; versions require published uds-k3d images.
 jobs:
+  nightly-gate:
+    if: ${{ github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check whether Kubernetes compatibility needs testing
+        id: gate
+        uses: ./.github/actions/should-run-nightly
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          check_name: Nightly Kubernetes compatibility result
+
   test:
+    needs: nightly-gate
+    if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.nightly-gate.outputs.run == 'true' || needs.nightly-gate.result == 'failure') }}
     name: Kubernetes compatibility (${{ matrix.k3s_version }}, ${{ matrix.flavor }})
     strategy:
       fail-fast: false
@@ -43,12 +56,15 @@ jobs:
       flavor: ${{ matrix.flavor }}
       test_type: values
       k3s_version: ${{ matrix.k3s_version }}
+      verify_envoy_cleanup: ${{ github.event_name == 'schedule' && matrix.flavor == 'upstream' }}
     secrets:
       IRON_BANK_ROBOT_USERNAME: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
       IRON_BANK_ROBOT_PASSWORD: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
       CHAINGUARD_IDENTITY: ${{ secrets.CHAINGUARD_IDENTITY }}
 
   k8s-version-check:
+    needs: nightly-gate
+    if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.nightly-gate.outputs.run == 'true' || needs.nightly-gate.result == 'failure') }}
     name: Kubernetes version validation
     runs-on: ubuntu-latest
     steps:
@@ -61,8 +77,8 @@ jobs:
 
   aggregate:
     name: Kubernetes compatibility complete
-    if: ${{ always() }}
-    needs: [test, k8s-version-check]
+    if: ${{ always() && (github.event_name != 'schedule' || needs.nightly-gate.outputs.run == 'true' || needs.nightly-gate.result == 'failure') }}
+    needs: [nightly-gate, test, k8s-version-check]
     runs-on: ubuntu-latest
     steps:
       - name: Verify matrix results
@@ -82,3 +98,14 @@ jobs:
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: ${{ vars.SLACK_ALERT_CHANNEL }}
+
+  nightly-result:
+    needs: [nightly-gate, aggregate]
+    if: ${{ always() && github.event_name == 'schedule' && (needs.nightly-gate.outputs.run == 'true' || needs.nightly-gate.result == 'failure') }}
+    name: Nightly Kubernetes compatibility result
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify compatibility suite passed
+        env:
+          TEST_RESULT: ${{ needs.aggregate.result }}
+        run: test "$TEST_RESULT" = success

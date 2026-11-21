@@ -3,6 +3,8 @@
 
 variables:
   core:
+    INSECURE_ADMIN_PASSWORD_GENERATION: true
+
     # Classification banner E2E test matrix
     CLASSIFICATION_BANNERS:
       - text: "SAMPLE BANNER"

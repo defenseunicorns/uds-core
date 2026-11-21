@@ -4,17 +4,7 @@
 name: CLI Compatibility
 
 on:
-  schedule:
-    # Runs every morning at 2:00 AM UTC
-    - cron: "0 2 * * *"
-  pull_request:
-    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added to support renovate-ready labelling on PRs
-    types: [milestoned, labeled, opened, reopened, synchronize]
-    paths:
-      - ".github/workflows/test-cli-matrix.yaml"
-      - "bundles/k3d-standard/**"
-      - "bundles/k3d-standard-next/**"
+  workflow_call:
 
 # Abort prior jobs in the same workflow / PR
 concurrency:
@@ -28,11 +18,15 @@ permissions:
 
 jobs:
   cli-upgrade:
+    # Keep the CLI-version combinations on Release PRs without a separate
+    # version-sync script. These jobs run beside the Full Core upgrades.
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (startsWith(github.head_ref, 'release-please') && github.event.pull_request.user.login == 'github-actions[bot]' && github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 60
     name: "Test Upgrade (${{ matrix.mode }}, ${{ matrix.scenario }}, ${{ matrix.flavor }})"
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - mode: legacy
@@ -66,6 +60,13 @@ jobs:
         uses: ./.github/actions/setup
         with:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pin the latest released baseline
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: ./.github/actions/pin-released-baseline
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base_ref: ${{ github.base_ref }}
 
       - name: Install CLI for install phase
         uses: defenseunicorns/setup-uds@d6add59d4c2ca789ed7c92741e91bd340b4e950b # v1.0.2
@@ -126,6 +127,7 @@ jobs:
     name: "Test Install (${{ matrix.mode }}, minimum supported, upstream)"
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - mode: legacy

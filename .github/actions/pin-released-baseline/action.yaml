@@ -1,0 +1,49 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Pin released baseline
+description: Pin the latest published Core release for the PR base branch
+
+inputs:
+  token:
+    description: Token with repository contents read access
+    required: true
+  base_ref:
+    description: PR base branch
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Find released Core version
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      env:
+        BASE_REF: ${{ inputs.base_ref }}
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          const baseRef = process.env.BASE_REF;
+          let version;
+          if (baseRef.startsWith('release/')) {
+            const stream = baseRef.slice('release/'.length);
+            if (!/^\d+\.\d+$/.test(stream)) {
+              throw new Error(`Invalid release branch: ${baseRef}`);
+            }
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              ...context.repo,
+              per_page: 100,
+            });
+            const patches = releases
+              .filter(release => !release.draft && !release.prerelease && release.tag_name.startsWith(`v${stream}.`))
+              .map(release => release.tag_name.slice(1))
+              .filter(tag => /^\d+\.\d+\.\d+$/.test(tag))
+              .sort((a, b) => Number(b.split('.')[2]) - Number(a.split('.')[2]));
+            version = patches[0];
+          } else {
+            const { data } = await github.rest.repos.getLatestRelease(context.repo);
+            version = data.tag_name.replace(/^v/, '');
+          }
+          if (!version || !/^\d+\.\d+\.\d+$/.test(version)) {
+            throw new Error(`No published Core release found for ${baseRef}`);
+          }
+          core.exportVariable('BASELINE_CORE_TAG', version);

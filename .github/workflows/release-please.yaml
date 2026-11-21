@@ -45,9 +45,6 @@ jobs:
           config-file: ${{ startsWith(github.ref, 'refs/heads/release/') && 'release-please-config.patch.json' || 'release-please-config.json' }}
           skip-github-pull-request: true
 
-      # Phase 2: create or update the release PR with GITHUB_TOKEN. Keeping PR
-      # creation on GITHUB_TOKEN preserves the existing behavior where release
-      # PR checks are manually triggered through the milestone workflow pattern.
       - name: Create or update release PR
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:

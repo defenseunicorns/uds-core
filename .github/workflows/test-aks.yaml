@@ -4,9 +4,11 @@
 name: AKS Test
 
 on:
-  schedule:
-    - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
-  workflow_call: {}
+  workflow_call:
+    inputs:
+      flavor:
+        type: string
+        default: all
 
 permissions:
   id-token: write
@@ -18,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flavor: [upstream, registry1, unicorn]
+        flavor: ${{ fromJSON(inputs.flavor == 'all' && '["upstream","registry1","unicorn"]' || format('["{0}"]', inputs.flavor)) }}
     runs-on: ubuntu-latest
     name: test-aks
     permissions:

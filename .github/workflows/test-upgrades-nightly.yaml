@@ -1,0 +1,141 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Nightly Upgrade Tests
+
+on:
+  schedule:
+    - cron: "23 0 * * *"
+      timezone: America/Los_Angeles
+  workflow_dispatch:
+    inputs:
+      family:
+        description: Suite to rerun; auto follows the daily rotation
+        type: choice
+        options: [auto, full-core, ha, cli]
+        default: auto
+        required: true
+
+permissions:
+  checks: read
+  contents: read
+  id-token: write
+  packages: read
+  pull-requests: write
+
+concurrency:
+  group: nightly-upgrades-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  select-suites:
+    runs-on: ubuntu-latest
+    outputs:
+      run_core: ${{ steps.core-gate.outputs.run }}
+      run_ha: ${{ steps.ha-gate.outputs.run }}
+      run_cli: ${{ steps.cli-gate.outputs.run }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Select upgrade suites
+        id: choose
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          MANUAL_FAMILY: ${{ inputs.family }}
+        with:
+          script: |
+            const requested = process.env.MANUAL_FAMILY;
+            const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
+            const days = Math.floor((Date.parse(`${date}T00:00:00Z`) - Date.parse('2026-11-16T00:00:00Z')) / 86400000);
+            const family = requested && requested !== 'auto' ? requested : days % 2 === 0 ? 'full-core' : 'ha';
+            core.setOutput('family', family);
+            core.setOutput('run_cli', String(!requested || requested === 'auto' || requested === 'cli'));
+      - name: Check full Core upgrade history
+        id: core-gate
+        if: ${{ steps.choose.outputs.family == 'full-core' }}
+        uses: ./.github/actions/should-run-nightly
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          check_name: Nightly Full Core result
+          heartbeat_days: "6"
+          force: ${{ github.event_name == 'workflow_dispatch' }}
+      - name: Check HA upgrade history
+        id: ha-gate
+        if: ${{ steps.choose.outputs.family == 'ha' }}
+        uses: ./.github/actions/should-run-nightly
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          check_name: Nightly HA result
+          heartbeat_days: "6"
+          force: ${{ github.event_name == 'workflow_dispatch' }}
+      - name: Check CLI compatibility history
+        id: cli-gate
+        if: ${{ steps.choose.outputs.run_cli == 'true' }}
+        uses: ./.github/actions/should-run-nightly
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          check_name: Nightly CLI result
+          heartbeat_days: "6"
+          force: ${{ github.event_name == 'workflow_dispatch' }}
+
+  test-full-core:
+    needs: select-suites
+    if: ${{ needs.select-suites.outputs.run_core == 'true' }}
+    name: Full Core upgrades
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [upstream, registry1, unicorn]
+    uses: ./.github/workflows/test.yaml
+    with:
+      package: all
+      flavor: ${{ matrix.flavor }}
+      test_type: upgrade
+    secrets: inherit
+
+  test-ha:
+    needs: select-suites
+    if: ${{ needs.select-suites.outputs.run_ha == 'true' }}
+    name: HA upgrades and installs
+    uses: ./.github/workflows/test-k3d-ha.yaml
+    secrets: inherit
+
+  test-cli:
+    needs: select-suites
+    if: ${{ needs.select-suites.outputs.run_cli == 'true' }}
+    name: CLI compatibility
+    uses: ./.github/workflows/test-cli-matrix.yaml
+    secrets: inherit
+
+  full-core-result:
+    needs: [select-suites, test-full-core]
+    if: ${{ always() && needs.select-suites.outputs.run_core == 'true' }}
+    name: Nightly Full Core result
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify full Core upgrades passed
+        env:
+          TEST_RESULT: ${{ needs.test-full-core.result }}
+        run: test "$TEST_RESULT" = success
+
+  ha-result:
+    needs: [select-suites, test-ha]
+    if: ${{ always() && needs.select-suites.outputs.run_ha == 'true' }}
+    name: Nightly HA result
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify HA tests passed
+        env:
+          TEST_RESULT: ${{ needs.test-ha.result }}
+        run: test "$TEST_RESULT" = success
+
+  cli-result:
+    needs: [select-suites, test-cli]
+    if: ${{ always() && needs.select-suites.outputs.run_cli == 'true' }}
+    name: Nightly CLI result
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify CLI tests passed
+        env:
+          TEST_RESULT: ${{ needs.test-cli.result }}
+        run: test "$TEST_RESULT" = success

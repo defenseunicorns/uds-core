@@ -1,0 +1,108 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Nightly IaC Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Cloud environment to rerun
+        type: choice
+        options: [aks, eks, rke2]
+        required: true
+      flavor:
+        description: Core flavor to rerun
+        type: choice
+        options: [upstream, registry1, unicorn]
+        required: true
+
+permissions:
+  checks: read
+  id-token: write
+  contents: read
+  packages: read
+  pull-requests: write
+
+concurrency:
+  group: nightly-iac-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  select-pair:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.select.outputs.environment }}
+      flavor: ${{ steps.select.outputs.flavor }}
+      run: ${{ steps.coverage.outputs.run }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Select nightly test
+        id: select
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          MANUAL_ENVIRONMENT: ${{ inputs.environment }}
+          MANUAL_FLAVOR: ${{ inputs.flavor }}
+        with:
+          script: |
+            const pairs = [
+              ['aks', 'upstream'], ['rke2', 'registry1'], ['eks', 'unicorn'],
+              ['rke2', 'unicorn'], ['eks', 'upstream'], ['aks', 'registry1'],
+              ['eks', 'registry1'], ['aks', 'unicorn'], ['rke2', 'upstream'],
+            ];
+            const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
+            const days = Math.floor((Date.parse(`${date}T00:00:00Z`) - Date.parse('2026-11-16T00:00:00Z')) / 86400000);
+            const pair = process.env.MANUAL_ENVIRONMENT && process.env.MANUAL_FLAVOR
+              ? [process.env.MANUAL_ENVIRONMENT, process.env.MANUAL_FLAVOR]
+              : pairs[((days % pairs.length) + pairs.length) % pairs.length];
+            if (!pairs.some(([environment, flavor]) => environment === pair[0] && flavor === pair[1])) {
+              throw new Error('Invalid nightly cloud pair');
+            }
+            core.setOutput('environment', pair[0]);
+            core.setOutput('flavor', pair[1]);
+      - name: Check whether this cloud pair needs testing
+        id: coverage
+        uses: ./.github/actions/should-run-nightly
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          check_name: Nightly IaC / ${{ steps.select.outputs.environment }} / ${{ steps.select.outputs.flavor }}
+          heartbeat_days: "6"
+          force: ${{ github.event_name == 'workflow_dispatch' }}
+
+  test-aks:
+    needs: select-pair
+    if: ${{ needs.select-pair.outputs.run == 'true' && needs.select-pair.outputs.environment == 'aks' }}
+    uses: ./.github/workflows/test-aks.yaml
+    with:
+      flavor: ${{ needs.select-pair.outputs.flavor }}
+    secrets: inherit
+
+  test-eks:
+    needs: select-pair
+    if: ${{ needs.select-pair.outputs.run == 'true' && needs.select-pair.outputs.environment == 'eks' }}
+    uses: ./.github/workflows/test-eks.yaml
+    with:
+      flavor: ${{ needs.select-pair.outputs.flavor }}
+    secrets: inherit
+
+  test-rke2:
+    needs: select-pair
+    if: ${{ needs.select-pair.outputs.run == 'true' && needs.select-pair.outputs.environment == 'rke2' }}
+    uses: ./.github/workflows/test-rke2.yaml
+    with:
+      flavor: ${{ needs.select-pair.outputs.flavor }}
+    secrets: inherit
+
+  nightly-result:
+    needs: [select-pair, test-aks, test-eks, test-rke2]
+    if: ${{ always() && needs.select-pair.outputs.run == 'true' }}
+    name: Nightly IaC / ${{ needs.select-pair.outputs.environment }} / ${{ needs.select-pair.outputs.flavor }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify selected cloud test passed
+        env:
+          AKS_RESULT: ${{ needs.test-aks.result }}
+          EKS_RESULT: ${{ needs.test-eks.result }}
+          RKE2_RESULT: ${{ needs.test-rke2.result }}
+        run: test "$AKS_RESULT" = success || test "$EKS_RESULT" = success || test "$RKE2_RESULT" = success
