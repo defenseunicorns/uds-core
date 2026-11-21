@@ -24,7 +24,6 @@ This bundle is used for demonstration, development, and testing of UDS Core. In 
 | Variable | Description | Path |
 |----------|-------------|------|
 | `LOKI_CHUNKS_BUCKET` | The object storage bucket for Loki chunks | loki.storage.bucketNames.chunks |
-| `LOKI_RULER_BUCKET` | The object storage bucket for Loki ruler | loki.storage.bucketNames.ruler |
 | `LOKI_ADMIN_BUCKET` | The object storage bucket for Loki admin | loki.storage.bucketNames.admin |
 | `LOKI_S3_ENDPOINT` | The S3 endpoint | loki.storage.s3.endpoint |
 | `LOKI_S3_REGION` | The S3 region | loki.storage.s3.region |
@@ -103,7 +102,6 @@ You can customize the Loki setup at deploy time via ```uds-config.yaml```
 variables:
   core:
     LOKI_CHUNKS_BUCKET: loki
-    LOKI_RULES_BUCKET: loki
     LOKI_ADMIN_BUCKET: loki
     LOKI_S3_ENDPOINT: loki.s3.us-east-1.amazonaws.com
     LOKI_S3_REGION: us-east-1
