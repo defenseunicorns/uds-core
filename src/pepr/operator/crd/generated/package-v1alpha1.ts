@@ -297,6 +297,10 @@ export interface Expose {
    */
   annotations?: { [key: string]: string };
   /**
+   * Protect this tenant HTTP host with Authservice and a UDS machine identity.
+   */
+  authentication?: Authentication;
+  /**
    * A description of this expose entry, this will become part of the generated resource name
    */
   description?: string;
@@ -669,6 +673,24 @@ export interface URIRegexRewrite {
    * The string that should replace into matching portions of original URI.
    */
   rewrite?: string;
+}
+
+/**
+ * Protect this tenant HTTP host with Authservice and a UDS machine identity.
+ */
+export interface Authentication {
+  /**
+   * Service-account client ID required as the machine token presenter.
+   */
+  machineClientId: string;
+  /**
+   * Set to authservice to protect this host.
+   */
+  mode: string;
+  /**
+   * Browser client ID and required machine token audience.
+   */
+  ssoClientId: string;
 }
 
 export interface ExposeMatch {

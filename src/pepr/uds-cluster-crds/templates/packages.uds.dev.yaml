@@ -193,6 +193,32 @@ spec:
                               - selector
                               - port
                         properties:
+                          authentication:
+                            type: object
+                            description: >-
+                              Protect this tenant HTTP host with Authservice and
+                              a UDS machine identity.
+                            required:
+                              - mode
+                              - ssoClientId
+                              - machineClientId
+                            properties:
+                              mode:
+                                type: string
+                                pattern: ^authservice$
+                                description: Set to authservice to protect this host.
+                              ssoClientId:
+                                type: string
+                                minLength: 1
+                                description: >-
+                                  Browser client ID and required machine token
+                                  audience.
+                              machineClientId:
+                                type: string
+                                minLength: 1
+                                description: >-
+                                  Service-account client ID required as the
+                                  machine token presenter.
                           description:
                             type: string
                             description: >-

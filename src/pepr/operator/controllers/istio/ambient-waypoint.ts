@@ -47,7 +47,25 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, client: Sso): Promis
   try {
     await createWaypointGateway(pkg, waypointName);
     await waitForWaypointPodHealthy(namespace, waypointName);
-    await reconcileExistingResources(pkg, client, waypointName);
+    const host = pkg.spec?.network?.expose?.find(e => e.authentication?.ssoClientId === waypointId);
+    if (host) {
+      // Service-targeted policies apply only on the named Service's waypoint path.
+      await K8s(kind.Service).Apply(
+        {
+          metadata: {
+            name: host.service,
+            namespace,
+            labels: {
+              [ISTIO_WAYPOINT_LABEL]: waypointName,
+              "istio.io/ingress-use-waypoint": "true",
+            },
+          },
+        },
+        { force: true },
+      );
+    } else {
+      await reconcileExistingResources(pkg, client, waypointName);
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     log.error(
@@ -220,9 +238,14 @@ export async function reconcileService(svc: a.Service): Promise<void> {
 
   // Find the SSO client that matches this service's selector (only authservice-enabled)
   const authClients = getAuthserviceClients(pkg);
-  const matchingSso = authClients.find(sso =>
-    serviceMatchesSelector(svc, sso.enableAuthserviceSelector!),
-  );
+  const matchingSso = authClients.find(sso => {
+    const host = pkg.spec?.network?.expose?.find(
+      e => e.authentication?.ssoClientId === sso.clientId,
+    );
+    return host
+      ? host.service === svc.metadata?.name
+      : serviceMatchesSelector(svc, sso.enableAuthserviceSelector!);
+  });
 
   if (!matchingSso?.clientId) return;
 
@@ -274,8 +297,10 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
 
   // Find the SSO client that matches this pod's labels (only authservice-enabled)
   const authClients = getAuthserviceClients(pkg);
-  const matchingSso = authClients.find(sso =>
-    matchesLabels(pod.metadata?.labels || {}, sso.enableAuthserviceSelector!),
+  const matchingSso = authClients.find(
+    sso =>
+      !pkg.spec?.network?.expose?.some(e => e.authentication?.ssoClientId === sso.clientId) &&
+      matchesLabels(pod.metadata?.labels || {}, sso.enableAuthserviceSelector!),
   );
 
   if (!matchingSso?.clientId) return;
@@ -305,6 +330,7 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
 export async function cleanupWaypointLabels(
   namespace: string,
   waypointName: string,
+  retainService?: string,
 ): Promise<void> {
   log.info(`Starting cleanup of waypoint labels: namespace=${namespace}, waypoint=${waypointName}`);
 
@@ -313,7 +339,7 @@ export async function cleanupWaypointLabels(
     await cleanupPodsWithWaypointLabel(namespace, waypointName);
 
     // Clean up services with the waypoint label
-    await cleanupServicesWithWaypointLabel(namespace, waypointName);
+    await cleanupServicesWithWaypointLabel(namespace, waypointName, retainService);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     log.error(
@@ -383,6 +409,7 @@ async function cleanupPodsWithWaypointLabel(
 async function cleanupServicesWithWaypointLabel(
   namespace: string,
   waypointName: string,
+  retainService?: string,
 ): Promise<void> {
   const services = await K8s(a.Service)
     .InNamespace(namespace)
@@ -392,7 +419,7 @@ async function cleanupServicesWithWaypointLabel(
   await Promise.all(
     services.items.map(async svc => {
       const svcName = svc.metadata?.name;
-      if (!svcName) return;
+      if (!svcName || svcName === retainService) return;
 
       // Skip if service is being deleted or doesn't have the label anymore
       if (svc.metadata?.deletionTimestamp) {

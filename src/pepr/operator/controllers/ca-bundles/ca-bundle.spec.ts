@@ -30,7 +30,8 @@ const mockLog = vi.hoisted(() => ({
   error: vi.fn(),
 }));
 
-vi.mock("../utils", () => ({
+vi.mock("../utils", async importOriginal => ({
+  ...(await importOriginal<typeof import("../utils")>()),
   getOwnerRef: vi.fn(),
   purgeOrphans: vi.fn(),
 }));

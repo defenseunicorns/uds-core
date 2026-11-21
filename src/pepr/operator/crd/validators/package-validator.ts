@@ -18,6 +18,8 @@ import { sanitizeResourceName } from "../../controllers/utils";
 import { ExposeProtocol, Kind, Mode } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";
 
+import { validateHostAuthentication } from "./host-authentication";
+
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
 
 export async function validator(req: PeprValidateRequest<UDSPackage>) {
@@ -77,6 +79,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const uptimeFqdns = new Set<string>();
 
   for (const [index, expose] of exposeList.entries()) {
+    const hostAuthError = validateHostAuthentication(pkg, expose);
+    if (hostAuthError) return req.Deny(hostAuthError);
     // Validate gateway name format if it's a custom gateway
     if (expose.gateway && !isStandardGateway(expose.gateway)) {
       // Check if gateway name is a valid Kubernetes resource name
