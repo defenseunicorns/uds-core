@@ -1,0 +1,21 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+suite: Keycloak - Pushed Authorization Requests
+templates:
+  - statefulset.yaml
+
+tests:
+  - it: should disable the PAR feature for all realms by default
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--feature-par=disabled"
+
+  - it: should omit the feature disablement when PAR is allowed
+    set:
+      allowPushedAuthorizationRequests: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: "--feature-par=disabled"
