@@ -909,6 +909,17 @@
                 },
                 "ingress": {
                   "type": "boolean"
+                },
+                "natsCluster": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "port": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
                 }
               },
               "type": "object"
