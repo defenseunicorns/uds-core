@@ -4,7 +4,7 @@
 # K0S_TAG has no default; callers must pass --build-arg K0S_TAG=<version>.
 ARG K0S_TAG
 # Digest-pinned for reproducible builds; managed by Renovate's Docker manager.
-ARG WOLFI_IMAGE="cgr.dev/chainguard/wolfi-base:latest@sha256:2c12da5496e21e99003b3db3b9246f025e53d533c4df334205391260f1e8f85b"
+ARG WOLFI_IMAGE="cgr.dev/chainguard/wolfi-base:latest@sha256:be019c1c74fe69204a42c4e10bc4d886a49bf5403ffa74374ef7baa408fc9a26"
 
 FROM ${WOLFI_IMAGE} AS wolfi
 RUN apk add --no-cache libcrypto3
