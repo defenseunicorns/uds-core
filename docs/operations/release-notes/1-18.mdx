@@ -1,6 +1,6 @@
 ---
 title: UDS Core 1.18
-description: UDS Core 1.18 updates Istio and Prometheus Operator and includes a client ownership migration guide for Keycloak.
+description: UDS Core 1.18 extends Keycloak ownership checks to client roles and secrets and updates Grafana across all flavors.
 sidebar:
   order: 3.977
 ---
@@ -10,64 +10,57 @@ import { Steps } from "@astrojs/starlight/components";
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
-UDS Core 1.18 updates Istio and Prometheus Operator. If your upgrade includes the Identity Config client ownership change, review the migration steps before upgrading.
+UDS Core 1.18.0 includes UDS Identity Config 0.33.0 and Grafana 13.3.1. If you handed an existing Keycloak client to the UDS Operator or Fleet Admin, check its recorded owner before upgrading.
 
-### ⚠ Breaking changes
+## ⚠ Breaking changes
 
-Review this change before upgrading to a build that includes the Identity Config update.
+The `uds` realm now checks ownership when an enrolled service account accesses client roles or secrets.
 
 | Change | Impact | Action required |
 | --- | --- | --- |
-| Keycloak client ownership | Service accounts enrolled in the UDS Client Policy can manage only clients whose `created-by` attribute matches their Keycloak client ID. Client roles inherit that ownership. | Follow the [client ownership migration](#identity-config-updates-client-ownership) for existing clients that enrolled service accounts must continue managing. |
+| Keycloak client ownership | A missing or outdated `created-by` attribute can block SSO reconciliation or deny access to a client's roles or secret. | For affected clients, [check the recorded owner](#identity-config-updates-client-ownership) and set it to the managing service account's client ID if needed. |
 
-### Notable features
+## Notable features
 
-This release includes these updates:
+This release also changes Keycloak, package metadata, and the development bundle.
 
-- **Keycloak:** Disables hardware-accelerated Base64 encoding and decoding. UDS Core 1.17.2 also includes this fix ([#3240](https://github.com/defenseunicorns/uds-core/pull/3240)).
-- **Package metadata:** UDS Core packages now link to their source repository ([#3220](https://github.com/defenseunicorns/uds-core/pull/3220)).
+- **Keycloak** disables hardware-accelerated Base64 encoding and decoding. UDS Core 1.17.2 also includes this fix. [#3240](https://github.com/defenseunicorns/uds-core/pull/3240)
+- **UDS Core packages** now link to their source repository. [#3220](https://github.com/defenseunicorns/uds-core/pull/3220)
+- **The `k3d-standard-next` development bundle** sets the Pepr watcher memory limit to `768Mi` by default. [#3230](https://github.com/defenseunicorns/uds-core/pull/3230)
 
-### Dependency updates
+## Dependency updates
 
-The following versions change from UDS Core 1.17.0. UDS Core 1.17.2 already includes these updates.
+The table shows changes since UDS Core 1.17.0. Version 1.17.1 already includes the upstream Prometheus Operator and config reloader updates. Version 1.17.2 also includes the Gateway API and Istio updates.
 
-| Package | Previous | Updated |
+| Component | 1.17.0 | 1.18.0 |
 | --- | --- | --- |
-| Istio (upstream and Unicorn) | 1.31.2 | [1.32.0](https://github.com/istio/istio/releases/tag/1.32.0) |
-| Prometheus Operator (upstream) | 0.95.1 | [0.95.2](https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.95.2) |
+| Gateway API CRDs | 1.6.3 | [1.7.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.7.0) |
+| Grafana | 13.3.0 | [13.3.1](https://github.com/grafana/grafana/releases/tag/v13.3.1) |
+| Grafana Helm chart | 14.3.1 | [14.5.0](https://github.com/grafana-community/helm-charts/releases/tag/grafana-14.5.0) |
+| Grafana UBI 9 minimal image (Iron Bank) | 9.8 | 9.9 |
+| Istio Helm charts (all flavors) and images (upstream and Unicorn) | 1.31.2 | [1.32.0](https://github.com/istio/istio/releases/tag/1.32.0) |
+| Prometheus Operator and config reloader (upstream) | 0.95.1 | [0.95.2](https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.95.2) |
+| UDS Identity Config | 0.32.6 | [0.33.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.33.0) |
 
 ## Upgrade considerations
 
 ### Identity Config updates: client ownership
 
-This migration applies to builds that include the [Identity Config ownership change](https://github.com/defenseunicorns/uds-identity-config/pull/963), which is planned for UDS Core 1.18.0. The UDS Client Policy enrolls the UDS Operator (`uds-operator`) and `uds-fleet-admin` by default. An enrolled service account follows the ownership rule even if it has the `realm-admin` role.
+UDS Identity Config [0.33.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.33.0) extends ownership checks in the `uds` realm to client roles and secrets. When the UDS Operator or Fleet Admin creates a client, Keycloak sets `created-by` to `uds-operator` or `uds-fleet-admin`, respectively. If the same account still manages the client, you normally have nothing to change. OpenTofu-only clients need no change unless you added `uds-opentofu-client` to `ownership-enforced-clients`.
 
-Use these examples to decide which existing clients need an ownership update.
-
-| Scenario | Example | Before upgrading |
-| --- | --- | --- |
-| The UDS Operator registers a new SSO client from a `Package` CR after the upgrade. | A `Package` sets `spec.sso[].clientId` to `my-app`. When the UDS Operator creates that client, the policy sets `created-by` to `uds-operator`. | No action for a client that does not exist yet. |
-| The UDS Operator already manages a Package SSO client with the correct owner. | The Grafana `Package` uses `uds-core-admin-grafana` as its SSO client ID. If `created-by` is already `uds-operator`, the operator can continue reconciling it. | Verify the existing value. |
-| A Keycloak administrator creates a client for the UDS Operator to manage. | An administrator registers `my-app` through the Keycloak Admin Console before adding that client ID to a `Package` CR. | Verify the handoff and set `created-by` to `uds-operator` before the operator reconciles it on the upgraded system. |
-
-Before upgrading, assign the intended service account's client ID to each affected client.
+Before upgrading, check `created-by` on clients that an enrolled service account took over. After upgrading, check it if `Package` SSO reconciliation fails with `unauthorized_client` or a request for a client role or secret returns `403 Forbidden`.
 
 <Steps>
 
-1. **Identify the owner**
+1. **Check the affected client's recorded owner**
 
-   Pause affected automation and back up each client's `created-by` attribute. Verify the enrolled service account's `clientId`. A client's name alone cannot establish its owner.
-
-2. **Assign ownership through the admin gateway**
-
-   Set `KEYCLOAK_TOKEN` to an access token from your usual administrator sign-in. Use an unenrolled client and an account with administrator access to the `uds` realm. Replace the admin gateway URL and client IDs below. Run the script with Bash, `curl`, and `jq`. Keep TLS verification enabled and supply your trusted CA if needed.
+   Sign in to the `uds` realm as an administrator through an unenrolled client and set `KEYCLOAK_TOKEN` to your access token. In Bash, replace the admin gateway URL and target client ID, then read the current owner with `curl` and `jq`. Use your trusted CA for the admin gateway.
 
    ```bash
    set -euo pipefail
    : "${KEYCLOAK_TOKEN:?Set KEYCLOAK_TOKEN to an administrator access token}"
    CLIENTS_URL='https://keycloak.admin.uds.dev/admin/realms/uds/clients'
    TARGET_CLIENT_ID='<client-to-migrate>'
-   OWNER_CLIENT_ID='<owning-application-clientId>'
 
    keycloak() {
      curl --fail-with-body --silent --show-error \
@@ -80,7 +73,17 @@ Before upgrading, assign the intended service account's client ID to each affect
        | if length == 1 then .[0].id | select(type == "string" and length > 0)
          else error("Expected exactly one matching client") end')
    CLIENT_URL="$CLIENTS_URL/$CLIENT_UUID"
+   keycloak "$CLIENT_URL" | jq '.attributes["created-by"]'
+   ```
 
+   A `null` result means the attribute is missing. Record the result and confirm which service account manages this client. If the IDs match, skip the update.
+
+2. **Correct the owner and verify the change**
+
+   Pause automation for the affected client. In the same shell, set `OWNER_CLIENT_ID` to the managing service account's client ID. The update preserves the client's Authorization Services setting.
+
+   ```bash
+   : "${OWNER_CLIENT_ID:?Set OWNER_CLIENT_ID to the client ID of the managing service account}"
    # Keycloak disables Authorization Services if the update omits this field.
    AUTHZ_ENABLED=$(keycloak "$CLIENT_URL" | jq '.authorizationServicesEnabled // false')
    jq -n --arg owner "$OWNER_CLIENT_ID" --argjson enabled "$AUTHZ_ENABLED" \
@@ -92,11 +95,7 @@ Before upgrading, assign the intended service account's client ID to each affect
      '.attributes["created-by"] == $owner and (.authorizationServicesEnabled // false) == $enabled'
    ```
 
-   This update changes ownership while preserving the existing Authorization Services state, unrelated client settings, and client UUID. Client roles inherit this ownership and need no separate migration.
-
-3. **Verify after upgrading and resume automation**
-
-   Use the intended manager to read and update a migrated client and manage a disposable client role. Verify that another service account enrolled in the policy cannot access that role. Delete the disposable role, then resume automation. If needed, use a Keycloak administrator authenticated through an unenrolled client to restore the saved ownership values.
+   Once the check returns `true`, resume automation and retry the original reconciliation or role or secret request. Client roles inherit their client's owner.
 
 </Steps>
 
@@ -104,5 +103,7 @@ Before upgrading, assign the intended service account's client ID to each affect
 
 - [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
 - [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) - declare SSO clients in a `Package` CR
-- [UDS Core 1.18.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#1180-2026-11-17) - full changelog
-- [Full diff (1.17.2...1.18.0)](https://github.com/defenseunicorns/uds-core/compare/v1.17.2...v1.18.0) - all changes between versions
+- [Keycloak security hardening](/reference/configuration/identity-and-authorization/#security-hardening) - default policy and ownership rules
+- [UDS Identity Config 0.33.0 changelog](https://github.com/defenseunicorns/uds-identity-config/blob/v0.33.0/CHANGELOG.md#0330-2026-11-23) - upstream ownership change and migration criteria
+- [UDS Core 1.18.0 release PR](https://github.com/defenseunicorns/uds-core/pull/3222) - Core changelog
+- [Full diff (1.17.2...1.18.0)](https://github.com/defenseunicorns/uds-core/compare/v1.17.2...v1.18.0) - changes since the previous patch release
