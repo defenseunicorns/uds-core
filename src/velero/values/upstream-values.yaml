@@ -3,17 +3,17 @@
 
 image:
   repository: velero/velero
-  tag: v1.18.4
+  tag: v1.19.0
 
 initContainers:
   - name: velero-plugin-for-aws
-    image: velero/velero-plugin-for-aws:v1.14.4
+    image: velero/velero-plugin-for-aws:v1.15.0
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
         name: plugins
   - name: velero-plugin-for-azure
-    image: velero/velero-plugin-for-microsoft-azure:v1.14.4
+    image: velero/velero-plugin-for-microsoft-azure:v1.15.0
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
