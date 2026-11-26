@@ -287,6 +287,7 @@ If your application expects credentials in a specific format (JSON config file, 
    | `post.logout.redirect.uris` | Allowed post-logout redirect URIs |
    | `use.refresh.tokens` | Enable refresh tokens (`"true"` / `"false"`) |
    | `logout.confirmation.enabled` | Show logout confirmation page (defaults to `"true"`) |
+   | `backchannel.logout.url` | URL where Keycloak sends a logout token when the user logs out (OIDC backchannel logout). Keycloak must be able to reach this URL. |
    | `backchannel.logout.session.required` | Include session ID in backchannel logout (`"true"` / `"false"`) |
    | `backchannel.logout.revoke.offline.tokens` | Revoke offline tokens on backchannel logout (`"true"` / `"false"`) |
    | `oauth2.device.authorization.grant.enabled` | Enable the device authorization grant (`"true"` / `"false"`) |

@@ -2294,6 +2294,7 @@ describe("Test Allowed SSO Client Attributes", () => {
             "oidc.ciba.grant.enabled": "true",
             "backchannel.logout.session.required": "false",
             "backchannel.logout.revoke.offline.tokens": "true",
+            "backchannel.logout.url": "https://app.uds.dev/backchannel-logout",
             "post.logout.redirect.uris": "https://app.uds.dev/logout",
             "oauth2.device.authorization.grant.enabled": "true",
             "pkce.code.challenge.method": "S256",

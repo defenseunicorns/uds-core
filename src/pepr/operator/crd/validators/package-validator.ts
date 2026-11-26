@@ -360,6 +360,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     "access.token.lifespan",
     "backchannel.logout.revoke.offline.tokens",
     "backchannel.logout.session.required",
+    "backchannel.logout.url",
     "client.session.idle.timeout",
     "client.session.max.lifespan",
     "logout.confirmation.enabled",
