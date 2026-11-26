@@ -22,7 +22,7 @@ components:
             targetPath: .
       - name: grafana
         url: https://grafana-community.github.io/helm-charts
-        version: 14.5.0
+        version: 14.6.1
         namespace: grafana
         templatedValuesFiles:
           - ../values/values.yaml
