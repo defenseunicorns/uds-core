@@ -40,6 +40,15 @@ tasks:
             -p 127.0.0.1:6443:6443 -p 127.0.0.1:80:80 -p 127.0.0.1:443:443 uds-k0s-test \
             k0s controller --single --config=/etc/k0s/k0s.yaml \
             --disable-components=metrics-server --kubelet-root-dir=/var/lib/kubelet
+      - description: "Wait for K0s to finish container initialization"
+        maxRetries: 30
+        maxTotalSeconds: 120
+        # Running docker exec before cgroup setup finishes can cause the entrypoint to fail with EBUSY.
+        cmd: |
+          curl --insecure --noproxy '*' --silent --show-error --output /dev/null \
+            --max-time 5 https://127.0.0.1:6443/livez || { sleep 2; exit 1; }
+      - description: "Verify K0s version and enable shared mount propagation"
+        cmd: |
           test "$(docker exec k0s-uds k0s version)" = "$DEFAULT_K0S_VERSION"
           # Istio CNI and node-exporter require shared host-mount propagation.
           docker exec k0s-uds mount --make-rshared /
