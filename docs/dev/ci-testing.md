@@ -30,6 +30,8 @@ What: [Standard k3d Next bundle](../../bundles/k3d-standard-next/bundle.uds.hcl)
 
 This test deploys the latest release of the Legacy `k3d-core-demo` bundle, then upgrades to the `k3d-core-demo-next` bundle built from the PR branch with UDS CLI Next. This catches breaking changes across both UDS Core and the CLI Next functional-layer deployment path.
 
+The standard upgrade test and CLI upgrade matrix start K3s with embedded etcd. This avoids SQLite compaction failures in the test cluster.
+
 When: On all PRs
 
 Where: k3d

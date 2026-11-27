@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables = {
+  # Use embedded etcd to avoid Kine's fatal SQLite compaction failures under load.
+  k3d_extra_args = "--k3s-arg=--cluster-init@server:0"
+
   classification_banners = [
     {
       text = "SAMPLE BANNER"

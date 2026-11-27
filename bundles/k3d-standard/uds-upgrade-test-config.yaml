@@ -2,6 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables:
+  uds-k3d-dev:
+    # Use embedded etcd to avoid Kine's fatal SQLite compaction failures under load.
+    K3D_EXTRA_ARGS: "--k3s-arg=--cluster-init@server:0"
+
   core:
     # Classification banner E2E test matrix
     CLASSIFICATION_BANNERS:
