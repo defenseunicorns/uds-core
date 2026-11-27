@@ -51,7 +51,8 @@ tasks:
             ./uds zarf package verify "${signed_package}" \
               --certificate-identity-regexp "${signing_identity_regex}" \
               --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
-            ./uds zarf package publish "${signed_package}" oci://${TARGET_REPO}
+            # Allow time for newly pushed manifests to become readable by digest.
+            ./uds zarf package publish "${signed_package}" oci://${TARGET_REPO} --retries 3
           }
 
           for package in "${packages[@]}"; do
