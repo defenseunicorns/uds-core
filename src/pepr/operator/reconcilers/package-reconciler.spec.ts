@@ -16,6 +16,12 @@ vi.mock("../controllers/envoy-gateway/udp-route-resources", () => ({
   removeDefaultListenerMapEntry: vi.fn(),
 }));
 vi.mock("../controllers/istio/egress-orchestrator", () => ({ istioEgressResources: vi.fn() }));
+vi.mock("../controllers/keycloak/authservice/host-resources", () => ({
+  resolveHostSelectors: vi.fn(),
+  applyHostPolicies: vi.fn(),
+  purgeHostPolicies: vi.fn(),
+  cleanupHostAuthentication: vi.fn(),
+}));
 vi.mock("../controllers/istio/istio-resources", async () => {
   const originalModule = (await vi.importActual("../controllers/istio/istio-resources")) as object;
   return { ...originalModule, istioResources: vi.fn() };
@@ -39,12 +45,6 @@ vi.mock("../controllers/network/authorizationPolicies", () => ({
 }));
 vi.mock("../controllers/uptime/probe", () => ({ probe: vi.fn() }));
 vi.mock("../controllers/uptime/config", () => ({ updateBlackboxConfig: vi.fn() }));
-vi.mock("../controllers/utils", () => ({
-  retryWithDelay: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
-  Mutex: class {
-    acquire = vi.fn().mockResolvedValue(vi.fn());
-  },
-}));
 vi.mock(".", async () => {
   const originalModule = (await vi.importActual(".")) as object;
   return { ...originalModule, writeEvent: vi.fn() };
@@ -77,6 +77,7 @@ vi.mock("pepr", () => ({
 
 // ---- Imports that depend on mocks ----
 import { K8s, Log } from "pepr";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { uidSeen, writeEvent } from ".";
 import { caBundleConfigMap } from "../controllers/ca-bundles/ca-bundle";
 import {
@@ -90,16 +91,21 @@ import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
 import { istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import {
+  applyHostPolicies,
+  cleanupHostAuthentication,
+} from "../controllers/keycloak/authservice/host-resources";
+import {
   authservice,
   purgeAuthserviceClients,
 } from "../controllers/keycloak/authservice/authservice";
-import { purgeSSOClients } from "../controllers/keycloak/client-sync";
+import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
 import { networkPolicies } from "../controllers/network/policies";
 import { probe } from "../controllers/uptime/probe";
 import { retryWithDelay } from "../controllers/utils";
+import { UDSConfig } from "../controllers/config/config";
 import { Phase, UDSPackage } from "../crd";
 import { ExposeProtocol } from "../crd/generated/package-v1alpha1";
 import { packageFinalizer, packageReconciler } from "./package-reconciler";
@@ -119,14 +125,17 @@ vi.mock("../controllers/istio/namespace", async () => {
 });
 vi.mock("../controllers/keycloak/client-sync", () => ({
   keycloak: vi.fn(),
+  purgeSSOSecrets: vi.fn(),
   purgeSSOClients: vi.fn(),
 }));
 vi.mock("../controllers/keycloak/authservice/authservice", () => ({
   authservice: vi.fn(),
+  cleanupAuthservice: vi.fn(),
   purgeAuthserviceClients: vi.fn(),
 }));
 vi.mock("../controllers/uptime/config", () => ({ updateBlackboxConfig: vi.fn() }));
 vi.mock("../controllers/utils", () => ({
+  deleteResourceIfUnchanged: vi.fn(),
   retryWithDelay: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
   Mutex: class {
     acquire = vi.fn().mockResolvedValue(vi.fn());
@@ -191,6 +200,27 @@ describe("packageReconciler", () => {
     (caBundleConfigMap as Mock).mockResolvedValue(undefined);
     (authservice as Mock).mockResolvedValue([]);
   });
+  test.each(["keycloak", "host policies"])(
+    "preserves mesh enforcement when %s setup fails",
+    async failure => {
+      const identityDeployed = UDSConfig.isIdentityDeployed;
+      UDSConfig.isIdentityDeployed = true;
+      const failedStep = failure === "keycloak" ? keycloak : applyHostPolicies;
+      vi.mocked(failedStep).mockRejectedValueOnce(new Error("setup failed"));
+      try {
+        await packageReconciler(mockPackage);
+        expect(networkPolicies).toHaveBeenCalled();
+        expect(generateAuthorizationPolicies).not.toHaveBeenCalled();
+        expect(enableIstio).not.toHaveBeenCalled();
+        expect(mockPatchStatus).toHaveBeenCalledWith(
+          expect.objectContaining({ status: expect.objectContaining({ phase: Phase.Retrying }) }),
+        );
+      } finally {
+        UDSConfig.isIdentityDeployed = identityDeployed;
+      }
+    },
+  );
+
   test("logs error for invalid package definitions", async () => {
     delete mockPackage.metadata!.namespace;
     (networkPolicies as Mock).mockRejectedValue(new Error("invalid package"));
@@ -201,11 +231,30 @@ describe("packageReconciler", () => {
   });
 
   test("uses standard failure handling when Envoy Gateway reconciliation fails", async () => {
-    (envoyGatewayResources as Mock).mockRejectedValue(new Error("GatewayClass missing"));
+    const error = new Error("GatewayClass missing");
+    vi.mocked(envoyGatewayResources).mockRejectedValueOnce(error);
 
     await packageReconciler(mockPackage);
 
-    expect(Log.error).toHaveBeenCalled();
+    expect(envoyGatewayResources).toHaveBeenCalledWith(mockPackage, "test-namespace");
+    expect(Log.error).toHaveBeenCalledWith({ err: error }, expect.stringContaining("retrying"));
+    expect(mockPatchStatus).toHaveBeenCalledWith(
+      expect.objectContaining({ status: expect.objectContaining({ phase: Phase.Retrying }) }),
+    );
+  });
+
+  test("retains the client inventory for retry when Keycloak deletion fails", async () => {
+    mockPackage.status = { ssoClients: ["old-client"], observedGeneration: 0 };
+    vi.mocked(purgeSSOClients).mockRejectedValueOnce(new Error("Keycloak unavailable"));
+    await packageReconciler(mockPackage);
+    expect(purgeSSOClients).toHaveBeenCalledWith(mockPackage, []);
+    expect(mockPatchStatus).toHaveBeenCalledWith(
+      expect.objectContaining({ status: expect.objectContaining({ phase: Phase.Retrying }) }),
+    );
+    for (const [patch] of (mockPatchStatus as Mock).mock.calls) {
+      expect(patch.status).not.toHaveProperty("ssoClients");
+      expect(patch.status.phase).not.toBe(Phase.Ready);
+    }
   });
 
   test("continues package retry when writing the backoff event fails", async () => {
@@ -235,7 +284,12 @@ describe("packageFinalizer", () => {
     vi.clearAllMocks();
 
     mockPackage = {
-      metadata: { name: "test-package", namespace: "test-namespace", generation: 1 },
+      metadata: {
+        name: "test-package",
+        namespace: "test-namespace",
+        generation: 1,
+        uid: "test-uid",
+      },
       spec: {
         sso: [
           {
@@ -253,12 +307,12 @@ describe("packageFinalizer", () => {
     mockPatchStatus.mockReset().mockResolvedValue(undefined);
     mockReconcileSharedEgressResources.mockReset().mockResolvedValue(undefined);
     mockWriteEvent.mockReset();
+    vi.mocked(cleanupHostAuthentication).mockReset().mockResolvedValue(undefined);
     (K8s as Mock).mockImplementation(() => ({
       Create: vi.fn(),
-      Get: vi.fn(async () => {
-        throw { status: 404 };
-      }),
+      Get: vi.fn().mockRejectedValue({ status: 404, message: "Not found" }),
       InNamespace: vi.fn().mockReturnThis(),
+      WithLabel: vi.fn().mockReturnThis(),
       PatchStatus: mockPatchStatus,
     }));
     (cleanupNamespace as Mock).mockImplementation(mockCleanupNamespace);
@@ -271,40 +325,57 @@ describe("packageFinalizer", () => {
     (removeDefaultListenerMapEntry as Mock).mockReturnValue(undefined);
   });
 
-  test("should not remove the finalizer for pending packages", async () => {
-    mockPackage.status = { phase: Phase.Pending };
-    const finalizerRemoved = await packageFinalizer(mockPackage);
-    // Assert that we didn't try to cleanup anything
-    expect(retryWithDelay).not.toHaveBeenCalled();
+  test.each([Phase.Pending, Phase.Removing, Phase.RemovalFailed])(
+    "resumes cleanup after an operator restart in phase %s",
+    async phase => {
+      mockPackage.status = { phase };
+      expect(await packageFinalizer(mockPackage)).toBe(true);
+      expect(mockPurgeSSO).toHaveBeenCalled();
+    },
+  );
+
+  test("retries finalization when host authentication cleanup fails", async () => {
+    vi.mocked(cleanupHostAuthentication).mockRejectedValueOnce(
+      new Error("Route still terminating"),
+    );
+    expect(await packageFinalizer(mockPackage)).toBe(false);
     expect(mockCleanupNamespace).not.toHaveBeenCalled();
-    expect(mockPurgeSSO).not.toHaveBeenCalled();
-    expect(mockPurgeAuthservice).not.toHaveBeenCalled();
-    // Assert that the finalizer was not removed
-    expect(finalizerRemoved).toEqual(false);
+
+    expect(await packageFinalizer(mockPackage)).toBe(true);
+    expect(cleanupHostAuthentication).toHaveBeenCalledWith(mockPackage);
   });
 
-  test("should not remove the finalizer for removing packages", async () => {
+  test("finishes a deletion replayed on startup and preserves other finalizers", async () => {
+    mockPackage.metadata!.deletionTimestamp = new Date();
+    mockPackage.metadata!.finalizers = ["other/finalizer", "pepr.dev/finalizer"];
     mockPackage.status = { phase: Phase.Removing };
-    const finalizerRemoved = await packageFinalizer(mockPackage);
-    // Assert that we didn't try to cleanup anything
-    expect(retryWithDelay).not.toHaveBeenCalled();
-    expect(mockCleanupNamespace).not.toHaveBeenCalled();
-    expect(mockPurgeSSO).not.toHaveBeenCalled();
-    expect(mockPurgeAuthservice).not.toHaveBeenCalled();
-    // Assert that the finalizer was not removed
-    expect(finalizerRemoved).toEqual(false);
+    const patch = vi.fn();
+    const mockK8s = K8s as Mock;
+    const normalImplementation = mockK8s.getMockImplementation()!;
+    mockK8s.mockImplementation((model, options) => {
+      if (model !== UDSPackage) return normalImplementation(model, options);
+      if (options?.name) return { Patch: patch };
+      return {
+        ...normalImplementation(model, options),
+        InNamespace: () => ({ Get: vi.fn().mockResolvedValue(mockPackage) }),
+      };
+    });
+    await packageReconciler(mockPackage, WatchPhase.Added);
+    expect(mockPurgeSSO).toHaveBeenCalled();
+    expect(patch).toHaveBeenCalledWith([
+      { op: "test", path: "/metadata/uid", value: "test-uid" },
+      { op: "test", path: "/metadata/finalizers/1", value: "pepr.dev/finalizer" },
+      { op: "remove", path: "/metadata/finalizers/1" },
+    ]);
+    expect(networkPolicies).not.toHaveBeenCalled();
   });
 
-  test("should not remove the finalizer for removalfailed packages", async () => {
-    mockPackage.status = { phase: Phase.RemovalFailed };
-    const finalizerRemoved = await packageFinalizer(mockPackage);
-    // Assert that we didn't try to cleanup anything
-    expect(retryWithDelay).not.toHaveBeenCalled();
+  test("retains the finalizer on status errors and excludes overlapping callbacks", async () => {
+    mockPatchStatus.mockRejectedValueOnce(new Error("status unavailable"));
+    const first = packageFinalizer(mockPackage);
+    expect(await packageFinalizer(mockPackage)).toBe(false);
+    expect(await first).toBe(false);
     expect(mockCleanupNamespace).not.toHaveBeenCalled();
-    expect(mockPurgeSSO).not.toHaveBeenCalled();
-    expect(mockPurgeAuthservice).not.toHaveBeenCalled();
-    // Assert that the finalizer was not removed
-    expect(finalizerRemoved).toEqual(false);
   });
 
   test("should finalize a ready package", async () => {

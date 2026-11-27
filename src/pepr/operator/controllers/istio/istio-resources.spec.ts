@@ -40,7 +40,7 @@ describe("istio-resources (ingress)", () => {
   const pkgBase: UDSPackage = {
     apiVersion: "uds.dev/v1alpha1",
     kind: "Package",
-    metadata: { name: "pkg", namespace: "ns", generation: 7 },
+    metadata: { name: "pkg", namespace: "ns", generation: 7, uid: "pkg-uid" },
     spec: {
       network: {
         expose: [{ host: "a" }, { host: "b" }],
@@ -54,18 +54,25 @@ describe("istio-resources (ingress)", () => {
 
   let applyVS: ReturnType<typeof vi.fn>;
   let applySE: ReturnType<typeof vi.fn>;
+  const listProtectedRoutes = vi.fn();
 
   beforeEach(() => {
     // Create stable spies once per test
     applyVS = vi.fn(async () => undefined);
     applySE = vi.fn(async () => undefined);
+    listProtectedRoutes.mockReset().mockResolvedValue({ items: [] });
 
     // Reset K8s mock Apply per kind
     const k8sMock = K8s as unknown as Mock;
     type K8sApply = { Apply: (obj: unknown) => Promise<void> };
     k8sMock.mockImplementation((k: unknown): K8sApply => {
       if (k === IstioVirtualService) {
-        return { Apply: applyVS } as K8sApply;
+        return {
+          Apply: applyVS,
+          InNamespace: vi.fn().mockReturnThis(),
+          WithLabel: vi.fn().mockReturnThis(),
+          Get: listProtectedRoutes,
+        } as K8sApply;
       }
       if (k === IstioServiceEntry) {
         return { Apply: applySE } as K8sApply;
@@ -77,19 +84,17 @@ describe("istio-resources (ingress)", () => {
     vi.spyOn(utils, "purgeOrphans").mockResolvedValue();
 
     // Stub generators with predictable payloads
-    let vsIdx = 0;
     vi.spyOn(vsMod, "generateIngressVirtualService").mockImplementation(
-      (_expose, ns, pkgName, gen): IstioVirtualService => {
-        const name = `vs-${++vsIdx}`;
+      (expose, ns, pkgName, gen): IstioVirtualService => {
         return {
           apiVersion: "networking.istio.io/v1",
           kind: "VirtualService",
           metadata: {
-            name,
+            name: `vs-${expose.host}`,
             namespace: ns,
             labels: { "uds/package": pkgName, "uds/generation": gen },
           },
-          spec: { hosts: [vsIdx === 1 ? "a.uds.dev" : "b.uds.dev"] },
+          spec: { hosts: [`${expose.host}.uds.dev`], http: [{}] },
         } as unknown as IstioVirtualService;
       },
     );
@@ -166,6 +171,44 @@ describe("istio-resources (ingress)", () => {
     expect(applyVS).toHaveBeenCalledTimes(1);
     expect(applySE).toHaveBeenCalledTimes(1);
     expect(hosts).toEqual(["a.uds.dev"]);
+  });
+
+  it.each([
+    ["a delete conflict", { name: "old", labels: { "uds/generation": "6" } }],
+    [
+      "termination",
+      { name: "old", labels: { "uds/generation": "6" }, deletionTimestamp: new Date() },
+    ],
+  ])(
+    "retains protection after %s until the obsolete route disappears",
+    async (_reason, metadata) => {
+      const pkg = { ...pkgBase, spec: { network: { expose: [] } } };
+      listProtectedRoutes.mockResolvedValueOnce({ items: [{ metadata }] });
+      await expect(istioResources(pkg, "ns")).rejects.toThrow(
+        "Waiting for protected VirtualServices",
+      );
+      expect(utils.purgeOrphans).toHaveBeenCalledTimes(1);
+      await expect(istioResources(pkg, "ns")).resolves.toEqual([]);
+    },
+  );
+
+  it("accepts only active protected routes for the current generation", async () => {
+    const pkg = {
+      ...pkgBase,
+      spec: {
+        ...pkgBase.spec,
+        sso: [{ name: "Browser", clientId: "browser", authservice: { exposeHost: "a" } }],
+      },
+    };
+    const metadata = { name: "vs-a", labels: { "uds/generation": "7" } };
+    listProtectedRoutes.mockResolvedValueOnce({ items: [{ metadata }] });
+    expect(await istioResources(pkg, "ns")).toEqual(["a.uds.dev", "b.uds.dev"]);
+    listProtectedRoutes.mockResolvedValueOnce({
+      items: [{ metadata: { ...metadata, deletionTimestamp: new Date() } }],
+    });
+    await expect(istioResources(pkg, "ns")).rejects.toThrow(
+      "Waiting for protected VirtualServices",
+    );
   });
 });
 

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { Expose, Gateway } from "../crd";
+import { Expose, Gateway, UDSPackage } from "../crd";
 import { UDSConfig } from "./config/config";
 
 /**
@@ -37,4 +37,9 @@ export function getFqdn(expose: Expose): string {
 export function getExposureKey(expose: Expose): string {
   const gateway = (expose.gateway ?? Gateway.Tenant).toLowerCase();
   return `${gateway}:${getFqdn(expose).toLowerCase()}`;
+}
+
+// Bind the generated route and gateway policy to the same Package generation.
+export function hostAuthRouteName(pkg: UDSPackage, expose: Expose): string {
+  return `uds-host-auth-${pkg.metadata!.uid}-${pkg.metadata!.generation}-${pkg.spec!.network!.expose!.indexOf(expose)}`;
 }

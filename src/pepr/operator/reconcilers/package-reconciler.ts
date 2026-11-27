@@ -4,6 +4,14 @@
  */
 
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
+import { K8s } from "pepr";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
+import {
+  applyHostPolicies,
+  cleanupHostAuthentication,
+  purgeHostPolicies,
+  resolveHostSelectors,
+} from "../controllers/keycloak/authservice/host-resources";
 import { Component, setupLogger } from "../../logger";
 import { caBundleConfigMap } from "../controllers/ca-bundles/ca-bundle";
 import { UDSConfig } from "../controllers/config/config";
@@ -20,9 +28,10 @@ import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import { PackageAction } from "../controllers/istio/types";
 import {
   authservice,
+  cleanupAuthservice,
   purgeAuthserviceClients,
 } from "../controllers/keycloak/authservice/authservice";
-import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
+import { keycloak, purgeSSOClients, purgeSSOSecrets } from "../controllers/keycloak/client-sync";
 import { Client } from "../controllers/keycloak/types";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
@@ -38,6 +47,8 @@ import { migrate } from "../crd/migrate";
 // @lulaStart 5c6d86fa-5206-4bb5-a685-62ec52ff5694
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_RECONCILERS);
+const reconciling = new Map<string, Promise<void>>();
+const finalizing = new Set<string>();
 
 /**
  * The reconciler is called from the queue and is responsible for reconciling the state of the package
@@ -45,10 +56,33 @@ const log = setupLogger(Component.OPERATOR_RECONCILERS);
  *
  * @param pkg the package to reconcile
  */
-export async function packageReconciler(pkg: UDSPackage) {
+export async function packageReconciler(pkg: UDSPackage, phase?: WatchPhase) {
   const metadata = pkg.metadata!;
   const { namespace, name } = metadata;
+  if (metadata.deletionTimestamp) {
+    // Pepr's finalizer handles updates. A terminating Package is replayed as Added after a restart.
+    if (phase !== WatchPhase.Added || !metadata.finalizers?.includes("pepr.dev/finalizer")) return;
+    if (!(await packageFinalizer(pkg))) return;
+    const resource = K8s(UDSPackage, { name, namespace });
+    await retryWithDelay(async () => {
+      try {
+        const current = await K8s(UDSPackage).InNamespace(namespace!).Get(name!);
+        const index = current.metadata?.finalizers?.indexOf("pepr.dev/finalizer") ?? -1;
+        if (current.metadata?.uid !== metadata.uid || index < 0) return;
+        const path = `/metadata/finalizers/${index}`;
+        await resource.Patch([
+          { op: "test", path: "/metadata/uid", value: metadata.uid },
+          { op: "test", path, value: "pepr.dev/finalizer" },
+          { op: "remove", path },
+        ]);
+      } catch (error) {
+        if (error.status !== 404) throw error;
+      }
+    }, log);
+    return;
+  }
 
+  if (finalizing.has(metadata.uid!)) return;
   log.info(
     `Processing Package ${namespace}/${name}, status.phase: ${pkg.status?.phase}, observedGeneration: ${pkg.status?.observedGeneration}, retryAttempt: ${pkg.status?.retryAttempt}`,
   );
@@ -63,6 +97,18 @@ export async function packageReconciler(pkg: UDSPackage) {
   // Migrate the package to the latest version
   migrate(pkg);
 
+  const reconciliation = reconcileWithRetry(pkg);
+  reconciling.set(metadata.uid!, reconciliation);
+  try {
+    await reconciliation;
+  } finally {
+    reconciling.delete(metadata.uid!);
+  }
+}
+
+async function reconcileWithRetry(pkg: UDSPackage) {
+  const metadata = pkg.metadata!;
+  const { namespace, name } = metadata;
   if (pkg.status?.retryAttempt && pkg.status?.retryAttempt > 0) {
     // calculate exponential backoff where backoffSeconds = 3^retryAttempt
     const backOffSeconds = 3 ** pkg.status.retryAttempt;
@@ -106,21 +152,18 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   // Get the requested service mesh mode, default to ambient if not specified
   const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
 
-  // Ensure network policies are in place
+  // Host authentication reconciliation order:
+  // resolve selectors -> configure Keycloak clients -> apply host policies and filters
+  // -> mesh authorization/injection -> Authservice chains -> ingress routes -> retire old resources.
+  await resolveHostSelectors(pkg);
   const netPol = await networkPolicies(pkg, namespace!, istioMode);
-  const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
-
-  // Enable Istio injection (this may restart pods in sidecar mode)
-  await enableIstio(pkg);
-
-  let endpoints: string[] = [];
   let ssoClients = new Map<string, Client>();
   let authserviceClients: AuthserviceClient[] = [];
 
   if (UDSConfig.isIdentityDeployed) {
-    // Configure SSO
+    // Configure Keycloak clients before generating host policy subjects.
     ssoClients = await keycloak(pkg);
-    authserviceClients = await authservice(pkg, ssoClients);
+    await applyHostPolicies(pkg);
   } else if (pkg.spec?.sso) {
     log.error("Identity & Authorization is not deployed, but the package has SSO configuration");
     throw new Error(
@@ -128,8 +171,29 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
     );
   }
 
-  // Create the Istio ingress resources per the package configuration
-  endpoints = await istioResources(pkg, namespace!);
+  // Mesh authorization follows installed host protection; injection can restart Sidecar workloads.
+  const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
+
+  // Enable Istio injection (this may restart pods in sidecar mode)
+  await enableIstio(pkg);
+
+  if (UDSConfig.isIdentityDeployed) {
+    // Configure Authservice chains only after mesh protection and injection are ready.
+    authserviceClients = await authservice(pkg, ssoClients);
+  }
+
+  // Publish ingress routes after host policies, mesh authorization, and Authservice chains.
+  const endpoints = await istioResources(pkg, namespace!);
+
+  // Retire obsolete chains and host policies only after replacement routes are active.
+  if (UDSConfig.isIdentityDeployed) {
+    await cleanupAuthservice(pkg, authserviceClients);
+    await purgeSSOSecrets(pkg);
+  }
+  // Generation 1 has no older policy generations for this UID.
+  if (metadata.uid && metadata.generation !== 1) {
+    await purgeHostPolicies(pkg);
+  }
 
   // Create the Envoy Gateway ingress resources for UDP expose entries.
   await envoyGatewayResources(pkg, namespace!);
@@ -147,11 +211,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
 
   // Purge orphaned SSO clients now that both keycloak and probe clients are known
   const allSsoClients = [...ssoClients.keys(), ...probeSsoClients];
-  try {
-    await purgeSSOClients(pkg, allSsoClients);
-  } catch (e) {
-    log.error(e, `Failed to purge orphaned SSO clients for ${pkg.metadata!.name!}: ${e}`);
-  }
+  await purgeSSOClients(pkg, allSsoClients);
 
   // Create the CA Bundle Config Map if needed
   await caBundleConfigMap(pkg, namespace!);
@@ -159,13 +219,16 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   const readyStatus: StatusObject = {
     phase: Phase.Ready,
     conditions: getReadinessConditions(true),
-    ssoClients: [...ssoClients.keys(), ...probeSsoClients],
+    ssoClients: allSsoClients,
     authserviceClients,
     endpoints,
     monitors,
     probes,
     networkPolicyCount: netPol.length,
-    authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
+    authorizationPolicyCount:
+      authPol.length +
+      authserviceClients.length * 2 +
+      (pkg.spec?.sso?.filter(s => s.authservice).length ?? 0),
     meshMode: istioMode,
     observedGeneration: metadata.generation,
     retryAttempt: 0, // todo: make this nullable when kfc generates the type
@@ -182,23 +245,31 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
  * @param pkg the package to finalize
  */
 export async function packageFinalizer(pkg: UDSPackage) {
-  // Skip running the finalizer if it is already running
-  if (pkg.status?.phase === Phase.Removing || pkg.status?.phase === Phase.RemovalFailed) {
-    // Trace log since this can be confusing when the finalizer hits quickly for the status patch
-    log.trace(
-      `Skipping finalizer for ${pkg.metadata?.namespace}/${pkg.metadata?.name}, removal already in progress or failed.`,
+  const uid = pkg.metadata!.uid!;
+  if (finalizing.has(uid)) return false;
+  finalizing.add(uid);
+  try {
+    const reconciliation = reconciling.get(uid);
+    if (reconciliation) {
+      await reconciliation;
+      pkg = await K8s(UDSPackage).InNamespace(pkg.metadata!.namespace!).Get(pkg.metadata!.name!);
+      if (pkg.metadata?.uid !== uid) return false;
+    }
+    migrate(pkg);
+    return await finalizePackage(pkg);
+  } catch (error) {
+    // Pepr removes the finalizer when the callback throws. Retain it for the next attempt.
+    log.error(
+      { error },
+      `Finalization failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
     );
     return false;
+  } finally {
+    finalizing.delete(uid);
   }
+}
 
-  // Skip running the finalizer if the CR has not completed initial reconciliation - running this during reconciliation can lead to orphaned resources and failed cleanup
-  if (pkg.status?.phase !== Phase.Ready && pkg.status?.phase !== Phase.Failed) {
-    log.debug(
-      `Waiting to finalize package ${pkg.metadata?.namespace}/${pkg.metadata?.name}, package has not completed initial reconciliation.`,
-    );
-    return false;
-  }
-
+async function finalizePackage(pkg: UDSPackage) {
   log.debug(`Processing removal of package ${pkg.metadata?.namespace}/${pkg.metadata?.name}`);
 
   // Update Package to indicate removal in progress
@@ -206,6 +277,9 @@ export async function packageFinalizer(pkg: UDSPackage) {
 
   // Cleanup Istio status on namespace
   try {
+    if (pkg.metadata?.uid) {
+      await cleanupHostAuthentication(pkg);
+    }
     await writeEvent(pkg, {
       message: `Restoring original Istio injection status on namespace`,
       reason: "RemovalInProgress",

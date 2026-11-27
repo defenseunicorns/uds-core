@@ -310,9 +310,12 @@ describe("enableIstio", () => {
 describe("cleanupNamespace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockApply.mockReset();
+    mockPodDelete.mockReset().mockResolvedValue({});
+    mockPodGet.mockReset().mockResolvedValue({ items: [] });
     (K8s as Mock).mockImplementation(resourceKind => {
       if (resourceKind === kind.Pod) {
-        return { InNamespace: vi.fn().mockReturnValue({ Get: mockPodGet }) };
+        return { InNamespace: vi.fn().mockReturnValue({ Get: mockPodGet }), Delete: mockPodDelete };
       }
       if (resourceKind === kind.Namespace) {
         return { Get: mockGet, Apply: mockApply };
@@ -422,7 +425,7 @@ describe("cleanupNamespace", () => {
       metadata: {
         name: "test-ns",
         annotations: {
-          "uds.dev/istio-original-state": IstioState.None,
+          "uds.dev/original-istio-state": IstioState.None,
           "uds.dev/pkg-test-pkg": IstioState.Sidecar,
         },
       },
@@ -440,7 +443,7 @@ describe("cleanupNamespace", () => {
     expect(applyCall.metadata).toHaveProperty("labels");
   });
 
-  test("should handle namespace without metadata.annotations during cleanup", async () => {
+  test("preserves the restored mesh mode when Package cleanup is repeated", async () => {
     mockGet.mockResolvedValue({
       metadata: {
         name: "test-ns",
@@ -457,8 +460,8 @@ describe("cleanupNamespace", () => {
       },
     } as UDSPackage);
 
-    // Should not throw an error and should attempt to update
-    expect(mockApply).toHaveBeenCalled();
+    expect(mockApply).not.toHaveBeenCalled();
+    expect(mockPodGet).not.toHaveBeenCalled();
   });
 
   test("should not modify istio labels when other packages exist", async () => {
@@ -495,7 +498,122 @@ describe("cleanupNamespace", () => {
     // Verify that only the specific package annotation was removed
     expect(applyCall.metadata.annotations["uds.dev/pkg-test-pkg"]).toBeUndefined();
     expect(applyCall.metadata.annotations["uds.dev/pkg-other-pkg"]).toBe("true");
+    expect(mockPodGet).not.toHaveBeenCalled();
   });
+
+  test.each(
+    [IstioState.Sidecar, IstioState.Ambient, IstioState.None].flatMap(target =>
+      ["pod deletion", "annotation removal"].map(failure => ({ target, failure })),
+    ),
+  )(
+    "resumes $target cleanup after failed $failure using persisted state",
+    async ({ target, failure }) => {
+      const pkg = { metadata: { namespace: "test-ns", name: "test-pkg" } };
+      const pkgKey = "uds.dev/pkg-test-pkg";
+      const originalKey = "uds.dev/original-istio-state";
+      let namespace: kind.Namespace = {
+        metadata: {
+          name: "test-ns",
+          labels:
+            target === IstioState.Sidecar
+              ? { "istio.io/dataplane-mode": "ambient" }
+              : { "istio-injection": "enabled" },
+          annotations: { [pkgKey]: "true", [originalKey]: target },
+        },
+      };
+      const pod = (name: string, sidecar: boolean): kind.Pod => ({
+        metadata: { name },
+        spec: { containers: [{ name: sidecar ? "istio-proxy" : "app" }] },
+      });
+      const wantSidecar = target === IstioState.Sidecar;
+      const terminating = pod("terminating", !wantSidecar);
+      terminating.metadata!.deletionTimestamp = new Date();
+      const pods = [
+        pod("correct", wantSidecar),
+        terminating,
+        pod("first", !wantSidecar),
+        pod("remaining", !wantSidecar),
+      ];
+      let fail = true;
+      mockGet.mockImplementation(async () => structuredClone(namespace));
+      mockApply.mockImplementation(async update => {
+        if (fail && failure === "annotation removal" && !(pkgKey in update.metadata.annotations)) {
+          fail = false;
+          throw new Error("cleanup interrupted");
+        }
+        namespace = structuredClone(update);
+      });
+      mockPodGet.mockImplementation(async () => ({ items: [...pods] }));
+      mockPodDelete.mockImplementation(async deleting => {
+        if (fail && failure === "pod deletion" && deleting.metadata.name === "remaining") {
+          fail = false;
+          throw new Error("cleanup interrupted");
+        }
+        pods.splice(
+          pods.findIndex(p => p.metadata?.name === deleting.metadata.name),
+          1,
+        );
+      });
+
+      await expect(cleanupNamespace(pkg)).rejects.toThrow("cleanup interrupted");
+      expect(getCurrentIstioState(namespace.metadata!.labels!)).toBe(target);
+      expect(namespace.metadata!.annotations).toEqual({
+        [pkgKey]: "cleanup-pending",
+        [originalKey]: target,
+      });
+
+      mockPodDelete.mockClear();
+      await cleanupNamespace(structuredClone(pkg));
+      expect(mockPodDelete).toHaveBeenCalledTimes(failure === "pod deletion" ? 1 : 0);
+      expect(pods.map(p => p.metadata!.name)).toEqual(["correct", "terminating"]);
+      expect(namespace.metadata!.annotations).toEqual({});
+
+      mockApply.mockClear();
+      mockPodDelete.mockClear();
+      await cleanupNamespace(pkg);
+      expect(mockApply).not.toHaveBeenCalled();
+      expect(mockPodDelete).not.toHaveBeenCalled();
+    },
+  );
+
+  test.each([
+    { labels: { "istio-injection": "enabled" }, original: IstioState.Sidecar },
+    { labels: { "istio.io/dataplane-mode": "ambient" }, original: IstioState.None },
+  ])(
+    "uses one namespace update when pod cycling is unnecessary ($original)",
+    async ({ labels, original }) => {
+      mockGet.mockResolvedValue({
+        metadata: {
+          labels,
+          annotations: {
+            "uds.dev/pkg-test-pkg": "true",
+            "uds.dev/original-istio-state": original,
+          },
+        },
+      });
+      await cleanupNamespace({ metadata: { namespace: "test-ns", name: "test-pkg" } });
+      expect(mockPodGet).not.toHaveBeenCalled();
+      expect(mockApply).toHaveBeenCalledTimes(1);
+      expect(getCurrentIstioState(mockApply.mock.calls[0][0].metadata.labels)).toBe(original);
+    },
+  );
+
+  test.each([undefined, "invalid"])(
+    "retains cleanup state when the original mode is %s",
+    async original => {
+      mockGet.mockResolvedValue({
+        metadata: {
+          labels: { "istio-injection": "enabled" },
+          annotations: { "uds.dev/pkg-test-pkg": "true", "uds.dev/original-istio-state": original },
+        },
+      });
+      await expect(
+        cleanupNamespace({ metadata: { namespace: "test-ns", name: "test-pkg" } }),
+      ).rejects.toThrow("original Istio state is missing or invalid");
+      expect(mockApply).not.toHaveBeenCalled();
+      expect(mockPodGet).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe("killPods", () => {

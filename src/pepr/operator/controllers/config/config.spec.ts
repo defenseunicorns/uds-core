@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -8,7 +8,7 @@ import { kind } from "pepr";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClusterConfig, ClusterConfigName, ConfigPhase as Phase } from "../../crd";
 import { updateAllCaBundleConfigMaps, updateIstioCAConfigMap } from "../ca-bundles/ca-bundle";
-import { reconcileAuthservice } from "../keycloak/authservice/authservice";
+import { updateConfig } from "../keycloak/authservice/authservice";
 import { Action } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
@@ -36,7 +36,7 @@ const mockPatchStatus = vi.fn();
 const mockBuildCABundleContent = vi.fn();
 
 vi.mock("../keycloak/authservice/authservice", () => ({
-  reconcileAuthservice: vi.fn(),
+  updateConfig: vi.fn(),
 }));
 
 vi.mock("../network/generators/kubeAPI", () => ({
@@ -232,7 +232,7 @@ describe("initial config load", () => {
 
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
-    expect(reconcileAuthservice).not.toHaveBeenCalled();
+    expect(updateConfig).not.toHaveBeenCalled();
     expect(updateIstioCAConfigMap).toHaveBeenCalled();
   });
 });
@@ -440,14 +440,14 @@ describe("handleUDSConfig", () => {
     expect(UDSConfig.allowAllNSExemptions).toBe(true);
   });
 
-  describe("reconcileAuthservice", () => {
+  describe("updateConfig", () => {
     it("calls if CA Cert changes", async () => {
       UDSConfig.caBundle.certs = "old-ca-cert";
       mockBuildCABundleContent.mockReturnValue(exampleCACert);
 
       await handleCfg(mockCfg, ConfigAction.UPDATE);
 
-      expect(reconcileAuthservice).toHaveBeenCalledWith({
+      expect(updateConfig).toHaveBeenCalledWith({
         name: "global-config-update",
         action: Action.UpdateGlobalConfig,
         redisUri: "",
@@ -471,7 +471,7 @@ describe("handleUDSConfig", () => {
 
       await handleCfg(cfg, ConfigAction.UPDATE);
 
-      expect(reconcileAuthservice).toHaveBeenCalledWith({
+      expect(updateConfig).toHaveBeenCalledWith({
         name: "global-config-update",
         action: Action.UpdateGlobalConfig,
         redisUri: "",
@@ -495,7 +495,7 @@ describe("handleUDSConfig", () => {
 
       await handleCfg(cfg, ConfigAction.UPDATE);
 
-      expect(reconcileAuthservice).toHaveBeenCalledWith({
+      expect(updateConfig).toHaveBeenCalledWith({
         name: "global-config-update",
         action: Action.UpdateGlobalConfig,
         redisUri: "",
@@ -503,7 +503,7 @@ describe("handleUDSConfig", () => {
       });
     });
 
-    it("always calls reconcileAuthservice even if CA Cert is still empty string (dev mode)", async () => {
+    it("always calls updateConfig even if CA Cert is still empty string (dev mode)", async () => {
       const cfg = {
         ...defaultConfig,
         spec: {
@@ -515,7 +515,7 @@ describe("handleUDSConfig", () => {
       } as ClusterConfig;
       await handleCfg(cfg, ConfigAction.UPDATE);
 
-      expect(reconcileAuthservice).toHaveBeenCalled();
+      expect(updateConfig).toHaveBeenCalled();
     });
 
     it("calls if Redis URI changes", async () => {
@@ -525,7 +525,7 @@ describe("handleUDSConfig", () => {
 
       await handleCfgSecret(mockSecret, ConfigAction.UPDATE);
 
-      expect(reconcileAuthservice).toHaveBeenCalledWith({
+      expect(updateConfig).toHaveBeenCalledWith({
         name: "global-config-update",
         action: Action.UpdateGlobalConfig,
         redisUri: "mock-redis-uri",
@@ -540,7 +540,7 @@ describe("handleUDSConfig", () => {
 
       await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
-      expect(reconcileAuthservice).toHaveBeenCalledWith({
+      expect(updateConfig).toHaveBeenCalledWith({
         name: "global-config-update",
         action: Action.UpdateGlobalConfig,
         redisUri: "",
@@ -558,7 +558,7 @@ describe("handleUDSConfig", () => {
 
       await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
-      expect(reconcileAuthservice).toHaveBeenCalledWith({
+      expect(updateConfig).toHaveBeenCalledWith({
         name: "global-config-update",
         action: Action.UpdateGlobalConfig,
         redisUri: "",
@@ -573,7 +573,7 @@ describe("handleUDSConfig", () => {
 
       await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
-      expect(reconcileAuthservice).toHaveBeenCalledWith({
+      expect(updateConfig).toHaveBeenCalledWith({
         name: "global-config-update",
         action: "UpdateGlobalConfig",
         redisUri: "",
@@ -590,7 +590,7 @@ describe("handleUDSConfig", () => {
 
       await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
-      expect(reconcileAuthservice).not.toHaveBeenCalled();
+      expect(updateConfig).not.toHaveBeenCalled();
     });
   });
 
@@ -691,11 +691,11 @@ describe("handleUDSConfig", () => {
     mockBuildCABundleContent.mockReturnValue(exampleCACert);
 
     // Reset the mock to ensure it wasn't called by handleCABundleUpdate setup
-    vi.mocked(reconcileAuthservice).mockClear();
+    vi.mocked(updateConfig).mockClear();
 
     await handleCfg(mockCfg, ConfigAction.UPDATE);
 
-    expect(reconcileAuthservice).toHaveBeenCalled();
+    expect(updateConfig).toHaveBeenCalled();
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
   });
@@ -719,7 +719,7 @@ describe("handleUDSConfig", () => {
 
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
-    expect(reconcileAuthservice).not.toHaveBeenCalled();
+    expect(updateConfig).not.toHaveBeenCalled();
     // updateIstioCAConfigMap is called in loadUDSConfig, not handleCfg
     expect(updateIstioCAConfigMap).not.toHaveBeenCalled();
   });

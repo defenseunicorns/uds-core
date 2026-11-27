@@ -7,6 +7,7 @@ import { fetch, K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
 import { Sso, UDSPackage } from "../../crd";
+import { updateStatus } from "../../reconcilers";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { credentialsCreateOrUpdate, credentialsDelete } from "./clients/client-credentials";
 import { throwErrorIfNeeded } from "./clients/common";
@@ -46,21 +47,23 @@ export async function keycloak(pkg: UDSPackage) {
   // Get the list of clients from the package
   const clientReqs = pkg.spec?.sso || [];
   const clients: Map<string, Client> = new Map();
-  const generation = (pkg.metadata?.generation ?? 0).toString();
 
   for (const clientReq of clientReqs) {
     const client = await syncClient(clientReq, pkg);
     clients.set(client.clientId, client);
   }
 
-  // Purge orphaned SSO secrets
-  try {
-    await purgeOrphans(generation, pkg.metadata!.namespace!, pkg.metadata!.name!, kind.Secret, log);
-  } catch (e) {
-    log.error(e, `Failed to purge orphaned SSO secrets in for ${pkg.metadata!.name!}: ${e}`);
-  }
-
   return clients;
+}
+
+export async function purgeSSOSecrets(pkg: UDSPackage) {
+  await purgeOrphans(
+    String(pkg.metadata?.generation ?? 0),
+    pkg.metadata!.namespace!,
+    pkg.metadata!.name!,
+    kind.Secret,
+    log,
+  );
 }
 
 /**
@@ -167,6 +170,26 @@ export async function syncClient({ secretConfig, ...clientReq }: Sso, pkg: UDSPa
     () => credentialsCreateOrUpdate(keycloakClient),
     `Failed to process Keycloak request for client '${client.clientId}', package ${pkgRef}`,
   );
+
+  // Record successful syncs before later steps can fail, so deletion can clean up partial installs.
+  const ssoClients = pkg.status?.ssoClients ?? [];
+  const authserviceClients = pkg.status?.authserviceClients ?? [];
+  const recordAuthservice =
+    (clientReq.authservice || clientReq.enableAuthserviceSelector) &&
+    !authserviceClients.some(entry => entry.clientId === client.clientId);
+  if (!ssoClients.includes(client.clientId) || recordAuthservice) {
+    const status = {
+      ssoClients: [...new Set([...ssoClients, client.clientId])],
+      ...(recordAuthservice && {
+        authserviceClients: [
+          ...authserviceClients,
+          { clientId: client.clientId, selector: clientReq.enableAuthserviceSelector ?? {} },
+        ],
+      }),
+    };
+    await updateStatus(pkg, status);
+    pkg.status = { ...pkg.status, ...status };
+  }
 
   // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
   delete syncedClient.registrationAccessToken;

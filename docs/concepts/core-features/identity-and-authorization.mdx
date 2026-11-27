@@ -44,7 +44,7 @@ The UDS Operator supports two SSO integration patterns.
     - The application requires an application-specific machine-authentication flow that cannot use platform-issued tokens
     - The application owns fine-grained authorization or user-management behavior
   </TabItem>
-  <TabItem label="Authservice">
+  <TabItem label="Pod-based Authservice">
     Authservice handles the browser OIDC flow at the mesh boundary before requests reach the application. The UDS Operator creates the Authservice chain and the required Istio `RequestAuthentication` and `AuthorizationPolicy` resources from the `Package` CR. In ambient mode, the operator also creates and manages the waypoint proxy required for L7 enforcement.
 
     **Use Authservice when:**
@@ -61,11 +61,13 @@ The UDS Operator supports two SSO integration patterns.
   </TabItem>
 </Tabs>
 
+You can [protect a tenant host with Authservice](/how-to-guides/identity-and-authorization/protect-apps-with-authservice-host/) while keeping the application's own OIDC sign-in and allowing approved machine clients to use application credentials.
+
 ## Authentication and authorization boundaries
 
 Authservice provides authentication enforcement at the platform boundary. The `Package` CR can declare group-based access requirements for an SSO client, which UDS Core enforces as a coarse-grained gate during browser-based authentication. Authservice does not replace application user management or fine-grained, domain-specific authorization. After the platform grants access, application teams still own decisions that depend on application data, business roles, resource ownership, or workflow state.
 
-Authservice protection is intended for complete protection of the selected workload. In the current UDS Core implementation, application traffic to a protected workload requires a valid UDS JWT. The operator adds exceptions for configured Prometheus endpoints and the sidecar metrics endpoint. If an application requires unauthenticated routes or a machine-authentication flow that cannot use a Keycloak-issued service-account token, evaluate native SSO or another supported application design before enabling Authservice.
+Pod-based Authservice protection is intended for complete protection of the selected workload. In the current UDS Core implementation, application traffic to a protected workload requires a valid UDS JWT. The operator adds exceptions for configured Prometheus endpoints and the sidecar metrics endpoint. If an application requires unauthenticated routes or a machine-authentication flow that cannot use a Keycloak-issued service-account token, evaluate native SSO or another supported application design before enabling Authservice.
 
 ## Platform groups
 

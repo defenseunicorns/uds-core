@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -30,6 +30,7 @@ import {
 // CRD imports
 import { ClusterConfig, UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
+import { validateHostService } from "./crd/validators/host-service";
 
 // Reconciler imports
 import { Component, setupLogger } from "../logger";
@@ -76,7 +77,10 @@ When(a.Service)
 // Watch for Service mutations to apply ambient waypoint labels
 When(a.Service)
   .IsCreatedOrUpdated()
-  .Mutate(req => reconcileService(req.Raw));
+  .Mutate(req => reconcileService(req.Raw))
+  .Validate(validateHostService);
+
+When(a.Service).IsDeleted().Validate(validateHostService);
 
 // Watch for Pod mutations to apply ambient waypoint labels
 When(a.Pod)

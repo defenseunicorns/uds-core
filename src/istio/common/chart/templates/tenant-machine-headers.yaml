@@ -1,0 +1,63 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: tenant-machine-headers
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      app: tenant-ingressgateway
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: INSERT_FIRST
+        value:
+          name: uds.tenant-machine-headers
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+            inlineCode: |
+              function envoy_on_request(handle)
+                local headers = handle:headers()
+                local token = headers:get("x-uds-machine-token")
+                if headers:get("x-uds-authservice-token") ~= nil or
+                   (token ~= nil and (headers:getNumValues("x-uds-machine-token") ~= 1 or
+                    not token:match("^Bearer [%w_%-]+%.[%w_%-]+%.[%w_%-]+$"))) then
+                  handle:respond({[":status"] = "401"}, "")
+                end
+              end
+    - applyTo: HTTP_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+              subFilter:
+                name: envoy.filters.http.router
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: uds.tenant-machine-destination
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+            inlineCode: |
+              function envoy_on_request(handle)
+                local headers = handle:headers()
+                local route = handle:streamInfo():routeName()
+                local protected = route:match("^uds%-host%-auth%-") ~= nil
+                local credential = headers:get("x-uds-machine-token") or headers:get("x-uds-authservice-token")
+                local marks = handle:streamInfo():dynamicMetadata():get("uds.host_auth")
+                if (protected and (not credential or not marks or not marks[route])) or
+                   (not protected and credential) then
+                  handle:respond({[":status"] = "403"}, "")
+                end
+              end

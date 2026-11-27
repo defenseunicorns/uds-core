@@ -13,7 +13,7 @@ import {
   updateAllCaBundleConfigMaps,
   updateIstioCAConfigMap,
 } from "../ca-bundles/ca-bundle";
-import { reconcileAuthservice } from "../keycloak/authservice/authservice";
+import { updateConfig } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
@@ -507,7 +507,7 @@ async function performAuthserviceUpdate(reason: string) {
     redisUri: UDSConfig.authserviceRedisUri,
   };
   configLog.debug(`Updating Authservice secret based on: ${reason}`);
-  await reconcileAuthservice(authserviceUpdate);
+  await updateConfig(authserviceUpdate);
 }
 
 /**

@@ -462,6 +462,26 @@ describe("Admin API token recovery", () => {
     expect(mockFetch).toHaveBeenCalledTimes(4 + Number(needsLookup) + Number(returnsClient));
   });
 
+  it("completes deletion when a previous attempt already removed the client", async () => {
+    mockFetch.mockResolvedValueOnce(okTokenResponse(firstToken)).mockResolvedValueOnce({
+      ...okClients,
+      data: [],
+    });
+
+    await credentialsDelete(client);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("completes deletion when the client disappears after lookup", async () => {
+    mockFetch
+      .mockResolvedValueOnce(okTokenResponse(firstToken))
+      .mockResolvedValueOnce(okClients)
+      .mockResolvedValueOnce(errorResponse(404, "Not Found"));
+
+    await credentialsDelete(client);
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+  });
+
   it("propagates renewal failures", async () => {
     mockFetch
       .mockResolvedValueOnce(okTokenResponse(firstToken))

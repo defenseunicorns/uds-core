@@ -7,7 +7,8 @@ import { a, K8s, kind } from "pepr";
 import { K8sGateway, K8sGatewayFromType, UDSPackage } from "../../crd";
 import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "../packages/package-store";
-import { getAuthserviceClients, getOwnerRef } from "../utils";
+import { getAuthserviceClients, getHostExposure, getOwnerRef } from "../utils";
+import { computeMonitorExemptions } from "../monitoring/monitor-exemptions";
 import {
   ambientEgressNamespace,
   getSharedAnnotationKey,
@@ -220,9 +221,11 @@ export async function reconcileService(svc: a.Service): Promise<void> {
 
   // Find the SSO client that matches this service's selector (only authservice-enabled)
   const authClients = getAuthserviceClients(pkg);
-  const matchingSso = authClients.find(sso =>
-    serviceMatchesSelector(svc, sso.enableAuthserviceSelector!),
-  );
+  const matchingSso = authClients.find(sso => {
+    return sso.authservice
+      ? getHostExposure(pkg, sso)?.service === svc.metadata?.name
+      : serviceMatchesSelector(svc, sso.enableAuthserviceSelector!);
+  });
 
   if (!matchingSso?.clientId) return;
 
@@ -274,8 +277,11 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
 
   // Find the SSO client that matches this pod's labels (only authservice-enabled)
   const authClients = getAuthserviceClients(pkg);
-  const matchingSso = authClients.find(sso =>
-    matchesLabels(pod.metadata?.labels || {}, sso.enableAuthserviceSelector!),
+  const matchingSso = authClients.find(
+    sso =>
+      matchesLabels(pod.metadata?.labels || {}, sso.enableAuthserviceSelector!) &&
+      (!sso.authservice ||
+        computeMonitorExemptions(pkg, sso.enableAuthserviceSelector!, true).length > 0),
   );
 
   if (!matchingSso?.clientId) return;
@@ -305,15 +311,17 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
 export async function cleanupWaypointLabels(
   namespace: string,
   waypointName: string,
+  retainService?: string,
+  retainPodSelector?: Record<string, string>,
 ): Promise<void> {
   log.info(`Starting cleanup of waypoint labels: namespace=${namespace}, waypoint=${waypointName}`);
 
   try {
     // Clean up pods with the waypoint label
-    await cleanupPodsWithWaypointLabel(namespace, waypointName);
+    await cleanupPodsWithWaypointLabel(namespace, waypointName, retainPodSelector);
 
     // Clean up services with the waypoint label
-    await cleanupServicesWithWaypointLabel(namespace, waypointName);
+    await cleanupServicesWithWaypointLabel(namespace, waypointName, retainService);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     log.error(
@@ -324,7 +332,7 @@ export async function cleanupWaypointLabels(
       },
       "Failed to clean up waypoint labels",
     );
-    // Don't throw here to allow other cleanup to continue
+    throw error;
   }
 }
 
@@ -334,6 +342,7 @@ export async function cleanupWaypointLabels(
 async function cleanupPodsWithWaypointLabel(
   namespace: string,
   waypointName: string,
+  retainPodSelector?: Record<string, string>,
 ): Promise<void> {
   const pods = await K8s(a.Pod)
     .InNamespace(namespace)
@@ -344,6 +353,7 @@ async function cleanupPodsWithWaypointLabel(
     pods.items.map(async pod => {
       const podName = pod.metadata?.name;
       if (!podName) return;
+      if (retainPodSelector && matchesLabels(pod.metadata?.labels ?? {}, retainPodSelector)) return;
 
       // Skip if pod is being deleted or doesn't have the label anymore
       if (pod.metadata?.deletionTimestamp) {
@@ -356,6 +366,7 @@ async function cleanupPodsWithWaypointLabel(
           name: podName,
           namespace,
         }).Patch([
+          { op: "test", path: "/metadata/labels/istio.io~1use-waypoint", value: waypointName },
           {
             op: "remove",
             path: "/metadata/labels/istio.io~1use-waypoint",
@@ -363,15 +374,7 @@ async function cleanupPodsWithWaypointLabel(
         ]);
         log.info({ namespace, podName, waypointName }, "Removed waypoint label from pod");
       } catch (error) {
-        log.error(
-          {
-            namespace,
-            podName,
-            waypointName,
-            error: error instanceof Error ? error.message : String(error),
-          },
-          "Failed to remove waypoint label from pod",
-        );
+        if (error?.status !== 404) throw error;
       }
     }),
   );
@@ -383,6 +386,7 @@ async function cleanupPodsWithWaypointLabel(
 async function cleanupServicesWithWaypointLabel(
   namespace: string,
   waypointName: string,
+  retainService?: string,
 ): Promise<void> {
   const services = await K8s(a.Service)
     .InNamespace(namespace)
@@ -392,7 +396,7 @@ async function cleanupServicesWithWaypointLabel(
   await Promise.all(
     services.items.map(async svc => {
       const svcName = svc.metadata?.name;
-      if (!svcName) return;
+      if (!svcName || svcName === retainService) return;
 
       // Skip if service is being deleted or doesn't have the label anymore
       if (svc.metadata?.deletionTimestamp) {
@@ -405,10 +409,10 @@ async function cleanupServicesWithWaypointLabel(
           name: svcName,
           namespace,
         }).Patch([
-          {
-            op: "remove",
-            path: "/metadata/labels/istio.io~1ingress-use-waypoint",
-          },
+          { op: "test", path: "/metadata/labels/istio.io~1use-waypoint", value: waypointName },
+          ...(svc.metadata?.labels?.["istio.io/ingress-use-waypoint"] !== undefined
+            ? [{ op: "remove" as const, path: "/metadata/labels/istio.io~1ingress-use-waypoint" }]
+            : []),
           {
             op: "remove",
             path: "/metadata/labels/istio.io~1use-waypoint",
@@ -416,15 +420,7 @@ async function cleanupServicesWithWaypointLabel(
         ]);
         log.info({ namespace, svcName, waypointName }, "Removed waypoint labels from service");
       } catch (error) {
-        log.error(
-          {
-            namespace,
-            svcName,
-            waypointName,
-            error: error instanceof Error ? error.message : String(error),
-          },
-          "Failed to remove waypoint labels from service",
-        );
+        if (error?.status !== 404) throw error;
       }
     }),
   );
@@ -449,17 +445,17 @@ export async function reconcileExistingResources(
       K8s(kind.Pod).InNamespace(namespace).Get(),
     ]);
 
+    const host = getHostExposure(pkg, ssoClient);
+    const selector = ssoClient.enableAuthserviceSelector!;
     const matchingServices = services.items.filter(svc =>
-      serviceMatchesSelector(svc, ssoClient.enableAuthserviceSelector!),
+      host ? svc.metadata?.name === host.service : serviceMatchesSelector(svc, selector),
     );
 
-    const matchingPods = pods.items.filter(pod => {
-      const matches = matchesLabels(
-        pod.metadata?.labels || {},
-        ssoClient.enableAuthserviceSelector!,
-      );
-      return matches;
-    });
+    // Pod-addressed scrapes need the waypoint's identity and path enforcement.
+    const enrollPods = !host || computeMonitorExemptions(pkg, selector, true).length > 0;
+    const matchingPods = enrollPods
+      ? pods.items.filter(pod => matchesLabels(pod.metadata?.labels || {}, selector))
+      : [];
 
     log.debug(`Found resource to update with waypoint labels in ${namespace}`);
 
@@ -470,6 +466,9 @@ export async function reconcileExistingResources(
           name: svc.metadata!.name!,
           namespace: namespace,
         }).Patch([
+          ...(!svc.metadata?.labels
+            ? [{ op: "add" as const, path: "/metadata/labels", value: {} }]
+            : []),
           {
             op: "add",
             path: "/metadata/labels/istio.io~1ingress-use-waypoint",
@@ -482,6 +481,7 @@ export async function reconcileExistingResources(
           },
         ]);
       } catch (error) {
+        if (host) throw error;
         const errorMessage = error instanceof Error ? error.message : String(error);
         log.error({ errorMessage }, `Service reconciliation failed for ${namespace}`);
       }
@@ -503,6 +503,7 @@ export async function reconcileExistingResources(
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         log.info({ errorMessage }, `Pod reconciliation failed for ${namespace}`);
+        if (host) throw error;
       }
     }
   } catch (error) {

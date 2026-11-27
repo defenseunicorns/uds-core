@@ -8,7 +8,7 @@ import { fetch, K8s, kind } from "pepr";
 import { UDSConfig } from "../../config/config";
 import { KeycloakClientMode } from "../../config/types";
 import { Client } from "../types";
-import { baseUrl, isAuthError, log, throwErrorIfNeeded } from "./common";
+import { baseUrl, isAuthError, KeycloakHttpError, log, throwErrorIfNeeded } from "./common";
 
 export interface ClientWithId extends Client {
   id: string;
@@ -238,12 +238,28 @@ export async function credentialsUpdate(client: Partial<Client>) {
 export async function credentialsDelete(client: Partial<Client>) {
   log.info(`credentialsDelete: deleting client ${client.clientId}`);
   const existing = await credentialsGet(client);
-  if (!existing || !existing.id) {
+  if (!existing) return;
+  if (!existing.id) {
     throw new Error(`Failed to retrieve existing client, ${client.clientId}`);
   }
   const url = `${clientsAdminUrl}/${encodeURIComponent(existing.id)}`;
-  await authenticatedFetch(url, {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-  });
+  try {
+    await authenticatedFetch(url, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    if (!(error instanceof KeycloakHttpError && error.httpStatus === 404)) throw error;
+  }
+}
+
+export async function serviceAccountSubject(clientId: string): Promise<string> {
+  const client = await credentialsGet({ clientId });
+  if (!client?.id) throw new Error(`Missing machine client ${clientId}`);
+  const response = await authenticatedFetch<{ id?: string }>(
+    `${clientsAdminUrl}/${encodeURIComponent(client.id)}/service-account-user`,
+    { method: "GET" },
+  );
+  if (!response.data?.id) throw new Error(`Missing service-account user for ${clientId}`);
+  return response.data.id;
 }

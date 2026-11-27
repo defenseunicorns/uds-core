@@ -805,6 +805,10 @@ export interface Sso {
    */
   attributes?: { [key: string]: string };
   /**
+   * Protect a tenant HTTP exposure with Authservice.
+   */
+  authservice?: Authservice;
+  /**
    * Default URL to use when the auth server needs to redirect or link back to the client.
    */
   baseUrl?: string;
@@ -825,8 +829,8 @@ export interface Sso {
    */
   description?: string;
   /**
-   * Labels to match pods to automatically protect with authservice. Leave empty to disable
-   * authservice protection
+   * Pod labels for selector-based Authservice protection. Omit when using
+   * authservice.exposeHost.
    */
   enableAuthserviceSelector?: { [key: string]: string };
   /**
@@ -845,6 +849,10 @@ export interface Sso {
    * The client SSO group type
    */
   groups?: Groups;
+  /**
+   * Grant this service account machine access to an Authservice-protected host.
+   */
+  machineAccess?: MachineAccess;
   /**
    * Specifies display name of the client
    */
@@ -913,6 +921,16 @@ export interface Sso {
 }
 
 /**
+ * Protect a tenant HTTP exposure with Authservice.
+ */
+export interface Authservice {
+  /**
+   * Host from spec.network.expose in this Package.
+   */
+  exposeHost: string;
+}
+
+/**
  * The client authenticator type
  */
 export enum ClientAuthenticatorType {
@@ -928,6 +946,16 @@ export interface Groups {
    * List of groups allowed to access the client
    */
   anyOf?: string[];
+}
+
+/**
+ * Grant this service account machine access to an Authservice-protected host.
+ */
+export interface MachineAccess {
+  /**
+   * Protecting SSO client ID in this Package and required access-token audience.
+   */
+  authserviceClientId: string;
 }
 
 /**

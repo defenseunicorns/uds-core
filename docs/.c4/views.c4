@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -128,6 +128,51 @@ views "uds-core" {
       cluster,
       cluster.keycloak.*,
       cluster.authservice.*,
+  }
+
+  dynamic view host-browser-authentication-flow {
+    title 'Identity & Authorization / Protected Host Browser Authentication Flow'
+
+    enduser -> infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway 'Browser request'
+    infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway -> infrastructure.cluster.authservice.authservice 'Check browser session'
+    infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway -> enduser 'Return Authservice redirect to Keycloak'
+    enduser -> infrastructure.cluster.keycloak.keycloak 'Sign in'
+    enduser -> infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway 'Follow callback with authorization code'
+    infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway -> infrastructure.cluster.authservice.authservice 'Process callback'
+    infrastructure.cluster.authservice.authservice -> infrastructure.cluster.keycloak.keycloak 'Exchange authorization code for tokens'
+    infrastructure.cluster.authservice.authservice -> infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway 'Provide ID token on the authenticated application request'
+    infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway -> infrastructure.cluster.generic-customer.host-proxy 'Forward browser token and application credential'
+    infrastructure.cluster.generic-customer.host-proxy -> infrastructure.cluster.generic-customer.custom-application 'Validate UDS identity; strip UDS headers; preserve application Authorization'
+  }
+
+  dynamic view host-native-oidc-flow {
+    title 'Identity & Authorization / Protected Host with Native OIDC'
+
+    enduser -> infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway 'Open the protected host'
+    infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway -> infrastructure.cluster.authservice.authservice 'Check browser session'
+    infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway -> enduser 'Redirect to Keycloak for host sign-in'
+    enduser -> infrastructure.cluster.keycloak.keycloak 'Sign in and establish a Keycloak SSO session'
+    enduser -> infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway 'Return to /authservice/callback with the host client’s code'
+    infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway -> infrastructure.cluster.authservice.authservice 'Process host callback'
+    infrastructure.cluster.authservice.authservice -> infrastructure.cluster.keycloak.keycloak 'Exchange the code for the host client’s tokens'
+    infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway -> infrastructure.cluster.generic-customer.custom-application 'Reach the application through the authenticated host'
+    infrastructure.cluster.generic-customer.custom-application -> enduser 'Start OIDC sign-in with the application’s client ID'
+    enduser -> infrastructure.cluster.keycloak.keycloak 'Follow the redirect with the existing SSO cookie'
+    infrastructure.cluster.keycloak.keycloak -> enduser 'Recognize the session and redirect with a new authorization code'
+    enduser -> infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway 'Return to /auth/callback'
+    infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway -> infrastructure.cluster.generic-customer.custom-application 'Forward native OIDC callback'
+    infrastructure.cluster.generic-customer.custom-application -> infrastructure.cluster.keycloak.keycloak 'Exchange the code for the application client’s tokens'
+    infrastructure.cluster.generic-customer.custom-application -> enduser 'Validate the ID token and start the application session'
+  }
+
+  dynamic view host-machine-authentication-flow {
+    title 'Identity & Authorization / Protected Host Machine Authentication Flow'
+
+    host-machine-client -> infrastructure.cluster.keycloak.keycloak 'Client credentials grant'
+    infrastructure.cluster.keycloak.keycloak -> host-machine-client 'UDS access token with protected host audience'
+    host-machine-client -> infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway 'UDS token and application Authorization'
+    infrastructure.cluster.istio-tenant-gateway.istio-tenant-ingress-gateway -> infrastructure.cluster.generic-customer.host-proxy 'Validate approved machine identity; forward credentials'
+    infrastructure.cluster.generic-customer.host-proxy -> infrastructure.cluster.generic-customer.custom-application 'Validate UDS identity; strip UDS headers; preserve application Authorization'
   }
 
   view metrics-server-layer of infrastructure {

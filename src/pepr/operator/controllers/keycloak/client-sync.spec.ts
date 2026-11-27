@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, MockedFunction, vi } from "vitest";
 import { Protocol, Sso, UDSPackage } from "../../crd";
+import { updateStatus } from "../../reconcilers";
 import { syncClient } from "./client-sync";
 import * as clientCredentials from "./clients/client-credentials";
 
@@ -16,6 +17,7 @@ import * as clientCredentials from "./clients/client-credentials";
 const { mockFetch } = vi.hoisted(() => ({
   mockFetch: vi.fn(),
 }));
+vi.mock("../../reconcilers", () => ({ updateStatus: vi.fn() }));
 
 // Mock the logger before importing the modules that use it
 vi.mock("../../../logger", () => ({
@@ -465,6 +467,26 @@ describe("syncClient secretConfig preservation", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("records a synchronized client for cleanup even when its Secret write fails", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "pkg", namespace: "ns" },
+      status: { ssoClients: ["existing"] },
+    };
+    const sso = { clientId: "browser", name: "Browser", authservice: { exposeHost: "app" } };
+    vi.mocked(clientCredentials.credentialsCreateOrUpdate).mockResolvedValueOnce({
+      ...mockClient,
+      clientId: "browser",
+      id: "client-uid",
+      publicClient: false,
+    });
+    mockApply.mockRejectedValueOnce(new Error("Secret unavailable"));
+    await expect(syncClient(sso, pkg)).rejects.toThrow("Secret unavailable");
+    expect(updateStatus).toHaveBeenCalledWith(pkg, {
+      ssoClients: ["existing", "browser"],
+      authserviceClients: [{ clientId: "browser", selector: {} }],
+    });
   });
 
   it("should preserve secretConfig.name when creating K8s secret", async () => {

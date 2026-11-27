@@ -17,19 +17,13 @@ let pendingSecretFetch: Promise<AuthserviceConfig> | null = null;
 // Cache for in-memory secret to avoid unnecessary Kubernetes secret lookups
 let inMemorySecret: AuthserviceConfig | null = null;
 
-// Track pending package updates and their resolve functions
-const pendingPackages: Map<
-  AuthserviceConfig,
-  { resolve: () => void; reject: (reason?: Error) => void }
-> = new Map();
+let pendingWrite: Promise<void> | undefined;
+let previousWrite = Promise.resolve();
 
 // Backup for the last known successful state of the secret
 let lastSuccessfulSecret: AuthserviceConfig | null = null;
 
-// Timer for debouncing updates to the secret
-let debounceTimer: NodeJS.Timeout | null = null;
-
-// Debounce duration (1 seconds) to reduce excessive updates, configurable via environment variable
+// Maximum batching delay when there is no write in progress.
 const DEBOUNCE_DURATION = parseInt(process.env.DEBOUNCE_DURATION || "1000", 10);
 
 export let operatorConfig: Record<string, string> = {};
@@ -77,12 +71,16 @@ export async function setupAuthserviceSecret() {
         .InNamespace(operatorConfig.namespace)
         .Get(operatorConfig.secretName);
       log.info(`Authservice Secret exists, skipping creation - ${secret.metadata?.name}`);
-    } catch {
+    } catch (error) {
+      if (error?.status !== 404) throw error;
       log.info("Secret does not exist, creating authservice secret");
       try {
-        // Build and create the initial secret configuration
-        await updateAuthServiceSecret(buildInitialSecret(), false); // False to skip checksum on initial creation.
+        await K8s(kind.Secret).Create({
+          metadata: { namespace: operatorConfig.namespace, name: operatorConfig.secretName },
+          data: { "config.json": encodeConfig(buildInitialSecret()).base64EncodedConfig },
+        });
       } catch (err) {
+        if (err?.status === 409) return;
         log.error(err, "Failed to create UDS managed authservice secret.");
         throw new Error("Failed to create UDS managed authservice secret.", { cause: err });
       }
@@ -150,15 +148,6 @@ export function buildInitialSecret(): AuthserviceConfig {
 }
 
 /**
- * Sets the in memory configuration for Authservce.
- *
- * @param config - The configuration object for Authservice.
- */
-export function setAuthserviceConfig(config: AuthserviceConfig) {
-  inMemorySecret = config;
-}
-
-/**
  * Retrieves the authservice configuration, either from the in-memory cache
  * or from the Kubernetes secret if not already cached.
  *
@@ -192,73 +181,29 @@ export async function getAuthserviceConfig(): Promise<AuthserviceConfig> {
 }
 
 /**
- * Update the authservice secret in memory and debounce the write to the Kubernetes cluster.
- * The in-memory secret is updated immediately, while the actual write to Kubernetes is debounced
- * to prevent excessive writes. Rollback is handled if the update fails.
- *
- * @param {AuthserviceConfig} authserviceConfig - The updated authservice configuration.
- * @param {boolean} [checksum=true] - Whether to add a checksum to the deployment after the update.
+ * Batch concurrent updates and resolve each caller after its Secret and checksum are applied.
  */
-export async function updateAuthServiceSecret(
-  authserviceConfig: AuthserviceConfig,
-  checksum = true,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    // Add the package config and its resolve function to the pending packages map
-    pendingPackages.set(authserviceConfig, { resolve, reject });
+export function updateAuthServiceSecret(authserviceConfig: AuthserviceConfig): Promise<void> {
+  inMemorySecret = authserviceConfig;
+  if (pendingWrite) return pendingWrite;
 
-    // Clear the previous debounce timer, if it exists
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
+  const delay = new Promise<void>(resolve => setTimeout(resolve, DEBOUNCE_DURATION));
+  const promise = Promise.all([previousWrite, delay]).then(async () => {
+    pendingWrite = undefined;
+    try {
+      const { base64EncodedConfig, hash } = encodeConfig(inMemorySecret!);
+      lastSuccessfulSecret = await applySecret(base64EncodedConfig);
+      await checksumDeployment(hash);
+    } catch (e) {
+      // A queued batch already contains the newer desired configuration.
+      if (!pendingWrite) inMemorySecret = lastSuccessfulSecret;
+      throw new Error("Failed to write authservice secret for config", { cause: e });
     }
-
-    // Set a new debounce timer to apply the update after the delay
-    debounceTimer = setTimeout(async () => {
-      try {
-        log.info(
-          `Applying debounced secret update for packages: ${
-            Array.from(pendingPackages.keys()).length
-          } pending packages`,
-        );
-
-        // Prepare the config to be written (assumes that all packages share the same secret)
-        const { base64EncodedConfig, hash } = encodeConfig(authserviceConfig!);
-
-        // Apply the authservice config secret
-        lastSuccessfulSecret = await applySecret(base64EncodedConfig);
-
-        log.info(`Updated authservice secret successfully for all pending packages.`);
-
-        // Apply the checksum if required
-        if (checksum) {
-          log.info(`Adding checksum to deployment for authservice secret`);
-          await checksumDeployment(hash);
-        }
-
-        // Resolve the promises for all pending packages after the secret update
-        pendingPackages.forEach(p => {
-          p.resolve();
-        });
-      } catch (e) {
-        log.error(e, `Failed to write authservice secret`);
-
-        // Rollback to the last known successful state if the update fails
-        inMemorySecret = lastSuccessfulSecret;
-        log.info("Reverted to last successful secret state.");
-
-        // Reject all promises for the pending packages on error
-        pendingPackages.forEach(p => {
-          p.reject(new Error(`Failed to write authservice secret for config`, { cause: e }));
-        });
-      } finally {
-        // Clear pending packages on error
-        pendingPackages.clear();
-
-        // Reset debounce timer
-        debounceTimer = null;
-      }
-    }, DEBOUNCE_DURATION);
   });
+  pendingWrite = promise;
+  // Each caller sees its own batch failure. The next batch can still retry.
+  previousWrite = promise.catch(() => undefined);
+  return promise;
 }
 
 /**

@@ -168,12 +168,24 @@ describe("writeEvent", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    Create = vi.fn();
+    Create = vi.fn().mockResolvedValue(undefined);
 
     (K8s as Mock).mockImplementation(() => ({
       Create,
       PatchStatus: vi.fn(),
     }));
+  });
+
+  it("continues deletion when a terminating namespace rejects Events", async () => {
+    Create.mockRejectedValue({
+      status: 403,
+      data: { details: { causes: [{ reason: "NamespaceTerminating" }] } },
+    });
+    await expect(
+      writeEvent({ metadata: { deletionTimestamp: new Date() } } as GenericKind, {
+        message: "Removing",
+      }),
+    ).resolves.toBeUndefined();
   });
 
   it("should write a K8s event for the CRD", async () => {
@@ -210,7 +222,7 @@ describe("handleFailure", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    Create = vi.fn();
+    Create = vi.fn().mockResolvedValue(undefined);
     PatchStatus = vi.fn();
 
     (K8s as Mock).mockImplementation(() => ({

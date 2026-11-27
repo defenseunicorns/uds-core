@@ -360,9 +360,34 @@ const sso = {
     type: "object",
     required: ["clientId", "name"],
     properties: {
+      authservice: {
+        type: "object",
+        description: "Protect a tenant HTTP exposure with Authservice.",
+        required: ["exposeHost"],
+        properties: {
+          exposeHost: {
+            type: "string",
+            minLength: 1,
+            description: "Host from spec.network.expose in this Package.",
+          },
+        },
+      },
+      machineAccess: {
+        type: "object",
+        description: "Grant this service account machine access to an Authservice-protected host.",
+        required: ["authserviceClientId"],
+        properties: {
+          authserviceClientId: {
+            type: "string",
+            minLength: 1,
+            description:
+              "Protecting SSO client ID in this Package and required access-token audience.",
+          },
+        },
+      },
       enableAuthserviceSelector: {
         description:
-          "Labels to match pods to automatically protect with authservice. Leave empty to disable authservice protection",
+          "Pod labels for selector-based Authservice protection. Omit when using authservice.exposeHost.",
         type: "object",
         additionalProperties: {
           type: "string",

@@ -80,7 +80,7 @@ export async function updateStatus(cr: UDSPackage, status: PkgStatus) {
   // Specifically, older packages stored authserviceClients as string[]; new schema expects object[]
   const migratedStatus: PkgStatus & { authserviceClients?: AuthserviceClient[] } = { ...status };
   const normalized = buildMigratedAuthserviceStatus(cr);
-  if (normalized) {
+  if (normalized && !status.authserviceClients) {
     migratedStatus.authserviceClients = normalized;
   }
 
@@ -113,26 +113,39 @@ export async function updateStatus(cr: UDSPackage, status: PkgStatus) {
 export async function writeEvent(cr: GenericKind, event: Partial<kind.CoreEvent>) {
   log.debug(`Writing ${cr.metadata?.name}/${cr.metadata?.namespace} event: ${event.message}`);
 
-  await K8s(kind.CoreEvent).Create({
-    type: "Warning",
-    reason: "ReconciliationFailed",
-    ...event,
-    // Fixed values
-    metadata: {
-      namespace: cr.metadata!.namespace,
-      generateName: cr.metadata!.name,
-    },
-    involvedObject: {
-      apiVersion: cr.apiVersion,
-      kind: cr.kind,
-      name: cr.metadata!.name,
-      namespace: cr.metadata!.namespace,
-      uid: cr.metadata!.uid,
-    },
-    firstTimestamp: new Date(),
-    reportingComponent: "uds.dev/operator",
-    reportingInstance: process.env.HOSTNAME,
-  });
+  await K8s(kind.CoreEvent)
+    .Create({
+      type: "Warning",
+      reason: "ReconciliationFailed",
+      ...event,
+      // Fixed values
+      metadata: {
+        namespace: cr.metadata!.namespace,
+        generateName: cr.metadata!.name,
+      },
+      involvedObject: {
+        apiVersion: cr.apiVersion,
+        kind: cr.kind,
+        name: cr.metadata!.name,
+        namespace: cr.metadata!.namespace,
+        uid: cr.metadata!.uid,
+      },
+      firstTimestamp: new Date(),
+      reportingComponent: "uds.dev/operator",
+      reportingInstance: process.env.HOSTNAME,
+    })
+    .catch(error => {
+      // Kubernetes rejects new Events in a terminating namespace. Continue finalizer cleanup.
+      if (
+        cr.metadata?.deletionTimestamp &&
+        error.status === 403 &&
+        error.data?.details?.causes?.some(
+          (cause: { reason: string }) => cause.reason === "NamespaceTerminating",
+        )
+      )
+        return;
+      throw error;
+    });
 }
 
 /**

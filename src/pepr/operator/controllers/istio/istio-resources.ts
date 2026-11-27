@@ -8,6 +8,7 @@ import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from "../../crd";
 import { ExposeProtocol } from "../../crd/generated/package-v1alpha1";
+import { hostAuthRouteName } from "../domain-utils";
 import { getOwnerRef, purgeOrphans } from "../utils";
 import { generateIngressServiceEntry } from "./service-entry";
 import { generateIngressVirtualService } from "./virtual-service";
@@ -56,6 +57,10 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
       ownerRefs,
     );
 
+    if (pkg.spec?.sso?.some(s => s.authservice && s.authservice.exposeHost === expose.host)) {
+      vsPayload.metadata!.labels!["uds/for"] = "host-auth";
+      vsPayload.spec!.http![0].name = hostAuthRouteName(pkg, expose);
+    }
     log.debug(vsPayload, `Applying VirtualService ${vsPayload.metadata?.name}`);
 
     // Apply the VirtualService and force overwrite any existing policy
@@ -87,6 +92,23 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
 
   // Purge any orphaned resources
   await purgeOrphans(generation, namespace, pkgName, IstioVirtualService, log);
+  // A conflicted or terminating route can survive deletion. Keep its policies until it is gone.
+  const routes = await K8s(IstioVirtualService)
+    .InNamespace(namespace)
+    .WithLabel("uds/package", pkgName)
+    .WithLabel("uds/for", "host-auth")
+    .Get();
+  if (
+    routes.items.some(
+      route =>
+        route.metadata?.deletionTimestamp ||
+        route.metadata?.labels?.["uds/generation"] !== generation,
+    )
+  ) {
+    throw new Error(
+      `Waiting for protected VirtualServices to match ${namespace}/${pkgName} generation ${generation}`,
+    );
+  }
   await purgeOrphans(generation, namespace, pkgName, IstioServiceEntry, log); // for ingress and egress
   await purgeOrphans(generation, namespace, pkgName, IstioSidecar, log); // for egress only
 

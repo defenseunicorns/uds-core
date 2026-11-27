@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -10,21 +10,28 @@ vi.mock("../../ca-bundles/ca-bundle", () => ({
   buildCABundleContent: vi.fn(),
 }));
 
-import { Sso, UDSPackage } from "../../../crd";
+import {
+  IstioAuthorizationPolicy,
+  IstioRequestAuthentication,
+  Sso,
+  UDSPackage,
+} from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
 import { buildCABundleContent } from "../../ca-bundles/ca-bundle";
 import { cleanupWaypointLabels } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
+import * as utils from "../../utils";
 import { Client } from "../types";
 import * as authorizationPolicy from "./authorization-policy";
-import { authservice, buildChain, buildConfig } from "./authservice";
+import { authservice, buildChain, buildConfig, cleanupAuthservice } from "./authservice";
 import * as configModule from "./config";
 import * as mockConfig from "./mock-authservice-config.json";
 import { Action, AuthserviceConfig, AuthServiceEvent } from "./types";
 const mockBuildCABundleContent = vi.mocked(buildCABundleContent);
 
 // Mock the waypoint utilities
-vi.mock("../../istio/waypoint-utils", () => ({
+vi.mock("../../istio/waypoint-utils", async importOriginal => ({
+  ...(await importOriginal<typeof import("../../istio/waypoint-utils")>()),
   getWaypointName: vi.fn().mockImplementation((id: string) => `${id}-waypoint`),
 }));
 
@@ -105,7 +112,6 @@ vi.mock("./config", () => {
   return {
     initializeOperatorConfig: vi.fn().mockResolvedValue(undefined),
     getAuthserviceConfig: vi.fn().mockResolvedValue(mockAuthserviceConfig),
-    setAuthserviceConfig: vi.fn().mockResolvedValue(undefined),
     updateAuthServiceSecret: vi.fn().mockResolvedValue(undefined),
     operatorConfig: {
       secretName: "authservice-secret",
@@ -124,7 +130,8 @@ vi.mock("../../config/config", () => ({
 }));
 
 // Mock the authorization-policy module
-vi.mock("./authorization-policy", () => ({
+vi.mock("./authorization-policy", async importOriginal => ({
+  ...(await importOriginal<typeof import("./authorization-policy")>()),
   updatePolicy: vi.fn().mockResolvedValue(undefined),
   UDSConfig: {
     domain: "uds.dev",
@@ -224,6 +231,58 @@ describe("purgeAuthserviceClients", () => {
     const { cleanupWaypointLabels } = await import("../../istio/ambient-waypoint.js");
     expect(cleanupWaypointLabels).not.toHaveBeenCalled();
     expect(pkg.status?.authserviceClients).toHaveLength(0);
+  });
+  it("retires legacy policies and stale Service labels after applying host protection for a retained client", async () => {
+    const pkg = createMockPackage("test-pkg", {}, [
+      { name: "browser", clientId: "browser", authservice: { exposeHost: "app" } },
+    ]);
+    const client = { clientId: "browser", selector: { app: "web" } };
+    pkg.metadata!.generation = 2;
+    pkg.status!.authserviceClients = [client];
+    pkg.spec!.network = {
+      expose: [{ host: "app", service: "new-service", selector: client.selector, port: 80 }],
+    };
+    const purge = vi.spyOn(utils, "purgeOrphans").mockResolvedValue(undefined);
+    try {
+      const retainedClients = await authservice(
+        pkg,
+        new Map([
+          [
+            "browser",
+            { clientId: "browser", redirectUris: ["https://app.uds.dev/callback"] } as Client,
+          ],
+        ]),
+      );
+      expect(retainedClients).toEqual([client]);
+      expect(purge).not.toHaveBeenCalled();
+      await cleanupAuthservice(pkg, retainedClients);
+      for (const type of [IstioAuthorizationPolicy, IstioRequestAuthentication])
+        expect(purge).toHaveBeenCalledWith(
+          "2",
+          "test-ns",
+          "test-pkg",
+          type,
+          expect.anything(),
+          undefined,
+          true,
+        );
+      expect(cleanupWaypointLabels).toHaveBeenCalledWith(
+        "test-ns",
+        "browser-waypoint",
+        "new-service",
+        undefined,
+      );
+      pkg.spec!.monitor = [{ selector: client.selector, portName: "http", targetPort: 80 }];
+      await cleanupAuthservice(pkg, retainedClients);
+      expect(cleanupWaypointLabels).toHaveBeenLastCalledWith(
+        "test-ns",
+        "browser-waypoint",
+        "new-service",
+        client.selector,
+      );
+    } finally {
+      purge.mockRestore();
+    }
   });
 });
 
@@ -419,6 +478,7 @@ describe("authservice", () => {
     });
 
     expect(config2.default_oidc_config.redis_session_store_config).toBeUndefined();
+    expect(config1.default_oidc_config.redis_session_store_config?.server_uri).toBe(redisUri);
 
     // Test removal with an empty redis uri
     const config3 = buildConfig(config1, {
@@ -503,6 +563,23 @@ describe("authservice", () => {
 
     expect(config.chains.length).toEqual(0);
     expect(config.listen_address).toEqual("0.0.0.0");
+  });
+
+  test("orders an exact host ahead of an overlapping legacy prefix across client updates", () => {
+    let config = buildConfig(mockConfig as AuthserviceConfig, {
+      client: mockClient,
+      name: "z-exact",
+      action: Action.AddClient,
+      hostAuthentication: true,
+    });
+    config = buildConfig(config, {
+      client: mockClient,
+      name: "a-legacy",
+      action: Action.AddClient,
+    });
+    expect(config.chains[0].name).toBe("z-exact");
+    expect(config.chains[0].match).toEqual({ header: ":authority", equality: "foo.uds.dev" });
+    expect(config.chains[1].match).toEqual({ header: ":authority", prefix: "foo.uds.dev" });
   });
 
   test("should test authservice chain addition", async () => {
