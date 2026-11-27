@@ -462,11 +462,22 @@ describe("cleanupWaypointLabels", () => {
     // The finished message might not be in the implementation anymore
   });
 
-  it("should handle errors gracefully", async () => {
+  it("retains monitored host Pods and removes their labels when monitoring is withdrawn", async () => {
+    const pods = [createMockPod({ app: "web" }), createMockPod({ app: "old" })];
+    mockGet.mockResolvedValueOnce({ items: pods }).mockResolvedValueOnce({ items: [] });
+    await cleanupWaypointLabels(namespace, waypointName, "web", { app: "web" });
+    expect(mockPatch).toHaveBeenCalledTimes(1);
+    mockPatch.mockClear();
+    mockGet.mockResolvedValueOnce({ items: pods }).mockResolvedValueOnce({ items: [] });
+    await cleanupWaypointLabels(namespace, waypointName, "web");
+    expect(mockPatch).toHaveBeenCalledTimes(2);
+  });
+
+  it("propagates list failures so cleanup can retry", async () => {
     const testError = new Error("Test error");
     mockGet.mockRejectedValueOnce(testError);
 
-    await cleanupWaypointLabels(namespace, waypointName);
+    await expect(cleanupWaypointLabels(namespace, waypointName)).rejects.toThrow("Test error");
 
     expect(mockLog.error).toHaveBeenCalledWith(
       {
@@ -659,6 +670,49 @@ describe("reconcileExistingResources", () => {
     mockLog.info.mockClear();
     mockLog.warn.mockClear();
     mockLog.error.mockClear();
+  });
+
+  it.each([false, true])(
+    "routes host Pod scrapes through the waypoint only when monitored (%s)",
+    async monitored => {
+      const resolved = { ...selector, component: "server" };
+      const client = {
+        ...ssoClient,
+        enableAuthserviceSelector: resolved,
+        authservice: { exposeHost: "app" },
+      };
+      const pkg = createMockPackage("test-pkg", resolved, "ambient", [client]);
+      pkg.spec!.network!.expose = [
+        { host: "app", service: "test-svc", port: 80, selector: resolved },
+      ];
+      if (monitored) pkg.spec!.monitor = [{ selector, portName: "http", targetPort: 80 }];
+      mockGet
+        .mockResolvedValueOnce({ items: [createMockService(resolved)] })
+        .mockResolvedValueOnce({ items: [createMockPod(resolved)] });
+      await reconcileExistingResources(pkg, client, waypointName);
+      expect(mockPatch).toHaveBeenCalledTimes(monitored ? 2 : 1);
+
+      vi.mocked(PackageStore.getPackageByNamespace).mockReturnValue(pkg);
+      const pod = createMockPod(resolved);
+      await reconcilePod(pod);
+      expect(pod.metadata?.labels?.["istio.io/use-waypoint"]).toBe(
+        monitored ? waypointName : undefined,
+      );
+    },
+  );
+
+  it("propagates host Pod enrollment failures for reconciliation retry", async () => {
+    const client = { ...ssoClient, authservice: { exposeHost: "app" } };
+    const pkg = createMockPackage("test-pkg", selector, "ambient", [client]);
+    pkg.spec!.network!.expose = [{ host: "app", service: "test-svc", port: 80, selector }];
+    pkg.spec!.monitor = [{ selector, portName: "http", targetPort: 80 }];
+    mockGet
+      .mockResolvedValueOnce({ items: [] })
+      .mockResolvedValueOnce({ items: [createMockPod(selector)] });
+    mockPatch.mockRejectedValueOnce(new Error("enrollment failed"));
+    await expect(reconcileExistingResources(pkg, client, waypointName)).rejects.toThrow(
+      "enrollment failed",
+    );
   });
 
   it("should warn and return if no namespace in package", async () => {

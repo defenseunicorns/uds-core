@@ -14,8 +14,10 @@ import {
 } from "../../crd/generated/istio/authorizationpolicy-v1";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { RemoteProtocol } from "../../crd/generated/package-v1alpha1";
+import { selectorsOverlap } from "../../crd/validators/host-authentication";
 import { IstioState } from "../istio/namespace";
-import { getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
+import { getWaypointName, matchesLabels, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
+import { monitorWaypoints } from "../monitoring/monitor-exemptions";
 import {
   PROMETHEUS_PRINCIPAL,
   getAuthserviceClients,
@@ -368,45 +370,35 @@ export async function generateAuthorizationPolicies(
     }
   }
 
-  // Process monitor rules.
-  if (pkg.spec?.monitor) {
-    for (const monitor of pkg.spec.monitor) {
-      const selector = monitor.podSelector ?? monitor.selector;
-      const source: Source = { principals: [PROMETHEUS_PRINCIPAL] };
-      const ports: string[] = [monitor.targetPort.toString()];
-
-      // Check if this monitor's selector matches an SSO client
-      const sso = findMatchingSsoClient(pkg, selector);
-
-      if (sso) {
-        // Waypoint service handling for monitor rules
-        const waypointName = getWaypointName(sso.clientId);
-        const waypointSelector = { "istio.io/gateway-name": waypointName };
-
-        const policyName = sanitizeResourceName(
-          `protect-${pkgName}-monitor-${generateMonitorName(monitor)}-${waypointName}`,
-        );
-
-        const authPolicy = buildAuthPolicy(policyName, pkg, waypointSelector, source, ports, {
-          "uds/waypoint": waypointName,
-        });
-        policies.push(authPolicy);
-        log.trace(`Generated waypoint monitor authpol: ${authPolicy.metadata?.name}`);
-      } else {
-        // Regular monitor rule processing
-        const policyName = sanitizeResourceName(
-          `protect-${pkgName}-${generateMonitorName(monitor)}`,
-        );
-        const authPolicy = buildAuthPolicy(policyName, pkg, selector, source, ports);
-        policies.push(authPolicy);
-        log.trace(`Generated monitor authpol: ${authPolicy.metadata?.name}`);
-      }
+  const monitorPolicyNames = new Set<string>();
+  const directMonitorSelectors: Record<string, string>[] = [];
+  for (const [index, monitor] of (pkg.spec?.monitor ?? []).entries()) {
+    const name = generateMonitorName(monitor);
+    const selector = monitor.podSelector ?? monitor.selector;
+    for (const waypoint of monitorWaypoints(pkg, monitor)) {
+      const suffix = waypoint ? `monitor-${name}-${waypoint}` : name;
+      const policyName = sanitizeResourceName(`protect-${pkgName}-${suffix}`);
+      const uniqueName = monitorPolicyNames.has(policyName)
+        ? sanitizeResourceName(`protect-${pkgName}-${index + 1}-${suffix}`)
+        : policyName;
+      monitorPolicyNames.add(policyName);
+      if (!waypoint) directMonitorSelectors.push(selector);
+      policies.push(
+        buildAuthPolicy(
+          uniqueName,
+          pkg,
+          waypoint ? { "istio.io/gateway-name": waypoint } : selector,
+          { principals: [PROMETHEUS_PRINCIPAL] },
+          [monitor.targetPort.toString()],
+          waypoint ? { "uds/waypoint": waypoint } : undefined,
+        ),
+      );
     }
   }
 
   // Process waypoint deny-all policies for SSO clients
   if (pkg.spec?.sso && shouldUseAmbientWaypoint(pkg)) {
-    for (const sso of pkg.spec.sso) {
+    for (const sso of getAuthserviceClients(pkg)) {
       if (!sso.enableAuthserviceSelector) continue;
 
       const waypointName = getWaypointName(sso.clientId);
@@ -415,6 +407,20 @@ export async function generateAuthorizationPolicies(
       // Add deny-all policy that only allows traffic from the waypoint
       const denyPolicy = createDenyAllExceptWaypointPolicy(pkg, waypointName, appSelector);
       policies.push(denyPolicy);
+      // A direct scrape ALLOW also puts overlapping workloads behind an allowlist in ztunnel.
+      if (sso.authservice && directMonitorSelectors.some(s => selectorsOverlap(s, appSelector))) {
+        policies.push(
+          buildAuthPolicy(
+            `allow-from-${waypointName}`,
+            pkg,
+            appSelector,
+            {
+              principals: [waypointPrincipal(pkgNamespace, waypointName)],
+            },
+            [],
+          ),
+        );
+      }
     }
   }
 
@@ -479,18 +485,9 @@ export function findMatchingSsoClient(
     return undefined;
   }
 
-  const authserviceClients = getAuthserviceClients(pkg);
-  return authserviceClients.find(client => {
-    const waypointSelector = client.enableAuthserviceSelector;
-
-    // Empty object means namespace-wide protection
-    if (Object.keys(waypointSelector!).length === 0) {
-      return true;
-    }
-
-    // For non-empty selectors, require all labels to match
-    return Object.entries(waypointSelector!).every(([key, value]) => selector[key] === value);
-  });
+  return getAuthserviceClients(pkg).find(client =>
+    matchesLabels(selector, client.enableAuthserviceSelector!),
+  );
 }
 
 /**
@@ -529,7 +526,9 @@ export function createDenyAllExceptWaypointPolicy(
           from: [
             {
               source: {
-                notPrincipals: [`cluster.local/ns/${pkg.metadata?.namespace}/sa/${waypointName}`],
+                notPrincipals: [
+                  waypointPrincipal(pkg.metadata?.namespace ?? "default", waypointName),
+                ],
               },
             },
           ],
@@ -547,4 +546,8 @@ export function createDenyAllExceptWaypointPolicy(
   }
 
   return policy;
+}
+
+function waypointPrincipal(namespace: string, name: string) {
+  return `cluster.local/ns/${namespace}/sa/${name}`;
 }

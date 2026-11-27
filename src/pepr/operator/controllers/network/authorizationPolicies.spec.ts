@@ -49,6 +49,37 @@ vi.mock("./generators/kubeNodes", () => ({
   kubeNodes: () => [{ ipBlock: { cidr: "192.168.0.0/16" } }],
 }));
 
+test.each([Mode.Ambient, Mode.Sidecar])(
+  "keeps both monitor grants and permits waypoint forwarding to protected pods in %s",
+  async mode => {
+    const apps = ["httpbin", "httpbin2"];
+    const pkg: UDSPackage = {
+      metadata: { name: "test", namespace: "test-ns", generation: 1 },
+      spec: {
+        monitor: apps.map(app => ({ selector: { app }, targetPort: 80, portName: "http" })),
+        network: {
+          serviceMesh: { mode },
+          expose: apps.map(app => ({ host: app, selector: { app, version: "v1" }, port: 80 })),
+        },
+        sso: apps.map(app => ({ name: app, clientId: app, authservice: { exposeHost: app } })),
+      },
+    };
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", mode);
+    expect.soft(new Set(policies.map(policy => policy.metadata?.name)).size).toBe(policies.length);
+    if (mode === Mode.Ambient) {
+      for (const app of apps) {
+        expect(policies.map(policy => policy.spec)).toContainEqual({
+          action: Action.Allow,
+          selector: { matchLabels: { app, version: "v1" } },
+          rules: [
+            { from: [{ source: { principals: [`cluster.local/ns/test-ns/sa/${app}-waypoint`] } }] },
+          ],
+        });
+      }
+    }
+  },
+);
+
 describe("flexible gateway configuration", () => {
   test("should generate correct principal for custom gateway", async () => {
     const pkg: UDSPackage = {

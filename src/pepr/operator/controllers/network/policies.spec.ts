@@ -499,6 +499,21 @@ describe("networkPolicies", () => {
     });
   });
 
+  it("keeps legacy identity egress grants off a host-protected application", async () => {
+    const host = mockPkg.spec!.network!.expose![0].host!;
+    const pkg = {
+      ...mockPkg,
+      spec: {
+        ...mockPkg.spec,
+        sso: [{ name: "browser", clientId: "browser", authservice: { exposeHost: host } }],
+      },
+    };
+    const policies = await networkPolicies(pkg, "test-ns", "sidecar");
+    expect(policies.map(p => p.metadata?.name).join(" ")).not.toMatch(
+      /authservice egress|keycloak JWKS egress/,
+    );
+  });
+
   it("should skip directResponse services in expose", async () => {
     const directResponsePkg: UDSPackage = {
       ...mockPkg,

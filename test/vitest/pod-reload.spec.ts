@@ -3,8 +3,21 @@
  */
 import { K8s, kind } from "pepr";
 import { v4 as uuidv4 } from "uuid";
-import { afterAll, describe, expect, test } from "vitest";
+import { afterAll, describe, expect, test, vi } from "vitest";
 import { waitForPodReady } from "./helpers/k8s";
+
+async function waitForInitialObservation(
+  resource: typeof kind.Secret | typeof kind.ConfigMap,
+  name: string,
+) {
+  await vi.waitFor(
+    async () => {
+      const current = await K8s(resource).InNamespace(PODINFO_NAMESPACE).Get(name);
+      expect(current.metadata?.annotations?.["uds.dev/pod-reload-cleanup-complete"]).toBe("true");
+    },
+    { timeout: 10000, interval: 250 },
+  );
+}
 
 // Helper function to wait for a deployment to complete a rollout
 async function waitForDeploymentRollout(
@@ -133,6 +146,8 @@ describe("Secret Auto-reload", () => {
           testKey: Buffer.from("initial-value").toString("base64"),
         },
       });
+
+      await waitForInitialObservation(kind.Secret, testSecretName);
 
       // Get the current deployment generation
       const deployment = await K8s(kind.Deployment)
@@ -380,6 +395,8 @@ describe("ConfigMap Auto-reload", () => {
           testKey: "initial-value",
         },
       });
+
+      await waitForInitialObservation(kind.ConfigMap, testConfigMapName);
 
       // Get the current deployment generation
       const deployment = await K8s(kind.Deployment)

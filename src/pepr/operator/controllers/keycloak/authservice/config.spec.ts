@@ -224,11 +224,33 @@ describe("AuthService Config Tests", () => {
 
   it("should not create the namespace when the namespace lookup fails", async () => {
     const error = { status: 500, message: "server error" };
-    namespaceGetMock.mockRejectedValue(error);
+    (K8s as Mock).mockReturnValue({
+      Get: namespaceGetMock.mockRejectedValue(error),
+      Apply: namespaceApplyMock,
+    });
 
     await expect(setupAuthserviceSecret()).rejects.toEqual(error);
 
     expect(namespaceApplyMock).not.toHaveBeenCalled();
+  });
+
+  it("preserves Secrets across failed lookups and concurrent creation", async () => {
+    const error = { status: 503 };
+    const create = vi.fn().mockRejectedValue({ status: 409 });
+    const get = vi.fn().mockRejectedValueOnce(error).mockRejectedValueOnce({ status: 404 });
+    (K8s as Mock).mockImplementation(type =>
+      type === kind.Namespace
+        ? { Get: vi.fn().mockResolvedValue({}) }
+        : { Get: get, InNamespace: vi.fn().mockReturnThis(), Create: create, Apply: applyMock },
+    );
+
+    await expect(setupAuthserviceSecret()).rejects.toBe(error);
+    expect(create).not.toHaveBeenCalled();
+    expect(applyMock).not.toHaveBeenCalled();
+
+    await setupAuthserviceSecret();
+    expect(create).toHaveBeenCalledOnce();
+    expect(applyMock).not.toHaveBeenCalled();
   });
 
   it("updateAuthServiceSecret should debounce and update the Kubernetes secret", async () => {
@@ -401,13 +423,57 @@ describe("AuthService Config Tests", () => {
 
     vi.advanceTimersByTime(2000); // Fast-forward time
 
-    failedUpdate
-      .then(config => {
-        expect(config).toEqual(false);
-      })
-      .catch(async () => {
-        const fallbackConfig = await getAuthserviceConfig();
-        expect(fallbackConfig.chains.length).toEqual(2);
-      });
+    await expect(failedUpdate).rejects.toThrow("Failed to write authservice secret");
+    expect((await getAuthserviceConfig()).chains).toHaveLength(2);
+  });
+
+  it("waits for each batch's Secret and checksum before starting the next write", async () => {
+    const finishChecksum: (() => void)[] = [];
+    const checksum = vi.fn(() => new Promise<void>(resolve => finishChecksum.push(resolve)));
+    (K8s as Mock).mockImplementation(type => ({
+      Apply: type === kind.Secret ? applyMock : checksum,
+    }));
+    const config = getConfig();
+    const first = updateAuthServiceSecret(config);
+    await vi.runOnlyPendingTimersAsync();
+    expect(checksum).toHaveBeenCalledTimes(1);
+
+    const nextConfig = { ...config, chains: [...config.chains, getChain("next")] };
+    const settled = vi.fn();
+    const second = updateAuthServiceSecret(nextConfig).then(settled);
+    const repeated = updateAuthServiceSecret(nextConfig);
+    await vi.runOnlyPendingTimersAsync();
+    expect(applyMock).toHaveBeenCalledTimes(1);
+    finishChecksum[0]();
+    await first;
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(checksum).toHaveBeenCalledTimes(2);
+    expect(settled).not.toHaveBeenCalled();
+    const written = applyMock.mock.calls[1][0].data!["config.json"];
+    expect(JSON.parse(atob(written))).toEqual(nextConfig);
+    finishChecksum[1]();
+    await Promise.all([second, repeated]);
+    expect(settled).toHaveBeenCalledOnce();
+  });
+
+  it("retains a queued update when the preceding Secret write fails", async () => {
+    let failFirst!: (e: Error) => void;
+    applyMock.mockImplementationOnce(() => new Promise((_, reject) => (failFirst = reject)));
+    (K8s as Mock).mockImplementation(type => ({
+      Apply: type === kind.Secret ? applyMock : vi.fn(),
+    }));
+    const config = getConfig();
+    const first = updateAuthServiceSecret(config);
+    await vi.runOnlyPendingTimersAsync();
+
+    const nextConfig = { ...config, chains: [...config.chains, getChain("next")] };
+    const second = updateAuthServiceSecret(nextConfig);
+    failFirst(new Error("first write failed"));
+    await expect(first).rejects.toThrow("Failed to write authservice secret");
+    expect(await getAuthserviceConfig()).toEqual(nextConfig);
+    await vi.runOnlyPendingTimersAsync();
+    await second;
+    expect(JSON.parse(atob(applyMock.mock.calls[1][0].data!["config.json"]))).toEqual(nextConfig);
   });
 });

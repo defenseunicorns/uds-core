@@ -1459,6 +1459,35 @@ describe("Test validation of Package CRs", () => {
     expect(req.Deny).toHaveBeenCalledWith("Package spec cannot change during deletion.");
   });
 
+  it("allows metadata updates and finalization after the protected host domain changes", async () => {
+    const req = makeMockReq(
+      {},
+      [{ host: "app", service: "web", port: 80, selector: { app: "web" } }],
+      [],
+      [{ authservice: { exposeHost: "app" } }],
+      [],
+    );
+    Object.defineProperty(req, "OldResource", { value: structuredClone(req.Raw) });
+    const previousDomain = UDSConfig.domain;
+    UDSConfig.domain = "new.example";
+    try {
+      req.Raw.metadata!.annotations = { description: "new annotation" };
+      await validator(req);
+      req.Raw.metadata!.deletionTimestamp = new Date();
+      req.Raw.metadata!.finalizers = [];
+      await validator(req);
+      expect(req.Approve).toHaveBeenCalledTimes(2);
+      expect(req.Deny).not.toHaveBeenCalled();
+
+      delete req.Raw.metadata!.deletionTimestamp;
+      req.Raw.spec!.sso![0].name = "Changed client";
+      await validator(req);
+      expect(req.Deny).toHaveBeenCalledWith(expect.stringContaining("exact HTTPS callback"));
+    } finally {
+      UDSConfig.domain = previousDomain;
+    }
+  });
+
   it("denies a Package that declares both an SSO client and its reserved probe ID", async () => {
     const req = makeMockReq(
       {},

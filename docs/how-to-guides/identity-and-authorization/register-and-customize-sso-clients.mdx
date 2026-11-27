@@ -28,7 +28,7 @@ When a `Package` CR declares an `sso` block, the UDS Operator:
 2. Stores the client credentials in a Kubernetes secret named `sso-client-<clientId>` in the application namespace
 3. For SAML clients, fetches the IdP signing certificate from Keycloak and includes it in the secret as `samlIdpCertificate`
 
-The application reads its credentials from this secret and speaks directly to Keycloak. The application handles the SSO flow instead of delegating browser authentication to Authservice.
+The application reads its credentials from this secret and speaks directly to Keycloak. The application handles its own SSO flow, even when [Authservice protects its tenant host](/how-to-guides/identity-and-authorization/protect-apps-with-authservice-host/).
 
 If your application expects credentials in a specific format (JSON config file, properties file, etc.), you can use `secretConfig.template` to control the secret layout.
 

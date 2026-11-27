@@ -18,14 +18,15 @@ import { sanitizeResourceName } from "../../controllers/utils";
 import { ExposeProtocol, Kind, Mode } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";
 
+import { validateHostAuthentication } from "./host-authentication";
+
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
 
 export async function validator(req: PeprValidateRequest<UDSPackage>) {
-  if (req.Raw.metadata?.deletionTimestamp) {
-    const oldPkg = req.OldResource as UDSPackage | undefined;
-    if (!oldPkg || !isDeepStrictEqual(req.Raw.spec, oldPkg.spec)) {
-      return req.Deny("Package spec cannot change during deletion.");
-    }
+  const oldPkg = req.OldResource as UDSPackage | undefined;
+  const specUnchanged = oldPkg && isDeepStrictEqual(req.Raw.spec, oldPkg.spec);
+  if (req.Raw.metadata?.deletionTimestamp && !specUnchanged) {
+    return req.Deny("Package spec cannot change during deletion.");
   }
 
   const rawExposeList = req.Raw.spec?.network?.expose ?? [];
@@ -75,6 +76,11 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const udpGatewayPortKeys = new Set<string>();
   // Track FQDNs for uptime probes to ensure no duplicates
   const uptimeFqdns = new Set<string>();
+
+  if (!specUnchanged) {
+    const hostAuthError = validateHostAuthentication(pkg);
+    if (hostAuthError) return req.Deny(hostAuthError);
+  }
 
   for (const [index, expose] of exposeList.entries()) {
     // Validate gateway name format if it's a custom gateway

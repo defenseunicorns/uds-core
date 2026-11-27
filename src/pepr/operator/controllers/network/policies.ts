@@ -10,7 +10,13 @@ import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../cr
 import { ExposeProtocol, Mode, RemoteProtocol } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
 import { getUDPGatewayName, getUDPGatewayNamespace } from "../envoy-gateway/constants";
-import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
+import {
+  getPodSelector,
+  getWaypointName,
+  matchesLabels,
+  shouldUseAmbientWaypoint,
+} from "../istio/waypoint-utils";
+import { monitorWaypoints } from "../monitoring/monitor-exemptions";
 import { getAuthserviceClients, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
@@ -25,23 +31,10 @@ import { allowAmbientHealthprobes } from "./generators/ambientHealthprobes";
  * - If the client has a selector, it matches only pods with all the specified labels
  */
 export function findMatchingClient(pkg: UDSPackage, podLabels: Record<string, string>) {
-  const authserviceClients = getAuthserviceClients(pkg);
-
-  if (!podLabels || authserviceClients.length === 0) return undefined;
-
-  return authserviceClients.find(sso => {
-    const selector = sso.enableAuthserviceSelector;
-
-    // If the selector is empty, it matches all pods in the namespace
-    if (Object.keys(selector!).length === 0) {
-      return true;
-    }
-
-    // Otherwise, check that every label in the selector exists and matches in podLabels
-    return Object.entries(selector!).every(
-      ([key, value]) => key in podLabels && podLabels[key] === value,
-    );
-  });
+  if (!podLabels) return undefined;
+  return getAuthserviceClients(pkg).find(sso =>
+    matchesLabels(podLabels, sso.enableAuthserviceSelector!),
+  );
 }
 
 // configure subproject logger
@@ -163,31 +156,28 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     const waypointName = getWaypointName(sso.clientId);
     const netpolSelector = getPodSelector(pkg, sso.enableAuthserviceSelector!, waypointName);
 
-    const policy: Allow = {
-      direction: Direction.Egress,
-      selector: netpolSelector,
-      remoteNamespace: "authservice",
-      remoteSelector: { "app.kubernetes.io/name": "authservice" },
-      port: 10003,
-      description: `${sanitizeResourceName(sso.clientId)} authservice egress`,
-    };
-
-    // Generate the workload to keycloak for JWKS endpoint policy
-    const generatedPolicy = generate(namespace, policy, istioMode as Mode);
-    policies.push(generatedPolicy);
-
-    const keycloakPolicy: Allow = {
-      direction: Direction.Egress,
-      selector: netpolSelector,
-      remoteNamespace: "keycloak",
-      remoteSelector: { "app.kubernetes.io/name": "keycloak" },
-      port: 8080,
-      description: `${sanitizeResourceName(sso.clientId)} keycloak JWKS egress`,
-    };
-
-    // Generate the policy
-    const keycloakGeneratedPolicy = generate(namespace, keycloakPolicy, istioMode as Mode);
-    policies.push(keycloakGeneratedPolicy);
+    // Host protection calls Authservice at ingress. These grants belong to selector-based clients.
+    if (!sso.authservice) {
+      for (const [remoteNamespace, port, description] of [
+        ["authservice", 10003, "authservice egress"],
+        ["keycloak", 8080, "keycloak JWKS egress"],
+      ] as const) {
+        policies.push(
+          generate(
+            namespace,
+            {
+              direction: Direction.Egress,
+              selector: netpolSelector,
+              remoteNamespace,
+              remoteSelector: { "app.kubernetes.io/name": remoteNamespace },
+              port,
+              description: `${sanitizeResourceName(sso.clientId)} ${description}`,
+            },
+            istioMode as Mode,
+          ),
+        );
+      }
+    }
 
     // Add waypoint network policies for ambient mode
     if (shouldUseAmbientWaypoint(pkg)) {
@@ -243,36 +233,25 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     }
   }
 
-  // Generate NetworkPolicies for any monitors that are generated
-  const monitorList = pkg.spec?.monitor ?? [];
-  // Iterate over each monitor
-  for (const monitor of monitorList) {
+  for (const monitor of pkg.spec?.monitor ?? []) {
     const { selector, targetPort, podSelector } = monitor;
-
-    // Find if this service has a matching client with waypoint
-    const matchingClient = findMatchingClient(pkg, selector);
-    const waypointName = matchingClient ? getWaypointName(matchingClient.clientId) : undefined;
-
-    // Use waypoint selector only if we have a waypoint and the package is configured for ambient waypoint
-    const allowSelector = waypointName
-      ? getPodSelector(pkg, podSelector ?? selector, waypointName)
-      : (podSelector ?? selector);
-
-    // Create the NetworkPolicy for the monitor
-    const policy: Allow = {
-      direction: Direction.Ingress,
-      selector: allowSelector,
-      remoteNamespace: "monitoring",
-      remoteSelector: {
-        app: "prometheus",
-      },
-      port: targetPort,
-      // Use the targetPort and selector to generate a description for the monitoring derived policies
-      description: `${targetPort}-${Object.values(selector)} Metrics`,
-    };
-    // Generate the policy
-    const generatedPolicy = generate(namespace, policy, istioMode as Mode);
-    policies.push(generatedPolicy);
+    const description = `${targetPort}-${Object.values(selector)} Metrics`;
+    for (const [index, waypoint] of monitorWaypoints(pkg, monitor, selector).entries()) {
+      policies.push(
+        generate(
+          namespace,
+          {
+            direction: Direction.Ingress,
+            selector: waypoint ? { "istio.io/gateway-name": waypoint } : (podSelector ?? selector),
+            remoteNamespace: "monitoring",
+            remoteSelector: { app: "prometheus" },
+            port: targetPort,
+            description: index ? `${waypoint} ${description}` : description,
+          },
+          istioMode as Mode,
+        ),
+      );
+    }
   }
 
   // Iterate over each policy and apply it

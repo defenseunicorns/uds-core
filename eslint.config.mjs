@@ -56,4 +56,11 @@ export default defineConfig([
       eqeqeq: ["error", "smart"]
     },
   },
+  {
+    files: ["src/pepr/operator/crd/generated/istio/trafficextension-v1alpha1.ts"],
+    rules: {
+      // The upstream pluginConfig accepts arbitrary JSON.
+      "@typescript-eslint/no-explicit-any": ["error", { fixToUnknown: true }],
+    },
+  },
 ]);

@@ -48,7 +48,7 @@ tasks:
           docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" -e DOMAIN="${DOMAIN:-uds.dev}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.65.0-noble sh -c " \
             cd app && \
             npm ci && \
-            npx playwright test ambient-waypoint.test.ts keycloak-hostname-admin.test.ts \
+            npx playwright test ambient-waypoint.test.ts keycloak-hostname-admin.test.ts host-authservice.test.ts \
             "
         dir: test/playwright
       - description: "Run Secret Reload Tests"
@@ -162,6 +162,14 @@ tasks:
         with:
           address: ambient2-protected.uds.dev
 
+      - task: check-authservice-protection
+        with:
+          address: browser-protected-ambient.uds.dev
+
+      - task: check-authservice-protection
+        with:
+          address: browser-protected-sidecar.uds.dev
+
       - description: Verify podinfo podmonitor exists
         wait:
           cluster:
@@ -212,6 +220,12 @@ tasks:
         description: Whether the test run deployed UDP expose resources
         default: "true"
     actions:
+      - description: Withdraw protected browser fixtures before removing their Services
+        cmd: |
+          set -e
+          for mode in ambient sidecar; do
+            uds zarf tools kubectl delete package browser -n "host-auth-browser-$mode" --ignore-not-found --wait=true --timeout=2m
+          done
       - description: Remove the test apps zarf package
         cmd: |
           set -e

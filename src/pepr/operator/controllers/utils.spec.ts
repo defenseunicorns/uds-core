@@ -570,6 +570,64 @@ describe("purgeOrphans", () => {
     expect(kubernetesObjectApiMocks.delete).toHaveBeenCalledTimes(1);
   });
 
+  it.each(["conflict", "terminating", "promoted", "deleted"])(
+    "verifies removal after a %s outcome and preserves newer generations",
+    async outcome => {
+      const stale = {
+        apiVersion: "v1",
+        kind: "Pod",
+        metadata: {
+          name: "old",
+          uid: "old-uid",
+          resourceVersion: "1",
+          labels: { "uds/package": "pkg", "uds/generation": "1" },
+        },
+      };
+      const newer = {
+        ...stale,
+        metadata: {
+          ...stale.metadata,
+          name: "new",
+          labels: { "uds/package": "pkg", "uds/generation": "3" },
+        },
+      };
+      const promoted = { ...newer, metadata: { ...newer.metadata, name: "old" } };
+      const remaining: kind.Pod[] = [newer];
+      if (outcome === "conflict") {
+        kubernetesObjectApiMocks.delete.mockRejectedValueOnce({ code: 409 });
+        remaining.push(stale);
+      } else if (outcome === "terminating") {
+        remaining.push({
+          ...stale,
+          metadata: { ...stale.metadata, deletionTimestamp: new Date() },
+        });
+      } else if (outcome === "promoted") {
+        remaining.push(promoted);
+      }
+      const get = vi
+        .fn()
+        .mockResolvedValueOnce({ items: [stale, newer] })
+        .mockResolvedValueOnce(outcome === "promoted" ? promoted : stale)
+        .mockResolvedValueOnce({ items: remaining });
+      vi.mocked(K8s).mockReturnValue(createMockK8sClient({ Get: get }));
+      const purge = purgeOrphans(
+        "2",
+        "test-ns",
+        "pkg",
+        kind.Pod as never,
+        createMockLogger(),
+        undefined,
+        true,
+      );
+      if (outcome === "conflict" || outcome === "terminating") {
+        await expect(purge).rejects.toThrow("Waiting for orphaned Pod test-ns/old");
+      } else {
+        await expect(purge).resolves.toBeUndefined();
+      }
+      expect(kubernetesObjectApiMocks.delete).toHaveBeenCalledTimes(outcome === "promoted" ? 0 : 1);
+    },
+  );
+
   it("treats a missing fresh resource as already cleaned up", async () => {
     const listedResource = {
       kind: "Pod",

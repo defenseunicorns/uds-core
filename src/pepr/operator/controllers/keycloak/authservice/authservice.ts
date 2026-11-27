@@ -1,24 +1,25 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { R } from "pepr";
 
 import { Component, setupLogger } from "../../../../logger";
-import { K8sGateway, UDSPackage } from "../../../crd";
+import {
+  IstioAuthorizationPolicy,
+  IstioRequestAuthentication,
+  K8sGateway,
+  UDSPackage,
+} from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
 import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
-import { getAuthserviceClients, purgeOrphans } from "../../utils";
+import { getAuthserviceClients, getHostExposure, purgeOrphans } from "../../utils";
 import { Client } from "../types";
 import { UDSConfig, updatePolicy } from "./authorization-policy";
-import {
-  getAuthserviceConfig,
-  operatorConfig,
-  setAuthserviceConfig,
-  updateAuthServiceSecret,
-} from "./config";
+import { computeMonitorExemptions } from "../../monitoring/monitor-exemptions";
+import { getAuthserviceConfig, operatorConfig, updateAuthServiceSecret } from "./config";
 import {
   Action,
   AddOrRemoveClientEvent,
@@ -28,7 +29,7 @@ import {
 } from "./types";
 
 export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
-let lock = false;
+let pendingConfigUpdate: Promise<void> = Promise.resolve();
 
 export async function authservice(
   pkg: UDSPackage,
@@ -40,7 +41,6 @@ export async function authservice(
 
   // Get the requested service mesh mode, default to ambient if not specified
   const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
-  const previousMeshMode = pkg.status?.meshMode || Mode.Ambient;
   const isAmbient = istioMode === Mode.Ambient;
 
   // Get the list of authservice-enabled clients from the package
@@ -63,32 +63,42 @@ export async function authservice(
       throw new Error(`Failed to get client ${sso.clientId}`);
     }
 
-    // Get the full waypoint name for authorization policies
-    const fullWaypointName = getWaypointName(sso.clientId);
-
-    await reconcileAuthservice(
-      { name: sso.clientId, action: Action.AddClient, client },
-      sso.enableAuthserviceSelector!,
-      isAmbient,
-      pkg,
-      fullWaypointName,
-    );
+    const event: AddOrRemoveClientEvent = { name: sso.clientId, action: Action.AddClient, client };
+    await updateConfig({ ...event, hostAuthentication: !!sso.authservice });
+    if (!sso.authservice) {
+      await updatePolicy(
+        event,
+        sso.enableAuthserviceSelector!,
+        pkg,
+        isAmbient,
+        getWaypointName(sso.clientId),
+      );
+    }
   }
-
-  // Cleanup logic now takes the new objects
-  await purgeAuthserviceClients(pkg, newAuthserviceClients, previousMeshMode, istioMode);
-
-  // Clean up any existing waypoint resources if SSO is not configured
-  await purgeOrphans(
-    (pkg.metadata?.generation ?? 0).toString(),
-    pkg.metadata.namespace,
-    pkg.metadata.name,
-    K8sGateway,
-    log,
-  );
 
   // Return the new status objects for status update
   return newAuthserviceClients;
+}
+
+export async function cleanupAuthservice(pkg: UDSPackage, clients: AuthserviceClient[]) {
+  const mode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
+  await purgeAuthserviceClients(pkg, clients, pkg.status?.meshMode || Mode.Ambient, mode);
+  // A selector-to-host migration keeps the client ID and retires its legacy policies.
+  const kinds =
+    clients.length || pkg.status?.authserviceClients?.length
+      ? [IstioAuthorizationPolicy, IstioRequestAuthentication, K8sGateway]
+      : [K8sGateway];
+  for (const kind of kinds) {
+    await purgeOrphans(
+      String(pkg.metadata?.generation ?? 0),
+      pkg.metadata!.namespace!,
+      pkg.metadata!.name!,
+      kind,
+      log,
+      undefined,
+      kind !== K8sGateway && pkg.spec?.sso?.some(sso => !!sso.authservice),
+    );
+  }
 }
 
 export async function purgeAuthserviceClients(
@@ -113,121 +123,82 @@ export async function purgeAuthserviceClients(
       const fullWaypointName = getWaypointName(client.clientId);
       log.info(`Removing authservice client ${client.clientId}`);
 
-      await reconcileAuthservice(
-        { name: client.clientId, action: Action.RemoveClient },
-        {},
-        false, // Don't need to update policy for removed clients
-        pkg,
-        fullWaypointName,
-      );
+      const event: AddOrRemoveClientEvent = { name: client.clientId, action: Action.RemoveClient };
+      await updateConfig(event);
+      await updatePolicy(event, {}, pkg, false, fullWaypointName);
 
-      if (pkg.metadata?.namespace) {
+      if (
+        pkg.metadata?.namespace &&
+        !newAuthserviceClients.some(c => getWaypointName(c.clientId) === fullWaypointName)
+      ) {
         await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
       }
     }),
   );
 
-  // Then handle updated clients (selector changes or mesh mode change)
-  const updatedWaypointClients = meshModeChanged
-    ? prevClients // All clients need update if mesh mode changed
-    : prevClients.filter(oldClient => {
-        const newClient = newAuthserviceClients.find(c => c.clientId === oldClient.clientId);
-        if (!newClient) return false; // Already handled by removedClients
-        return JSON.stringify(oldClient.selector) !== JSON.stringify(newClient.selector);
-      });
-
-  // Process updated clients (selector changes or mesh mode)
-  for (const client of updatedWaypointClients) {
-    const newClient = newAuthserviceClients.find(c => c.clientId === client.clientId);
-    const fullWaypointName = getWaypointName(client.clientId);
-    if (!newClient) continue;
-
-    log.info(
-      {
-        reason: meshModeChanged ? "mesh_mode_change" : "selector_changed",
-      },
-      `Updating authservice client ${client.clientId}`,
-    );
-
-    if (pkg.metadata?.namespace) {
-      await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
+  if (!pkg.metadata?.namespace) return;
+  for (const client of newAuthserviceClients) {
+    const sso = pkg.spec?.sso?.find(s => s.clientId === client.clientId);
+    const host = sso && getHostExposure(pkg, sso);
+    const previous = prevClients.find(c => c.clientId === client.clientId);
+    const waypoint = getWaypointName(client.clientId);
+    if (currentMeshMode === Mode.Ambient && host) {
+      // A replacement Service can select the same pods as the retired Service.
+      await cleanupWaypointLabels(
+        pkg.metadata.namespace,
+        waypoint,
+        host.service,
+        computeMonitorExemptions(pkg, host.selector!, true).length ? host.selector : undefined,
+      );
+    } else if (
+      previous &&
+      (meshModeChanged || JSON.stringify(previous.selector) !== JSON.stringify(client.selector))
+    ) {
+      await cleanupWaypointLabels(pkg.metadata.namespace, waypoint);
     }
   }
 }
 
-function isAddOrRemoveClientEvent(event: AuthServiceEvent): event is AddOrRemoveClientEvent {
-  return event.action === Action.AddClient || event.action === Action.RemoveClient;
-}
-
-export async function reconcileAuthservice(
-  event: AuthServiceEvent,
-  labelSelector: { [key: string]: string } = {},
-  isAmbient?: boolean,
-  pkg?: UDSPackage,
-  waypointName?: string,
-) {
-  await updateConfig(event);
-  if (isAddOrRemoveClientEvent(event)) {
-    if (!pkg) {
-      throw new Error("Package must be provided for AddClient or RemoveClient events");
-    }
-    await updatePolicy(event, labelSelector, pkg, isAmbient, waypointName);
-  }
-}
-
-// Write authservice config to secret (ensure the new function name is referenced)
-export async function updateConfig(event: AuthServiceEvent) {
-  // Lock to prevent concurrent updates
-  if (lock) {
-    log.debug("Lock is set for config update, retrying...");
-    setTimeout(() => updateConfig(event), 0);
-    return;
-  }
-
-  let config: AuthserviceConfig;
-
+export async function updateConfig(event: AuthServiceEvent): Promise<void> {
+  const previousUpdate = pendingConfigUpdate;
+  let release = () => {};
+  pendingConfigUpdate = new Promise<void>(resolve => {
+    release = resolve;
+  });
+  await previousUpdate;
   try {
-    log.debug("Locking config for update");
-    lock = true;
-
-    // build updated config based on event
-    config = await getAuthserviceConfig().then(config => {
-      return buildConfig(config, event);
-    });
-
-    // Update the in-memory config immediately
-    setAuthserviceConfig(config);
+    const config = buildConfig(await getAuthserviceConfig(), event);
+    // Queue the snapshot under the lock and release it while the batch is written.
+    return updateAuthServiceSecret(config);
   } catch (e) {
-    log.error({ event, e }, "Failed to build in memory authservice secret for event");
+    log.error(
+      { action: event.action, name: event.name },
+      "Failed to build Authservice configuration",
+    );
     throw e;
   } finally {
-    // unlock config
-    log.debug("Unlocking config for update");
-    lock = false;
+    release();
   }
-
-  // apply the authservice secret
-  log.debug("Applying authservice secret");
-  await updateAuthServiceSecret(config);
 }
 
-export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) {
+export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent): AuthserviceConfig {
   let chains: Chain[];
 
   if (event.action === Action.AddClient) {
     // Add the new chain to the existing authservice config
-    chains = config.chains.filter(chain => chain.name !== event.name);
-    chains = chains.concat(buildChain(event));
-    // Sort the chains by their name before returning. Note that the accuracy of
-    // sorting here is not relevant, only the consistency.
-    const sortByName = R.sortBy(R.prop("name"));
-    chains = sortByName(chains);
+    chains = [...config.chains.filter(chain => chain.name !== event.name), buildChain(event)];
+    // Authservice selects the first matching chain. Exact hosts precede legacy prefixes.
+    chains = R.sortWith<Chain>(
+      [R.descend(chain => Boolean(chain.match.equality)), R.ascend(chain => chain.name)],
+      chains,
+    );
   } else if (event.action === Action.RemoveClient) {
     // Search in the existing chains for the chain to remove by name.
     // Filtering here should preserve the order, so there is no need to re-sort.
     chains = config.chains.filter(chain => chain.name !== event.name);
     // Handle global config updates
   } else if (event.action === Action.UpdateGlobalConfig) {
+    config = { ...config, default_oidc_config: { ...config.default_oidc_config } };
     if (!event.redisUri) {
       // Remove the redis session store config if a URI is not provided
       delete config.default_oidc_config.redis_session_store_config;
@@ -250,38 +221,42 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
   }
 
   // Add the new chains to the existing authservice config
-  return { ...config, chains } as AuthserviceConfig;
+  return { ...config, chains };
 }
 
-export function buildChain(update: AuthServiceEvent) {
+export function buildChain(update: AuthServiceEvent): Chain {
+  const client = update.client!;
+  const callbackUri = client.redirectUris[0];
   // TODO: get this from the package
   // TODO: update to loop and build multiple chains on redirectUris
   // Parse the hostname from the first client redirect URI
-  const hostname = new URL(update.client!.redirectUris[0]).hostname;
+  const hostname = new URL(callbackUri).hostname;
 
-  const chain: Chain = {
+  return {
     name: update.name,
     match: {
       header: ":authority",
-      prefix: hostname,
+      ...(update.hostAuthentication ? { equality: hostname } : { prefix: hostname }),
     },
     filters: [
       {
         oidc_override: {
           authorization_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/auth`,
           token_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/token`,
-          callback_uri: update.client!.redirectUris[0],
-          client_id: update.client!.clientId,
-          client_secret: update.client!.secret,
+          callback_uri: callbackUri,
+          client_id: client.clientId,
+          client_secret: client.secret,
+          ...(update.hostAuthentication && {
+            id_token: { header: "x-uds-authservice-token", preamble: "Bearer" },
+          }),
           scopes: [],
           logout: {
             path: "/logout",
             redirect_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/logout`,
           },
-          cookie_name_prefix: update.client!.clientId,
+          cookie_name_prefix: client.clientId,
         },
       },
     ],
   };
-  return chain;
 }

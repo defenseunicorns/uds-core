@@ -16,6 +16,7 @@ const log = setupLogger(Component.OPERATOR_ISTIO);
 const INJECTION_LABEL = "istio-injection";
 const AMBIENT_LABEL = "istio.io/dataplane-mode";
 const ISTIO_STATE_ANNOTATION = "uds.dev/original-istio-state";
+const CLEANUP_PENDING = "cleanup-pending";
 const MANAGED_LABEL_FIELDS = new Set([`f:${INJECTION_LABEL}`, `f:${AMBIENT_LABEL}`]);
 
 export enum IstioState {
@@ -92,39 +93,54 @@ export async function cleanupNamespace(pkg: UDSPackage) {
   const currentState = getCurrentIstioState(labels);
   const originalIstioState = annotations[ISTIO_STATE_ANNOTATION] as IstioState;
 
-  // Remove the package annotation
-  delete annotations[`uds.dev/pkg-${pkg.metadata.name}`];
+  const pkgKey = `uds.dev/pkg-${pkg.metadata.name}`;
+  if (!(pkgKey in annotations)) return;
 
   // Check if there are any other package annotations
   // Backwards compatibility for multiple package CRs in a single namespace
-  const hasOtherPackages = Object.keys(annotations).some(key => key.startsWith("uds.dev/pkg-"));
-
-  // Only modify Istio labels if this is the last package
-  let result;
-  if (hasOtherPackages) {
-    // Keep existing labels if other packages are still present, don't cycle pods/change istio state
-    result = { labels, shouldRestartPods: false };
-  } else {
-    // Set labels based on the original state and determine if pods need to be restarted
-    result = getIstioLabels(labels, originalIstioState, currentState);
-
-    // Delete the annotation since we're restoring to original state
-    delete annotations[ISTIO_STATE_ANNOTATION];
+  const hasOtherPackages = Object.keys(annotations).some(
+    key => key !== pkgKey && key.startsWith("uds.dev/pkg-"),
+  );
+  if (
+    !hasOtherPackages &&
+    ![IstioState.Sidecar, IstioState.Ambient, IstioState.None].includes(originalIstioState)
+  ) {
+    throw new Error(
+      `Cannot restore namespace ${pkg.metadata.namespace}: original Istio state is missing or invalid`,
+    );
   }
 
-  // Apply the updated Namespace
+  const result = hasOtherPackages
+    ? { labels, shouldRestartPods: false }
+    : getIstioLabels(labels, originalIstioState, currentState);
+  const shouldRestart =
+    !hasOtherPackages && (result.shouldRestartPods || annotations[pkgKey] === CLEANUP_PENDING);
+  let previousMetadata = sourceNS.metadata;
+  if (shouldRestart) {
+    // Persist restart intent with restored labels so a retry survives an operator restart.
+    annotations[pkgKey] = CLEANUP_PENDING;
+    await applyNamespaceUpdates(
+      pkg.metadata.namespace,
+      result.labels,
+      annotations,
+      previousMetadata?.labels,
+      previousMetadata?.annotations,
+      previousMetadata?.managedFields,
+    );
+    await restartPodsIfNeeded(pkg.metadata.namespace, true, originalIstioState);
+    previousMetadata = { labels: result.labels, annotations: { ...annotations } };
+  }
+
+  delete annotations[pkgKey];
+  if (!hasOtherPackages) delete annotations[ISTIO_STATE_ANNOTATION];
   await applyNamespaceUpdates(
     pkg.metadata.namespace,
     result.labels,
     annotations,
-    sourceNS.metadata?.labels,
-    sourceNS.metadata?.annotations,
-    sourceNS.metadata?.managedFields,
-    `Updating namespace ${pkg.metadata.namespace}, removing ${pkg.metadata.name} state.`,
+    previousMetadata?.labels,
+    previousMetadata?.annotations,
+    previousMetadata?.managedFields,
   );
-
-  // Restart pods if needed
-  await restartPodsIfNeeded(pkg.metadata.namespace, result.shouldRestartPods, originalIstioState);
 }
 
 /**

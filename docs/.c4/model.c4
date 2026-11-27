@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -458,6 +458,12 @@ model {
           customer-waypoint -> authservice.authservice
         }
 
+        host-proxy = pod {
+          title 'Sidecar or Ambient Waypoint'
+          summary ' '
+          description 'Validates the host-scoped UDS identity, removes the reserved UDS token headers, and preserves application Authorization before forwarding to the protected workload.'
+        }
+
         custom-application = pod {
           title 'Customer Application'
           summary ' '
@@ -657,6 +663,12 @@ model {
 
     // external relationship
     enduser -> external-tenant-loadbalancer
+  }
+
+  host-machine-client = actor {
+    title 'Machine Client'
+    summary ' '
+    description 'Approved service account presenting a UDS token separately from its application credential.'
   }
 
   external-apps = externalAppsGroup {

@@ -11,6 +11,8 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 You'll configure operator-managed Authservice protection for an application. Authservice handles the browser OIDC flow at the Istio mesh boundary, validates requests before they reach the application, and requires users to log in through Keycloak before accessing the protected workload. This pattern can be preferable even when an application supports native OIDC because it keeps authentication enforcement outside the application.
 
+This guide covers selector-based protection. To protect a tenant host while preserving the application's own `Authorization` header, see [Protect tenant hosts with Authservice](/how-to-guides/identity-and-authorization/protect-apps-with-authservice-host/).
+
 ## Prerequisites
 
 - UDS Core deployed (Authservice is included by default)

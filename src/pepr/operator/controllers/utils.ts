@@ -14,7 +14,7 @@ import { WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
 import { K8s, kind } from "pepr";
 import { WatchEventArgs } from "pepr/dist/lib/processors/watch-processor";
 import { Logger } from "pino";
-import { UDSPackage } from "../crd";
+import { Sso, UDSPackage } from "../crd";
 
 export const PROMETHEUS_PRINCIPAL =
   "cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus";
@@ -159,6 +159,7 @@ export function getOwnerRef(cr: GenericKind): V1OwnerReference[] {
  * @param {T} kind - The Kubernetes resource kind to purge.
  * @param {Logger} log - Logger instance for logging debug messages.
  * @param {Record<string, string>} [additionalLabels] - Optional additional label filters to further narrow down the resources to purge.
+ * @param verifyRemoval - Preserve newer Package generations and require older resources to disappear.
  * @returns {Promise<void>} - A promise that resolves when the operation is complete.
  */
 export async function purgeOrphans<T extends GenericClass>(
@@ -168,6 +169,7 @@ export async function purgeOrphans<T extends GenericClass>(
   kind: T,
   log: Logger,
   additionalLabels?: Record<string, string> | undefined,
+  verifyRemoval = false,
 ) {
   let query = K8s(kind).InNamespace(namespace).WithLabel("uds/package", pkgName);
 
@@ -179,6 +181,11 @@ export async function purgeOrphans<T extends GenericClass>(
 
   const fetchResources = () => query.Get();
   const resources = await retryWithDelay(fetchResources, log, 5, 1000);
+  const isOrphan = (resource: InstanceType<T>) => {
+    const label = resource.metadata?.labels?.["uds/generation"];
+    if (verifyRemoval && Number(label) > Number(generation)) return false;
+    return label !== generation;
+  };
 
   for (const resource of resources.items) {
     const name = resource.metadata?.name;
@@ -186,14 +193,7 @@ export async function purgeOrphans<T extends GenericClass>(
       continue;
     }
 
-    const resourceGenLabel = resource.metadata?.labels?.["uds/generation"];
-
-    const mightBeOrphaned =
-      resourceGenLabel === null ||
-      resourceGenLabel === undefined ||
-      resourceGenLabel !== generation;
-
-    if (!mightBeOrphaned) {
+    if (!isOrphan(resource)) {
       continue;
     }
 
@@ -223,20 +223,27 @@ export async function purgeOrphans<T extends GenericClass>(
       continue;
     }
 
-    const currentGeneration = currentResource.metadata?.labels?.["uds/generation"];
-    if (currentGeneration === generation) {
+    if (!isOrphan(currentResource)) {
       continue;
     }
 
     log.debug(
-      { resource: currentResource },
+      { kind: currentResource.kind, namespace, name },
       `Deleting orphaned ${currentResource.kind!} ${currentResource.metadata!.name}`,
     );
     const deleted = await deleteResourceIfUnchanged(currentResource);
     if (!deleted) {
       log.debug(
-        { resource: currentResource },
+        { kind: currentResource.kind, namespace, name },
         "Skipping orphan deletion because the resource changed or was already removed",
+      );
+    }
+  }
+  if (verifyRemoval) {
+    const remaining = (await fetchResources()).items.find(isOrphan);
+    if (remaining) {
+      throw new Error(
+        `Waiting for orphaned ${remaining.kind} ${namespace}/${remaining.metadata?.name} to disappear`,
       );
     }
   }
@@ -374,13 +381,20 @@ export async function validateNamespace(
 
 /**
  * Get SSO clients with authservice enabled.
- * Filters to entries where enableAuthserviceSelector is present (not null/undefined).
+ * Host-based clients use the protected Service selector for network and waypoint policies.
  */
 export function getAuthserviceClients(pkg: UDSPackage) {
   const list = pkg.spec?.sso || [];
-  return list.filter(
-    sso => sso?.enableAuthserviceSelector !== null && sso?.enableAuthserviceSelector !== undefined,
-  );
+  return list.flatMap(sso => {
+    if (sso.enableAuthserviceSelector != null) return [sso];
+    const exposure = getHostExposure(pkg, sso);
+    return exposure?.selector ? [{ ...sso, enableAuthserviceSelector: exposure.selector }] : [];
+  });
+}
+
+export function getHostExposure(pkg: UDSPackage, sso: Sso) {
+  const host = sso.authservice?.exposeHost;
+  return host === undefined ? undefined : pkg.spec?.network?.expose?.find(e => e.host === host);
 }
 
 /**

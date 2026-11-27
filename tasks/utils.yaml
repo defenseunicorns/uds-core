@@ -118,7 +118,7 @@ tasks:
       - description: Adds Cluster LoadBalancer IP Addresses to match appropriate hosts names in /etc/hosts
         mute: true
         cmd: |
-          echo "$ADMIN_GW_IP keycloak.admin.uds.dev grafana.admin.uds.dev demo.admin.uds.dev\n$TENANT_GW_IP sso.uds.dev sso-alt.uds.dev demo-8080.uds.dev demo-8081.uds.dev protected.uds.dev alt-protected.uds.dev ambient-protected.uds.dev ambient2-protected.uds.dev podinfo.uds.dev portal.uds.dev" | sudo tee -a /etc/hosts
+          echo "$ADMIN_GW_IP keycloak.admin.uds.dev grafana.admin.uds.dev demo.admin.uds.dev\n$TENANT_GW_IP sso.uds.dev sso-alt.uds.dev demo-8080.uds.dev demo-8081.uds.dev protected.uds.dev alt-protected.uds.dev browser-protected-ambient.uds.dev browser-protected-sidecar.uds.dev ambient-protected.uds.dev ambient2-protected.uds.dev host-auth-sidecar-access.uds.dev host-auth-sidecar-access-b.uds.dev host-auth-sidecar-lifecycle.uds.dev host-auth-ambient-access.uds.dev host-auth-ambient-access-b.uds.dev host-auth-ambient-lifecycle.uds.dev podinfo.uds.dev portal.uds.dev" | sudo tee -a /etc/hosts
 
   - name: prepare-node-test-ca
     description: "Prepare the active gateway CA for Node-based e2e tests"

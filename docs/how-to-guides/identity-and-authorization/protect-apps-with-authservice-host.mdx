@@ -1,0 +1,225 @@
+---
+title: Protect tenant hosts with Authservice
+description: Configure browser and machine authentication for a tenant host while preserving the application's own credential.
+sidebar:
+  order: 3.022
+---
+
+import LikeC4View from '@components/LikeC4View.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Configure Authservice to protect a tenant HTTP host. The browser flow redirects users through Keycloak. Approved machine clients send a service-account token in `x-uds-machine-token` while retaining the application's own `Authorization` credential.
+
+## Prerequisites
+
+- UDS Core deployed with Identity & Authorization
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster
+- An application deployed as a UDS `Package` with a tenant HTTP exposure backed by a `Service` with a selector
+- Callers routed through tenant HTTP ingress; do not add uptime probes to the protected exposure
+
+Check the exposure before adding an SSO client. The protected host must match exactly one `spec.network.expose` entry on the tenant gateway. Use an exact host name on the tenant domain. Wildcards, custom `domain` values, `match`, and `advancedHTTP` are unsupported on that entry.
+
+UDS Core validates the protected Service selector and installs host policies before changing mesh authorization or restarting workloads. The Service must use a numeric `targetPort` matching the exposure's `targetPort`, or `port` when `targetPort` is omitted; named target ports are not supported for protected hosts.
+
+Configured application monitor endpoints remain accessible to the Prometheus service account on their declared ports and paths. Requests through tenant ingress still require host authentication on those paths. In Ambient mode, the operator routes pod-addressed scrapes through the application's waypoint to enforce these checks.
+
+## Browser flow
+
+Configure a browser SSO client to protect the tenant host. UDS Core redirects browser requests to Keycloak, then returns users to the application after login.
+
+<LikeC4View viewId="host-browser-authentication-flow" />
+
+<Steps>
+
+1. **Configure the protected host and browser client**
+
+   Set `authservice.exposeHost` on a browser client in the same `Package` as the tenant exposure. Reserve the first redirect URI's path and `/logout` for Authservice. Choose a path unused by the application, including its native login callbacks.
+
+   Add the following fields to your application's existing `Package` manifest. Use the Service name, ports, and selector from your deployment. This example protects `my-app.uds.dev`:
+
+   ```yaml title="package.yaml"
+   spec:
+     network:
+       expose:
+         - host: my-app
+           service: my-app
+           port: 8181
+           selector:
+             app: my-app
+     sso:
+       - name: my-app Authservice
+         clientId: my-app-authservice
+         authservice:
+           exposeHost: my-app
+         redirectUris:
+           - https://my-app.uds.dev/authservice/callback
+   ```
+
+2. **Apply the `Package` CR**
+
+   Merge the fields above into your complete `Package` manifest, retaining its `apiVersion`, `kind`, and `metadata`.
+
+   **(Recommended)** Include the manifest in your Zarf package. See [Packaging applications](/how-to-guides/packaging-applications/overview/).
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the complete manifest directly for testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f package.yaml
+   uds zarf tools kubectl wait package/<package-name> -n <namespace> --for=condition=Ready --timeout=5m
+   ```
+
+</Steps>
+
+### Verification
+
+Verify that the `Package` is ready and that UDS Core created the host policies:
+
+```bash
+uds zarf tools kubectl get package <package-name> -n <namespace>
+uds zarf tools kubectl get authorizationpolicy,requestauthentication -n <namespace>
+uds zarf tools kubectl get authorizationpolicy,requestauthentication -n istio-tenant-gateway
+```
+
+Open the protected host in a fresh browser session. Keycloak should prompt you to sign in, then return you to the application.
+
+### Sign in to an application with native OIDC
+
+If your application already supports OpenID Connect (OIDC), it can keep its own sign-in after Authservice protects the host. Both use OIDC, the sign-in protocol built on OAuth 2.0. Register Authservice and the application as separate clients in the same Keycloak realm so Keycloak can recognize the user's existing session.
+
+<LikeC4View viewId="host-native-oidc-flow" />
+
+The Authservice client handles its own callback at `/authservice/callback`. The application handles its native OIDC redirects, validates the returned ID token, and manages its own session. Keep the application's callback at a distinct path, such as `/auth/callback`.
+
+If the application already has a client in that realm, keep it. Otherwise, append this entry to the existing `spec.sso` list and set the redirect URI to the application's callback:
+
+```yaml title="package.yaml (entry under spec.sso)"
+- name: My Application
+  clientId: my-app
+  redirectUris:
+    - https://my-app.uds.dev/auth/callback
+  defaultClientScopes:
+    - openid
+```
+
+Apply the updated `Package`. Configure the application to use the same Keycloak issuer and the credentials from its `sso-client-my-app` Secret. See [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/).
+
+To verify both sign-ins, open `https://my-app.uds.dev` in a fresh private browser window:
+
+1. Sign in at Keycloak when Authservice redirects the browser. Authservice completes its flow at `/authservice/callback` and returns the browser to the application.
+2. Start sign-in from the application. The browser follows its redirect back to Keycloak. If the SSO session is still active and policy allows reuse, Keycloak returns a new authorization code without asking for credentials again.
+3. Confirm the application handles its `/auth/callback`, creates its session, and keeps you signed in after a page reload.
+
+## Machine client flow
+
+After the browser client protects the host, configure a service-account client in the same `Package`. The machine client must send a well-formed JSON Web Token (JWT) in `x-uds-machine-token` without replacing the application's own credential.
+
+<LikeC4View viewId="host-machine-authentication-flow" />
+
+<Steps>
+
+1. **Add a machine client**
+
+   Append this entry to the existing `spec.sso` list in `package.yaml`. Keep the browser client entry and all other `Package` fields. Set `machineAccess.authserviceClientId` to the protecting browser client's ID. The audience mapper adds that ID to the service-account token's audience.
+
+   ```yaml title="package.yaml"
+   - name: my-app machine access
+     clientId: my-app-machine
+     machineAccess:
+       authserviceClientId: my-app-authservice
+     standardFlowEnabled: false
+     serviceAccountsEnabled: true
+     secretConfig:
+       name: my-app-machine-secret
+       template:
+         client_secret: clientField(secret)
+     protocolMappers:
+       - name: my-app audience
+         protocol: openid-connect
+         protocolMapper: oidc-audience-mapper
+         config:
+           included.client.audience: my-app-authservice
+           access.token.claim: "true"
+   ```
+
+2. **Reapply the `Package`**
+
+   Redeploy the complete `Package` with Zarf, or reapply it with `kubectl` if you're testing locally. Wait for the operator to reconcile the new client and create its Secret.
+
+3. **Get a machine access token**
+
+   Set `NAMESPACE` to the application's namespace. This example uses `jq` to read the client secret and extract the access token for `my-app-machine`:
+
+   ```bash
+   NAMESPACE='<application-namespace>'
+   UDS_TOKEN=$(
+     uds zarf tools kubectl get secret my-app-machine-secret -n "$NAMESPACE" -o json |
+       jq -erj '.data.client_secret | @base64d' |
+       curl --fail --silent --show-error \
+         --data 'grant_type=client_credentials' \
+         --data 'client_id=my-app-machine' \
+         --data-urlencode 'client_secret@-' \
+         https://sso.uds.dev/realms/uds/protocol/openid-connect/token |
+       jq -er '.access_token'
+   )
+   ```
+
+   Request a fresh token when it expires. After a client secret rotation, repeat this exchange to verify that Keycloak accepts the credential in the Kubernetes Secret.
+
+4. **Call an authenticated application endpoint**
+
+   Choose a read-only API endpoint that requires application authentication and returns data you recognize. Set `APP_PATH` to its path without the leading slash. Set `APP_TOKEN` to an application bearer token authorized to read it. Send both credentials in the same request:
+
+   ```bash
+   curl --include "https://my-app.uds.dev/${APP_PATH}" \
+     -H "x-uds-machine-token: Bearer ${UDS_TOKEN}" \
+     -H "Authorization: Bearer ${APP_TOKEN}"
+   ```
+
+</Steps>
+
+### Verification
+
+Check for the endpoint's expected success status and data. UDS Core validates the machine identity and removes the UDS token headers before forwarding the request. The application uses the original `Authorization` header to decide what the caller can read.
+
+### Revoke one machine client's access
+
+Remove only the `machineAccess` block from that client's `spec.sso` entry. Keep the client, the protecting browser client, and the exposure in the `Package`. Apply the updated manifest and wait until the `Package` reports `Ready` and `status.observedGeneration` matches `metadata.generation`.
+
+Repeat the previously successful request with the same unexpired machine token and application credential. Expect HTTP `403`. Open the host in a fresh private browser window and verify that it still redirects to Keycloak for sign-in.
+
+### Troubleshooting
+
+#### Problem: A machine request returns `401` or `403`
+
+**Symptoms:** A request with `x-uds-machine-token` does not reach the application.
+
+**Solution:** Check that the token uses the protecting browser client's audience, the machine client's service account is enabled, and `machineAccess.authserviceClientId` references that browser client in the same `Package`. Send the UDS token only to the protected host.
+
+## Troubleshooting
+
+### Problem: The `Package` reports an invalid protected Service
+
+**Symptoms:** The operator reports a Service, selector, or host-isolation error.
+
+**Solution:** Use a tenant HTTP exposure backed by a Service with a selector. The protected Service selector must not overlap selectors for other exposures or selector-based Authservice clients.
+
+### Problem: The protected Service must change or be removed
+
+**Symptoms:** Kubernetes rejects a Service deletion or selector change.
+
+**Solution:** In one `Package` update, remove the exposure, the browser client's `authservice` block, and every `machineAccess` block referencing that client. Wait until the `Package` reports `Ready` and `status.observedGeneration` matches `metadata.generation`. Then change or delete the Service. Reapply the exposure and client configuration after the replacement Service exists.
+
+## Related documentation
+
+- [Protect applications with Authservice](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) - configure selector-based Authservice protection.
+- [Configure service account clients](/how-to-guides/identity-and-authorization/configure-service-accounts/) - configure service-account credentials and audience mapping.
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - compare native SSO and operator-managed Authservice protection.
+- [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - review host and machine access fields.

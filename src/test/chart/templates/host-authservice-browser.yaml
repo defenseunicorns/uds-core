@@ -1,0 +1,92 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- range $mode := list "ambient" "sidecar" }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: host-auth-browser-{{ $mode }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin
+  namespace: host-auth-browser-{{ $mode }}
+spec:
+  selector:
+    app: httpbin
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 80
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: browser
+  namespace: host-auth-browser-{{ $mode }}
+spec:
+  network:
+    serviceMesh:
+      mode: {{ $mode }}
+    expose:
+      - host: browser-protected-{{ $mode }}
+        service: httpbin
+        port: 8000
+        targetPort: 80
+        selector:
+          app: httpbin
+  sso:
+    - name: Browser login test
+      clientId: host-auth-browser-{{ $mode }}
+      authservice:
+        exposeHost: browser-protected-{{ $mode }}
+      redirectUris:
+        - https://browser-protected-{{ $mode }}.uds.dev/authservice/callback
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin
+  namespace: host-auth-browser-{{ $mode }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: httpbin
+        version: v1
+    spec:
+      containers:
+        - image: docker.io/kong/httpbin:0.2.3
+          imagePullPolicy: IfNotPresent
+          name: httpbin
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          readinessProbe:
+            tcpSocket:
+              port: 80
+          ports:
+            - containerPort: 80
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+{{- end }}
